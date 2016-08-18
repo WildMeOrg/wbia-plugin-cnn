@@ -415,7 +415,7 @@ def print_batch_info(Xb, yb, verbose, batch_index, num_batches):
 
 
 def concatenate_hack(sequence, axis=0):
-    print(sequence)
+    #print(sequence)
     # Hack to fix numpy bug. concatenate should do hstacks on 0-dim arrays
     if len(sequence) > 1 and len(sequence[1].shape) == 0:
         arr = np.hstack(sequence)

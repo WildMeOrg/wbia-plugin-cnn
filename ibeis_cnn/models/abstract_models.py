@@ -33,6 +33,9 @@ The model directory must keep track of several things:
         - images of convolutional weights
         - other visualizations
 
+The trained model keeps track of the trained weights and is now independant of
+the dataset. Finalized weights should be copied to and loaded from here.
+
 ----------------
 |   |--  <training_dpath>
 |   |   |-- dataset_{dataset_id} *
@@ -60,6 +63,8 @@ The model directory must keep track of several things:
 |   |   |   |   |   |-- diagnostics
 |   |   |   |   |   |   |-- {history_id} *
 |   |   |   |   |   |   |   |-- <files>
+|   |   |-- trained_models
+|   |   |   |-- arch_{archid} *
 ----------------
 
 
@@ -110,65 +115,103 @@ def imwrite_wrapper(show_func):
     return imwrite_func
 
 
-class LearnPropertyInjector(type):
-    def __init__(cls, name, bases, dct):
-        super(LearnPropertyInjector, cls).__init__(name, bases, dct)
-        cls._keys = [
+#class LearnPropertyInjector(type):
+#    def __init__(cls, name, bases, dct):
+#        super(LearnPropertyInjector, cls).__init__(name, bases, dct)
+#        cls._keys = [
+#            'momentum',
+#            'weight_decay',
+#            'learning_rate',
+#        ]
+
+#        def _make_prop(key):
+#            def fget(self):
+#                return self.getitem(key)
+#            ut.set_funcname(fget, key)
+
+#            def fset(self, value):
+#                self.setitem(key, value)
+#            ut.set_funcname(fset, key)
+#            prop = property(fget=fget, fset=fset)
+#            return prop
+#        # Inject properties
+#        for key in cls._keys:
+#            prop = _make_prop(key)
+#            setattr(cls, key, prop)
+
+
+@ut.reloadable_class
+#@six.add_metaclass(LearnPropertyInjector)
+class LearnState(ut.DictLike):
+    """ Keeps track of shared variables that can be changed during theano execution """
+    def __init__(self, learning_rate, momentum, weight_decay):
+        self._keys = [
             'momentum',
             'weight_decay',
             'learning_rate',
         ]
-
-        def _make_prop(key):
-            def fget(self):
-                return self.getitem(key)
-            ut.set_funcname(fget, key)
-
-            def fset(self, value):
-                self.setitem(key, value)
-            ut.set_funcname(fset, key)
-            prop = property(fget=fget, fset=fset)
-            return prop
-        # Inject properties
-        for key in cls._keys:
-            prop = _make_prop(key)
-            setattr(cls, key, prop)
-
-
-@ut.reloadable_class
-@six.add_metaclass(LearnPropertyInjector)
-class LearnState(ut.DictLike):
-    """ Keeps track of shared variables that can be changed during theano execution """
-    def __init__(self, learning_rate, momentum, weight_decay):
-        # import ibeis_cnn.__THEANO__ as theano
         self._shared_state = {key: None for key in self._keys}
+        self._isinit = False
+        # Set special properties
         self.learning_rate = learning_rate
         self.momentum = momentum
         self.weight_decay = weight_decay
 
+    # --- special properties ---
+    momentum = property(
+        fget=lambda self: self.getitem('momentum'),
+        fset=lambda self, val: self.setitem('momentum', val)
+    )
+
+    learning_rate = property(
+        fget=lambda self: self.getitem('learning_rate'),
+        fset=lambda self, val: self.setitem('learning_rate', val)
+    )
+
+    weight_decay = property(
+        fget=lambda self: self.getitem('weight_decay'),
+        fset=lambda self, val: self.setitem('weight_decay', val)
+    )
+
     @property
     def shared(self):
-        return self._shared_state
+        if self._isinit:
+            return self._shared_state
+        else:
+            raise AssertionError('Learning has not been initialized')
+
+    def init(self):
+        if not self._isinit:
+            self._isinit = True
+            # Reset variables with shared theano state
+            for key in self.keys():
+                self[key] = self._shared_state[key]
 
     def keys(self):
         return self._keys
 
     def getitem(self, key):
         _shared = self._shared_state[key]
-        value = None if _shared is None else _shared.get_value()
+        if self._isinit:
+            value = None if _shared is None else _shared.get_value()
+        else:
+            value = _shared
         return value
 
     def setitem(self, key, value):
-        import ibeis_cnn.__THEANO__ as theano
-        print('[model] setting %s to %.9r' % (key, value))
-        _shared = self._shared_state[key]
-        if value is None and _shared is not None:
-            raise ValueError('Cannot set an initialized shared variable to None.')
-        elif _shared is None and value is not None:
-            self._shared_state[key] = theano.shared(
-                np.cast['float32'](value), name=key)
-        elif _shared is not None:
-            _shared.set_value(np.cast['float32'](value))
+        if self._isinit:
+            import ibeis_cnn.__THEANO__ as theano
+            print('[model] setting %s to %.9r' % (key, value))
+            _shared = self._shared_state[key]
+            if value is None and _shared is not None:
+                raise ValueError('Cannot set an initialized shared variable to None.')
+            elif _shared is None and value is not None:
+                self._shared_state[key] = theano.shared(
+                    np.cast['float32'](value), name=key)
+            elif _shared is not None:
+                _shared.set_value(np.cast['float32'](value))
+        else:
+            self._shared_state[key] = value
 
 
 @ut.reloadable_class
@@ -578,7 +621,7 @@ class _ModelFitting(object):
         else:
             new_era = {
                 'learn_hashid': learn_hashid,
-                'arch_hashid': model.get_architecture_hashid(),
+                'arch_hashid': model.get_arch_hashid(),
                 'arch_id': model.arch_id,
                 'num_learn': len(y_learn),
                 'num_valid': len(y_valid),
@@ -1181,7 +1224,7 @@ class _ModelStrings(object):
         layer_json_list = [net_strs.make_layer_json_dict(layer)
                            for layer in layer_list]
         json_dict = ut.odict()
-        json_dict['arch_hashid'] = model.get_architecture_hashid()
+        json_dict['arch_hashid'] = model.get_arch_hashid()
         json_dict['layers'] = layer_json_list
         #json_str1 = ut.to_json(json_dict, pretty=False)
         # prettier json
@@ -1281,7 +1324,7 @@ class _ModelStrings(object):
         print('\n---- Layer Info')
         model.print_layer_info()
         print('\n---- Arch HashID')
-        print('arch_hashid=%r' % (model.get_architecture_hashid()),)
+        print('arch_hashid=%r' % (model.get_arch_hashid()),)
         print('----')
 
 
@@ -1298,14 +1341,14 @@ class _ModelIDs(object):
         #    model.name = ut.get_classname(model.__class__, local=True)
 
     def __nice__(model):
-        if model.name is None:
-            return '(' + model.get_arch_nice() + ' ' + model.get_history_nice() + ')'
-        else:
-            return '(' + model.name + ' ' + model.get_arch_nice() + ' ' + model.get_history_nice() + ')'
+        parts = [model.get_arch_nice(), model.get_history_nice()]
+        if model.name is not None:
+            parts = [model.name] + parts
+        return '(' + ' '.join(parts) + ')'
 
     @property
     def hash_id(model):
-        arch_hashid = model.get_architecture_hashid()
+        arch_hashid = model.get_arch_hashid()
         history_hashid = model.get_history_hashid()
         hashid = ut.hashstr27(history_hashid + arch_hashid)
         return hashid
@@ -1327,9 +1370,10 @@ class _ModelIDs(object):
             >>> print(result)
         """
         if model.name is not None:
-            arch_id = 'arch_' + model.name + '_' + model.get_arch_nice() + '_' + model.get_architecture_hashid()
+            parts = ['arch', model.name, model.get_arch_nice(), model.get_arch_hashid()]
         else:
-            arch_id = 'arch_' + model.get_arch_nice() + '_' + model.get_architecture_hashid()
+            parts = ['arch', model.get_arch_nice(), model.get_arch_hashid()]
+        arch_id = '_'.join(parts)
         return arch_id
 
     @property
@@ -1351,7 +1395,7 @@ class _ModelIDs(object):
         history_id = nice + hashid
         return history_id
 
-    def get_architecture_hashid(model):
+    def get_arch_hashid(model):
         """
         Returns a hash identifying the architecture of the determenistic net.
         This does not involve any dropout or noise layers, nor does the
@@ -1433,6 +1477,7 @@ class _ModelIO(object):
 
     def _init_io_vars(model, kwargs):
         model.dataset_dpath = kwargs.pop('dataset_dpath', '.')
+        model.training_dpath = kwargs.pop('training_dpath', '.')
 
     def print_structure(model):
         """
@@ -1457,6 +1502,16 @@ class _ModelIO(object):
         print(model.saved_session_dpath)
         print(model.checkpoint_dpath)
         print(model.diagnostic_dpath)
+        print(model.trained_model_dpath)
+        print(model.trained_arch_dpath)
+
+    @property
+    def trained_model_dpath(model):
+        return join(model.training_dpath, 'trained_models')
+
+    @property
+    def trained_arch_dpath(model):
+        return join(model.trained_model_dpath, model.arch_id)
 
     @property
     def model_dpath(model):
@@ -1557,7 +1612,7 @@ class _ModelIO(object):
     def get_model_state_fpath(model, fpath=None, dpath=None, fname=None,
                               checkpoint_tag=None):
         default_fname = 'model_state_arch_%s.pkl' % (
-            model.get_architecture_hashid())
+            model.get_arch_hashid())
         model_state_fpath = model._get_model_file_fpath(default_fname, fpath,
                                                         dpath, fname,
                                                         checkpoint_tag)
@@ -1566,7 +1621,7 @@ class _ModelIO(object):
     def get_model_info_fpath(model, fpath=None, dpath=None, fname=None,
                              checkpoint_tag=None):
         default_fname = 'model_info_arch_%s.pkl' % (
-            model.get_architecture_hashid())
+            model.get_arch_hashid())
         model_state_fpath = model._get_model_file_fpath(default_fname, fpath,
                                                         dpath, fname,
                                                         checkpoint_tag)
@@ -1865,6 +1920,8 @@ class _ModelBackend(object):
             print('[model.build] request_backprop')
             import ibeis_cnn.__THEANO__ as theano
             from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
+
+            model.learn_state.init()
 
             X, X_batch = model._get_batch_input_exprs()
             y, y_batch = model._get_batch_output_exprs()

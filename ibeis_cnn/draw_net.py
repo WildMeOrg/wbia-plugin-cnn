@@ -619,6 +619,134 @@ def plot_saliency(net, Xb, figsize=(9, None)):
         net, Xb, figsize, lambda net, Xb, n: -saliency_map_net(net, Xb))
 
 
+def class_model_visualization(model, target_label):
+    """
+    https://groups.google.com/forum/#!topic/lasagne-users/UxZpNthZfq0
+    http://arxiv.org/pdf/1312.6034.pdf
+
+    Example:
+        >>> # DISABLE_DOCTEST
+        >>> # Assumes mnist is trained
+        >>> from ibeis_cnn.draw_net import *  # NOQA
+        >>> from ibeis_cnn import ingest_data
+        >>> from ibeis_cnn.models import MNISTModel
+        >>> dataset = ingest_data.grab_mnist_category_dataset()
+        >>> model = MNISTModel(batch_size=128, data_shape=dataset.data_shape,
+        >>>                    name='bnorm',
+        >>>                    output_dims=len(dataset.unique_labels),
+        >>>                    batch_norm=True,
+        >>>                    dataset_dpath=dataset.dataset_dpath)
+        >>> model.encoder = None
+        >>> model.initialize_architecture()
+        >>> model.load_model_state()
+        >>> #import plottool as pt
+        >>> #pt.qt4ensure()
+        >>> #class_model_visualization(model, dataset)
+        >>> #ut.show_if_requested()
+    """
+    import ibeis_cnn.__LASAGNE__ as lasagne
+    import ibeis_cnn.__THEANO__ as theano
+    from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
+    # compute label for that variable
+    ##label_value = np.zeros((model.batch_size, model.output_dims), dtype=np.float32)
+    ##label_value[:, 0] = 1.0
+    #label_value = np.zeros(model.output_dims, dtype=np.float32)
+    #label_value[0] = 1.0
+    #shared_label_value = theano.shared(label_value)
+    import utool as ut
+
+    import copy
+    output_layer = model.output_layer
+    target_label = 3
+    # Precomputed mean and std across training data
+    input_mean = model.preproc_kw['center_mean']
+    input_std = model.preproc_kw['center_std']
+
+    # We are forcing a batch size of 1 for this visualization
+    input_shape = (1,) + model.input_shape[1:]
+    if False:
+        # intializing to zeros seems to do nothing on mnist data
+        initial_state = np.zeros(input_shape, dtype=np.float32)
+    elif False:
+        rng = np.random.RandomState(0)
+        initial_state = rng.rand(*input_shape)
+    else:
+        initial_state = input_mean / input_std
+        initial_state = initial_state.transpose(2, 0, 1)[None, :]
+
+    # make image a shared variable that you can update
+    img = theano.shared(initial_state.astype(np.float32))
+
+    # Get the final layer and remove the softmax nonlinearity to access the
+    # pre-activation. (Softmax encourages minimization of other classes)
+    softmax = copy.copy(output_layer)
+    softmax.nonlinearity = lasagne.nonlinearities.identity
+
+    # Overwrite lasagne's InputLayer with the image
+    # Build expression to represent class scores wrt the image
+    class_scores = lasagne.layers.get_output(softmax, img, deterministic=True)
+
+    # Get the class score that represents our class of interest
+    target_score = class_scores[:, target_label]
+    max_term_batch = target_score
+
+    # Get the squared L2 norm of the image values
+    flat_img = T.reshape(img, (img.shape[0], T.prod(img.shape[1:])))
+    reg_term_batch = (flat_img ** 2).sum(axis=1)
+
+    # aggregate scores across the batch
+    #max_term = max_term_batch.mean(axis=0)
+    #reg_term = reg_term_batch.mean(axis=0)
+    max_term = max_term_batch[0]
+    reg_term = reg_term_batch[0]
+
+    # The goal is to optimize
+    # S_c = score of class c before softmax nonlinearity
+    # argmax_{I} S_c(I) - \lambda \elltwo{I}
+    # max(S_c(I) - lambda * norm(I, 2))
+    weight_decay = .00001
+    to_maximize = max_term - weight_decay * reg_term
+
+    # Compute the gradient of the maximization objective
+    # with respect to the image
+    grads = theano.grad(to_maximize, wrt=img)
+
+    # compile a function that does this update
+    update_rate = 0.01
+    step_fn = theano.function(
+        inputs=[],
+        # outputs could be empty, but returning to_maximize allows us to
+        # monitor progress
+        outputs=[to_maximize],
+        updates={
+            img: img + update_rate * grads
+        }
+    )
+
+    # Optimize objective via backpropogation for a few iterations
+    niters = 500
+    for _ in ut.ProgIter(range(niters), lbl='making class model img', bs=True):
+        out = step_fn()
+        #print('out = %r' % (out,))
+
+    # return final state of the image
+    Xb = img.get_value()
+    X = Xb.transpose((0, 2, 3, 1))
+    #pt.imshow(X[0])
+    #out_ = X.mean(axis=0)
+    out_ = X[0]
+    import vtool as vt  # NOQA
+    out = out_.copy()
+    out = vt.norm01(out) * 255
+    # Not sure why readding mean and std seem to hurt
+    #out += model.preproc_kw['center_mean']
+    #out *= model.preproc_kw['center_std']
+    out = np.round(out).astype(np.uint8)
+    import plottool as pt
+    pt.imshow(out)
+    return out
+
+
 def show_saliency_heatmap(model, dataset):
     """
     https://github.com/dnouri/nolearn/blob/master/nolearn/lasagne/visualize.py
