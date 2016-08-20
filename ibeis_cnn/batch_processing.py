@@ -86,6 +86,7 @@ def process_batch(model, X, y, theano_fn, fix_output=False, buffered=False,
         for Xb, yb in ut.ProgressIter(batch_iter2, lbl=':EXEC FG'):
             [ut.is_prime(346373) for _ in range(2)]
     """
+    import vtool as vt
     batch_output_list = []
     output_names = [
         str(outexpr.variable)
@@ -144,7 +145,8 @@ def process_batch(model, X, y, theano_fn, fix_output=False, buffered=False,
             stacked_output_list[index] = output
     else:
         stacked_output_list  = [
-            concatenate_hack(_output_unstacked, axis=0)
+            vt.safe_cat(_output_unstacked, axis=0)
+            # concatenate_hack(_output_unstacked, axis=0)
             for _output_unstacked in unstacked_output_gen
         ]
 
@@ -191,7 +193,7 @@ def batch_iterator(model, X, y, randomize_batch_order=False, augment_on=False,
         >>> from ibeis_cnn import models
         >>> model = models.DummyModel(batch_size=16)
         >>> X, y = model.make_random_testdata(num=99, seed=None, cv2_format=True)
-        >>> model.ensure_training_state(X, y)
+        >>> model.ensure_data_params(X, y)
         >>> y = None
         >>> encoder = None
         >>> randomize_batch_order = True
@@ -208,7 +210,7 @@ def batch_iterator(model, X, y, randomize_batch_order=False, augment_on=False,
         >>> import time
         >>> model = models.SiameseL2(batch_size=128, data_shape=(8, 8, 1))
         >>> X, y = model.make_random_testdata(num=1000, seed=None, cv2_format=True)
-        >>> model.ensure_training_state(X, y)
+        >>> model.ensure_data_params(X, y)
         >>> encoder = None
         >>> result_list1 = []
         >>> result_list2 = []
@@ -259,7 +261,7 @@ def batch_iterator(model, X, y, randomize_batch_order=False, augment_on=False,
         >>>                    arch_tag=dataset1.alias_key,
         >>>                    training_dpath=dataset1.training_dpath)
         >>> X1, y1 = dataset1.subset('train')
-        >>> model1.ensure_training_state(X1, y1)
+        >>> model1.ensure_data_params(X1, y1)
         >>> _iter1 = batch_iterator(model1, X1, y1, randomize_batch_order)
         >>> Xb1, yb1 = six.next(_iter1)
         >>> # ---
@@ -269,7 +271,7 @@ def batch_iterator(model, X, y, randomize_batch_order=False, augment_on=False,
         >>>                    arch_tag=dataset2.alias_key,
         >>>                    training_dpath=dataset2.training_dpath)
         >>> X2, y2 = dataset2.subset('train')
-        >>> model2.ensure_training_state(X2, y2)
+        >>> model2.ensure_data_params(X2, y2)
         >>> _iter2 = batch_iterator(model2, X2, y2, randomize_batch_order)
         >>> Xb2, yb2 = six.next(_iter2)
         >>> # ---
@@ -320,9 +322,9 @@ def batch_iterator(model, X, y, randomize_batch_order=False, augment_on=False,
     center_mean = None
     center_std  = None
     # Load precomputed whitening parameters
-    if model.preproc_kw is not None:
-        center_mean = np.array(model.preproc_kw['center_mean'], dtype=np.float32)
-        center_std  = np.array(model.preproc_kw['center_std'], dtype=np.float32)
+    if model.data_params is not None:
+        center_mean = np.array(model.data_params['center_mean'], dtype=np.float32)
+        center_std  = np.array(model.data_params['center_std'], dtype=np.float32)
     do_whitening = (center_mean is not None and
                     center_std is not None and
                     center_std != 0.0)
@@ -415,8 +417,14 @@ def print_batch_info(Xb, yb, verbose, batch_index, num_batches):
 
 
 def concatenate_hack(sequence, axis=0):
+    """
+    Hack to fix numpy bug.
+    concatenate fails when one item in sequence is empty
+
+    >>> sequence = (np.array([[]]), np.array([[1, 2, 3]]))
+    >>> sequence = (np.array([[1, 2, 3]]), np.array([[]]))
+    """
     #print(sequence)
-    # Hack to fix numpy bug. concatenate should do hstacks on 0-dim arrays
     if len(sequence) > 1 and len(sequence[1].shape) == 0:
         arr = np.hstack(sequence)
     else:

@@ -13,7 +13,7 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         python -m ibeis_cnn.models.mnist MNISTModel:0
         python -m ibeis_cnn.models.mnist MNISTModel:1
 
-        python -m ibeis_cnn _ModelFitting.fit:0 --vd
+        python -m ibeis_cnn _ModelFitting.fit:0 --vd --monitor
         python -m ibeis_cnn _ModelFitting.fit:1 --vd
 
     Example:

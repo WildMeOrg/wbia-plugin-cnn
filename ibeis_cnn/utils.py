@@ -409,7 +409,6 @@ def expand_data_indicies(label_indices, data_per_label=1):
     when data_per_label > 1, gives the corresponding data indicies for the data
     indicies
     """
-    from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
     expanded_indicies = [label_indices * data_per_label + count
                          for count in range(data_per_label)]
     data_indices = np.vstack(expanded_indicies).T.flatten()

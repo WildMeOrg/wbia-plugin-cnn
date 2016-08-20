@@ -206,7 +206,7 @@ def netrun():
     if not model.is_train_state_initialized():
         ut.colorprint('[netrun] Need to initialize training state', 'yellow')
         X_train, y_train = dataset.subset('train')
-        model.ensure_training_state(X_train, y_train)
+        model.ensure_data_params(X_train, y_train)
 
     # Run Actions
     if requests['train']:
