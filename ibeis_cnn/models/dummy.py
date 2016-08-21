@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function
 import functools
-import six
 import utool as ut
 from ibeis_cnn.models import abstract_models
 from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
@@ -11,7 +10,7 @@ from ibeis_cnn.__LASAGNE__ import init
 print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.models.dummy]')
 
 
-@six.add_metaclass(ut.ReloadingMetaclass)
+@ut.reloadable_class
 class DummyModel(abstract_models.AbstractCategoricalModel):
     def __init__(model, autoinit=False, batch_size=8, input_shape=None, data_shape=(4, 4, 1), **kwargs):
         #if data_shape is not None:

@@ -181,8 +181,11 @@ class LearnState(ut.DictLike):
         if not self._isinit:
             self._isinit = True
             # Reset variables with shared theano state
+            _preinit_state = self._shared_state.copy()
             for key in self.keys():
-                self[key] = self._shared_state[key]
+                self._shared_state[key] = None
+            for key in self.keys():
+                self[key] = _preinit_state[key]
 
     def keys(self):
         return self._keys
@@ -231,16 +234,24 @@ class _ModelFitter(object):
             'valid_loss' : np.inf,
             'weights'    : None
         }
+        # Dynamic configuration that may change with time
         model.learn_state = LearnState(
             learning_rate=kwargs.pop('learning_rate', .005),
             momentum=kwargs.pop('momentum', .9),
             weight_decay=kwargs.pop('weight_decay', None),
         )
-        # Static configuration indicating training preferences
-        model.train_config = {
+        # Static configuration indicating hyper-parameters
+        # (these will influence how the model learns)
+        model.hyperparams = {
+            'whiten_on': False,
+            'augment_on': False,
             'era_size': 100,  # epochs per era
             'max_epochs': None,
             'rate_decay': .8,
+        }
+        # Static configuration indicating training preferences
+        # (these will not influence the model learning)
+        model.train_config = {
             'checkpoint_freq': 200,
             'monitor': ut.get_argflag('--monitor'),
             'showprog': True,
@@ -269,7 +280,6 @@ class _ModelFitter(object):
             >>>                    batch_norm=False,
             >>>                    learning_rate=.01,
             >>>                    dataset_dpath=dataset.dataset_dpath)
-            >>> model.encoder = None
             >>> model.initialize_architecture()
             >>> model.train_config['monitor'] = True
             >>> model.train_config['showprog'] = False
@@ -290,13 +300,12 @@ class _ModelFitter(object):
             >>>                    batch_norm=True,
             >>>                    learning_rate=.1,
             >>>                    dataset_dpath=dataset.dataset_dpath)
-            >>> model.encoder = None
             >>> model.initialize_architecture()
             >>> model.train_config['monitor'] = True
             >>> model.train_config['showprog'] = False
-            >>> model.train_config['rate_decay'] = .9
-            >>> model.train_config['era_size'] = 2
-            >>> model.learn_state['weight_decay'] = .01
+            >>> model.hyperparams['rate_decay'] = .9
+            >>> model.hyperparams['era_size'] = 2
+            >>> model.hyperparams['weight_decay'] = .01
             >>> model.print_layer_info()
             >>> model.print_model_info_str()
             >>> #model.reinit_weights()
@@ -404,7 +413,7 @@ class _ModelFitter(object):
                 max_era_size = model._fit_session['max_era_size']
                 if model.current_era['size'] >= max_era_size:
                     # Decay learning rate
-                    frac = model.train_config['rate_decay']
+                    frac = model.hyperparams['rate_decay']
                     learn_state = model.learn_state
                     learn_state.learning_rate = (
                         learn_state.learning_rate * frac)
@@ -416,8 +425,8 @@ class _ModelFitter(object):
                     utils.print_header_columns(printcol_info)
 
                 # Break on max epochs
-                if model.train_config['max_epochs'] is not None:
-                    if epoch >= model.train_config['max_epochs']:
+                if model.hyperparams['max_epochs'] is not None:
+                    if epoch >= model.hyperparams['max_epochs']:
                         print('\n[train] maximum number of epochs reached\n')
                         break
                 # Increment the epoch
@@ -477,7 +486,7 @@ class _ModelFitter(object):
         """
         model._fit_session = {
             'start_time': ut.get_timestamp(),
-            'max_era_size': model.train_config['era_size'],
+            'max_era_size': model.hyperparams['era_size'],
             'era_epoch_num': 0,
         }
         ut.ensuredir(model.arch_dpath)
@@ -570,20 +579,26 @@ class _ModelFitter(object):
 
     def ensure_data_params(model, X_learn, y_learn):
         # TODO: move to dataset. This is independant of the model.
-        if model.data_params is None:
-            model.data_params = {}
-            print('computing center mean.')
-            model.data_params['center_mean'] = np.mean(
-                X_learn.astype(np.float32), axis=0)
-            print('computing center std. (hacks to 255 or 1.0)')
-            if ut.is_int(X_learn):
-                ut.assert_inbounds(X_learn, 0, 255, eq=True,
+        if model.hyperparams['whiten_on']:
+            if model.data_params is None:
+                model.data_params = {}
+                print('computing center mean/std. (hacks std=1)')
+                X_ = X_learn.astype(np.float32)
+                if ut.is_int(X_learn):
+                    ut.assert_inbounds(X_learn, 0, 255, eq=True,
+                                       verbose=ut.VERBOSE)
+                    X_ = X_ / 255
+                ut.assert_inbounds(X_, 0.0, 1.0, eq=True,
                                    verbose=ut.VERBOSE)
-                model.data_params['center_std'] = 255.0
-            else:
-                ut.assert_inbounds(X_learn, 0.0, 1.0, eq=True,
-                                   verbose=ut.VERBOSE)
+                # Ensure that the mean is computed on 0-1 normalized data
+                model.data_params['center_mean'] = np.mean(X_, axis=0)
                 model.data_params['center_std'] = 1.0
+
+            # Hack to preconvert mean / std to 0-1 for old models
+            model._fix_center_mean_std()
+        else:
+            model.data_params = None
+
         if getattr(model, 'encoder', None) is None:
             if hasattr(model, 'initialize_encoder'):
                 model.initialize_encoder(y_learn)
@@ -682,12 +697,12 @@ class _ModelFitter(object):
         """
         Backwards propogate -- Run learning set through the backwards pass
         """
-        from ibeis_cnn import batch_processing as batch
+        # from ibeis_cnn import batch_processing as batch
 
-        learn_outputs = batch.process_batch(
-            model, X_learn, y_learn, theano_backprop,
-            randomize_batch_order=True, augment_on=True, buffered=True,
-            showprog=model.train_config['showprog'])
+        learn_outputs = model.process_batch(theano_backprop, X_learn, y_learn,
+                                            shuffle=True,
+                                            augment_on=model.hyperparams['augment_on'],
+                                            buffered=True)
 
         # compute the loss over all learning batches
         learn_info = {}
@@ -736,14 +751,12 @@ class _ModelFitter(object):
         """
         Forwards propogate -- Run validation set through the forwards pass
         """
-        from ibeis_cnn import batch_processing as batch
-        valid_outputs = batch.process_batch(
-            model, X_valid, y_valid, theano_forward, augment_on=False,
-            randomize_batch_order=False, showprog=model.train_config['showprog'])
+        valid_outputs = model.process_batch(theano_forward, X_valid, y_valid)
         valid_info = {}
         valid_info['valid_loss'] = valid_outputs['loss_determ'].mean()
         valid_info['valid_loss_std'] = valid_outputs['loss_determ'].std()
         if 'valid_acc' in model.requested_headers:
+            print(valid_outputs.keys())
             valid_info['valid_acc'] = valid_outputs['accuracy'].mean()
         return valid_info
 
@@ -787,6 +800,7 @@ class _BatchUtility(object):
         Xb = X[x_sl]
         yb = y if y is None else y[y_sl]
         if wraparound:
+            # Append extra data to ensure the batch size is full
             if Xb.shape[0] != batch_size:
                 extra = batch_size - Xb.shape[0]
                 Xb_wrap = X[slice(0, extra)]
@@ -807,48 +821,40 @@ class _BatchUtility(object):
         yb = np.hstack((yb, yb_buffer))
         return yb
 
-    def prepare_labels(model, y):
-        yb = None if y is None else y.astype(np.int32)
-        # encoder = getattr(model, 'encoder', None)
-        if yb is not None:
-            # if encoder is not None:
-            #     # Apply an encoding if applicable
-            #     yb = encoder.transform(yb).astype(np.int32)
-            if model.data_per_label_input > 1 and model.pad_labels:
-                # Pad data for siamese networks
-                yb = model._pad_labels(yb)
-        return yb
-
     def prepare_data(model, X):
-        # duplicate of part of batch_processing
-        center_mean = None
-        center_std  = None
-        # Load precomputed whitening parameters
-        if model.data_params is not None:
-            center_mean = np.array(model.data_params['center_mean'], dtype=np.float32)
-            center_std  = np.array(model.data_params['center_std'], dtype=np.float32)
-        do_whitening = (center_mean is not None and
-                        center_std is not None and
-                        center_std != 0.0)
-        needs_convert = ut.is_int(X)
-
-        if needs_convert:
-            ceneter_mean01 = center_mean / np.array(255.0, dtype=np.float32)
-            center_std01 = center_std / np.array(255.0, dtype=np.float32)
-        else:
-            ceneter_mean01 = center_mean
-            center_std01 = center_std
-        Xb = X.astype(np.float32)
-        if needs_convert:
-            # Rescale the batch data to the range 0 to 1
-            Xb = Xb / 255.0
-        if do_whitening:
-            # Center the batch data in the range (-1.0, 1.0)
-            Xb = (Xb - ceneter_mean01) / (center_std01)
-        if model.X_is_cv2_native:
-            # Convert from cv2 to lasange format
-            Xb = Xb.transpose((0, 3, 1, 2))
+        is_int = ut.is_int(X)
+        is_cv2 = model.X_is_cv2_native
+        whiten_on = model.hyperparams['whiten_on']
+        Xb, _ = model._prepare_batch(X, None, is_int=is_int, is_cv2=is_cv2,
+                                     whiten_on=whiten_on)
         return Xb
+
+    def _stack_outputs(model, theano_fn, output_list):
+        """
+        Combines outputs across batches and returns them in a dictionary keyed
+        by the theano variable output name.
+        """
+        import vtool as vt
+        output_vars = [outexpr.variable for outexpr in theano_fn.outputs]
+        output_names = [str(var) if var.name is None else var.name
+                        for var in output_vars]
+        unstacked_output_gen = [[bop[count] for bop in output_list]
+                                for count, name in enumerate(output_names)]
+        stacked_output_list  = [
+            vt.safe_cat(_output_unstacked, axis=0)
+            for _output_unstacked in unstacked_output_gen
+        ]
+        outputs = dict(zip(output_names, stacked_output_list))
+        return outputs
+
+    def _unwrap_outputs(model, outputs, X):
+        # batch iteration may wrap-around returned data.
+        # slice off the padding
+        num_inputs = X.shape[0] / model.data_per_label_input
+        num_outputs = num_inputs * model.data_per_label_output
+        for key in outputs.keys():
+            outputs[key] = outputs[key][0:num_outputs]
+        return outputs
 
 
 @ut.reloadable_class
@@ -859,69 +865,45 @@ class _ModelBatch(_BatchUtility):
         model.X_is_cv2_native = True
 
     def process_batch(model, theano_fn, X, y=None, buffered=False,
-                      unwrap=False):
-
+                      unwrap=False, shuffle=False, augment_on=False):
+        """ Execute a theano function on batches of X and y """
         # Break data into generated batches
-        batch_iter = model.batch_iterator(X, y)
+        # TODO: sliced batches when there is no shuffling
+        # Create an iterator to generate batches of data
+        batch_iter = model.batch_iterator(X, y, shuffle=shuffle,
+                                          augment_on=augment_on)
         if buffered:
             batch_iter = ut.buffered_generator(batch_iter)
-
         if model.train_config['showprog']:
             num_batches = (X.shape[0] + model.batch_size - 1) // model.batch_size
             batch_iter = ut.ProgressIter(
                 batch_iter, nTotal=num_batches, lbl=theano_fn.name, freq=10,
                 bs=True, adjust=True)
+
+        # Execute the function with either known or unknown y-targets
         output_list = []
         if y is None:
             aug_yb_list = None
-            # Labels are not known, only one argument
             for Xb, yb in batch_iter:
                 batch_output = theano_fn(Xb)
                 output_list.append(batch_output)
         else:
             aug_yb_list = []
-            # TODO: sliced batches
             for Xb, yb in batch_iter:
-                # Runs a batch through the network and updates the weights.
-                # Just returns what it did
                 batch_output = theano_fn(Xb, yb)
                 output_list.append(batch_output)
                 aug_yb_list.append(yb)
 
-        outputs_ = model._stack_outputs(theano_fn, output_list)
-
-        # get outputs of each type
-
+        # Combine results of batches into one big result
+        outputs = model._stack_outputs(theano_fn, output_list)
         if y is not None:
+            # Hack in special outputs
             auglbl_list = np.hstack(aug_yb_list)
-            outputs_['auglbl_list'] = auglbl_list
-
+            outputs['auglbl_list'] = auglbl_list
         if unwrap:
-            # batch iteration may wrap-around returned data.
-            # slice off the padding
-            num_inputs = X.shape[0] / model.data_per_label_input
-            num_outputs = num_inputs * model.data_per_label_output
-            for key in outputs_.keys():
-                outputs_[key] = outputs_[key][0:num_outputs]
-        return outputs_
-
-    def _stack_outputs(theano_fn, output_list):
-        """
-        Combines outputs across batches and returns them in a dictionary keyed
-        by the theano variable output name.
-        """
-        import vtool as vt
-        output_vars = [outexpr.variable for outexpr in theano_fn.outputs]
-        output_names = [str(var) if var.name is None else var.name
-                        for var in output_vars]
-        unstacked_output_gen = ([bop[count] for bop in output_list]
-                                for count, name in enumerate(output_names))
-        stacked_output_list  = [
-            vt.safe_cat(_output_unstacked, axis=0)
-            for _output_unstacked in unstacked_output_gen
-        ]
-        outputs_ = dict(zip(output_names, stacked_output_list))
-        return outputs_
+            # slice of batch induced padding
+            outputs = model._unwrap_outputs(outputs, X)
+        return outputs
 
     @profile
     def batch_iterator(model, X, y, shuffle=False, augment_on=False):
@@ -931,12 +913,28 @@ class _ModelBatch(_BatchUtility):
             >>> from ibeis_cnn.models.abstract_models import *  # NOQA
             >>> from ibeis_cnn import models
             >>> model = models.DummyModel(batch_size=16)
-            >>> X, y = model.make_random_testdata(num=99, cv2_format=True)
+            >>> X, y = model.make_random_testdata(num=37, cv2_format=True)
             >>> model.ensure_data_params(X, y)
             >>> result_list = [(Xb, Yb) for Xb, Yb in model.batch_iterator(X, y)]
+            >>> Xb, yb = result_list[0]
+            >>> assert np.all(X[0, :, :, 0] == Xb[0, 0, :, :])
             >>> result = ut.depth_profile(result_list, compress_consecutive=True)
             >>> print(result)
             (7, [(16, 1, 4, 4), 16])
+
+        Example:
+            >>> # ENABLE_DOCTEST
+            >>> from ibeis_cnn.models.abstract_models import *  # NOQA
+            >>> from ibeis_cnn import models
+            >>> model = models.DummyModel(batch_size=16)
+            >>> X, y = model.make_random_testdata(num=37, cv2_format=False, asint=True)
+            >>> model.X_is_cv2_native = False
+            >>> model.ensure_data_params(X, y)
+            >>> result_list = [(Xb, Yb) for Xb, Yb in model.batch_iterator(X, y)]
+            >>> Xb, yb = result_list[0]
+            >>> assert np.all(np.isclose(X[0] / 255, Xb[0]))
+            >>> result = depth
+            >>> print(result)
         """
         # need to be careful with batchsizes if directly specified to theano
         batch_size = model.batch_size
@@ -949,49 +947,45 @@ class _ModelBatch(_BatchUtility):
         if shuffle:
             X, y = model.shuffle_input(X, y, data_per_label)
 
-        # FIXME: put in a layer?
-        center_mean = None
-        center_std  = None
-        # Load precomputed whitening parameters
-        if model.data_params is not None:
-            center_mean = np.array(model.data_params['center_mean'], dtype=np.float32)
-            center_std  = np.array(model.data_params['center_std'], dtype=np.float32)
-        do_whitening = (center_mean is not None and
-                        center_std is not None and
-                        center_std != 0.0)
-
-        needs_convert = ut.is_int(X)
-        if needs_convert:
-            ceneter_mean01 = center_mean / np.array(255.0, dtype=np.float32)
-            center_std01 = center_std / np.array(255.0, dtype=np.float32)
-        else:
-            ceneter_mean01 = center_mean
-            center_std01 = center_std
+        is_int = ut.is_int(X)
+        is_cv2 = model.X_is_cv2_native
+        whiten_on = model.data_params is not None
 
         # Slice and preprocess data in batch
         for batch_index in range(num_batches):
             # Take a slice from the data
-            Xb_, yb_ = model.slice_batch(X, y, batch_size, batch_index,
-                                         data_per_label, wraparound)
-            # Ensure correct format for the GPU
-            Xb = model.prepare_data(Xb_)
-            yb = model.prepare_labels(yb_)
-
-            Xb = Xb_.astype(np.float32)
-            yb = None if yb_ is None else yb_.astype(np.int32)
-            if needs_convert:
-                # Rescale the batch data to the range 0 to 1
-                Xb = Xb / 255.0
-            if augment_on:
-                # Apply defined transformations
-                Xb, yb = model.augment(Xb, yb)
-            if do_whitening:
-                # Center the batch data in the range (-1.0, 1.0)
-                Xb = (Xb - ceneter_mean01) / (center_std01)
-            if model.X_is_cv2_native:
-                # Convert from cv2 to lasange format
-                Xb = Xb.transpose((0, 3, 1, 2))
+            Xb, yb = model.slice_batch(X, y, batch_size, batch_index,
+                                       data_per_label, wraparound)
+            # Prepare data for the GPU
+            Xb, yb = model._prepare_batch(Xb, yb, is_int=is_int, is_cv2=is_cv2,
+                                          augment_on=augment_on,
+                                          whiten_on=whiten_on)
             yield Xb, yb
+
+    def _prepare_batch(model, Xb, yb, is_int=True, is_cv2=True,
+                       augment_on=False, whiten_on=False):
+        Xb = Xb.astype(np.float32)
+        yb = None if yb is None else yb.astype(np.int32)
+        if is_int:
+            # Rescale the batch data to the range 0 to 1
+            Xb = Xb / 255.0
+        if augment_on:
+            Xb, yb = model.augment(Xb, yb)
+        if whiten_on:
+            mean = model.data_params['center_mean']
+            std  = model.data_params['center_std']
+            Xb = (Xb - mean) / (std)
+        if is_cv2:
+            # Convert from cv2 to lasange format
+            Xb = Xb.transpose((0, 3, 1, 2))
+        if yb is not None:
+            # if encoder is not None:
+            #     # Apply an encoding if applicable
+            #     yb = encoder.transform(yb).astype(np.int32)
+            if model.data_per_label_input > 1 and model.pad_labels:
+                # Pad data for siamese networks
+                yb = model._pad_labels(yb)
+        return Xb, yb
 
 
 class _ModelPredicter(object):
@@ -1010,13 +1004,7 @@ class _ModelPredicter(object):
         # Begin testing with the neural network
         print('\n[test] predict with batch size %0.1f' % (
             model.batch_size))
-        # test_outputs = batch.process_batch(model, X_test, None, theano_predict,
-        #                                    fix_output=True)
         test_outputs = model.process_batch(theano_predict, X_test, unwrap=True)
-        # encoder = getattr(model, 'encoder', None)
-        # if encoder is not None and 'predictions' in outputs_:
-        #     pred = outputs_['predictions']
-        #     outputs_['labeled_predictions'] = encoder.inverse_transform(pred)
         return test_outputs
 
     def predict_proba(model, X_test):
@@ -1051,6 +1039,13 @@ class _ModelLegacy(object):
     that may be eventually be depricated
     """
 
+    def _fix_center_mean_std(model):
+        # Hack to preconvert mean / std to 0-1 for old models
+        if model.data_params is not None:
+            if model.data_params.get('center_std', None) == 255:
+                model.data_params['center_std'] = 1.0
+                model.data_params['center_mean'] /= 255.0
+
     def load_old_weights_kw(model, old_weights_fpath):
         print('[model] loading old model state from: %s' % (
             old_weights_fpath,))
@@ -1073,6 +1068,7 @@ class _ModelLegacy(object):
             'center_mean' : oldkw['center_mean'],
             'center_std'  : oldkw['center_std'],
         }
+        model._fix_center_mean_std()
         # Set class attributes
         model.best_results = {
             'epoch'          : oldkw['best_epoch'],
@@ -1109,6 +1105,7 @@ class _ModelLegacy(object):
             'center_mean' : oldkw['data_whiten_mean'],
             'center_std'  : oldkw['data_whiten_std'],
         }
+        model._fix_center_mean_std()
         model.best_results = {
             'epoch'          : oldkw['best_epoch'],
             'test_accuracy'  : oldkw['best_valid_accuracy'],
@@ -2018,6 +2015,7 @@ class _ModelIO(object):
                 'architecture disagreement')
             if 'preproc_kw' in model_state:
                 model.data_params = model_state['preproc_kw']
+                model._fix_center_mean_std()
             else:
                 model.data_params = model_state['data_params']
         else:
@@ -2051,6 +2049,7 @@ class _ModelIO(object):
         # TODO make this a layer?
         if 'preproc_kw' in model_state:
             model.data_params = model_state['preproc_kw']
+            model._fix_center_mean_std()
         else:
             model.data_params = model_state['data_params']
         model.era_history = model_state['era_history']
@@ -2133,24 +2132,22 @@ class _ModelUtility(object):
         model._validate_data(X)
         model._validate_labels(X, y)
 
-    def make_random_testdata(model, num=1000, rng=0, cv2_format=False):
+    def make_random_testdata(model, num=37, rng=0, cv2_format=False, asint=False):
         print('made random testdata')
         rng = ut.ensure_rng(rng)
         num_labels = num
         num_data   = num * model.data_per_label_input
-        X_unshared = rng.rand(num_data, *model.data_shape)
-        y_unshared = rng.rand(num_labels) * (model.output_dims + 1)
-        X_unshared = X_unshared.astype(np.float32)
-        y_unshared = y_unshared.astype(np.int32)
-        if ut.VERBOSE:
-            print('made random testdata')
-            print('size(X_unshared) = %r' % (
-                ut.get_object_size_str(X_unshared),))
-            print('size(y_unshared) = %r' % (
-                ut.get_object_size_str(y_unshared),))
-        if cv2_format:
-            pass
-        return X_unshared, y_unshared
+        X = rng.rand(num_data, *model.data_shape)
+        y = rng.rand(num_labels) * (model.output_dims + 1)
+        X = (X * 100).astype(np.int) / 100
+        if asint:
+            X = (X * 255).astype(np.uint8)
+        else:
+            X = X.astype(np.float32)
+        y = y.astype(np.int32)
+        if not cv2_format:
+            X = X.transpose((0, 3, 1, 2))
+        return X, y
 
 
 class _ModelBackend(object):
@@ -2563,6 +2560,7 @@ class BaseModel(_ModelLegacy, _ModelVisualization, _ModelIO, _ModelStrings,
     # ---- UTILITY
 
 
+@ut.reloadable_class
 class AbstractCategoricalModel(BaseModel):
     """ base model for catagory classifiers """
 
