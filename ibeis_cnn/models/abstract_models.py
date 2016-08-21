@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-
 Directory structure of training
 
 The network directory is the root of the structure and is typically in
@@ -68,23 +67,17 @@ the dataset. Finalized weights should be copied to and loaded from here.
 |   |   |-- trained_models
 |   |   |   |-- arch_{archid} *
 ----------------
-
-
-----------------
-----------------
-
 """
-from __future__ import absolute_import, division, print_function
-import functools
+from __future__ import absolute_import, division, print_function, unicode_literals
 import six
 import numpy as np
 import utool as ut
-from os.path import join, exists, dirname, basename
+from os.path import join, exists, dirname, basename, split, splitext
 from six.moves import cPickle as pickle  # NOQA
 import warnings
 from ibeis_cnn import net_strs
 from ibeis_cnn import draw_net
-#ut.noinject('ibeis_cnn.abstract_models')
+from ibeis_cnn.models import _model_legacy
 print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.abstract_models]')
 
 
@@ -247,7 +240,7 @@ class _ModelFitter(object):
             'augment_on': False,
             'era_size': 100,  # epochs per era
             'max_epochs': None,
-            'rate_decay': .8,
+            'rate_schedule': .8,
         }
         # Static configuration indicating training preferences
         # (these will not influence the model learning)
@@ -274,12 +267,11 @@ class _ModelFitter(object):
             >>> from ibeis_cnn import ingest_data
             >>> from ibeis_cnn.models import MNISTModel
             >>> dataset = ingest_data.grab_mnist_category_dataset()
-            >>> model = MNISTModel(batch_size=128, data_shape=dataset.data_shape,
-            >>>                    name='dropout',
-            >>>                    output_dims=len(dataset.unique_labels),
-            >>>                    batch_norm=False,
-            >>>                    learning_rate=.01,
-            >>>                    dataset_dpath=dataset.dataset_dpath)
+            >>> model = MNISTModel(
+            >>>     batch_size=128, data_shape=dataset.data_shape,
+            >>>     name='dropout', output_dims=len(dataset.unique_labels),
+            >>>     batch_norm=False, learning_rate=.01,
+            >>>     dataset_dpath=dataset.dataset_dpath)
             >>> model.initialize_architecture()
             >>> model.train_config['monitor'] = True
             >>> model.train_config['showprog'] = False
@@ -291,21 +283,9 @@ class _ModelFitter(object):
             >>> model.fit(X_train, y_train)
 
         Example1:
-            >>> from ibeis_cnn import ingest_data
-            >>> from ibeis_cnn.models import MNISTModel
-            >>> dataset = ingest_data.grab_mnist_category_dataset()
-            >>> model = MNISTModel(batch_size=128, data_shape=dataset.data_shape,
-            >>>                    name='bnorm',
-            >>>                    output_dims=len(dataset.unique_labels),
-            >>>                    batch_norm=True,
-            >>>                    learning_rate=.1,
-            >>>                    dataset_dpath=dataset.dataset_dpath)
+            >>> from ibeis_cnn.models import mnist
+            >>> model, dataset = mnist.testdata_mnist(name='bnorm')
             >>> model.initialize_architecture()
-            >>> model.train_config['monitor'] = True
-            >>> model.train_config['showprog'] = False
-            >>> model.hyperparams['rate_decay'] = .9
-            >>> model.hyperparams['era_size'] = 2
-            >>> model.hyperparams['weight_decay'] = .01
             >>> model.print_layer_info()
             >>> model.print_model_info_str()
             >>> #model.reinit_weights()
@@ -314,11 +294,16 @@ class _ModelFitter(object):
         """
         from ibeis_cnn import utils
         print('\n[train] --- TRAINING LOOP ---')
+        model._validate_input(X_train, y_train)
 
-        X_learn, y_learn, X_valid, y_valid = model._prefit(
+        X_learn, y_learn, X_valid, y_valid = model._ensure_learnval_split(
             X_train, y_train, X_valid, y_valid, valid_idx)
 
-        model.new_fit_session()
+        model.ensure_data_params(X_learn, y_learn)
+        print('Learn y histogram: ' + ut.repr2(ut.dict_hist(y_learn)))
+        print('Valid y histogram: ' + ut.repr2(ut.dict_hist(y_valid)))
+
+        model._new_fit_session()
 
         epoch = model.best_results['epoch']
         if epoch is None:
@@ -342,7 +327,7 @@ class _ModelFitter(object):
 
         printcol_info = utils.get_printcolinfo(model.requested_headers)
 
-        model.new_era(X_learn, y_learn, X_valid, y_valid)
+        model._new_era(X_learn, y_learn, X_valid, y_valid)
         utils.print_header_columns(printcol_info)
 
         tt = ut.Timer(verbose=False)
@@ -371,7 +356,7 @@ class _ModelFitter(object):
 
                 # ---------------------------------------
                 # Record this epoch in history
-                model.record_epoch(epoch_info)
+                model._record_epoch(epoch_info)
 
                 # ---------------------------------------
                 # Check how we are learning
@@ -413,7 +398,7 @@ class _ModelFitter(object):
                 max_era_size = model._fit_session['max_era_size']
                 if model.current_era['size'] >= max_era_size:
                     # Decay learning rate
-                    frac = model.hyperparams['rate_decay']
+                    frac = model.hyperparams['rate_schedule']
                     learn_state = model.learn_state
                     learn_state.learning_rate = (
                         learn_state.learning_rate * frac)
@@ -421,7 +406,7 @@ class _ModelFitter(object):
                     max_era_size = np.ceil(max_era_size / (frac ** 2))
                     model._fit_session['max_era_size'] = max_era_size
                     # Start a new era
-                    model.new_era(X_learn, y_learn, X_valid, y_valid)
+                    model._new_era(X_learn, y_learn, X_valid, y_valid)
                     utils.print_header_columns(printcol_info)
 
                 # Break on max epochs
@@ -480,7 +465,7 @@ class _ModelFitter(object):
         model.checkpoint_save_model_state()
         model.save_model_state()
 
-    def new_fit_session(model):
+    def _new_fit_session(model):
         """
         Starts a model training session
         """
@@ -536,11 +521,8 @@ class _ModelFitter(object):
                 'weights_progress_dir': weights_progress_dir,
             })
 
-    def _prefit(model, X_train, y_train, X_valid=None, y_valid=None,
-                valid_idx=None):
-        # Center the data by subtracting the mean
-        model._validate_input(X_train, y_train)
-
+    def _ensure_learnval_split(model, X_train, y_train, X_valid=None,
+                               y_valid=None, valid_idx=None):
         if X_valid is not None:
             assert valid_idx is None, 'Cant specify both valid_idx and X_valid'
             # When X_valid is given assume X_train is actually X_learn
@@ -566,12 +548,6 @@ class _ModelFitter(object):
             # Set to crossvalidate hyperparamters
             X_valid = X_train.take(valid_idx, axis=0)
             y_valid = y_train.take(valid_idx, axis=0)
-
-        model.ensure_data_params(X_learn, y_learn)
-
-        print('Learn y histogram: ' + ut.repr2(ut.dict_hist(y_learn)))
-        print('Valid y histogram: ' + ut.repr2(ut.dict_hist(y_valid)))
-
         # print('\n[train] --- MODEL INFO ---')
         # model.print_architecture_str()
         # model.print_layer_info()
@@ -580,6 +556,7 @@ class _ModelFitter(object):
     def ensure_data_params(model, X_learn, y_learn):
         # TODO: move to dataset. This is independant of the model.
         if model.hyperparams['whiten_on']:
+            # Center the data by subtracting the mean
             if model.data_params is None:
                 model.data_params = {}
                 print('computing center mean/std. (hacks std=1)')
@@ -608,7 +585,6 @@ class _ModelFitter(object):
         copies the new image to a path to be overwritten so new updates are
         shown
         """
-        from os.path import split, join, splitext
         import shutil
         dpath, fname = split(fpath)
         ext = splitext(fpath)[1]
@@ -650,7 +626,7 @@ class _ModelFitter(object):
 
         model._overwrite_latest_image(fpath, 'update_mag')
 
-    def new_era(model, X_learn, y_learn, X_valid, y_valid):
+    def _new_era(model, X_learn, y_learn, X_valid, y_valid):
         """
         Used to denote a change in hyperparameters during training.
         """
@@ -662,7 +638,7 @@ class _ModelFitter(object):
         if model.current_era is not None and len(model.current_era['epoch_list']) == 0:
             print('Not starting new era (old one hasnt begun yet')
         else:
-            new_era = {
+            _new_era = {
                 'learn_hashid': learn_hashid,
                 'arch_hashid': model.get_arch_hashid(),
                 'arch_id': model.arch_id,
@@ -677,10 +653,10 @@ class _ModelFitter(object):
             num_eras = len(model.era_history)
             print('starting new era %d' % (num_eras,))
             #if model.current_era is not None:
-            model.current_era = new_era
+            model.current_era = _new_era
             model.era_history.append(model.current_era)
 
-    def record_epoch(model, epoch_info):
+    def _record_epoch(model, epoch_info):
         """
         Records an epoch in an era.
         """
@@ -1033,98 +1009,6 @@ class _ModelPredicter(object):
 
 
 @ut.reloadable_class
-class _ModelLegacy(object):
-    """
-    contains old functions for backwards compatibility
-    that may be eventually be depricated
-    """
-
-    def _fix_center_mean_std(model):
-        # Hack to preconvert mean / std to 0-1 for old models
-        if model.data_params is not None:
-            if model.data_params.get('center_std', None) == 255:
-                model.data_params['center_std'] = 1.0
-                model.data_params['center_mean'] /= 255.0
-
-    def load_old_weights_kw(model, old_weights_fpath):
-        print('[model] loading old model state from: %s' % (
-            old_weights_fpath,))
-        oldkw = ut.load_cPkl(old_weights_fpath)
-        # Model architecture and weight params
-        data_shape  = oldkw['model_shape'][1:]
-        input_shape = (None, data_shape[2], data_shape[0], data_shape[1])
-        output_dims  = oldkw['output_dims']
-
-        if model.output_dims is None:
-            model.output_dims = output_dims
-
-        # Perform checks
-        assert input_shape[1:] == model.input_shape[1:], (
-            'architecture disagreement')
-        assert output_dims == model.output_dims, (
-            'architecture disagreement')
-
-        model.data_params = {
-            'center_mean' : oldkw['center_mean'],
-            'center_std'  : oldkw['center_std'],
-        }
-        model._fix_center_mean_std()
-        # Set class attributes
-        model.best_results = {
-            'epoch'          : oldkw['best_epoch'],
-            'test_accuracy'  : oldkw['best_test_accuracy'],
-            'learn_loss'     : oldkw['best_learn_loss'],
-            'valid_accuracy' : oldkw['best_valid_accuracy'],
-            'valid_loss'     : oldkw['best_valid_loss'],
-            'weights'   : oldkw['best_weights'],
-        }
-
-        # Need to build architecture first
-        model.initialize_architecture()
-
-        model.encoder = oldkw.get('encoder', None)
-
-        # Set architecture weights
-        weights_list = model.best_results['weights']
-        model.set_all_param_values(weights_list)
-
-    def load_old_weights_kw2(model, old_weights_fpath):
-        print('[model] loading old model state from: %s' % (old_weights_fpath,))
-
-        oldkw = ut.load_cPkl(old_weights_fpath, n=None)
-        #output_dims = model.best_results['weights'][-1][0]
-
-        # Model architecture and weight params
-        if model.output_dims is None:
-            #model.output_dims = output_dims
-            #ut.depth_profile(oldkw['best_weights'])
-            model.output_dims = oldkw['best_weights'][-1].shape[0]
-
-        # Set class attributes
-        model.data_params = {
-            'center_mean' : oldkw['data_whiten_mean'],
-            'center_std'  : oldkw['data_whiten_std'],
-        }
-        model._fix_center_mean_std()
-        model.best_results = {
-            'epoch'          : oldkw['best_epoch'],
-            'test_accuracy'  : oldkw['best_valid_accuracy'],
-            'learn_loss'     : oldkw['best_train_loss'],
-            'valid_accuracy' : oldkw['best_valid_accuracy'],
-            'valid_loss'     : oldkw['best_valid_loss'],
-            'weights':  oldkw['best_fit_weights']
-        }
-
-        # Need to build architecture first
-        model.initialize_architecture()
-        model.encoder = oldkw.get('data_label_encoder', None)
-        model.batch_size = oldkw['train_batch_size']
-
-        # Set architecture weights
-        model.set_all_param_values(model.best_results['weights'])
-
-
-@ut.reloadable_class
 class _ModelVisualization(object):
     """
     """
@@ -1456,7 +1340,6 @@ class _ModelVisualization(object):
     # --- IMAGE WRITE
 
     imwrite_weights = imwrite_wrapper(show_weights_image)
-
     #imwrite_arch = imwrite_wrapper(show_arch)
 
     def render_arch(model):
@@ -1476,7 +1359,7 @@ class _ModelVisualization(object):
         Example:
             >>> # DISABLE_DOCTEST
             >>> from ibeis_cnn.models.abstract_models import *  # NOQA
-            >>> from ibeis_cnn.models import MNISTModel
+            >>> from ibeis_cnn.models.mnist import MNISTModel
             >>> model = MNISTModel(batch_size=128, data_shape=(24, 24, 1),
             >>>                    output_dims=10, batch_norm=False, name='mnist')
             >>> model.initialize_architecture()
@@ -1526,7 +1409,7 @@ class _ModelStrings(object):
         Example:
             >>> # ENABLE_DOCTEST
             >>> from ibeis_cnn.models.abstract_models import *  # NOQA
-            >>> from ibeis_cnn.models import MNISTModel
+            >>> from ibeis_cnn.models.mnist import MNISTModel
             >>> model = MNISTModel(batch_size=128, data_shape=(24, 24, 1),
             >>>                    output_dims=10, batch_norm=False)
             >>> model.initialize_architecture()
@@ -1557,7 +1440,7 @@ class _ModelStrings(object):
         Example:
             >>> # ENABLE_DOCTEST
             >>> from ibeis_cnn.models.abstract_models import *  # NOQA
-            >>> from ibeis_cnn.models import MNISTModel
+            >>> from ibeis_cnn.models.mnist import MNISTModel
             >>> model = MNISTModel(batch_size=128, data_shape=(24, 24, 1),
             >>>                    output_dims=10, batch_norm=False)
             >>> model.initialize_architecture()
@@ -1587,7 +1470,7 @@ class _ModelStrings(object):
         Example:
             >>> # ENABLE_DOCTEST
             >>> from ibeis_cnn.models.abstract_models import *  # NOQA
-            >>> from ibeis_cnn.models import MNISTModel
+            >>> from ibeis_cnn.models.mnist import MNISTModel
             >>> model = MNISTModel(batch_size=128, data_shape=(24, 24, 1),
             >>>                    output_dims=10)
             >>> model.initialize_architecture()
@@ -1645,10 +1528,6 @@ class _ModelStrings(object):
 class _ModelIDs(object):
 
     def _init_id_vars(model, kwargs):
-        pass
-        # FIXME: figure out how arch tag fits in here
-        #model.name = kwargs.pop('name', None)
-        #model.arch_tag = kwargs.pop('arch_tag', None)
         model.name = kwargs.pop('name', None)
         #if model.name is None:
         #    model.name = ut.get_classname(model.__class__, local=True)
@@ -1675,7 +1554,7 @@ class _ModelIDs(object):
         Example:
             >>> # ENABLE_DOCTEST
             >>> from ibeis_cnn.models.abstract_models import *  # NOQA
-            >>> from ibeis_cnn.models import MNISTModel
+            >>> from ibeis_cnn.models.mnist import MNISTModel
             >>> model = MNISTModel(batch_size=128, data_shape=(24, 24, 1),
             >>>                    output_dims=10, name='mnist')
             >>> model.initialize_architecture()
@@ -1741,7 +1620,7 @@ class _ModelIDs(object):
         Example:
             >>> # ENABLE_DOCTEST
             >>> from ibeis_cnn.models.abstract_models import *  # NOQA
-            >>> from ibeis_cnn.models import MNISTModel
+            >>> from ibeis_cnn.models.mnist import MNISTModel
             >>> model = MNISTModel(batch_size=128, data_shape=(24, 24, 1),
             >>>                    output_dims=10)
             >>> model.initialize_architecture()
@@ -1749,10 +1628,8 @@ class _ModelIDs(object):
             >>> print(result)
             o10_d4_c107
         """
-        #if model.arch_tag is not None:
-        #    return model.arch_tag
         if model.output_layer is None:
-            return 'NOARCH'
+            return 'NoArch'
         else:
             weighted_layers = model.get_all_layers(with_noise=False, with_weightless=False)
             info_list = [net_strs.get_layer_info(layer) for layer in weighted_layers]
@@ -1781,7 +1658,10 @@ class _ModelIDs(object):
             return nice
 
     def get_history_nice(model):
-        nice = 'era%03d_epoch%04d' % (model.total_eras, model.total_epochs)
+        if model.total_epochs == 0:
+            nice = 'NoHist'
+        else:
+            nice = 'era%03d_epoch%04d' % (model.total_eras, model.total_epochs)
         return nice
 
 
@@ -1803,7 +1683,7 @@ class _ModelIO(object):
             >>> dataset = grab_mnist_category_dataset()
             >>> dataset.print_dir_structure()
             >>> # ----
-            >>> from ibeis_cnn.models import MNISTModel
+            >>> from ibeis_cnn.models.mnist import MNISTModel
             >>> model = MNISTModel(batch_size=128, data_shape=(24, 24, 1),
             >>>                    output_dims=10, dataset_dpath=dataset.dataset_dpath)
             >>> model.print_structure()
@@ -1993,15 +1873,9 @@ class _ModelIO(object):
 
         Example:
             >>> # Assumes mnist is trained
-            >>> from ibeis_cnn import ingest_data
-            >>> from ibeis_cnn.models import MNISTModel
-            >>> dataset = ingest_data.grab_mnist_category_dataset()
-            >>> model = MNISTModel(batch_size=128, data_shape=dataset.data_shape,
-            >>>                    name='bnorm',
-            >>>                    output_dims=len(dataset.unique_labels),
-            >>>                    batch_norm=True,
-            >>>                    dataset_dpath=dataset.dataset_dpath)
-            >>> model.encoder = None
+            >>> from ibeis_cnn.models.abstract_models import  *  # NOQA
+            >>> from ibeis_cnn.models import mnist
+            >>> model, dataset = mnist.testdata_mnist()
             >>> model.initialize_architecture()
             >>> model.load_model_state()
         """
@@ -2167,14 +2041,8 @@ class _ModelBackend(object):
         # http://deeplearning.net/software/theano/library/compile/
         # function.html#theano.compile.function.function
         # http://deeplearning.net/software/theano/tutorial/modes.html
-        # theano.compile.MonitorMode
-        # theano.compile.FAST_COMPILE
-        # theano.compile.FAST_RUN
-        # theano.compile.Mode(linker=None, optimizer='default')
+        # theano.compile.FAST_COMPILE / FAST_RUN
         return model._mode
-        #mode = None
-        #mode = theano.compile.FAST_COMPILE
-        #return mode
 
     @theano_mode.setter
     def theano_mode(model, mode):
@@ -2457,9 +2325,9 @@ class _ModelBackend(object):
 
 
 @ut.reloadable_class
-class BaseModel(_ModelLegacy, _ModelVisualization, _ModelIO, _ModelStrings,
-                _ModelIDs, _ModelBackend, _ModelFitter, _ModelPredicter,
-                _ModelBatch, _ModelUtility, ut.NiceRepr):
+class BaseModel(_model_legacy._ModelLegacy, _ModelVisualization, _ModelIO,
+                _ModelStrings, _ModelIDs, _ModelBackend, _ModelFitter,
+                _ModelPredicter, _ModelBatch, _ModelUtility, ut.NiceRepr):
     """
     Abstract model providing functionality for all other models to derive from
     """
@@ -2538,6 +2406,9 @@ class BaseModel(_ModelLegacy, _ModelVisualization, _ModelIO, _ModelStrings,
     def augment(model, Xb, yb):
         raise NotImplementedError('data augmentation not implemented')
 
+    def loss_function(model, network_output, truth):
+        raise NotImplementedError('need to implement a loss function')
+
     def reinit_weights(model, W=None):
         """
         initailizes weights after the architecture has been defined.
@@ -2565,6 +2436,7 @@ class AbstractCategoricalModel(BaseModel):
     """ base model for catagory classifiers """
 
     def __init__(model, **kwargs):
+        # BaseModel.__init__(model, **kwargs)
         super(AbstractCategoricalModel, model).__init__(**kwargs)
         model.encoder = None
         # categorical models have a concept of accuracy
@@ -2606,128 +2478,6 @@ class AbstractCategoricalModel(BaseModel):
         accuracy.name = 'accuracy'
         labeled_outputs = [accuracy]
         return labeled_outputs
-
-
-class PretrainedNetwork(object):
-    """
-    Intialize weights from a specified (Caffe) pretrained network layers
-
-    Args:
-        layer (int) : int
-
-    CommandLine:
-        python -m ibeis_cnn --tf PretrainedNetwork:0
-        python -m ibeis_cnn --tf PretrainedNetwork:1
-
-    Example0:
-        >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.models import *  # NOQA
-        >>> self = PretrainedNetwork('caffenet', show_network=True)
-        >>> print('done')
-
-    Example1:
-        >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.models import *  # NOQA
-        >>> self = PretrainedNetwork('vggnet', show_network=True)
-        >>> print('done')
-    """
-    def __init__(self, modelkey=None, show_network=False):
-        from ibeis_cnn._plugin_grabmodels import ensure_model
-        self.modelkey = modelkey
-        weights_path = ensure_model(modelkey)
-        try:
-            self.pretrained_weights = ut.load_cPkl(weights_path)
-        except Exception:
-            raise IOError('The specified model was not found: %r' %
-                          (weights_path, ))
-        if show_network:
-            net_strs.print_pretrained_weights(
-                self.pretrained_weights, weights_path)
-
-    def get_num_layers(self):
-        return len(self.pretrained_weights)
-
-    def get_layer_num_filters(self, layer_index):
-        assert layer_index <= len(self.pretrained_weights), (
-            'Trying to specify a layer that does not exist')
-        shape = self.pretrained_weights[layer_index].shape
-        fanout, fanin, height, width = shape
-        return fanout
-
-    def get_layer_filter_size(self, layer_index):
-        assert layer_index <= len(self.pretrained_weights), (
-            'Trying to specify a layer that does not exist')
-        shape = self.pretrained_weights[layer_index].shape
-        fanout, fanin, height, width = shape
-        return (height, width)
-
-    def get_conv2d_layer(self, layer_index, name=None, **kwargs):
-        """ Assumes requested layer is convolutional
-
-        Returns:
-            lasange.layers.Layer: Layer
-        """
-        if name is None:
-            name = '%s_layer%r' % (self.modelkey, layer_index)
-        W = self.get_pretrained_layer(layer_index)
-        try:
-            b = self.get_pretrained_layer(layer_index + 1)
-            assert W.shape[0] == b.shape[0]
-        except:
-            b = None
-        print(W.shape)
-        print(b.shape)
-        num_filters = self.get_layer_num_filters(layer_index)
-        filter_size = self.get_layer_filter_size(layer_index)
-
-        from ibeis_cnn import custom_layers
-        Conv2DLayer = custom_layers.Conv2DLayer
-        #MaxPool2DLayer = custom_layers.MaxPool2DLayer
-
-        Layer = functools.partial(
-            Conv2DLayer, num_filters=num_filters,
-            filter_size=filter_size, W=W, b=b, name=name, **kwargs)
-        return Layer
-
-    def get_pretrained_layer(self, layer_index, rand=False):
-        import ibeis_cnn.__LASAGNE__ as lasagne
-        assert layer_index <= len(self.pretrained_weights), (
-            'Trying to specify a layer that does not exist')
-        pretrained_layer = self.pretrained_weights[layer_index]
-
-        class _PretrainedLayerInitializer(lasagne.init.Initializer):
-            def __init__(self, pretrained_layer):
-                self.pretrained_layer = pretrained_layer
-
-            def sample(self, shape):
-                if len(shape) == 1:
-                    assert shape[0] <= self.pretrained_layer.shape[0]
-                    pretrained_weights = self.pretrained_layer[:shape[0]]
-                else:
-                    is_conv = len(shape) == 4
-                    assert len(shape) == len(self.pretrained_layer.shape), (
-                        'Layer shape mismatch. Expected %r got %r' % (
-                            self.pretrained_layer.shape, shape))
-                    fanout, fanin = shape[:2]
-                    fanout_, fanin_ = self.pretrained_layer.shape[:2]
-                    assert fanout <= fanout_, ('Cannot increase weight fan-out dimension')
-                    assert fanin <= fanin_,  ('Cannot increase weight fan-in dimension')
-                    if is_conv:
-                        height, width = shape[2:]
-                        height_, width_ = self.pretrained_layer.shape[2:]
-                        assert height == height_, ('Layer height must equal Weight height')
-                        assert width == width_,  ('Layer width must equal Weight width')
-                    if is_conv:
-                        pretrained_weights = self.pretrained_layer[:fanout, :fanin, :, :]
-                    else:
-                        pretrained_weights = self.pretrained_layer[:fanout, :fanin]
-                pretrained_sample = lasagne.utils.floatX(pretrained_weights)
-                return pretrained_sample
-
-        weights_initializer = _PretrainedLayerInitializer(pretrained_layer)
-        if rand:
-            np.random.shuffle(weights_initializer)
-        return weights_initializer
 
 
 def report_error(msg):
@@ -2817,15 +2567,15 @@ def testdata_model_with_history():
     eralens = [4, 4, 4]
     total_epochs = sum(eralens)
     for era_length in eralens:
-        model.new_era(X_train, y_train, X_train, y_train)
+        model._new_era(X_train, y_train, X_train, y_train)
         for _ in range(era_length):
-            model.record_epoch(dummy_epoch_dict(num=epoch))
+            model._record_epoch(dummy_epoch_dict(num=epoch))
             epoch += 1
-    #model.record_epoch({'epoch': 1, 'valid_loss': .8, 'learn_loss': .9})
-    #model.record_epoch({'epoch': 2, 'valid_loss': .5, 'learn_loss': .7})
-    #model.record_epoch({'epoch': 3, 'valid_loss': .3, 'learn_loss': .6})
-    #model.record_epoch({'epoch': 4, 'valid_loss': .2, 'learn_loss': .3})
-    #model.record_epoch({'epoch': 5, 'valid_loss': .1, 'learn_loss': .2})
+    #model._record_epoch({'epoch': 1, 'valid_loss': .8, 'learn_loss': .9})
+    #model._record_epoch({'epoch': 2, 'valid_loss': .5, 'learn_loss': .7})
+    #model._record_epoch({'epoch': 3, 'valid_loss': .3, 'learn_loss': .6})
+    #model._record_epoch({'epoch': 4, 'valid_loss': .2, 'learn_loss': .3})
+    #model._record_epoch({'epoch': 5, 'valid_loss': .1, 'learn_loss': .2})
     return model
 
 

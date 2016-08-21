@@ -624,19 +624,14 @@ def class_model_visualization(model, target_label):
     https://groups.google.com/forum/#!topic/lasagne-users/UxZpNthZfq0
     http://arxiv.org/pdf/1312.6034.pdf
 
+    Sort of like a deep-dream
+
     Example:
         >>> # DISABLE_DOCTEST
         >>> # Assumes mnist is trained
         >>> from ibeis_cnn.draw_net import *  # NOQA
-        >>> from ibeis_cnn import ingest_data
-        >>> from ibeis_cnn.models import MNISTModel
-        >>> dataset = ingest_data.grab_mnist_category_dataset()
-        >>> model = MNISTModel(batch_size=128, data_shape=dataset.data_shape,
-        >>>                    name='bnorm',
-        >>>                    output_dims=len(dataset.unique_labels),
-        >>>                    batch_norm=True,
-        >>>                    dataset_dpath=dataset.dataset_dpath)
-        >>> model.encoder = None
+        >>> from ibeis_cnn.models import mnist
+        >>> model, dataset = mnist.testdata_mnist()
         >>> model.initialize_architecture()
         >>> model.load_model_state()
         >>> #import plottool as pt
@@ -647,32 +642,25 @@ def class_model_visualization(model, target_label):
     import ibeis_cnn.__LASAGNE__ as lasagne
     import ibeis_cnn.__THEANO__ as theano
     from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
-    # compute label for that variable
-    ##label_value = np.zeros((model.batch_size, model.output_dims), dtype=np.float32)
-    ##label_value[:, 0] = 1.0
-    #label_value = np.zeros(model.output_dims, dtype=np.float32)
-    #label_value[0] = 1.0
-    #shared_label_value = theano.shared(label_value)
     import utool as ut
-
     import copy
     output_layer = model.output_layer
     target_label = 3
     # Precomputed mean and std across training data
-    input_mean = model.preproc_kw['center_mean']
-    input_std = model.preproc_kw['center_std']
 
     # We are forcing a batch size of 1 for this visualization
     input_shape = (1,) + model.input_shape[1:]
     if False:
         # intializing to zeros seems to do nothing on mnist data
         initial_state = np.zeros(input_shape, dtype=np.float32)
-    elif False:
+    else:
         rng = np.random.RandomState(0)
         initial_state = rng.rand(*input_shape)
-    else:
-        initial_state = input_mean / input_std
-        initial_state = initial_state.transpose(2, 0, 1)[None, :]
+    # if model.data_params is not None:
+    #     input_mean = model.data_params['center_mean']
+    #     input_std = model.data_params['center_std']
+    #     initial_state = input_mean / input_std
+    #     initial_state = initial_state.transpose(2, 0, 1)[None, :]
 
     # make image a shared variable that you can update
     img = theano.shared(initial_state.astype(np.float32))
@@ -724,7 +712,7 @@ def class_model_visualization(model, target_label):
     )
 
     # Optimize objective via backpropogation for a few iterations
-    niters = 500
+    niters = 100
     for _ in ut.ProgIter(range(niters), lbl='making class model img', bs=True):
         out = step_fn()
         #print('out = %r' % (out,))

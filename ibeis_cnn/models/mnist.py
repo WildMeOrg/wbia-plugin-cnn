@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import, division, print_function, unicode_literals
 from ibeis_cnn.models import abstract_models
 import utool as ut
 print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.models.dummy]')
@@ -55,6 +55,7 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
     """
     def __init__(model, **kwargs):
         model.batch_norm = kwargs.pop('batch_norm', True)
+        model.dropout = kwargs.pop('dropout', None)
         super(MNISTModel, model).__init__(**kwargs)
 
     def get_mnist_model_def1(model):
@@ -64,7 +65,10 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         import ibeis_cnn.__LASAGNE__ as lasange
         from ibeis_cnn import custom_layers
         batch_norm = model.batch_norm
-        dropout = 0 if batch_norm else .5
+        if model.dropout is None:
+            dropout = 0 if batch_norm else .5
+        else:
+            dropout = model.dropout
 
         bundles = custom_layers.make_bundles(
             nonlinearity=lasange.nonlinearities.rectify,
@@ -93,8 +97,8 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         """
 
         CommandLine:
-            python -m ibeis_cnn --tf  MNISTModel.initialize_architecture --verbcnn
-            python -m ibeis_cnn --tf  MNISTModel.initialize_architecture --verbcnn --show
+            python -m ibeis_cnn  MNISTModel.initialize_architecture --verbcnn
+            python -m ibeis_cnn  MNISTModel.initialize_architecture --verbcnn --show
 
         Example:
             >>> # ENABLE_DOCTEST
@@ -120,6 +124,32 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         network_layers = abstract_models.evaluate_layer_list(network_layers_def)
         model.output_layer = network_layers[-1]
         return model.output_layer
+
+
+def testdata_mnist(name='bnorm'):
+    from ibeis_cnn import ingest_data
+    from ibeis_cnn.models import mnist
+    dataset = ingest_data.grab_mnist_category_dataset()
+    if name == 'bnorm':
+        batch_norm = True
+        dropout = False
+    output_dims = len(dataset.unique_labels)
+    model = mnist.MNISTModel(
+        batch_size=128,
+        data_shape=dataset.data_shape,
+        name=name,
+        output_dims=output_dims,
+        batch_norm=batch_norm,
+        dropout=dropout,
+        learning_rate=.1,
+        dataset_dpath=dataset.dataset_dpath
+    )
+    model.train_config['monitor'] = True
+    model.train_config['showprog'] = False
+    model.hyperparams['rate_schedule'] = .9
+    model.hyperparams['era_size'] = 2
+    model.hyperparams['weight_decay'] = .01
+    return model, dataset
 
 
 if __name__ == '__main__':
