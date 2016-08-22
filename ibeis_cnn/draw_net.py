@@ -155,6 +155,8 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
     def layerid(layer):
         return layer_to_id[layer]
 
+    main_nodes = []
+
     for i, layer in enumerate(layers):
         layer_info = net_strs.get_layer_info(layer)
         layer_type = layer_info['classalias']
@@ -170,6 +172,8 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
         if fullinfo:
             for attr, val in layer_info['layer_attrs'].items():
                 if attr == 'shape' and REMOVE_BATCH_SIZE:
+                    val = val[1:]
+                if attr == 'output_shape' and REMOVE_BATCH_SIZE:
                     val = val[1:]
                 lines.append('{0}: {1}'.format(attr, val))
 
@@ -195,11 +199,16 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
         if layer_type == 'Input':
             is_main_layer = True
 
+        if hasattr(layer, '_is_main_layer'):
+            is_main_layer = layer._is_main_layer
+
         node_attr = dict(name=key, label=label, color=color,
                          fillcolor=color, style='filled',
                          is_main_layer=is_main_layer)
 
         node_attr['is_main_layer'] = is_main_layer
+        if is_main_layer:
+            main_nodes.append(key)
         node_attr['classalias'] = layer_info['classalias']
 
         if is_main_layer:
@@ -294,8 +303,8 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
         nx.set_edge_attributes(G, key, val)
 
     # Add invisible structure
-    main_nodes = [key for key, val in
-                  nx.get_node_attributes(G, 'is_main_layer').items() if val]
+    #main_nodes = [key for key, val in
+    #              nx.get_node_attributes(G, 'is_main_layer').items() if val]
 
     main_children = {}
 
@@ -318,7 +327,7 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
     y = 1000
     #print('main_children = %s' % (ut.repr3(main_children),))
 
-    main_nodes = ut.isect(list(nx.topological_sort(G)), main_nodes)
+    #main_nodes = ut.isect(list(nx.topological_sort(G)), main_nodes)
     xpad = main_size_[0] * .3
     ypad = main_size_[1] * .3
 
@@ -370,7 +379,7 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
     # reset labels
     if 1:
         nx.set_node_attributes(G_, 'label', _labels)
-    _ = pt.show_nx(G_, fontsize=10, arrow_width=.3, layout='custom', fnum=fnum)  # NOQA
+    _ = pt.show_nx(G_, fontsize=8, arrow_width=.3, layout='custom', fnum=fnum)  # NOQA
     #pt.adjust_subplots2(top=1, bot=0, left=0, right=1)
     pt.plt.tight_layout()
 
@@ -624,21 +633,30 @@ class Dream(object):
     https://groups.google.com/forum/#!topic/lasagne-users/UxZpNthZfq0
     http://arxiv.org/pdf/1312.6034.pdf
 
+    #TODO
+    https://arxiv.org/pdf/1605.09304v3.pdf
+
     Class model visualization. Sort of like a deep-dream
+
+    CommandLine:
+        python -m ibeis_cnn.draw_net Dream --show
 
     Example:
         >>> # DISABLE_DOCTEST
         >>> # Assumes mnist is trained
         >>> from ibeis_cnn.draw_net import *  # NOQA
         >>> from ibeis_cnn.models import mnist
-        >>> model, dataset = mnist.testdata_mnist()
+        >>> model, dataset = mnist.testdata_mnist(dropout=.5)
         >>> model.initialize_architecture()
         >>> model.load_model_state()
-        >>> target_labels = 8
-        >>> #import plottool as pt
+        >>> target_labels = 3
+        >>> ut.quit_if_noshow()
+        >>> import plottool as pt
         >>> #pt.qt4ensure()
-        >>> #make_class_image(model, dataset)
-        >>> #ut.show_if_requested()
+        >>> dream = Dream(model, niters=200)
+        >>> img = dream.make_class_images(target_labels)
+        >>> pt.imshow(img)
+        >>> ut.show_if_requested()
     """
 
     def __init__(dream, model, init='gauss', niters=100, update_rate=1e-2,
@@ -648,30 +666,104 @@ class Dream(object):
         dream.niters = niters
         dream.update_rate = update_rate
         dream.weight_decay = weight_decay
+        # FIXME: cached vars assumes not much changes
+        dream.shared_images = None
+        dream.step_fn = None
+
+    def make_class_images(dream, target_labels):
+        import ibeis_cnn.__THEANO__ as theano
+        from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
+        import utool as ut
+
+        was_scalar = not ut.isiterable(target_labels)
+        target_labels = ut.ensure_iterable(target_labels)
+
+        if True:
+            # We are forcing a batch size for this visualization
+            input_shape = (len(target_labels),) + dream.model.input_shape[1:]
+        else:
+            # Maybe some cnn layers cant take variable batches?
+            input_shape = dream.model.input_shape
+        b, c, w, h = input_shape
+        assert len(target_labels) <= b, 'batch size too small'
+
+        initial_state = dream._make_init_state()
+
+        # make image a shared variable that you can update
+        if dream.shared_images is None:
+            dream.shared_images = theano.shared(initial_state)
+        else:
+            dream.shared_images.set_value(initial_state)
+
+        if dream.step_fn is None:
+            dream.step_fn = dream._make_objective(dream.shared_images, target_labels)
+
+        # Optimize objective via backpropogation for a few iterations
+        for _ in ut.ProgIter(range(dream.niters), lbl='making class model img',
+                             bs=True):
+            dream.step_fn()
+            #print('objective = %r' % (objective,))
+
+        out = dream._postprocess_class_image(dream.shared_images, target_labels, was_scalar)
+        return out
 
     def _make_init_state(dream):
+        r"""
+
+        CommandLine:
+            python -m ibeis_cnn.draw_net _make_init_state --show
+
+        Example:
+            >>> # DISABLE_DOCTEST
+            >>> # Assumes mnist is trained
+            >>> from ibeis_cnn.draw_net import *  # NOQA
+            >>> from ibeis_cnn.models import mnist
+            >>> model, dataset = mnist.testdata_mnist(dropout=.5)
+            >>> model.initialize_architecture()
+            >>> dream = Dream(model, init='rgauss', niters=200)
+            >>> ut.quit_if_noshow()
+            >>> import plottool as pt
+            >>> import vtool as vt
+            >>> #pt.qt4ensure()
+            >>> initial_state = dream._make_init_state().transpose((0, 2, 3, 1))[0]
+            >>> pt.imshow(initial_state, pnum=(1, 2, 1), fnum=1)
+            >>> pt.imshow(vt.norm01(initial_state), pnum=(1, 2, 2), fnum=1)
+            >>> ut.show_if_requested()
+        """
         init = dream.init
         input_shape = dream.model.input_shape
         b, c, w, h = input_shape
+
+        rng = np.random.RandomState(0)
 
         if init is None or init == 'zeros':
             # intializing to zeros seems to do nothing on mnist data
             initial_state = np.zeros(input_shape, dtype=np.float32)
         if init in ['rand', 'random']:
-            rng = np.random.RandomState(0)
             initial_state = rng.rand(*input_shape)
         elif init in ['randn']:
-            rng = np.random.RandomState(0)
             initial_state = np.abs(rng.randn(*input_shape)) / 6
             initial_state = np.clip(initial_state, 0, 1)
         elif init in ['gauss']:
             import vtool as vt
-            initial_state = np.array([[vt.gaussian_patch((h, w), sigma=None) for _ in range(c)]] * b)
+            initial_state = np.array([[vt.gaussian_patch((h, w), sigma=None)
+                                       for _ in range(c)]] * b)
+            #initial_state /= initial_state.max()
+        elif init in ['rgauss']:
+            import vtool as vt
+            initial_state = np.array([[vt.gaussian_patch((h, w), sigma=None)
+                                       for _ in range(c)]] * b)
+            #initial_state /= initial_state.max()
+            raug = (np.abs(rng.randn(*input_shape)) * (initial_state.max() / 12))
+            initial_state += raug
+            initial_state = np.clip(initial_state, 0, 1)
+
         elif init in ['perlin']:
             import vtool as vt
             b, c, w, h = input_shape
-            initial_state = np.array([[vt.perlin_noise((w, h)) for _ in range(c)]] * b)
+            initial_state = np.array([[vt.perlin_noise((w, h), rng=rng) for _ in range(c)]] * b)
             initial_state = initial_state.astype(np.float32) / 255
+        initial_state = initial_state.astype(np.float32)
         return initial_state
 
     def _make_objective(dream, shared_images, target_labels):
@@ -685,6 +777,7 @@ class Dream(object):
         import copy
         import ibeis_cnn.__THEANO__ as theano
         from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
+        print('Making dream objective')
         # Get the final layer and remove the softmax nonlinearity to access the
         # pre-activation. (Softmax encourages minimization of other classes)
         softmax = copy.copy(dream.model.output_layer)
@@ -700,7 +793,8 @@ class Dream(object):
         max_term = T.mean(max_term_batch)
 
         # Get the squared L2 norm of the image values
-        flat_img = T.reshape(shared_images, (shared_images.shape[0], T.prod(shared_images.shape[1:])))
+        flat_img = T.reshape(shared_images, (shared_images.shape[0],
+                                             T.prod(shared_images.shape[1:])))
         reg_term_batch = (flat_img ** 2).sum(axis=1)
         reg_term = T.mean(reg_term_batch)
 
@@ -733,36 +827,6 @@ class Dream(object):
         out = np.round(out).astype(np.uint8)
         if was_scalar:
             out = out[0]
-        return out
-
-    def make_class_image(dream, target_labels):
-        import ibeis_cnn.__THEANO__ as theano
-        from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
-        import utool as ut
-        # Precomputed mean and std across training data
-
-        # We are forcing a batch size of 1 for this visualization
-        # input_shape = (1,) + model.input_shape[1:]
-        input_shape = dream.model.input_shape
-        b, c, w, h = input_shape
-        was_scalar = not ut.isiterable(target_labels)
-        target_labels = ut.ensure_iterable(target_labels)
-        assert len(target_labels) <= b, 'batch size too small'
-
-        initial_state = dream._make_init_state()
-
-        # make image a shared variable that you can update
-        shared_images = theano.shared(initial_state.astype(np.float32))
-
-        step_fn = dream._make_objective(shared_images, target_labels)
-
-        # Optimize objective via backpropogation for a few iterations
-        for _ in ut.ProgIter(range(dream.niters), lbl='making class model img',
-                             bs=True):
-            objective = step_fn()
-            print('objective = %r' % (objective,))
-
-        out = dream._postprocess_class_image(shared_images, target_labels, was_scalar)
         return out
 
     def generate_class_images(dream, target_labels):
@@ -806,7 +870,7 @@ class Dream(object):
         out = dream._postprocess_class_image(shared_images, target_labels,
                                              was_scalar)
         yield out
-        for _ in ut.ProgIter(range(dream.niters), lbl='making class model img',
+        for _ in ut.ProgIter(range(dream.niters), lbl='class dream',
                              bs=True):
             step_fn()
             # objective = step_fn()

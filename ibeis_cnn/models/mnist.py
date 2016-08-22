@@ -32,19 +32,18 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
     Example:
         >>> # ENABLE_DOCTEST
         >>> from ibeis_cnn.models.mnist import *  # NOQA
-        >>> from ibeis_cnn import ingest_data
-        >>> dataset = ingest_data.grab_mnist_category_dataset_float()
-        >>> model = MNISTModel(batch_size=128, data_shape=dataset.data_shape,
-        >>>                    output_dims=len(dataset.unique_labels),
-        >>>                    learning_rate=.01,
-        >>>                    training_dpath=dataset.training_dpath)
-        >>> model.encoder = None
-        >>> model.train_config['monitor'] = True
-        >>> model.learn_state['weight_decay'] = None
+        >>> from ibeis_cnn.models import mnist
+        >>> model, dataset = mnist.testdata_mnist(name='bnorm')
+        >>> model.initialize_architecture()
+        >>> model.print_layer_info()
+        >>> model.print_model_info_str()
+        >>> #model.reinit_weights()
+        >>> X_train, y_train = dataset.subset('train')
+        >>> model.fit(X_train, y_train)
         >>> output_layer = model.initialize_architecture()
         >>> model.print_layer_info()
         >>> # parse training arguments
-        >>> model.train_config.update(**ut.argparse_dict(dict(
+        >>> model.monitor_config.update(**ut.argparse_dict(dict(
         >>>     era_size=100,
         >>>     max_epochs=5,
         >>>     rate_decay=.8,
@@ -55,43 +54,8 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
     """
     def __init__(model, **kwargs):
         model.batch_norm = kwargs.pop('batch_norm', True)
-        model.dropout = kwargs.pop('dropout', None)
+        model.dropout = kwargs.pop('dropout', .5)
         super(MNISTModel, model).__init__(**kwargs)
-
-    def get_mnist_model_def1(model):
-        """
-        Follows https://github.com/Lasagne/Lasagne/blob/master/examples/mnist.py
-        """
-        import ibeis_cnn.__LASAGNE__ as lasange
-        from ibeis_cnn import custom_layers
-        batch_norm = model.batch_norm
-        if model.dropout is None:
-            dropout = 0 if batch_norm else .5
-        else:
-            dropout = model.dropout
-
-        bundles = custom_layers.make_bundles(
-            nonlinearity=lasange.nonlinearities.rectify,
-            batch_norm=batch_norm,
-        )
-        InputBundle = bundles['InputBundle']
-        ConvPoolBundle = bundles['ConvPoolBundle']
-        FullyConnectedBundle = bundles['FullyConnectedBundle']
-        SoftmaxBundle = bundles['SoftmaxBundle']
-
-        network_layers_def = [
-            InputBundle(shape=model.input_shape, noise=False),
-            # Convolutional layer with 32 kernels of size 5x5 and 2x2 pooling
-            ConvPoolBundle(num_filters=32, filter_size=(5, 5)),
-            # Another convolution with 32 5x5 kernels, and 2x2 pooling
-            # with 50% dropout on its outputs
-            ConvPoolBundle(num_filters=32, filter_size=(5, 5), dropout=dropout),
-            # A fully-connected layer of 256 units and 50% dropout of its outputs
-            FullyConnectedBundle(num_units=256, dropout=dropout),
-            # And, finally, the 10-unit output layer with 50% dropout on its inputs
-            SoftmaxBundle(num_units=model.output_dims),
-        ]
-        return network_layers_def
 
     def initialize_architecture(model):
         """
@@ -100,11 +64,16 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
             python -m ibeis_cnn  MNISTModel.initialize_architecture --verbcnn
             python -m ibeis_cnn  MNISTModel.initialize_architecture --verbcnn --show
 
+            python -m ibeis_cnn  MNISTModel.initialize_architecture --verbcnn --name=bnorm --show
+            python -m ibeis_cnn  MNISTModel.initialize_architecture --verbcnn --name=incep --show
+
         Example:
             >>> # ENABLE_DOCTEST
             >>> from ibeis_cnn.models.mnist import *  # NOQA
             >>> verbose = True
-            >>> model = MNISTModel(batch_size=128, data_shape=(28, 28, 1), output_dims=9)
+            >>> name = ut.get_argval('--name', default='bnorm')
+            >>> model = MNISTModel(batch_size=128, data_shape=(28, 28, 1),
+            >>>                    output_dims=10, name=name)
             >>> model.initialize_architecture()
             >>> model.print_model_info_str()
             >>> print(model)
@@ -120,19 +89,102 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
             print('[model]   * input_height   = %r' % (model.input_height,))
             print('[model]   * input_channels = %r' % (model.input_channels,))
             print('[model]   * output_dims    = %r' % (model.output_dims,))
-        network_layers_def = model.get_mnist_model_def1()
+        if model.name.startswith('incep'):
+            network_layers_def = model.get_inception_def()
+        else:
+            network_layers_def = model.get_mnist_model_def1()
         network_layers = abstract_models.evaluate_layer_list(network_layers_def)
         model.output_layer = network_layers[-1]
         return model.output_layer
 
+    def get_mnist_model_def1(model):
+        """
+        Follows https://github.com/Lasagne/Lasagne/blob/master/examples/mnist.py
+        """
+        import ibeis_cnn.__LASAGNE__ as lasange
+        from ibeis_cnn import custom_layers
+        batch_norm = model.batch_norm
+        dropout = model.dropout
 
-def testdata_mnist(name='bnorm', batch_size=128):
+        bundles = custom_layers.make_bundles(
+            nonlinearity=lasange.nonlinearities.rectify,
+            batch_norm=batch_norm,
+        )
+        b = ut.DynStruct(copy_dict=bundles)
+
+        N = 128
+
+        network_layers_def = [
+            b.InputBundle(shape=model.input_shape, noise=False),
+            b.ConvBundle(num_filters=N, filter_size=(3, 3), pool=False),
+            b.ConvBundle(num_filters=N, filter_size=(3, 3), pool=True),
+            b.ConvBundle(num_filters=N, filter_size=(3, 3), pool=False),
+            b.ConvBundle(num_filters=N, filter_size=(3, 3), pool=True),
+            # A fully-connected layer of 256 units and 50% dropout of its inputs
+            b.DenseBundle(num_units=N * 4, dropout=dropout),
+            # A fully-connected layer of 256 units and 50% dropout of its inputs
+            b.DenseBundle(num_units=N * 4, dropout=dropout),
+            # And, finally, the 10-unit output layer with 50% dropout on its inputs
+            b.SoftmaxBundle(num_units=model.output_dims, dropout=dropout),
+        ]
+        return network_layers_def
+
+    def get_inception_def(model):
+        import ibeis_cnn.__LASAGNE__ as lasange
+        from ibeis_cnn import custom_layers
+        batch_norm = model.batch_norm
+        if model.dropout is None:
+            dropout = 0 if batch_norm else .5
+        else:
+            dropout = model.dropout
+
+        bundles = custom_layers.make_bundles(
+            nonlinearity=lasange.nonlinearities.rectify,
+            batch_norm=batch_norm,
+        )
+        b = ut.DynStruct(copy_dict=bundles)
+
+        N = 64
+
+        network_layers_def = [
+            b.InputBundle(shape=model.input_shape, noise=False),
+            b.ConvBundle(num_filters=N, filter_size=(3, 3), pool=False),
+            b.ConvBundle(num_filters=N, filter_size=(3, 3), pool=True),
+            b.InceptionBundle(
+                branches=[dict(t='c', s=(1, 1), r=00, n=N),
+                          dict(t='c', s=(3, 3), r=N // 2, n=N),
+                          dict(t='c', s=(3, 3), r=N // 4, n=N // 2, d=2),
+                          dict(t='p', s=(3, 3), n=N // 2)],
+            ),
+            b.InceptionBundle(
+                branches=[dict(t='c', s=(1, 1), r=00, n=N),
+                          dict(t='c', s=(3, 3), r=N // 2, n=N),
+                          dict(t='c', s=(3, 3), r=N // 4, n=N // 2, d=2),
+                          dict(t='p', s=(3, 3), n=N // 2)],
+                dropout=dropout,
+                pool=True
+            ),
+            # ---
+            b.DenseBundle(num_units=N, dropout=dropout),
+            b.DenseBundle(num_units=N, dropout=dropout),
+            # And, finally, the 10-unit output layer with 50% dropout on its inputs
+            b.SoftmaxBundle(num_units=model.output_dims, dropout=dropout),
+            #b.GlobalPool
+            #b.NonlinearitySoftmax(),
+        ]
+        return network_layers_def
+
+
+def testdata_mnist(name='bnorm', batch_size=128, dropout=None):
     from ibeis_cnn import ingest_data
     from ibeis_cnn.models import mnist
     dataset = ingest_data.grab_mnist_category_dataset()
     if name == 'bnorm':
         batch_norm = True
-        dropout = False
+        dropout = dropout
+    else:
+        batch_norm = False
+        dropout = .5
     output_dims = len(dataset.unique_labels)
     model = mnist.MNISTModel(
         batch_size=batch_size,
@@ -141,14 +193,20 @@ def testdata_mnist(name='bnorm', batch_size=128):
         output_dims=output_dims,
         batch_norm=batch_norm,
         dropout=dropout,
-        learning_rate=.1,
         dataset_dpath=dataset.dataset_dpath
     )
-    model.train_config['monitor'] = True
-    model.train_config['showprog'] = False
-    model.hyperparams['rate_schedule'] = .9
-    model.hyperparams['era_size'] = 2
-    model.hyperparams['weight_decay'] = .01
+    model.monitor_config['monitor'] = True
+    model.monitor_config['showprog'] = False
+    model.monitor_config['slowdump_freq'] = 10
+
+    model.learn_state['learning_rate'] = .1
+    model.hyperparams['weight_decay'] = .001
+    if name == 'bnorm':
+        model.hyperparams['era_size'] = 4
+        model.hyperparams['rate_schedule'] = [.9]
+    else:
+        model.hyperparams['era_size'] = 20
+        model.hyperparams['rate_schedule'] = [.9]
     return model, dataset
 
 

@@ -708,6 +708,8 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
                  pool_stride=(2, 2),
                  pool_size=(2, 2),
                  ):
+
+    # FIXME; dropout is a pre-operation
     import ibeis_cnn.__LASAGNE__ as lasange
     import itertools
     import six
@@ -718,40 +720,75 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
     nonlinearity = nonlinearity
     namer = ut.partial(lambda x: str(six.next(x)), itertools.count(1))
 
-    def apply_batch_norm(self, layer, **kwargs):
-        # change name standard
-        nonlinearity = getattr(layer, 'nonlinearity', None)
-        if nonlinearity is not None:
-            layer.nonlinearity = lasange.nonlinearities.identity
-        if hasattr(layer, 'b') and layer.b is not None:
-            del layer.params[layer.b]
-            layer.b = None
-        bn_name = (kwargs.pop('name', None) or
-                   (getattr(layer, 'name', None) and 'b' + self.name))
-        layer = lasange.layers.normalization.BatchNormLayer(
-            layer, name=bn_name, **kwargs)
-        if nonlinearity is not None:
-            nonlin_name = 'g' + self.name
-            layer = lasange.layers.special.NonlinearityLayer(layer,
-                                                             nonlinearity,
-                                                             name=nonlin_name)
-        #outgoing = lasange.layers.normalization.batch_norm(layer, **kwargs)
-        #outgoing.input_layer.name = 'bn' + self.name
-        #outgoing.name = 'nl' + self.name
-        outgoing = layer
-        return outgoing
+    bundles = {}
 
-    def apply_dropout(self, layer):
-        # change name standard
-        outgoing = lasange.layers.DropoutLayer(layer, p=self.dropout,
-                                               name='D' + self.name)
-        return outgoing
+    def register_bundle(class_):
+        classname = ut.get_classname(class_, local=True)
+        bundles[classname] = class_
+        return class_
 
-    class InputBundle(object):
-        def __init__(self, shape, noise=False):
+    class BatchNormLayer2(lasange.layers.BatchNormLayer):
+        """
+        Adds a nonlinearity to batch norm layer to reduce number of layers
+        """
+        def __init__(self, incoming, nonlinearity=None, **kwargs):
+            super(BatchNormLayer2, self).__init__(incoming, **kwargs)
+            self.nonlinearity = (lasange.nonlinearities.identity
+                                 if nonlinearity is None else nonlinearity)
+
+        def get_output_for(self, input, **kwargs):
+            normalized = super(BatchNormLayer2, self).get_output_for(input, **kwargs)
+            normalized_activation = self.nonlinearity(normalized)
+            return normalized_activation
+
+    class flip(lasange.layers.Layer):
+        def get_output_shape_for(self, input_shape):
+            return input_shape
+
+        def get_output_for(self, input, **kwargs):
+            return input[:, :, ::-1, ::-1]
+
+    class Bundle(object):
+        def __init__(self):
             self.name = namer()
+
+        def apply_dropout(self, layer):
+            # change name standard
+            outgoing = lasange.layers.DropoutLayer(layer, p=self.dropout,
+                                                   name='D' + self.name)
+            return outgoing
+
+        def apply_batch_norm(self, layer, **kwargs):
+            # change name standard
+            nonlinearity = getattr(layer, 'nonlinearity', None)
+            if nonlinearity is not None:
+                layer.nonlinearity = lasange.nonlinearities.identity
+            if hasattr(layer, 'b') and layer.b is not None:
+                del layer.params[layer.b]
+                layer.b = None
+            #bn_name = (kwargs.pop('name', None) or
+            #           (getattr(layer, 'name', None) and self.name + '/bn'))
+            bn_name = layer.name + '/bn'
+            layer = BatchNormLayer2(layer, name=bn_name,
+                                    nonlinearity=nonlinearity, **kwargs)
+            layer._is_main_layer = False
+            #if nonlinearity is not None:
+            #    nonlin_name = 'g' + self.name
+            #    layer = lasange.layers.special.NonlinearityLayer(layer,
+            #                                                     nonlinearity,
+            #                                                     name=nonlin_name)
+            #outgoing = lasange.layers.normalization.batch_norm(layer, **kwargs)
+            #outgoing.input_layer.name = 'bn' + self.name
+            #outgoing.name = 'nl' + self.name
+            outgoing = layer
+            return outgoing
+
+    @register_bundle
+    class InputBundle(Bundle):
+        def __init__(self, shape, noise=False):
             self.shape = shape
             self.noise = noise
+            super(InputBundle, self).__init__()
 
         def __call__(self):
             outgoing = lasange.layers.InputLayer(shape=self.shape,
@@ -761,12 +798,12 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
                     outgoing, name='N' + self.name)
             return outgoing
 
-    class ConvBundle(object):
+    @register_bundle
+    class ConvBundle(Bundle):
         def __init__(self, num_filters, filter_size=filter_size,
                      stride=stride, nonlinearity=nonlinearity,
                      batch_norm=batch_norm, pool_size=pool_size,
                      pool_stride=pool_stride, dropout=None, pool=False):
-            self.name = namer()
             self.num_filters = num_filters
             self.filter_size = filter_size
             self.stride = stride
@@ -776,77 +813,329 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
             self.pool_stride = pool_stride
             self.dropout = dropout
             self.pool = pool
+            super(ConvBundle, self).__init__()
+            self.name = 'C' + self.name
 
         def __call__(self, incoming):
-            outgoing = Conv2DLayer(incoming, num_filters=self.num_filters,
+            outgoing = incoming
+            if self.dropout is not None and self.dropout > 0:
+                outgoing = self.apply_dropout(outgoing)
+
+            outgoing = Conv2DLayer(outgoing, num_filters=self.num_filters,
                                    filter_size=self.filter_size,
-                                   stride=self.stride, name='C' + self.name,
+                                   stride=self.stride, name=self.name,
                                    nonlinearity=self.nonlinearity)
             if self.batch_norm:
-                outgoing = apply_batch_norm(self, outgoing)
+                outgoing = self.apply_batch_norm(outgoing)
+            if self.pool:
+                outgoing = MaxPool2DLayer(outgoing, pool_size=self.pool_size,
+                                          name=self.name + '/P',
+                                          stride=self.pool_stride)
+            return outgoing
+
+    @register_bundle
+    class InceptionBundle(Bundle):
+        # https://github.com/317070/lasagne-googlenet/blob/master/googlenet.py
+
+        def __init__(self, branches=None,
+                     nonlinearity=nonlinearity, batch_norm=batch_norm,
+                     dropout=None, pool=False, pool_size=pool_size,
+                     pool_stride=pool_stride):
+            # standard
+            self.branches = branches
+            self.nonlinearity = nonlinearity
+            self.dropout = dropout
+            self.batch_norm = batch_norm
+            self.pool = pool
+            self.pool_size = pool_size
+            self.pool_stride = pool_stride
+            super(InceptionBundle, self).__init__()
+            self.name = 'INCEP' + self.name
+
+        def __call__(self, incoming):
+            in_ = incoming
+            if self.dropout is not None and self.dropout > 0:
+                in_ = self.apply_dropout(in_)
+            name = self.name
+
+            #branches = self.inception_v0(in_)
+            if self.branches is not None:
+                branches = []
+                for b in self.branches:
+                    print(b)
+                    if b['t'] == 'c':
+                        branch = self.conv_branch(
+                            in_, b['s'], b['n'], b['r'], b.get('d', 1))
+                    elif b['t'] == 'p':
+                        branch = self.proj_branch(
+                            in_, b['s'], b['n'])
+                    else:
+                        print('b = %r' % (b,))
+                        assert False
+                    branches.append(branch)
+            else:
+                #branches = self.inception_v3_A(in_)
+                branches = self.inception_v0(in_)
+
+            #print(branches)
+            #for b in branches:
+            #    print(b.output_shape)
+
+            outgoing = lasange.layers.ConcatLayer(branches,
+                                                  name=name + '/cat')
+            outgoing._is_main_layer = True
             if self.pool:
                 outgoing = MaxPool2DLayer(outgoing, pool_size=self.pool_size,
                                           name='P' + self.name,
                                           stride=self.pool_stride)
-            if self.dropout is not None and self.dropout > 0:
-                outgoing = apply_dropout(self, outgoing)
             return outgoing
 
-    class ConvPoolBundle(ConvBundle):
-        def __init__(self, pool_size=pool_size, pool_stride=pool_stride,
-                     dropout=None, **kwargs):
-            super(ConvPoolBundle, self).__init__(**kwargs)
-            self.pool_size = pool_size
-            self.pool_stride = pool_stride
-            self.dropout = dropout
+        def conv_branch(self, incoming, filter_size, num_filters, num_reduce,
+                        depth=1):
+            name = self.name
+            name_aug = 'x'.join([str(s) for s in filter_size])
+            if num_reduce > 0:
+                if False:
+                    gain = 1.0
+                    bias = .1
+                    redu = lasange.layers.NINLayer(
+                        incoming, num_units=num_reduce,
+                        W=lasange.init.Orthogonal(gain),
+                        b=lasange.init.Constant(bias),
+                        nonlinearity=self.nonlinearity,
+                        name=name + '/' + name_aug + '_reduce',)
 
-        def __call__(self, incoming):
-            conv = super(ConvPoolBundle, self).__call__(incoming)
-            outgoing = MaxPool2DLayer(conv, pool_size=self.pool_size,
-                                      name='P' + self.name,
-                                      stride=self.pool_stride)
-            if self.dropout is not None and self.dropout > 0:
-                outgoing = apply_dropout(self, outgoing)
-            return outgoing
+                else:
+                    redu = Conv2DLayer(incoming, num_filters=num_reduce,
+                                       filter_size=(1, 1), pad=0, stride=(1, 1),
+                                       nonlinearity=self.nonlinearity,
+                                       name=name + '/' + name_aug + '_reduce',)
+                if self.batch_norm:
+                    redu = self.apply_batch_norm(redu)
+            else:
+                redu = incoming
+            conv = redu
+            for d in range(depth):
+                pad = min(filter_size) // 2
+                conv = Conv2DLayer(conv, num_filters=num_filters,
+                                   filter_size=filter_size, pad=pad, stride=(1, 1),
+                                   nonlinearity=self.nonlinearity,
+                                   name=name + '/' + name_aug + '_' + str(d))
+                if d > 0:
+                    conv._is_main_layer = False
+                if self.batch_norm:
+                    conv = self.apply_batch_norm(conv)
+            #if num_reduce > 0:
+            #    conv._is_main_layer = False
+            return conv
 
-    class FullyConnectedBundle(ConvBundle):
+        def proj_branch(self, incoming, pool_size, num_proj):
+            name = self.name
+            flipped = flip(incoming, name=name + '/Flip')
+            pool = MaxPool2DLayer(flipped, pool_size=pool_size,
+                                  stride=(1, 1), pad=(1, 1),
+                                  name=name + '/pool')
+            unflipped = flip(pool, name=name + '/Unflip')
+
+            project = Conv2DLayer(unflipped, num_filters=num_proj,
+                                  filter_size=(1, 1), pad=0, stride=(1, 1),
+                                  nonlinearity=self.nonlinearity,
+                                  name=name + '/proj')
+            if self.batch_norm:
+                project = self.apply_batch_norm(project)
+            return project
+
+        def inception_v0(self, in_):
+            # Define the 3 convolutional branches
+            conv_branches = [
+                self.conv_branch(in_, (1, 1), 64, 0),
+                self.conv_branch(in_, (3, 3), 128, 96),
+                self.conv_branch(in_, (5, 5), 16, 16),
+            ]
+            # Define the projection branch
+            proj_branches = [
+                self.proj_branch(in_, (3, 3), 32)
+            ]
+            branches = conv_branches + proj_branches
+            return branches
+
+        def inception_v3_A(self, in_):
+            conv_branches = [
+                self.conv_branch(in_, (1, 1), 64, 0),
+                self.conv_branch(in_, (3, 3), 128, 96),
+                self.conv_branch(in_, (3, 3), 16, 16, depth=2),
+            ]
+            proj_branches = [
+                self.proj_branch(in_, (3, 3), 32)
+            ]
+            branches = conv_branches + proj_branches
+            return branches
+
+    @register_bundle
+    class DenseBundle(Bundle):
         def __init__(self, num_units, batch_norm=batch_norm,
                      nonlinearity=nonlinearity, dropout=None):
-            self.name = namer()
             self.num_units = num_units
             self.batch_norm = batch_norm
             self.nonlinearity = nonlinearity
             self.dropout = dropout
+            super(DenseBundle, self).__init__()
 
         def __call__(self, incoming):
+            outgoing = incoming
+            if self.dropout is not None and self.dropout > 0:
+                outgoing = self.apply_dropout(outgoing)
             outgoing = lasange.layers.DenseLayer(
-                incoming, num_units=self.num_units, name='F' + self.name,
+                outgoing, num_units=self.num_units, name='F' + self.name,
                 nonlinearity=self.nonlinearity)
             if self.batch_norm:
-                outgoing = apply_batch_norm(self, outgoing)
-            if self.dropout is not None and self.dropout > 0:
-                outgoing = apply_dropout(self, outgoing)
+                outgoing = self.apply_batch_norm(outgoing)
             return outgoing
 
-    class SoftmaxBundle(ConvBundle):
-        def __init__(self, num_units):
-            self.name = namer()
+    @register_bundle
+    class SoftmaxBundle(Bundle):
+        def __init__(self, num_units, dropout=None):
             self.num_units = num_units
             self.batch_norm = batch_norm
+            self.dropout = dropout
+            super(SoftmaxBundle, self).__init__()
 
         def __call__(self, incoming):
-            dense_layer = lasange.layers.DenseLayer(
-                incoming, num_units=self.num_units, name='F' + self.name,
+            outgoing = incoming
+            if self.dropout is not None and self.dropout > 0:
+                outgoing = self.apply_dropout(outgoing)
+            outgoing = lasange.layers.DenseLayer(
+                outgoing, num_units=self.num_units, name='F' + self.name,
                 nonlinearity=lasange.nonlinearities.softmax)
-            return dense_layer
+            return outgoing
 
-    bundles = {
-        'SoftmaxBundle': SoftmaxBundle,
-        'FullyConnectedBundle': FullyConnectedBundle,
-        'ConvPoolBundle': ConvPoolBundle,
-        'ConvBundle': ConvBundle,
-        'InputBundle': InputBundle,
-    }
+    @register_bundle
+    class NonlinearitySoftmax(Bundle):
+        def __call__(self, incoming):
+            return lasagne.layers.NonlinearityLayer(
+                incoming,
+                nonlinearity=lasagne.nonlinearities.softmax,
+                name='Softmax' + self.name,
+            )
+
+    @register_bundle
+    class GlobalPool(Bundle):
+        def __call__(self, incoming):
+            return lasagne.layers.GlobalPoolLayer(
+                incoming,
+                name='GP' + self.name,
+            )
+
+    @register_bundle
+    class MaxPool2D(Bundle):
+        def __init__(self, pool_size=pool_size, pool_stride=pool_stride):
+            self.pool_size = pool_size
+            self.pool_stride = pool_stride
+            super(MaxPool2D, self).__init__()
+
+        def __call__(self, incoming):
+            return MaxPool2DLayer(
+                incoming,
+                pool_size=self.pool_size,
+                stride=self.pool_stride,
+                name='P' + self.name,
+            )
+
+    #class MLPConvBundle(object):
+    #    """ mplconv part of the NIN structure """
+    #    def __init__(self, num_filters, filter_size=filter_size,
+    #                 stride=stride, nonlinearity=nonlinearity,
+    #                 batch_norm=batch_norm, pool_size=pool_size,
+    #                 pool_stride=pool_stride, dropout=None, pool=False):
+    #        self.num_filters = num_filters
+    #        self.filter_size = filter_size
+    #        self.stride = stride
+    #        self.nonlinearity = nonlinearity
+    #        self.batch_norm = batch_norm
+    #        self.pool_size = pool_size
+    #        self.pool_stride = pool_stride
+    #        self.dropout = dropout
+    #        self.pool = pool
+
+    #    def __call__(self, incoming):
+    #        outgoing = Conv2DLayer(incoming, num_filters=self.num_filters,
+    #                               filter_size=self.filter_size,
+    #                               stride=self.stride, name='C' + self.name,
+    #                               nonlinearity=self.nonlinearity)
+    #        if self.batch_norm:
+    #            outgoing = apply_batch_norm(self, outgoing)
+    #        if self.pool:
+    #            outgoing = MaxPool2DLayer(outgoing, pool_size=self.pool_size,
+    #                                      name='P' + self.name,
+    #                                      stride=self.pool_stride)
+    #        if self.dropout is not None and self.dropout > 0:
+    #            outgoing = apply_dropout(self, outgoing)
+    #        return outgoing
+
+    #def inception_module(l_in, num_1x1, reduce_3x3, num_3x3, reduce_5x5,
+    #                     num_5x5, gain=1.0, bias=0.1):
+    #    """
+    #    inception module (without the 3x3x1 pooling and projection because
+    #    that's difficult in Theano right now)
+
+    #    http://www.cv-foundation.org/openaccess/content_cvpr_2015/papers/Szegedy_Going_Deeper_With_2015_CVPR_paper.pdf
+    #    """
+    #    import lasagne as nn
+    #    shape = l_in.get_output_shape()  # NOQA
+    #    out_layers = []
+
+    #    # 1x1
+    #    if num_1x1 > 0:
+    #        l_1x1 = nn.layers.NINLayer(l_in, num_units=num_1x1,
+    #                                   W=nn.init.Orthogonal(gain),
+    #                                   b=nn.init.Constant(bias))
+    #        out_layers.append(l_1x1)
+
+    #        l_inc_out = nn.layers.concat([l_conv_inc, l_conv_inc2b, l_conv_inc2d, l_conv_inc2e])
+
+    #    # 3x3
+    #    if num_3x3 > 0:
+    #        if reduce_3x3 > 0:
+    #            l_reduce_3x3 = nn.layers.NINLayer(l_in, num_units=reduce_3x3,
+    #                                              W=nn.init.Orthogonal(gain),
+    #                                              b=nn.init.Constant(bias))
+    #        else:
+    #            l_reduce_3x3 = l_in
+    #        l_3x3 = Conv2DLayer(l_reduce_3x3, num_filters=num_3x3,
+    #                            filter_size=(3, 3), border_mode="same",
+    #                            W=nn.init.Orthogonal(gain),
+    #                            b=nn.init.Constant(bias))
+    #        out_layers.append(l_3x3)
+
+    #    # 5x5
+    #    if num_5x5 > 0:
+    #        if reduce_5x5 > 0:
+    #            l_reduce_5x5 = nn.layers.NINLayer(l_in, num_units=reduce_5x5,
+    #                                              W=nn.init.Orthogonal(gain),
+    #                                              b=nn.init.Constant(bias))
+    #        else:
+    #            l_reduce_5x5 = l_in
+    #        l_5x5 = Conv2DLayer(l_reduce_5x5, num_filters=num_5x5,
+    #                            filter_size=(5, 5), border_mode="same",
+    #                            W=nn.init.Orthogonal(gain),
+    #                            b=nn.init.Constant(bias))
+    #        out_layers.append(l_5x5)
+
+    #    # stack
+    #    l_out = nn.layers.concat(out_layers)
+    #    return l_out
+
+    #def wrap_layer():
+    #    pass
+
+    #bundles = {
+    #    'SoftmaxBundle': SoftmaxBundle,
+    #    'DenseBundle': DenseBundle,
+    #    'ConvBundle': ConvBundle,
+    #    'InputBundle': InputBundle,
+    #    'InceptionBundle': InceptionBundle,
+    #    'SoftmaxLayer': SoftmaxLayer,
+    #}
     return bundles
 
 

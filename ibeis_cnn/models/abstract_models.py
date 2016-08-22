@@ -244,8 +244,10 @@ class _ModelFitter(object):
         }
         # Static configuration indicating training preferences
         # (these will not influence the model learning)
-        model.train_config = {
+        model.monitor_config = {
+            'monitor_updates': False,
             'checkpoint_freq': 200,
+            'slowdump_freq': 10,
             'monitor': ut.get_argflag('--monitor'),
             'showprog': True,
         }
@@ -258,37 +260,17 @@ class _ModelFitter(object):
         Trains the network with backprop.
 
         CommandLine:
-            python -m ibeis_cnn _ModelFitter.fit:0
-            python -m ibeis_cnn _ModelFitter.fit:1
-            python -m ibeis_cnn _ModelFitter.fit:0 --vd
-            python -m ibeis_cnn _ModelFitter.fit:1 --vd
-
-        Example0:
-            >>> from ibeis_cnn import ingest_data
-            >>> from ibeis_cnn.models import MNISTModel
-            >>> dataset = ingest_data.grab_mnist_category_dataset()
-            >>> model = MNISTModel(
-            >>>     batch_size=128, data_shape=dataset.data_shape,
-            >>>     name='dropout', output_dims=len(dataset.unique_labels),
-            >>>     batch_norm=False, learning_rate=.01,
-            >>>     dataset_dpath=dataset.dataset_dpath)
-            >>> model.initialize_architecture()
-            >>> model.train_config['monitor'] = True
-            >>> model.train_config['showprog'] = False
-            >>> model.learn_state['weight_decay'] = .01
-            >>> model.print_layer_info()
-            >>> model.print_model_info_str()
-            >>> #model.reinit_weights()
-            >>> X_train, y_train = dataset.subset('train')
-            >>> model.fit(X_train, y_train)
+            python -m ibeis_cnn _ModelFitter.fit --name=dropout
+            python -m ibeis_cnn _ModelFitter.fit --name=bnorm
+            python -m ibeis_cnn _ModelFitter.fit --name=incep
 
         Example1:
             >>> from ibeis_cnn.models import mnist
-            >>> model, dataset = mnist.testdata_mnist(name='bnorm')
+            >>> name = ut.get_argval('--name', default='bnorm')
+            >>> model, dataset = mnist.testdata_mnist(name=name, dropout=.5)
             >>> model.initialize_architecture()
             >>> model.print_layer_info()
             >>> model.print_model_info_str()
-            >>> #model.reinit_weights()
             >>> X_train, y_train = dataset.subset('train')
             >>> model.fit(X_train, y_train)
         """
@@ -322,7 +304,7 @@ class _ModelFitter(object):
 
         # number of non-best iterations after, that triggers a best save
         # This prevents strings of best-saves one after another
-        save_after_best_wait_epochs = 2
+        save_after_best_wait_epochs = model.hyperparams['era_size'] * 2
         save_after_best_countdown = None
 
         printcol_info = utils.get_printcolinfo(model.requested_headers)
@@ -369,7 +351,7 @@ class _ModelFitter(object):
 
                 # Check frequencies and countdowns
                 checkpoint_flag = utils.checkfreq(
-                    model.train_config['checkpoint_freq'], epoch)
+                    model.monitor_config['checkpoint_freq'], epoch)
                 if save_after_best_countdown is not None:
                     if save_after_best_countdown == 0:
                         ## Callbacks on best found
@@ -386,19 +368,26 @@ class _ModelFitter(object):
 
                 # Output any diagnostics
                 if checkpoint_flag:
+                    # FIXME: just move it to the second location
                     model.checkpoint_save_model_info()
-                    model.save_model_info()
                     model.checkpoint_save_model_state()
+                    model.save_model_info()
                     model.save_model_state()
 
-                if model.train_config['monitor']:
+                if model.monitor_config['monitor']:
                     model._dump_epoch_monitor()
+
+                if model.monitor_config['monitor']:
+                    if utils.checkfreq(model.monitor_config['slowdump_freq'], epoch):
+                        model._dump_slow_monitor()
 
                 # Check if the era is done
                 max_era_size = model._fit_session['max_era_size']
                 if model.current_era['size'] >= max_era_size:
                     # Decay learning rate
-                    frac = model.hyperparams['rate_schedule']
+                    rate_schedule = model.hyperparams['rate_schedule']
+                    era = model.total_eras
+                    frac = rate_schedule[min(era, len(rate_schedule) - 1)]
                     learn_state = model.learn_state
                     learn_state.learning_rate = (
                         learn_state.learning_rate * frac)
@@ -420,106 +409,53 @@ class _ModelFitter(object):
             except KeyboardInterrupt:
                 print('\n[train] Caught CRTL+C')
                 resolution = ''
-                while not (resolution.isdigit()):
+                while True:
                     print('\n[train] What do you want to do?')
                     print('[train]     0 - Continue')
                     print('[train]     1 - Shock weights')
                     print('[train]     2 - Save best weights')
-                    print('[train]     3 - View training directory')
+                    print('[train]     3 - View session directory')
                     print('[train]     4 - Embed into IPython')
                     print('[train]     5 - Draw current weights')
                     print('[train]     6 - Show training state')
-                    print('[train]  ELSE - Stop network training')
+                    print('[train]     q - Stop network training')
                     resolution = str(input('[train] Resolution: '))
-                resolution = int(resolution)
-                # We have a resolution
-                if resolution == 0:
-                    print('resuming training...')
-                elif resolution == 1:
-                    # Shock the weights of the network
-                    utils.shock_network(model.output_layer)
-                    learn_state = model.learn_state
-                    learn_state.learning_rate = learn_state.learning_rate * 2
-                    #epoch_marker = epoch
-                    utils.print_header_columns(printcol_info)
-                elif resolution == 2:
-                    # Save the weights of the network
-                    model.checkpoint_save_model_info()
-                    model.save_model_info()
-                    model.checkpoint_save_model_state()
-                    model.save_model_state()
-                elif resolution == 3:
-                    ut.view_directory(model.model_dpath)
-                elif resolution == 4:
-                    ut.embed()
-                elif resolution == 5:
-                    output_fpath_list = model.imwrite_weights(index=0)
-                    for fpath in output_fpath_list:
-                        ut.startfile(fpath)
-                elif resolution == 6:
-                    model.print_state_str()
-                else:
-                    # Terminate the network training
-                    raise
+                    # We have a resolution
+                    if resolution == 'q':
+                        print('quit training...')
+                    if resolution == '0':
+                        print('resuming training...')
+                    elif resolution == '1':
+                        # Shock the weights of the network
+                        utils.shock_network(model.output_layer)
+                        learn_state = model.learn_state
+                        learn_state.learning_rate = learn_state.learning_rate * 2
+                        #epoch_marker = epoch
+                        utils.print_header_columns(printcol_info)
+                    elif resolution == '2':
+                        # Save the weights of the network
+                        model.checkpoint_save_model_info()
+                        model.checkpoint_save_model_state()
+                        model.save_model_info()
+                        model.save_model_state()
+                    elif resolution == '3':
+                        session_dpath = model._fit_session['session_dpath']
+                        ut.view_directory(session_dpath)
+                    elif resolution == '4':
+                        ut.embed()
+                    elif resolution == '5':
+                        output_fpath_list = model.imwrite_weights(index=0)
+                        for fpath in output_fpath_list:
+                            ut.startfile(fpath)
+                    elif resolution == '6':
+                        model.print_state_str()
+                    else:
+                        continue
+                    # Handled the resolution
+                    break
         # Save the best network
         model.checkpoint_save_model_state()
         model.save_model_state()
-
-    def _new_fit_session(model):
-        """
-        Starts a model training session
-        """
-        model._fit_session = {
-            'start_time': ut.get_timestamp(),
-            'max_era_size': model.hyperparams['era_size'],
-            'era_epoch_num': 0,
-        }
-        ut.ensuredir(model.arch_dpath)
-        # Write feed-forward arch info to arch root
-        ut.writeto(join(model.arch_dpath, 'arch_info.json'),
-                   model.make_arch_json(with_noise=False), verbose=True)
-
-        if model.train_config['monitor']:
-            session_dname = 'fit_session_' + model._fit_session['start_time']
-            session_dpath = join(model.saved_session_dpath, session_dname)
-            session_dpath = ut.get_nonconflicting_path(session_dpath, offset=1,
-                                                       suffix='_conflict%d')
-            ut.symlink(session_dpath, join(model.arch_dpath, 'latest_session'))
-
-            ut.ensuredir(session_dpath)
-            model._fit_session['session_dpath'] = session_dpath
-
-            # Write backprop arch info to arch root
-            back_archinfo_fpath = join(model._fit_session['session_dpath'],
-                                       'fit_arch_info.json')
-            back_archinfo_json = model.make_arch_json(with_noise=True)
-            ut.writeto(back_archinfo_fpath, back_archinfo_json, verbose=True)
-
-            back_archimg_fpath = join(model._fit_session['session_dpath'],
-                                      'fit_arch_graph.jpg')
-            model.imwrite_arch(fpath=back_archimg_fpath)
-            model._overwrite_latest_image(back_archimg_fpath, 'arch_graph')
-
-            history_progress_dir = join(session_dpath, 'history')
-            weights_progress_dir = join(session_dpath, 'weights')
-            history_text_fpath = join(session_dpath, 'era_history.txt')
-            ut.ensuredir(history_progress_dir)
-            ut.ensuredir(weights_progress_dir)
-
-            if ut.get_argflag('--vd'):
-                ut.vd(session_dpath)
-
-            # Write initial states of the weights
-            fpath = model.imwrite_weights(
-                dpath=weights_progress_dir,
-                fname='weights_' + model.hist_id + '.png',
-                fnum=2, verbose=0)
-            model._overwrite_latest_image(fpath, 'weights')
-            model._fit_session.update(**{
-                'history_progress_dir':  history_progress_dir,
-                'history_text_fpath': history_text_fpath,
-                'weights_progress_dir': weights_progress_dir,
-            })
 
     def _ensure_learnval_split(model, X_train, y_train, X_valid=None,
                                y_valid=None, valid_idx=None):
@@ -580,6 +516,71 @@ class _ModelFitter(object):
             if hasattr(model, 'initialize_encoder'):
                 model.initialize_encoder(y_learn)
 
+    def _new_fit_session(model):
+        """
+        Starts a model training session
+        """
+        model._fit_session = {
+            'start_time': ut.get_timestamp(),
+            'max_era_size': model.hyperparams['era_size'],
+            'era_epoch_num': 0,
+        }
+        ut.ensuredir(model.arch_dpath)
+        # Write feed-forward arch info to arch root
+        ut.writeto(join(model.arch_dpath, 'arch_info.json'),
+                   model.make_arch_json(with_noise=False), verbose=True)
+
+        if model.monitor_config['monitor']:
+            # Create a directory for this training session with a timestamp
+            session_dname = 'fit_session_' + model._fit_session['start_time']
+            session_dpath = join(model.saved_session_dpath, session_dname)
+            session_dpath = ut.get_nonconflicting_path(session_dpath, offset=1,
+                                                       suffix='_conflict%d')
+            ut.symlink(session_dpath, join(model.arch_dpath, 'latest_session'))
+
+            ut.ensuredir(session_dpath)
+            model._fit_session['session_dpath'] = session_dpath
+
+            loss_progress_dir = join(session_dpath, 'history')
+            weights_progress_dir = join(session_dpath, 'weights')
+            dream_progress_dir = join(session_dpath, 'dream')
+
+            history_text_fpath = join(session_dpath, 'era_history.txt')
+            back_archinfo_fpath = join(session_dpath, 'fit_arch_info.json')
+            back_archimg_fpath = join(session_dpath, 'fit_arch_graph.jpg')
+
+            # Write backprop arch info to arch root
+            back_archinfo_json = model.make_arch_json(with_noise=True)
+            ut.writeto(back_archinfo_fpath, back_archinfo_json, verbose=True)
+
+            # Write arch graph to root
+            model.imwrite_arch(fpath=back_archimg_fpath)
+            model._overwrite_latest_image(back_archimg_fpath, 'arch_graph')
+
+            progress_dirs = {
+                'dream': dream_progress_dir,
+                'loss': loss_progress_dir,
+                'weights': weights_progress_dir,
+            }
+
+            model._fit_session.update(**{
+                'progress_dirs': progress_dirs,
+                'history_text_fpath': history_text_fpath,
+            })
+
+            for dpath in progress_dirs.values():
+                ut.ensuredir(dpath)
+
+            if ut.get_argflag('--vd'):
+                ut.vd(session_dpath)
+
+            # Write initial states of the weights
+            fpath = model.imwrite_weights(
+                dpath=weights_progress_dir,
+                fname='weights_' + model.hist_id + '.png',
+                fnum=2, verbose=0)
+            model._overwrite_latest_image(fpath, 'weights')
+
     def _overwrite_latest_image(model, fpath, new_name):
         """
         copies the new image to a path to be overwritten so new updates are
@@ -593,37 +594,47 @@ class _ModelFitter(object):
         shutil.copy(fpath, join(session_dpath, 'latest_' + new_name + ext))
         shutil.copy(fpath, join(model.arch_dpath, 'latest_' + new_name + ext))
 
+    def _dump_slow_monitor(model):
+        progress_dirs = model._fit_session['progress_dirs']
+
+        # Save class dreams
+        _fn = ut.get_method_func(model.show_class_dream)
+        fpath = imwrite_wrapper(_fn)(
+            model,
+            dpath=progress_dirs['dream'],
+            fname='dream_' + model.hist_id + '.png',
+            fnum=4, verbose=0)
+        model._overwrite_latest_image(fpath, 'class_dream')
+
+        # Save weights images
+        fpath = model.imwrite_weights(dpath=progress_dirs['weights'],
+                                      fname='weights_' + model.hist_id + '.png',
+                                      fnum=2, verbose=0)
+        model._overwrite_latest_image(fpath, 'weights')
+
     def _dump_epoch_monitor(model):
-        history_dir = model._fit_session['history_progress_dir']
-        weights_dir = model._fit_session['weights_progress_dir']
-        text_fpath = model._fit_session['history_text_fpath']
+        progress_dirs = model._fit_session['progress_dirs']
 
         # Save text info
+        text_fpath = model._fit_session['history_text_fpath']
         history_text = ut.list_str(model.era_history, newlines=True)
         ut.write_to(text_fpath, history_text, verbose=False)
 
         # Save loss graphs
         fpath = imwrite_wrapper(ut.get_method_func(model.show_era_loss_history))(
             model,
-            dpath=history_dir,
+            dpath=progress_dirs['loss'],
             fname='loss_' + model.hist_id + '.png',
             fnum=1, verbose=0)
         model._overwrite_latest_image(fpath, 'loss')
-
-        # Save weights images
-        fpath = model.imwrite_weights(dpath=weights_dir,
-                                      fname='weights_' + model.hist_id + '.png',
-                                      fnum=2, verbose=0)
-        model._overwrite_latest_image(fpath, 'weights')
 
         # Save weight updates
         _fn = ut.get_method_func(model.show_era_update_mag_history)
         fpath = imwrite_wrapper(_fn)(
             model,
-            dpath=history_dir,
+            dpath=progress_dirs['loss'],
             fname='update_mag_' + model.hist_id + '.png',
             fnum=3, verbose=0)
-
         model._overwrite_latest_image(fpath, 'update_mag')
 
     def _new_era(model, X_learn, y_learn, X_valid, y_valid):
@@ -732,7 +743,6 @@ class _ModelFitter(object):
         valid_info['valid_loss'] = valid_outputs['loss_determ'].mean()
         valid_info['valid_loss_std'] = valid_outputs['loss_determ'].std()
         if 'valid_acc' in model.requested_headers:
-            print(valid_outputs.keys())
             valid_info['valid_acc'] = valid_outputs['accuracy'].mean()
         return valid_info
 
@@ -850,7 +860,7 @@ class _ModelBatch(_BatchUtility):
                                           augment_on=augment_on)
         if buffered:
             batch_iter = ut.buffered_generator(batch_iter)
-        if model.train_config['showprog']:
+        if model.monitor_config['showprog']:
             num_batches = (X.shape[0] + model.batch_size - 1) // model.batch_size
             batch_iter = ut.ProgressIter(
                 batch_iter, nTotal=num_batches, lbl=theano_fn.name, freq=10,
@@ -1019,44 +1029,39 @@ class _ModelVisualization(object):
         draw_net.show_arch_nx_graph(layers, fnum=fnum, fullinfo=fullinfo)
         pt.set_figtitle(model.arch_id)
 
-    def make_class_image(model, target_label, init='randn', niters=100,
-                         update_rate=.01, weight_decay=.00001):
+    def show_class_dream(model, fnum=None):
         """
-        Not quite a dream. Shows a class visualization, but doesn't do funky
-        dream overlays yet.
+        CommandLine:
+            python -m ibeis_cnn.models.abstract_models show_class_dream --show
 
         Example:
-            >>> from ibeis_cnn.models.abstract_models import *  # NOQA
+            >>> # DISABLE_DOCTEST
+            >>> # Assumes mnist is trained
+            >>> from ibeis_cnn.draw_net import *  # NOQA
             >>> from ibeis_cnn.models import mnist
-            >>> model, dataset = mnist.testdata_mnist(batch_size=16)
+            >>> model, dataset = mnist.testdata_mnist(dropout=.5)
             >>> model.initialize_architecture()
             >>> model.load_model_state()
-            >>> target_label = 8
             >>> ut.quit_if_noshow()
-            >>> img = model.make_class_image(target_label, niters=100, init='randn',
-            >>>                              update_rate=1e-1,
-            >>>                              weight_decay=1e-4)
             >>> import plottool as pt
-            >>> pt.imshow(img)
+            >>> #pt.qt4ensure()
+            >>> model.show_class_dream()
             >>> ut.show_if_requested()
         """
-        kwargs = locals().copy()
-        del kwargs['model']
-        del kwargs['target_label']
-        return draw_net.make_class_image(model, target_label, **kwargs)
-
-    def show_class_images(model):
         import plottool as pt
-        fnum = None
-        kw = dict(init='randn', niters=500, update_rate=.05, weight_decay=1e-4)
+        kw = dict(init='randn', niters=200, update_rate=.05, weight_decay=1e-4)
         target_labels = list(range(model.output_dims))
-        dream = draw_net.Dream(model, **kw)
+        dream = getattr(model, '_dream', None)
+        if dream is None:
+            dream = draw_net.Dream(model, **kw)
+            model._dream = dream
         images = dream.make_class_images(target_labels)
         pnum_ = pt.make_pnum_nextgen(nSubplots=len(target_labels))
         fnum = pt.ensure_fnum(fnum)
-        pt.figure(fnum=fnum)
+        fig = pt.figure(fnum=fnum)
         for target_label, img in zip(target_labels, images):
             pt.imshow(img, fnum=fnum, pnum=pnum_(), title='target=%r' % (target_label,))
+        return fig
 
     def show_era_update_mag_history(model, fnum=None):
         """
@@ -1075,7 +1080,8 @@ class _ModelVisualization(object):
         fnum = pt.ensure_fnum(fnum)
 
         layer_info = model.get_all_layer_info()
-        param_groups = [[p['name'] for p in info['param_infos'] if 'trainable' in p['tags']] for info in layer_info]
+        param_groups = [[p['name'] for p in info['param_infos']
+                         if 'trainable' in p['tags']] for info in layer_info]
         param_groups = ut.compress(param_groups, param_groups)
 
         fig = pt.figure(fnum=fnum, pnum=(1, 1, 1), doclf=True, docla=True)
@@ -1101,7 +1107,7 @@ class _ModelVisualization(object):
 
         # TODO: dont do this if off
         #model.show_weight_updates(fnum=fnum, pnum=next_pnum())
-        # TODO: add accuracy and confusion
+        # TODO: add confusion
         pt.set_figtitle('Weight Update History: ' + model.hist_id + '\n' + model.arch_id)
         return fig
 
@@ -1136,7 +1142,6 @@ class _ModelVisualization(object):
 
         # TODO: dont do this if off
         #model.show_weight_updates(fnum=fnum, pnum=next_pnum())
-        # TODO: add accuracy and confusion
         pt.set_figtitle('Era Loss History: ' + model.hist_id + '\n' + model.arch_id)
         return fig
 
@@ -1157,17 +1162,24 @@ class _ModelVisualization(object):
         styles = {'valid': '-o'}
         labels = None
         if len(model.era_history) > 0:
+            era = model.era_history[0]
+            lastacc = era['valid_acc_list'][-1]
             labels = {
-                'valid': 'valid acc ' + str(model.era_history[0]['num_valid']),
+                'valid': 'valid acc ' + str(era['num_valid']) + ' ' + ut.repr2(lastacc * 100, precision=2) + '%',
             }
         ydatas = [
             {
-                'valid': era['valid_acc_list'],
+                'valid': era_['valid_acc_list'],
             }
-            for era in model.era_history
+            for era_ in model.era_history
         ]
-        return model._show_era_measure(ydatas, labels,  styles, ylabel='accuracy',
+        fig = model._show_era_measure(ydatas, labels,  styles, ylabel='accuracy',
                                        **kwargs)
+        #import plottool as pt
+        #ax = pt.gca()
+        #ymin, ymax = ax.get_ylim()
+        #pt.gca().set_ylim((ymin, 100))
+        return fig
 
     def show_era_loss(model, **kwargs):
         styles = {'learn': '-x', 'valid': '-o'}
@@ -1238,8 +1250,9 @@ class _ModelVisualization(object):
                                        yspreads=yspreads,
                                        yscale='linear', **kwargs)
 
-    def _show_era_measure(model, ydatas, labels=None, styles=None, xdatas=None, xlabel='epoch',
-                          ylabel='', yspreads=None, colors=None, fnum=None, pnum=(1, 1, 1),
+    def _show_era_measure(model, ydatas, labels=None, styles=None, xdatas=None,
+                          xlabel='epoch', ylabel='', yspreads=None,
+                          colors=None, fnum=None, pnum=(1, 1, 1),
                           yscale='log'):
 
         # print('Show Era Measure ylabel = %r' % (ylabel,))
@@ -1481,7 +1494,7 @@ class _ModelStrings(object):
             >>> from ibeis_cnn.models.abstract_models import *  # NOQA
             >>> from ibeis_cnn.models.mnist import MNISTModel
             >>> model = MNISTModel(batch_size=128, data_shape=(24, 24, 1),
-            >>>                    output_dims=10, batch_norm=False)
+            >>>                    output_dims=10, batch_norm=True)
             >>> model.initialize_architecture()
             >>> result = model.get_architecture_str(sep=ut.NEWLINE, with_noise=False)
             >>> print(result)
@@ -1588,14 +1601,14 @@ class _ModelIDs(object):
     def arch_id(model):
         """
         CommandLine:
-            python -m ibeis_cnn.models.abstract_models --test-_ModelIDs.arch_id:0
+            python -m ibeis_cnn.models.abstract_models _ModelIDs.arch_id:0
 
         Example:
             >>> # ENABLE_DOCTEST
             >>> from ibeis_cnn.models.abstract_models import *  # NOQA
             >>> from ibeis_cnn.models.mnist import MNISTModel
             >>> model = MNISTModel(batch_size=128, data_shape=(24, 24, 1),
-            >>>                    output_dims=10, name='mnist')
+            >>>                    output_dims=10, name='bnorm')
             >>> model.initialize_architecture()
             >>> result = str(model.arch_id)
             >>> print(result)
@@ -1863,6 +1876,7 @@ class _ModelIO(object):
         fpath = model.get_model_state_fpath(checkpoint_tag=model.hist_id)
         ut.ensuredir(dirname(fpath))
         model.save_model_state(fpath=fpath)
+        return fpath
 
     def checkpoint_save_model_info(model):
         fpath = model.get_model_info_fpath(checkpoint_tag=model.hist_id)
@@ -1886,8 +1900,9 @@ class _ModelIO(object):
             # 'arch_tag': model.arch_tag,
         }
         model_state_fpath = model.get_model_state_fpath(**kwargs)
-        print('saving model state to: %s' % (model_state_fpath,))
-        ut.save_cPkl(model_state_fpath, model_state)
+        print('saving model state')
+        #print('saving model state to: %s' % (model_state_fpath,))
+        ut.save_cPkl(model_state_fpath, model_state, verbose=False)
         print('finished saving')
 
     def save_model_info(model, **kwargs):
@@ -1899,8 +1914,9 @@ class _ModelIO(object):
             'era_history':  model.era_history,
         }
         model_info_fpath = model.get_model_state_fpath(**kwargs)
-        print('saving model info to: %s' % (model_info_fpath,))
-        ut.save_cPkl(model_info_fpath, model_info)
+        print('saving model info')
+        #print('saving model info to: %s' % (model_info_fpath,))
+        ut.save_cPkl(model_info_fpath, model_info, verbose=False)
         print('finished saving')
 
     def load_model_state(model, **kwargs):
@@ -2332,7 +2348,7 @@ class _ModelBackend(object):
         from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
         # Build outputs to babysit training
         monitor_outputs = []
-        if model.train_config['monitor']:  # and False:
+        if model.monitor_config['monitor_updates']:  # and False:
             for param in parameters:
                 # The vector each param was udpated with
                 # (one vector per channel)

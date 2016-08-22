@@ -217,7 +217,7 @@ def netrun():
             max_epochs=1200,
             rate_decay=.8,
         ))
-        model.train_config.update(**config)
+        model.monitor_config.update(**config)
         X_train, y_train = dataset.subset('train')
         X_valid, y_valid = dataset.subset('valid')
         model.fit(X_train, y_train, X_valid=X_valid, y_valid=y_valid)
@@ -408,7 +408,7 @@ def train_background():
     else:
         model.reinit_weights()
 
-    model.train_config.update(**dict(
+    model.monitor_config.update(**dict(
         era_size=15,
         max_epochs=120,
         show_confusion=False,

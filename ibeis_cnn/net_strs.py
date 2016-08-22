@@ -14,41 +14,10 @@ def make_layer_str(layer):
     """
     layer_info = get_layer_info(layer)
     layer_type = layer_info['classname']
-    # filter_size is a scalar in Conv2DLayers because non-uniform shapes is not supported
-    #common_attrs = ['shape', 'num_filters', 'num_units', 'ds', 'filter_shape',
-    #                'stride', 'strides', 'p', 'axis']
-    #ignore_attrs = ['nonlinearity', 'b', 'W']
-    #func_attrs = ['get_output_shape']
-    #func_attrs = []
-    #layer_attrs_dict = {
-    #    'DropoutLayer': ['p'],
-    #    'InputLayer': ['shape'],
-    #    'Conv2DCCLayer': ['num_filters', 'filter_size', 'stride'],
-    #    'MaxPool2DCCLayer': ['stride', 'pool_size'],
-    #    'DenseLayer': ['num_units'],
-    #    'L2NormalizeLayer': ['axis'],
-    #}
-    #request_attrs = sorted(list(set(layer_attrs_dict.get(layer_type, []) + common_attrs)))
-    #isvalid_list = [hasattr(layer, attr) for attr in request_attrs]
-    #attr_key_list = ut.compress(request_attrs, isvalid_list)
     attr_key_list = layer_info['layer_attrs']
-
-    #DEBUG = False
-    #if DEBUG:
-    #    #if layer_type == 'Conv2DCCLayer':
-    #    #    ut.embed()
-    #    print('---')
-    #    print(' * ' + layer_type)
-    #    print(' * does not have keys: %r' % (ut.filterfalse_items(request_attrs, isvalid_list),))
-    #    print(' * missing keys: %r' % ((set(layer.__dict__.keys()) - set(ignore_attrs)) - set(attr_key_list),))
-    #    print(' * has keys: %r' % (attr_key_list,))
 
     attr_val_list = [getattr(layer, attr) for attr in attr_key_list]
     attr_str_list = ['%s=%r' % item for item in zip(attr_key_list, attr_val_list)]
-
-    #for func_attr in func_attrs:
-    #    if hasattr(layer, func_attr):
-    #        attr_str_list.append('%s=%r' % (func_attr, getattr(layer, func_attr).__call__()))
 
     layer_name = getattr(layer, 'name', None)
     if layer_name is not None:
@@ -201,27 +170,31 @@ def get_layer_info(layer):
         'FlattenLayer'     : 'Flatten',
         'L2NormalizeLayer' : 'L2Norm',
         'BatchNormLayer'   : 'BatchNorm',
+        'BatchNormLayer2'   : 'BatchNorm',
     }
     layer_attrs_ignore_dict = {
         'MaxPool2D'  : ['mode', 'ignore_border'],
         'Dropout'  : ['rescale'],
         'Conv2D'   : ['convolution'],
-        'BatchNorm': ['epsilon', 'mean', 'inv_std', 'axes', 'beta', 'gamma']
+        'BatchNorm': ['epsilon', 'mean', 'inv_std', 'axes', 'beta', 'gamma'],
+        'BatchNorm2': ['epsilon', 'mean', 'inv_std', 'axes', 'beta', 'gamma'],
     }
     layer_attrs_dict = {
         'Noise'     : ['sigma'],
         'Input'     : ['shape'],
         'Dropout'   : ['p'],
-        'Conv2D'    : ['num_filters', 'filter_size', 'stride'],
-        'MaxPool2D' : ['stride', 'pool_size'],  # 'mode'],
+        'Conv2D'    : ['num_filters', 'filter_size', 'stride', 'output_shape'],
+        'MaxPool2D' : ['stride', 'pool_size', 'output_shape'],  # 'mode'],
         'Dense'     : ['num_units'],
         'SoftMax'   : ['num_units'],
         'L2Norm'    : ['axis'],
-        'BatchNorm' : ['alpha']
+        'BatchNorm' : ['alpha'],
+        'BatchNorm2' : ['alpha'],
     }
     all_ignore_attrs = ['nonlinearity', 'b', 'W', 'get_output_kwargs', 'name',
-                        'input_shape', 'input_layer', 'input_var',
-                        'untie_biases', 'flip_filters', 'pad', 'params', 'n']
+                        'input_shapes', 'input_layers', 'input_shape',
+                        'input_layer', 'input_var', 'untie_biases',
+                        'flip_filters', 'pad', 'params', 'n', '_is_main_layer']
 
     classname = layer.__class__.__name__
     classalias = classalias_map.get(classname, classname)
