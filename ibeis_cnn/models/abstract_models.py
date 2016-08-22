@@ -1019,6 +1019,45 @@ class _ModelVisualization(object):
         draw_net.show_arch_nx_graph(layers, fnum=fnum, fullinfo=fullinfo)
         pt.set_figtitle(model.arch_id)
 
+    def make_class_image(model, target_label, init='randn', niters=100,
+                         update_rate=.01, weight_decay=.00001):
+        """
+        Not quite a dream. Shows a class visualization, but doesn't do funky
+        dream overlays yet.
+
+        Example:
+            >>> from ibeis_cnn.models.abstract_models import *  # NOQA
+            >>> from ibeis_cnn.models import mnist
+            >>> model, dataset = mnist.testdata_mnist(batch_size=16)
+            >>> model.initialize_architecture()
+            >>> model.load_model_state()
+            >>> target_label = 8
+            >>> ut.quit_if_noshow()
+            >>> img = model.make_class_image(target_label, niters=100, init='randn',
+            >>>                              update_rate=1e-1,
+            >>>                              weight_decay=1e-4)
+            >>> import plottool as pt
+            >>> pt.imshow(img)
+            >>> ut.show_if_requested()
+        """
+        kwargs = locals().copy()
+        del kwargs['model']
+        del kwargs['target_label']
+        return draw_net.make_class_image(model, target_label, **kwargs)
+
+    def show_class_images(model):
+        import plottool as pt
+        fnum = None
+        kw = dict(init='randn', niters=500, update_rate=.05, weight_decay=1e-4)
+        target_labels = list(range(model.output_dims))
+        dream = draw_net.Dream(model, **kw)
+        images = dream.make_class_images(target_labels)
+        pnum_ = pt.make_pnum_nextgen(nSubplots=len(target_labels))
+        fnum = pt.ensure_fnum(fnum)
+        pt.figure(fnum=fnum)
+        for target_label, img in zip(target_labels, images):
+            pt.imshow(img, fnum=fnum, pnum=pnum_(), title='target=%r' % (target_label,))
+
     def show_era_update_mag_history(model, fnum=None):
         """
         CommandLine:

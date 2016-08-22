@@ -619,12 +619,12 @@ def plot_saliency(net, Xb, figsize=(9, None)):
         net, Xb, figsize, lambda net, Xb, n: -saliency_map_net(net, Xb))
 
 
-def class_model_visualization(model, target_label):
+class Dream(object):
     """
     https://groups.google.com/forum/#!topic/lasagne-users/UxZpNthZfq0
     http://arxiv.org/pdf/1312.6034.pdf
 
-    Sort of like a deep-dream
+    Class model visualization. Sort of like a deep-dream
 
     Example:
         >>> # DISABLE_DOCTEST
@@ -634,105 +634,185 @@ def class_model_visualization(model, target_label):
         >>> model, dataset = mnist.testdata_mnist()
         >>> model.initialize_architecture()
         >>> model.load_model_state()
+        >>> target_labels = 8
         >>> #import plottool as pt
         >>> #pt.qt4ensure()
-        >>> #class_model_visualization(model, dataset)
+        >>> #make_class_image(model, dataset)
         >>> #ut.show_if_requested()
     """
-    import ibeis_cnn.__LASAGNE__ as lasagne
-    import ibeis_cnn.__THEANO__ as theano
-    from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
-    import utool as ut
-    import copy
-    output_layer = model.output_layer
-    target_label = 3
-    # Precomputed mean and std across training data
 
-    # We are forcing a batch size of 1 for this visualization
-    input_shape = (1,) + model.input_shape[1:]
-    if False:
-        # intializing to zeros seems to do nothing on mnist data
-        initial_state = np.zeros(input_shape, dtype=np.float32)
-    else:
-        rng = np.random.RandomState(0)
-        initial_state = rng.rand(*input_shape)
-    # if model.data_params is not None:
-    #     input_mean = model.data_params['center_mean']
-    #     input_std = model.data_params['center_std']
-    #     initial_state = input_mean / input_std
-    #     initial_state = initial_state.transpose(2, 0, 1)[None, :]
+    def __init__(dream, model, init='gauss', niters=100, update_rate=1e-2,
+                 weight_decay=1e-5):
+        dream.model = model
+        dream.init = init
+        dream.niters = niters
+        dream.update_rate = update_rate
+        dream.weight_decay = weight_decay
 
-    # make image a shared variable that you can update
-    img = theano.shared(initial_state.astype(np.float32))
+    def _make_init_state(dream):
+        init = dream.init
+        input_shape = dream.model.input_shape
+        b, c, w, h = input_shape
 
-    # Get the final layer and remove the softmax nonlinearity to access the
-    # pre-activation. (Softmax encourages minimization of other classes)
-    softmax = copy.copy(output_layer)
-    softmax.nonlinearity = lasagne.nonlinearities.identity
+        if init is None or init == 'zeros':
+            # intializing to zeros seems to do nothing on mnist data
+            initial_state = np.zeros(input_shape, dtype=np.float32)
+        if init in ['rand', 'random']:
+            rng = np.random.RandomState(0)
+            initial_state = rng.rand(*input_shape)
+        elif init in ['randn']:
+            rng = np.random.RandomState(0)
+            initial_state = np.abs(rng.randn(*input_shape)) / 6
+            initial_state = np.clip(initial_state, 0, 1)
+        elif init in ['gauss']:
+            import vtool as vt
+            initial_state = np.array([[vt.gaussian_patch((h, w), sigma=None) for _ in range(c)]] * b)
+        elif init in ['perlin']:
+            import vtool as vt
+            b, c, w, h = input_shape
+            initial_state = np.array([[vt.perlin_noise((w, h)) for _ in range(c)]] * b)
+            initial_state = initial_state.astype(np.float32) / 255
+        return initial_state
 
-    # Overwrite lasagne's InputLayer with the image
-    # Build expression to represent class scores wrt the image
-    class_scores = lasagne.layers.get_output(softmax, img, deterministic=True)
+    def _make_objective(dream, shared_images, target_labels):
+        """
+        The goal is to optimize
+        S_c = score of class c before softmax nonlinearity
+        argmax_{I} S_c(I) - \lambda \elltwo{I}
+        max(S_c(I) - lambda * norm(I, 2))
+        """
+        import ibeis_cnn.__LASAGNE__ as lasagne
+        import copy
+        import ibeis_cnn.__THEANO__ as theano
+        from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
+        # Get the final layer and remove the softmax nonlinearity to access the
+        # pre-activation. (Softmax encourages minimization of other classes)
+        softmax = copy.copy(dream.model.output_layer)
+        softmax.nonlinearity = lasagne.nonlinearities.identity
 
-    # Get the class score that represents our class of interest
-    target_score = class_scores[:, target_label]
-    max_term_batch = target_score
+        # Overwrite lasagne's InputLayer with the image
+        # Build expression to represent class scores wrt the image
+        class_scores = lasagne.layers.get_output(softmax, shared_images, deterministic=True)
 
-    # Get the squared L2 norm of the image values
-    flat_img = T.reshape(img, (img.shape[0], T.prod(img.shape[1:])))
-    reg_term_batch = (flat_img ** 2).sum(axis=1)
+        # Get the class score that represents our class of interest
+        # simultaniously generate as many classes as were requested.
+        max_term_batch = [class_scores[bx, y] for bx, y in enumerate(target_labels)]
+        max_term = T.mean(max_term_batch)
 
-    # aggregate scores across the batch
-    #max_term = max_term_batch.mean(axis=0)
-    #reg_term = reg_term_batch.mean(axis=0)
-    max_term = max_term_batch[0]
-    reg_term = reg_term_batch[0]
+        # Get the squared L2 norm of the image values
+        flat_img = T.reshape(shared_images, (shared_images.shape[0], T.prod(shared_images.shape[1:])))
+        reg_term_batch = (flat_img ** 2).sum(axis=1)
+        reg_term = T.mean(reg_term_batch)
 
-    # The goal is to optimize
-    # S_c = score of class c before softmax nonlinearity
-    # argmax_{I} S_c(I) - \lambda \elltwo{I}
-    # max(S_c(I) - lambda * norm(I, 2))
-    weight_decay = .00001
-    to_maximize = max_term - weight_decay * reg_term
+        objective = max_term - dream.weight_decay * reg_term
 
-    # Compute the gradient of the maximization objective
-    # with respect to the image
-    grads = theano.grad(to_maximize, wrt=img)
+        # Compute the gradient of the maximization objective
+        # with respect to the image
+        grads = theano.grad(objective, wrt=shared_images)
 
-    # compile a function that does this update
-    update_rate = 0.01
-    step_fn = theano.function(
-        inputs=[],
-        # outputs could be empty, but returning to_maximize allows us to
-        # monitor progress
-        outputs=[to_maximize],
-        updates={
-            img: img + update_rate * grads
-        }
-    )
+        # compile a function that does this update
+        step_fn = theano.function(
+            inputs=[],
+            # outputs could be empty, but returning objective allows us to
+            # monitor progress
+            outputs=[objective],
+            updates={
+                shared_images: shared_images + dream.update_rate * grads
+            }
+        )
+        return step_fn
 
-    # Optimize objective via backpropogation for a few iterations
-    niters = 100
-    for _ in ut.ProgIter(range(niters), lbl='making class model img', bs=True):
-        out = step_fn()
-        #print('out = %r' % (out,))
+    def _postprocess_class_image(dream, shared_images, target_labels, was_scalar):
+        # return final state of the image
+        Xb = shared_images.get_value()
+        X = Xb.transpose((0, 2, 3, 1))
+        out_ = X[0:len(target_labels)]
+        import vtool as vt  # NOQA
+        out = out_.copy()
+        out = vt.norm01(out) * 255
+        out = np.round(out).astype(np.uint8)
+        if was_scalar:
+            out = out[0]
+        return out
 
-    # return final state of the image
-    Xb = img.get_value()
-    X = Xb.transpose((0, 2, 3, 1))
-    #pt.imshow(X[0])
-    #out_ = X.mean(axis=0)
-    out_ = X[0]
-    import vtool as vt  # NOQA
-    out = out_.copy()
-    out = vt.norm01(out) * 255
-    # Not sure why readding mean and std seem to hurt
-    #out += model.preproc_kw['center_mean']
-    #out *= model.preproc_kw['center_std']
-    out = np.round(out).astype(np.uint8)
-    import plottool as pt
-    pt.imshow(out)
-    return out
+    def make_class_image(dream, target_labels):
+        import ibeis_cnn.__THEANO__ as theano
+        from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
+        import utool as ut
+        # Precomputed mean and std across training data
+
+        # We are forcing a batch size of 1 for this visualization
+        # input_shape = (1,) + model.input_shape[1:]
+        input_shape = dream.model.input_shape
+        b, c, w, h = input_shape
+        was_scalar = not ut.isiterable(target_labels)
+        target_labels = ut.ensure_iterable(target_labels)
+        assert len(target_labels) <= b, 'batch size too small'
+
+        initial_state = dream._make_init_state()
+
+        # make image a shared variable that you can update
+        shared_images = theano.shared(initial_state.astype(np.float32))
+
+        step_fn = dream._make_objective(shared_images, target_labels)
+
+        # Optimize objective via backpropogation for a few iterations
+        for _ in ut.ProgIter(range(dream.niters), lbl='making class model img',
+                             bs=True):
+            objective = step_fn()
+            print('objective = %r' % (objective,))
+
+        out = dream._postprocess_class_image(shared_images, target_labels, was_scalar)
+        return out
+
+    def generate_class_images(dream, target_labels):
+        """
+        import plottool as pt
+        fnum = None
+        kw = dict(init='gauss', niters=500, update_rate=.05, weight_decay=1e-4)
+        target_labels = list(range(model.output_dims))
+        dream = draw_net.Dream(model, **kw)
+        target_labels = 8
+        images = list(dream.generate_class_images(target_labels))
+
+        vid = vt.make_video(images, 'dynimg.PIM1', fps=1, is_color=False, format='PIM1')
+
+        import matplotlib.pyplot as plt
+        ims = []
+        for img in imgs:
+            im = plt.imshow(img[:, :, 0], interpolation='nearest', cmap='gray')
+            ims.append([im])
+
+        import matplotlib.animation as animation
+        fig = plt.figure()
+        ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True,
+                                        repeat_delay=1000)
+        ani.save('dynamic_images.mp4')
+        ut.startfile('dynamic_images.mp4')
+        plt.show()
+        """
+        import ibeis_cnn.__THEANO__ as theano
+        from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
+        import utool as ut
+        input_shape = dream.model.input_shape
+        b, c, w, h = input_shape
+        was_scalar = not ut.isiterable(target_labels)
+        target_labels = ut.ensure_iterable(target_labels)
+        assert len(target_labels) <= b, 'batch size too small'
+        initial_state = dream._make_init_state()
+        shared_images = theano.shared(initial_state.astype(np.float32))
+        step_fn = dream._make_objective(shared_images, target_labels)
+        out = dream._postprocess_class_image(shared_images, target_labels,
+                                             was_scalar)
+        yield out
+        for _ in ut.ProgIter(range(dream.niters), lbl='making class model img',
+                             bs=True):
+            step_fn()
+            # objective = step_fn()
+            # print('objective = %r' % (objective,))
+            out = dream._postprocess_class_image(shared_images, target_labels,
+                                                 was_scalar)
+            yield out
 
 
 def show_saliency_heatmap(model, dataset):

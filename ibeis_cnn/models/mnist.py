@@ -126,7 +126,7 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         return model.output_layer
 
 
-def testdata_mnist(name='bnorm'):
+def testdata_mnist(name='bnorm', batch_size=128):
     from ibeis_cnn import ingest_data
     from ibeis_cnn.models import mnist
     dataset = ingest_data.grab_mnist_category_dataset()
@@ -135,7 +135,7 @@ def testdata_mnist(name='bnorm'):
         dropout = False
     output_dims = len(dataset.unique_labels)
     model = mnist.MNISTModel(
-        batch_size=128,
+        batch_size=batch_size,
         data_shape=dataset.data_shape,
         name=name,
         output_dims=output_dims,
