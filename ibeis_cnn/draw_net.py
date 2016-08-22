@@ -775,7 +775,8 @@ class Dream(object):
         target_labels = 8
         images = list(dream.generate_class_images(target_labels))
 
-        vid = vt.make_video(images, 'dynimg.PIM1', fps=1, is_color=False, format='PIM1')
+        vid = vt.make_video(images, 'dynimg.pimj', fps=1, is_color=False, format='PIM1')
+        vid = vt.make_video2(images, 'dynimg')
 
         import matplotlib.pyplot as plt
         ims = []
