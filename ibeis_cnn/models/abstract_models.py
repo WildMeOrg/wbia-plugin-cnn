@@ -950,8 +950,8 @@ class _ModelBatch(_BatchUtility):
 
     def _prepare_batch(model, Xb, yb, is_int=True, is_cv2=True,
                        augment_on=False, whiten_on=False):
-        Xb = Xb.astype(np.float32)
-        yb = None if yb is None else yb.astype(np.int32)
+        Xb = Xb.astype(np.float32, copy=True)
+        yb = None if yb is None else yb.astype(np.int32, copy=True)
         if is_int:
             # Rescale the batch data to the range 0 to 1
             Xb = Xb / 255.0
@@ -960,7 +960,11 @@ class _ModelBatch(_BatchUtility):
         if whiten_on:
             mean = model.data_params['center_mean']
             std  = model.data_params['center_std']
-            Xb = (Xb - mean) / (std)
+            assert np.all(mean <= 1.0)
+            assert np.all(std <= 1.0)
+            np.subtract(Xb, mean, out=Xb)
+            np.divide(Xb, std, out=Xb)
+            #Xb = (Xb - mean) / (std)
         if is_cv2:
             # Convert from cv2 to lasange format
             Xb = Xb.transpose((0, 3, 1, 2))

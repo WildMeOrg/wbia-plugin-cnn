@@ -117,9 +117,11 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         network_layers_def = [
             b.InputBundle(shape=model.input_shape, noise=False),
             b.ConvBundle(num_filters=N, filter_size=(3, 3), pool=False),
+            b.ConvBundle(num_filters=N, filter_size=(3, 3), pool=False),
             b.ConvBundle(num_filters=N, filter_size=(3, 3), pool=True),
             b.ConvBundle(num_filters=N, filter_size=(3, 3), pool=False),
             b.ConvBundle(num_filters=N, filter_size=(3, 3), pool=True),
+            b.ConvBundle(num_filters=N, filter_size=(3, 3), pool=False),
             # A fully-connected layer of 256 units and 50% dropout of its inputs
             b.DenseBundle(num_units=N * 4, dropout=dropout),
             # A fully-connected layer of 256 units and 50% dropout of its inputs
@@ -182,9 +184,12 @@ def testdata_mnist(name='bnorm', batch_size=128, dropout=None):
     if name == 'bnorm':
         batch_norm = True
         dropout = dropout
-    else:
+    elif name == 'dropout':
         batch_norm = False
         dropout = .5
+    else:
+        batch_norm = True
+        dropout = dropout
     output_dims = len(dataset.unique_labels)
     model = mnist.MNISTModel(
         batch_size=batch_size,
