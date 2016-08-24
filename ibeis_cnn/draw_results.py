@@ -528,7 +528,8 @@ def get_patch_multichunks(data_lists, label_list, flat_metadata, multiindicies):
     sfs_list = sfs_list[:-1]
 
     import vtool as vt
-    stacked_img, stacked_offsets, stacked_sfs = vt.stack_multi_images2(multiimg_list, offsets_list, sfs_list, vert=False)
+    tup = vt.stack_multi_images2(multiimg_list, offsets_list, sfs_list, vert=False)
+    stacked_img, stacked_offsets, stacked_sfs = tup
     return stacked_img, stacked_offsets, stacked_sfs
 
     # TODO; use offset_list for interaction

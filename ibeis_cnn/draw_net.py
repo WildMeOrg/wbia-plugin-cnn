@@ -632,6 +632,7 @@ class Dream(object):
     """
     https://groups.google.com/forum/#!topic/lasagne-users/UxZpNthZfq0
     http://arxiv.org/pdf/1312.6034.pdf
+    http://igva2012.wikispaces.asu.edu/file/view/Erhan+2009+Visualizing+higher+layer+features+of+a+deep+network.pdf
 
     #TODO
     https://arxiv.org/pdf/1605.09304v3.pdf
@@ -658,6 +659,62 @@ class Dream(object):
         >>> pt.imshow(img)
         >>> ut.show_if_requested()
     """
+
+    def saliency(dream, Xb, yb):
+        """
+        num = 10
+        Xb = model.prepare_data(X_test[0:num])
+        yb = y_test[0:num]
+
+        dpath = ''
+        dataset = None
+        """
+        dpath = '.'
+
+        import theano.tensor as T
+        import lasagne
+        import vtool as vt
+        import theano
+        model = dream.model
+
+        # Use current weights to find the score of a particular class
+        Xb_shared = theano.shared(Xb)
+        yb_shared = theano.shared(yb.astype(np.int32))
+
+        # Get the final layer and remove the softmax nonlinearity to access the
+        # pre-activation. (Softmax encourages minimization of other classes)
+        import copy
+        #softmax = copy.copy(model.output_layer)
+        #softmax.nonlinearity = lasagne.nonlinearities.identity
+        softmax = copy.copy(model.output_layer)
+
+        class_probs = lasagne.layers.get_output(softmax, Xb_shared,
+                                                deterministic=True)
+
+        # werid way to index into position of target
+        flat_idx = (T.arange(yb_shared.shape[0]) * class_probs.shape[1]) + yb_shared
+        class_probs_target = T.flatten(class_probs)[flat_idx]
+
+        # Get derivative of scores for the target class wrt the input
+        d_score_wrt_input = theano.grad(class_probs_target.mean(), Xb_shared)
+        w = np.array(d_score_wrt_input.eval())
+        saliency = w.max(axis=1, keepdims=True)
+
+        outs = saliency.transpose((0, 2, 3, 1))
+        X = Xb.transpose((0, 2, 3, 1))
+
+        for count in range(len(Xb)):
+            img = X[count]
+            y = yb[count]
+            out = vt.norm01(outs[count])
+            overlay = vt.blend_images_multiply(out, img)
+
+            vt.imwrite(join(dpath, 'out%d_A_image_t=%s.jpg' % (count, y)),
+                       vt.rectify_to_uint8(img))
+            vt.imwrite(join(dpath, 'out%d_B_heat_t=%s.jpg' % (count, y)),
+                       vt.rectify_to_uint8(out))
+            vt.imwrite(join(dpath, 'out%d_C_overlay_t=%s.jpg' % (count, y)),
+                       vt.rectify_to_uint8(overlay))
 
     def __init__(dream, model, init='gauss', niters=100, update_rate=1e-2,
                  weight_decay=1e-5):
@@ -761,7 +818,8 @@ class Dream(object):
         elif init in ['perlin']:
             import vtool as vt
             b, c, w, h = input_shape
-            initial_state = np.array([[vt.perlin_noise((w, h), rng=rng) for _ in range(c)]] * b)
+            initial_state = np.array([[vt.perlin_noise((w, h), rng=rng)
+                                       for _ in range(c)]] * b)
             initial_state = initial_state.astype(np.float32) / 255
         initial_state = initial_state.astype(np.float32)
         return initial_state
@@ -785,7 +843,8 @@ class Dream(object):
 
         # Overwrite lasagne's InputLayer with the image
         # Build expression to represent class scores wrt the image
-        class_scores = lasagne.layers.get_output(softmax, shared_images, deterministic=True)
+        class_scores = lasagne.layers.get_output(softmax, shared_images,
+                                                 deterministic=True)
 
         # Get the class score that represents our class of interest
         # simultaniously generate as many classes as were requested.

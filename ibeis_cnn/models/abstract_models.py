@@ -555,8 +555,11 @@ class _ModelFitter(object):
             ut.writeto(back_archinfo_fpath, back_archinfo_json, verbose=True)
 
             # Write arch graph to root
-            model.imwrite_arch(fpath=back_archimg_fpath)
-            model._overwrite_latest_image(back_archimg_fpath, 'arch_graph')
+            try:
+                model.imwrite_arch(fpath=back_archimg_fpath)
+                model._overwrite_latest_image(back_archimg_fpath, 'arch_graph')
+            except Exception as ex:
+                ut.printex(ex, iswarning=True)
 
             progress_dirs = {
                 'dream': dream_progress_dir,
@@ -576,11 +579,14 @@ class _ModelFitter(object):
                 ut.vd(session_dpath)
 
             # Write initial states of the weights
-            fpath = model.imwrite_weights(
-                dpath=weights_progress_dir,
-                fname='weights_' + model.hist_id + '.png',
-                fnum=2, verbose=0)
-            model._overwrite_latest_image(fpath, 'weights')
+            try:
+                fpath = model.imwrite_weights(
+                    dpath=weights_progress_dir,
+                    fname='weights_' + model.hist_id + '.png',
+                    fnum=2, verbose=0)
+                model._overwrite_latest_image(fpath, 'weights')
+            except Exception as ex:
+                ut.printex(ex, iswarning=True)
 
     def _overwrite_latest_image(model, fpath, new_name):
         """
@@ -597,21 +603,26 @@ class _ModelFitter(object):
 
     def _dump_slow_monitor(model):
         progress_dirs = model._fit_session['progress_dirs']
+        try:
+            # Save class dreams
+            _fn = ut.get_method_func(model.show_class_dream)
+            fpath = imwrite_wrapper(_fn)(
+                model,
+                dpath=progress_dirs['dream'],
+                fname='dream_' + model.hist_id + '.png',
+                fnum=4, verbose=0)
+            model._overwrite_latest_image(fpath, 'class_dream')
+        except Exception as ex:
+            ut.printex(ex, iswarning=True)
 
-        # Save class dreams
-        _fn = ut.get_method_func(model.show_class_dream)
-        fpath = imwrite_wrapper(_fn)(
-            model,
-            dpath=progress_dirs['dream'],
-            fname='dream_' + model.hist_id + '.png',
-            fnum=4, verbose=0)
-        model._overwrite_latest_image(fpath, 'class_dream')
-
-        # Save weights images
-        fpath = model.imwrite_weights(dpath=progress_dirs['weights'],
-                                      fname='weights_' + model.hist_id + '.png',
-                                      fnum=2, verbose=0)
-        model._overwrite_latest_image(fpath, 'weights')
+        try:
+            # Save weights images
+            fpath = model.imwrite_weights(dpath=progress_dirs['weights'],
+                                          fname='weights_' + model.hist_id + '.png',
+                                          fnum=2, verbose=0)
+            model._overwrite_latest_image(fpath, 'weights')
+        except Exception as ex:
+            ut.printex(ex, iswarning=True)
 
     def _dump_epoch_monitor(model):
         progress_dirs = model._fit_session['progress_dirs']
@@ -622,21 +633,27 @@ class _ModelFitter(object):
         ut.write_to(text_fpath, history_text, verbose=False)
 
         # Save loss graphs
-        fpath = imwrite_wrapper(ut.get_method_func(model.show_era_loss_history))(
-            model,
-            dpath=progress_dirs['loss'],
-            fname='loss_' + model.hist_id + '.png',
-            fnum=1, verbose=0)
-        model._overwrite_latest_image(fpath, 'loss')
+        try:
+            fpath = imwrite_wrapper(ut.get_method_func(model.show_era_loss_history))(
+                model,
+                dpath=progress_dirs['loss'],
+                fname='loss_' + model.hist_id + '.png',
+                fnum=1, verbose=0)
+            model._overwrite_latest_image(fpath, 'loss')
+        except Exception as ex:
+            ut.printex(ex, iswarning=True)
 
         # Save weight updates
-        _fn = ut.get_method_func(model.show_era_update_mag_history)
-        fpath = imwrite_wrapper(_fn)(
-            model,
-            dpath=progress_dirs['loss'],
-            fname='update_mag_' + model.hist_id + '.png',
-            fnum=3, verbose=0)
-        model._overwrite_latest_image(fpath, 'update_mag')
+        try:
+            _fn = ut.get_method_func(model.show_era_update_mag_history)
+            fpath = imwrite_wrapper(_fn)(
+                model,
+                dpath=progress_dirs['loss'],
+                fname='update_mag_' + model.hist_id + '.png',
+                fnum=3, verbose=0)
+            model._overwrite_latest_image(fpath, 'update_mag')
+        except Exception as ex:
+            ut.printex(ex, iswarning=True)
 
     def _new_era(model, X_learn, y_learn, X_valid, y_valid):
         """
@@ -1034,7 +1051,7 @@ class _ModelVisualization(object):
         draw_net.show_arch_nx_graph(layers, fnum=fnum, fullinfo=fullinfo)
         pt.set_figtitle(model.arch_id)
 
-    def show_class_dream(model, fnum=None):
+    def show_class_dream(model, fnum=None, **kwargs):
         """
         CommandLine:
             python -m ibeis_cnn.models.abstract_models show_class_dream --show
@@ -1055,6 +1072,7 @@ class _ModelVisualization(object):
         """
         import plottool as pt
         kw = dict(init='randn', niters=200, update_rate=.05, weight_decay=1e-4)
+        kw.update(**kwargs)
         target_labels = list(range(model.output_dims))
         dream = getattr(model, '_dream', None)
         if dream is None:
@@ -1067,6 +1085,36 @@ class _ModelVisualization(object):
         for target_label, img in zip(target_labels, images):
             pt.imshow(img, fnum=fnum, pnum=pnum_(), title='target=%r' % (target_label,))
         return fig
+
+    def dump_class_dream(model, fpath):
+        """
+        initial =
+        """
+        dpath = model._fit_session['session_dpath']
+        dpath = join(dpath, 'dreamvid')
+        dataset = ut.search_stack_for_localvar('dataset')
+        X_test, y_test = dataset.subset('valid')
+
+        import ibeis_cnn.__THEANO__ as theano
+        from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
+        import utool as ut
+        num = 64
+        Xb = model.prepare_data(X_test[0:num])
+        yb = y_test[0:num]
+        shared_images = theano.shared(Xb.astype(np.float32))
+        dream = model._dream
+        step_fn = dream._make_objective(shared_images, yb)
+        out = dream._postprocess_class_image(shared_images, yb,
+                                             was_scalar=True)
+        import vtool as vt
+        count = 0
+        for _ in range(100):
+            out = dream._postprocess_class_image(shared_images, yb,
+                                                 was_scalar=True)
+            vt.imwrite(join(dpath, 'out%d.jpg' % (count,)), out)
+            count += 1
+            for _ in ut.ProgIter(range(10)):
+                step_fn()
 
     def show_era_update_mag_history(model, fnum=None):
         """
@@ -2257,7 +2305,9 @@ class _ModelBackend(object):
 
                 print('Building symbolic loss function (determenistic)')
                 losses_determ = model.loss_function(network_output_determ, y_batch)
+                # TODO Weight classes
                 loss_determ = lasagne.objectives.aggregate(losses_determ,
+                                                           weights=None,
                                                            mode='mean')
                 loss_determ.name = 'loss_determ'
 
