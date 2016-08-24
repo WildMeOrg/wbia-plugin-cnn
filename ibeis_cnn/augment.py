@@ -395,7 +395,7 @@ def augment_affine(Xb, yb=None, rng=np.random, data_per_label=1,
 
     # Make the same affine parameters for each group
     # Determine which groups will be augmented
-    affperterb_flags = rng.uniform(0.0, 1.0, size=nGroups) <= affprob_perterb
+    affperterb_flags = rng.uniform(0.0, 1.0, size=nGroups) <= aug_prop
     # Build augmentation params for each group
     if affperterb_ranges is None:
         affperterb_ranges = dict(
