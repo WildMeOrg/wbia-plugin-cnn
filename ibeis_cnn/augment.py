@@ -348,7 +348,7 @@ def testdata_augment():
 
 @profile
 def augment_affine(Xb, yb=None, rng=np.random, data_per_label=1,
-                   inplace=False, affperterb_ranges=None):
+                   inplace=False, affperterb_ranges=None, aug_prop=.5):
     """
     CommandLine:
         python -m ibeis_cnn.augment --test-augment_affine --show
@@ -375,12 +375,11 @@ def augment_affine(Xb, yb=None, rng=np.random, data_per_label=1,
         >>>     enable_stretch=True,
         >>>     enable_flip=False,
         >>> )
-        >>> Xb_, yb_ = augment_affine(Xb, yb, data_per_label=data_per_label,
-        >>>                           rng=rng, affperterb_ranges=affperterb_ranges)
+        >>> Xb_, yb_ = augment_affine(Xb, yb, data_per_label=data_per_label, rng=rng, affperterb_ranges=affperterb_ranges)
         >>> assert Xb_ is not Xb
+        >>> ut.quit_if_noshow()
         >>> import plottool as pt
         >>> pt.qt4ensure()
-        >>> ut.quit_if_noshow()
         >>> show_augmented_patches(Xb, Xb_, yb, yb_, data_per_label=data_per_label)
         >>> ut.show_if_requested()
     """
@@ -395,7 +394,6 @@ def augment_affine(Xb, yb=None, rng=np.random, data_per_label=1,
     nGroups = len(Xb_) // data_per_label
 
     # Make the same affine parameters for each group
-    affprob_perterb = .7
     # Determine which groups will be augmented
     affperterb_flags = rng.uniform(0.0, 1.0, size=nGroups) <= affprob_perterb
     # Build augmentation params for each group
@@ -718,7 +716,7 @@ def augment_siamese_patches2(Xb, yb=None, rng=np.random):
         >>> show_augmented_patches(Xb_orig, Xb, yb_orig, yb)
         >>> ut.show_if_requested()
     """
-    augment_affine(Xb, yb, rng)
+    augment_affine(Xb, yb, rng, data_per_label=2)
     #augment_shadow(Xb, yb, rng)
     #augment_gamma(Xb, yb, rng)
     return Xb, yb
