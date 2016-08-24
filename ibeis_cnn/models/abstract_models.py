@@ -385,8 +385,9 @@ class _ModelFitter(object):
                 max_era_size = model._fit_session['max_era_size']
                 if model.current_era['size'] >= max_era_size:
                     # Decay learning rate
-                    rate_schedule = model.hyperparams['rate_schedule']
                     era = model.total_eras
+                    rate_schedule = model.hyperparams['rate_schedule']
+                    rate_schedule = ut.ensure_iterable(rate_schedule)
                     frac = rate_schedule[min(era, len(rate_schedule) - 1)]
                     learn_state = model.learn_state
                     learn_state.learning_rate = (
