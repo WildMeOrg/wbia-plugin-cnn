@@ -316,12 +316,13 @@ def make_InteractClasses(*args, **kwargs):
 
     @ut.reloadable_class
     class InteractAnnotClasses(abstract_interaction.AbstractInteraction):
-        def __init__(inter, ibs, config, df_chunks, nCols, **kwargs):
+        def __init__(inter, ibs, config, df_chunks, nCols, metadata=None, **kwargs):
             inter.df_chunks = df_chunks
             inter.ibs = ibs
             inter.nCols = nCols
             inter.config = config
             inter._init_lists()
+            inter.metadata = metadata
             super(InteractAnnotClasses, inter).__init__(**kwargs)
 
         def _init_lists(inter):
@@ -337,22 +338,25 @@ def make_InteractClasses(*args, **kwargs):
             inter._ensure_running()
             inter._init_lists()
 
-            pnum_ = pt.make_pnum_nextgen(nCols=inter.nCols, nSubplots=len(inter.df_chunks))
+            pnum_ = pt.make_pnum_nextgen(nCols=inter.nCols,
+                                         nSubplots=len(inter.df_chunks))
             for df_chunk in inter.df_chunks:
                 ibs = inter.ibs
                 config = inter.config
-                annots_chunk = ibs.annots(df_chunk['aid'].values, config=config)
+                annots_chunk = ibs.annots(df_chunk['aid'].values,
+                                          config=config)
                 #data_lists = [(np.array(annots_chunk.hog_img) * 255).astype(np.uint8),
                 #              annots_chunk.chips]
                 #data_lists = [annots_chunk.chips]
-                data_lists = [ibs.get_image_thumbnail(annots_chunk.gids, draw_annots=True)]
+                data_lists = [ibs.get_image_thumbnail(annots_chunk.gids,
+                                                      draw_annots=True)]
                 label_list = (1 - df_chunk['failed']).values
                 flat_metadata = df_chunk.to_dict(orient='list')
                 flat_metadata['tags'] = annots_chunk.case_tags
-                tup = draw_results.get_patch_chunk(data_lists, label_list,
-                                                   flat_metadata,
-                                                   draw_meta=['decision', 'tags'],
-                                                   vert=False, fontScale=4.0)
+                tup = draw_results.get_patch_chunk(
+                    data_lists, label_list, flat_metadata,
+                    draw_meta=['decision', 'tags'], vert=False,
+                    fontScale=4.0)
                 inter.metadata_lists.append(flat_metadata)
                 img, offset_list, sf_list, sizes_list = tup
                 inter.offset_lists.append(offset_list)
@@ -360,9 +364,10 @@ def make_InteractClasses(*args, **kwargs):
                 inter.sizes_lists.append(sizes_list)
                 inter.data_lists.append(data_lists)
                 fig, ax = pt.imshow(img, fnum=inter.fnum, pnum=pnum_())
-                ax.set_title(df_chunk.nice)
+                ax.set_title(getattr(df_chunk, 'nice', 'no-title'))
                 inter.ax_list.append(ax)
-            pt.adjust_subplots2(top=.95, left=0, right=1, bottom=.00, hspace=.1, wspace=0)
+            pt.adjust_subplots2(top=.95, left=0, right=1, bottom=.00,
+                                hspace=.1, wspace=0)
 
         def on_click_inside(inter, event, ax):
             print('click inside')
@@ -423,8 +428,20 @@ def make_InteractClasses(*args, **kwargs):
                     ibs = inter.ibs
                     aid = flat_metadata['aid'][col_index]
                     if ibs is not None:
-                        options += interact_chip.build_annot_context_options(ibs, aid)
-                        print('Annot Info:' + ut.repr3(inter.ibs.get_annot_info([aid], case_tags=True)))
+                        options += interact_chip.build_annot_context_options(
+                            ibs, aid)
+                        print('Annot Info:' + ut.repr3(
+                            inter.ibs.get_annot_info([aid], case_tags=True)))
+
+            if event.dblclick:
+                print('Doubleclick')
+                import guitool as gt
+                option_dict = gt.make_option_dict(options, shortcuts=False)
+                #print('options = %s' % (ut.repr3(options),))
+                #print('option_dict = %s' % (ut.repr3(option_dict),))
+                func = option_dict.get('Interact image', None)
+                if func is not None:
+                    func()
 
             if event.button == 3:
                 #options = inter.context_option_funcs[index]()
