@@ -295,8 +295,8 @@ class _ModelFitter(object):
             print('Resuming training at epoch=%r' % (epoch,))
         # Begin training the neural network
         print('model.batch_size = %r' % (model.batch_size,))
-        print('learn_state = %s' % ut.repr3(model.learn_state.asdict(),
-                                            precision=2))
+        print('model.hyperparams = %r' % (ut.repr4(model.hyperparams),))
+        print('learn_state = %s' % ut.repr4(model.learn_state.asdict()))
 
         # create theano symbolic expressions that define the network
         theano_backprop = model.build_backprop_func()
