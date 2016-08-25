@@ -148,7 +148,7 @@ r"""
 #        training_dpath=dataset.training_dpath, **hyperparams)
 
 #    # Initialize architecture
-#    model.initialize_architecture()
+#    model.init_arch()
 
 #    # Load previously learned weights or initialize new weights
 #    if model.has_saved_state():

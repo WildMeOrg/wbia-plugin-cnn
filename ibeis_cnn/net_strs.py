@@ -110,7 +110,7 @@ def get_layer_info(layer):
         >>> from ibeis_cnn.net_strs import *  # NOQA
         >>> from ibeis_cnn import models
         >>> model = models.mnist.MNISTModel(batch_size=8, data_shape=(24, 24, 1), output_dims=10)
-        >>> model.initialize_architecture()
+        >>> model.init_arch()
         >>> nn_layers = model.get_all_layers()
         >>> for layer in nn_layers:
         >>>     layer_info = get_layer_info(layer)
@@ -311,7 +311,7 @@ def get_layer_info_str(output_layer):
         >>> from ibeis_cnn import models
         >>> model = models.mnist.MNISTModel(batch_size=128, output_dims=10,
         >>>                                 data_shape=(24, 24, 3))
-        >>> model.initialize_architecture()
+        >>> model.init_arch()
         >>> output_layer = model.output_layer
         >>> result = get_layer_info_str(output_layer)
         >>> result = '\n'.join([x.rstrip() for x in result.split('\n')])

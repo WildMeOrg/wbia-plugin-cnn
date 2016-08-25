@@ -108,7 +108,7 @@ class BackgroundModel(abstract_models.AbstractCategoricalModel):
         )
         return network_layers_def
 
-    def initialize_architecture(model, verbose=ut.VERBOSE, **kwargs):
+    def init_arch(model, verbose=ut.VERBOSE, **kwargs):
         r"""
         """
         (_, input_channels, input_width, input_height) = model.input_shape

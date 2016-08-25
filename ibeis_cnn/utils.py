@@ -295,9 +295,12 @@ def get_printcolinfo(requested_headers_):
     requested_headers = ['epoch'] + requested_headers_ + ['duration']
     header_dict = {
         'epoch'        : '   Epoch ',
-        'learn_loss'   : '  Learn Loss (determ)  ',
+        #'learn_loss'   : '  Learn Loss (determ)  ',
+        # We always use determenistic reporting, so dont be redundant
+        'learn_loss'   : '  Learn Loss  ',
         'valid_loss'   : '  Valid Loss  ',
-        'learnval_rat' : '  Learn / Val (determ)  ',
+        'learnval_rat' : '  Learn / Val  ',
+        #'learnval_rat' : '  Learn / Val (determ)  ',
         'valid_acc'    : '  Valid Acc ',
         'test_acc'     : '  Test Acc  ',
         'duration'     : '  Dur ',

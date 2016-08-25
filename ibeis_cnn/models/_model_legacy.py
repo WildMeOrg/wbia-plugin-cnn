@@ -53,7 +53,7 @@ class _ModelLegacy(object):
         }
 
         # Need to build architecture first
-        model.initialize_architecture()
+        model.init_arch()
 
         model.encoder = oldkw.get('encoder', None)
 
@@ -89,7 +89,7 @@ class _ModelLegacy(object):
         }
 
         # Need to build architecture first
-        model.initialize_architecture()
+        model.init_arch()
         model.encoder = oldkw.get('data_label_encoder', None)
         model.batch_size = oldkw['train_batch_size']
 

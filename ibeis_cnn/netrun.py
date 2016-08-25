@@ -172,7 +172,7 @@ def netrun():
         raise ValueError('Unknown arch_tag=%r' % (arch_tag,))
 
     ut.colorprint('[netrun] Initialize archchitecture', 'yellow')
-    model.initialize_architecture()
+    model.init_arch()
 
     # ----------------------------
     # Choose weight initialization
@@ -400,7 +400,7 @@ def train_background():
         training_dpath=dataset.training_dpath, **hyperparams)
 
     # Initialize architecture
-    model.initialize_architecture()
+    model.init_arch()
 
     # Load previously learned weights or initialize new weights
     if model.has_saved_state():

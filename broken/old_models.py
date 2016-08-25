@@ -381,11 +381,11 @@ class SiameseModel(abstract_models.BaseModel):
         model.input_shape = input_shape
         model.batch_size = batch_size
         model.output_dims = 256
-        model.initialize_architecture(verbose=verbose)
+        model.init_arch(verbose=verbose)
         output_layer = model.get_output_layer()
         return output_layer
 
-    def initialize_architecture(model, verbose=True):
+    def init_arch(model, verbose=True):
         # TODO: remove output dims
         _P = functools.partial
         (_, input_channels, input_width, input_height) = model.input_shape

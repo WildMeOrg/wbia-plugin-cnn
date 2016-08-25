@@ -24,7 +24,7 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         >>> model = MNISTModel(batch_size=128, data_shape=dataset.data_shape,
         >>>                    output_dims=dataset.output_dims,
         >>>                    training_dpath=dataset.training_dpath)
-        >>> output_layer = model.initialize_architecture()
+        >>> output_layer = model.init_arch()
         >>> model.print_model_info_str()
         >>> model.mode = 'FAST_COMPILE'
         >>> model.build_backprop_func()
@@ -34,13 +34,13 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         >>> from ibeis_cnn.models.mnist import *  # NOQA
         >>> from ibeis_cnn.models import mnist
         >>> model, dataset = mnist.testdata_mnist(name='bnorm')
-        >>> model.initialize_architecture()
+        >>> model.init_arch()
         >>> model.print_layer_info()
         >>> model.print_model_info_str()
         >>> #model.reinit_weights()
         >>> X_train, y_train = dataset.subset('train')
         >>> model.fit(X_train, y_train)
-        >>> output_layer = model.initialize_architecture()
+        >>> output_layer = model.init_arch()
         >>> model.print_layer_info()
         >>> # parse training arguments
         >>> model.monitor_config.update(**ut.argparse_dict(dict(
@@ -57,15 +57,15 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         model.dropout = kwargs.pop('dropout', .5)
         super(MNISTModel, model).__init__(**kwargs)
 
-    def initialize_architecture(model):
+    def init_arch(model):
         """
 
         CommandLine:
-            python -m ibeis_cnn  MNISTModel.initialize_architecture --verbcnn
-            python -m ibeis_cnn  MNISTModel.initialize_architecture --verbcnn --show
+            python -m ibeis_cnn  MNISTModel.init_arch --verbcnn
+            python -m ibeis_cnn  MNISTModel.init_arch --verbcnn --show
 
-            python -m ibeis_cnn  MNISTModel.initialize_architecture --verbcnn --name=bnorm --show
-            python -m ibeis_cnn  MNISTModel.initialize_architecture --verbcnn --name=incep --show
+            python -m ibeis_cnn  MNISTModel.init_arch --verbcnn --name=bnorm --show
+            python -m ibeis_cnn  MNISTModel.init_arch --verbcnn --name=incep --show
 
         Example:
             >>> # ENABLE_DOCTEST
@@ -74,14 +74,14 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
             >>> name = ut.get_argval('--name', default='bnorm')
             >>> model = MNISTModel(batch_size=128, data_shape=(28, 28, 1),
             >>>                    output_dims=10, name=name)
-            >>> model.initialize_architecture()
+            >>> model.init_arch()
             >>> model.print_model_info_str()
             >>> print(model)
             >>> ut.quit_if_noshow()
             >>> model.show_arch()
             >>> ut.show_if_requested()
         """
-        print('[model] initialize_architecture')
+        print('[model] init_arch')
         if True:
             print('[model] Initialize MNIST model architecture')
             print('[model]   * batch_size     = %r' % (model.batch_size,))

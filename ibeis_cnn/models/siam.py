@@ -75,7 +75,7 @@ class SiameseL2(AbstractSiameseModel):
         model.data_per_label_output = 2
         #model.arch_tag = arch_tag
         if autoinit:
-            model.initialize_architecture()
+            model.init_arch()
 
     def get_siaml2_def(model, verbose=True, **kwargs):
         """
@@ -166,8 +166,8 @@ class SiameseL2(AbstractSiameseModel):
     def get_siam_deepfaceish_def(model, verbose=True, **kwargs):
         """
         CommandLine:
-            python -m ibeis_cnn --tf  SiameseL2.initialize_architecture --archtag siam_deepfaceish --datashape=128,256,1 --verbose  --show
-            python -m ibeis_cnn --tf  SiameseL2.initialize_architecture --archtag siam_deepface --datashape=152,152,3 --verbose  --show
+            python -m ibeis_cnn --tf  SiameseL2.init_arch --archtag siam_deepfaceish --datashape=128,256,1 --verbose  --show
+            python -m ibeis_cnn --tf  SiameseL2.init_arch --archtag siam_deepface --datashape=152,152,3 --verbose  --show
         """
         _P = functools.partial
 
@@ -242,7 +242,7 @@ class SiameseL2(AbstractSiameseModel):
     def get_siaml2_partmatch_def(model, verbose=True, **kwargs):
         """
         CommandLine:
-            python -m ibeis_cnn --tf  SiameseL2.initialize_architecture --archtag siaml2_partmatch --datashape=128,256,1 --verbose  --show
+            python -m ibeis_cnn --tf  SiameseL2.init_arch --archtag siaml2_partmatch --datashape=128,256,1 --verbose  --show
         """
         _P = functools.partial
 
@@ -314,7 +314,7 @@ class SiameseL2(AbstractSiameseModel):
                 C0(96, 7, 3) - ReLU - P0(2, 2) - C1(192, 5, 1) - ReLU - P1(2, 2) - C2(256, 3, 1)
 
         CommandLine:
-            python -m ibeis_cnn --tf  SiameseL2.initialize_architecture --archtag siam2streaml2 --datashape=64,64,1 --verbose  --show
+            python -m ibeis_cnn --tf  SiameseL2.init_arch --archtag siam2streaml2 --datashape=64,64,1 --verbose  --show
         """
         _P = functools.partial
 
@@ -357,7 +357,7 @@ class SiameseL2(AbstractSiameseModel):
 
     def get_mnist_siaml2_def(model, verbose=True, **kwargs):
         """
-        python -m ibeis_cnn --tf  SiameseL2.initialize_architecture --archtag mnist_siaml2 --datashape=28,28,1 --verbose  --show
+        python -m ibeis_cnn --tf  SiameseL2.init_arch --archtag mnist_siaml2 --datashape=28,28,1 --verbose  --show
 
         """
         _P = functools.partial
@@ -395,14 +395,14 @@ class SiameseL2(AbstractSiameseModel):
         )
         return network_layers_def
 
-    def initialize_architecture(model, verbose=ut.VERBOSE, **kwargs):
+    def init_arch(model, verbose=ut.VERBOSE, **kwargs):
         r"""
         Notes:
             http://arxiv.org/pdf/1504.03641.pdf
 
         CommandLine:
-            python -m ibeis_cnn.models.siam --test-SiameseL2.initialize_architecture --verbcnn --show
-            python -m ibeis_cnn --tf  SiameseL2.initialize_architecture --verbcnn --show
+            python -m ibeis_cnn.models.siam --test-SiameseL2.init_arch --verbcnn --show
+            python -m ibeis_cnn --tf  SiameseL2.init_arch --verbcnn --show
 
         Example:
             >>> # ENABLE_DOCTEST
@@ -411,7 +411,7 @@ class SiameseL2(AbstractSiameseModel):
             >>> arch_tag = ut.get_argval('--archtag', default='siaml2')
             >>> data_shape = tuple(ut.get_argval('--datashape', type_=list, default=(64, 64, 3)))
             >>> model = SiameseL2(batch_size=128, data_shape=data_shape, arch_tag=arch_tag)
-            >>> output_layer = model.initialize_architecture()
+            >>> output_layer = model.init_arch()
             >>> model.print_model_info_str()
             >>> ut.quit_if_noshow()
             >>> model.show_arch()
@@ -419,7 +419,7 @@ class SiameseL2(AbstractSiameseModel):
         """
         # TODO: remove output dims
         #_P = functools.partial
-        print('[model] initialize_architecture')
+        print('[model] init_arch')
         #(_, input_channels, input_width, input_height) = model.input_shape
         (_, input_channels, input_height, input_width) = model.input_shape
         if verbose:
@@ -719,17 +719,17 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
         model.data_per_label_input  = 2
         model.data_per_label_output = 1
         if autoinit:
-            model.initialize_architecture()
+            model.init_arch()
 
-    def initialize_architecture(model, verbose=True, **kwargs):
+    def init_arch(model, verbose=True, **kwargs):
         r"""
         Notes:
             http://arxiv.org/pdf/1504.03641.pdf
 
         CommandLine:
-            python -m ibeis_cnn.models.siam --test-SiameseCenterSurroundModel.initialize_architecture
-            python -m ibeis_cnn.models.siam --test-SiameseCenterSurroundModel.initialize_architecture --verbcnn
-            python -m ibeis_cnn.models.siam --test-SiameseCenterSurroundModel.initialize_architecture --verbcnn --show
+            python -m ibeis_cnn.models.siam --test-SiameseCenterSurroundModel.init_arch
+            python -m ibeis_cnn.models.siam --test-SiameseCenterSurroundModel.init_arch --verbcnn
+            python -m ibeis_cnn.models.siam --test-SiameseCenterSurroundModel.init_arch --verbcnn --show
             python -m ibeis_cnn.train --test-pz_patchmatch --vtd --max-examples=5 --batch_size=128 --learning_rate .0000001 --verbcnn
             python -m ibeis_cnn.train --test-pz_patchmatch --vtd
 
@@ -742,7 +742,7 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
             >>> verbose = True
             >>> model = SiameseCenterSurroundModel(batch_size=batch_size, input_shape=input_shape)
             >>> # execute function
-            >>> output_layer = model.initialize_architecture()
+            >>> output_layer = model.init_arch()
             >>> model.print_model_info_str()
             >>> result = str(output_layer)
             >>> print(result)
@@ -751,7 +751,7 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
             >>> model.show_arch()
             >>> ut.show_if_requested()
         """
-        print('[model] initialize_architecture')
+        print('[model] init_arch')
         (_, input_channels, input_width, input_height) = model.input_shape
         if verbose:
             print('[model] Initialize center surround siamese model architecture')

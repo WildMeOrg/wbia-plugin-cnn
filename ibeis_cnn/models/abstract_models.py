@@ -72,9 +72,11 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import six
 import numpy as np
 import utool as ut
+import sys
 from os.path import join, exists, dirname, basename, split, splitext
 from six.moves import cPickle as pickle  # NOQA
 import warnings
+import sklearn
 from ibeis_cnn import net_strs
 from ibeis_cnn import draw_net
 from ibeis_cnn.models import _model_legacy
@@ -84,7 +86,7 @@ print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.abstract_models]')
 VERBOSE_CNN = ut.get_module_verbosity_flags('cnn')[0] or ut.VERBOSE
 
 # Delayed imports
-lasange = None
+lasagne = None
 T = None
 theano = None
 
@@ -96,40 +98,10 @@ def delayed_import():
     import ibeis_cnn.__LASAGNE__ as lasagne
     import ibeis_cnn.__THEANO__ as theano
     from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
-    # import ibeis_cnn.__LASAGNE__
-    # import ibeis_cnn.__THEANO__
-    # from ibeis_cnn.__THEANO__ import tensor
-    # lasagne = ibeis_cnn.__LASAGNE__
-    # theano = ibeis_cnn.__THEANO__
-    # T = tensor
 
 
-def imwrite_wrapper(show_func):
-    r"""
-    helper to convert show funcs into imwrite funcs
-    Automatically creates filenames if not specified
-
-    DEPRICATE
-    """
-    def imwrite_func(model, dpath=None, fname=None, dpi=180, asdiagnostic=True,
-                     ascheckpoint=None, verbose=1, **kwargs):
-        #import plottool as pt
-        # Resolve path to save the image
-        if dpath is None:
-            if ascheckpoint is True:
-                dpath = model._get_model_dpath(checkpoint_tag=model.hist_id)
-            elif asdiagnostic is True:
-                dpath = model.get_epoch_diagnostic_dpath()
-            else:
-                dpath = model.model_dpath
-        # Make the image
-        fig = show_func(model, **kwargs)
-        # Save the image
-        fpath = join(dpath, fname)
-        fig.savefig(fpath, dpi=dpi)
-        #output_fpath = pt.save_figure(fig=fig, dpath=dpath, dpi=dpi, verbose=verbose)
-        return fpath
-    return imwrite_func
+if 'theano' in sys.modules:
+    delayed_import()
 
 
 @ut.reloadable_class
@@ -227,55 +199,85 @@ class _ModelFitter(object):
             'valid_loss' : np.inf,
             'weights'    : None
         }
-        # Dynamic configuration that may change with time
-        model.learn_state = LearnState(
-            learning_rate=kwargs.pop('learning_rate', .005),
-            momentum=kwargs.pop('momentum', .9),
-            weight_decay=kwargs.pop('weight_decay', None),
-        )
+
+        # TODO: some sort of behavior config Things that dont influence
+        # training, but do impact performance / memory usage.
+        model._behavior = {
+            'buffered': True,
+        }
+        # Static configuration indicating training preferences
+        # (these will not influence the model learning)
+        model.monitor_config = {
+            'monitor': ut.get_argflag('--monitor'),
+            'monitor_updates': False,
+            'checkpoint_freq': 200,
+            'slowdump_freq': 10,
+            'showprog': True,
+        }
+        ut.update_existing(model.monitor_config, kwargs)
+        ut.delete_dict_keys(kwargs, model.monitor_config.keys())
         # Static configuration indicating hyper-parameters
         # (these will influence how the model learns)
+        # Some of these values (ie learning state) may be dynamic durring
+        # training. The dynamic version should be used in this context. This
+        # dictionary is always static in a fit session and only indicates the
+        # initial state of these variables.
         model.hyperparams = {
             'whiten_on': False,
             'augment_on': False,
             'era_size': 100,  # epochs per era
             'max_epochs': None,
-            'rate_schedule': .8,
+            'rate_schedule': 0.8,
+            #'class_weight': None,
+            'class_weight': 'balanced',
+            'random_seed': None,
+            'learning_rate': 0.005,
+            'momentum': 0.9,
+            'weight_decay': 0.0,
         }
-        # Static configuration indicating training preferences
-        # (these will not influence the model learning)
-        model.monitor_config = {
-            'monitor_updates': False,
-            'checkpoint_freq': 200,
-            'slowdump_freq': 10,
-            'monitor': ut.get_argflag('--monitor'),
-            'showprog': True,
-        }
+        ut.update_existing(model.hyperparams, kwargs)
+        ut.delete_dict_keys(kwargs, model.hyperparams.keys())
+        # Dynamic configuration that may change with time
+        model.learn_state = LearnState(
+            learning_rate=model.hyperparams['learning_rate'],
+            momentum=model.hyperparams['momentum'],
+            weight_decay=model.hyperparams['weight_decay'],
+        )
         # This will by a dynamic dict that will span the life of a training
         # session
         model._fit_session = None
 
-    def fit(model, X_train, y_train, X_valid=None, y_valid=None, valid_idx=None):
+    def fit(model, X_train, y_train, X_valid=None, y_valid=None,
+            valid_idx=None, verbose=True, **kwargs):
         r"""
         Trains the network with backprop.
 
         CommandLine:
             python -m ibeis_cnn _ModelFitter.fit --name=dropout
-            python -m ibeis_cnn _ModelFitter.fit --name=bnorm
+            python -m ibeis_cnn _ModelFitter.fit --name=bnorm --vd --monitor
             python -m ibeis_cnn _ModelFitter.fit --name=incep
 
         Example1:
             >>> from ibeis_cnn.models import mnist
             >>> name = ut.get_argval('--name', default='bnorm')
             >>> model, dataset = mnist.testdata_mnist(name=name, dropout=.5)
-            >>> model.initialize_architecture()
+            >>> model.init_arch()
             >>> model.print_layer_info()
             >>> model.print_model_info_str()
             >>> X_train, y_train = dataset.subset('train')
             >>> model.fit(X_train, y_train)
         """
         from ibeis_cnn import utils
+
         print('\n[train] --- TRAINING LOOP ---')
+        ut.update_existing(model.hyperparams, kwargs)
+        ut.delete_dict_keys(kwargs, model.hyperparams.keys())
+        ut.update_existing(model.monitor_config, kwargs)
+        ut.delete_dict_keys(kwargs, model.monitor_config.keys())
+        ut.update_existing(model._behavior, kwargs)
+        ut.delete_dict_keys(kwargs, model._behavior.keys())
+        assert len(kwargs) == 0, 'unhandled kwargs=%r' % (kwargs,)
+
         model._validate_input(X_train, y_train)
 
         X_learn, y_learn, X_valid, y_valid = model._ensure_learnval_split(
@@ -284,6 +286,17 @@ class _ModelFitter(object):
         model.ensure_data_params(X_learn, y_learn)
         print('Learn y histogram: ' + ut.repr2(ut.dict_hist(y_learn)))
         print('Valid y histogram: ' + ut.repr2(ut.dict_hist(y_valid)))
+
+        if 'class_to_weight' in model.data_params:
+            # Hack, assuming a classification task
+            class_to_weight = model.data_params['class_to_weight']
+            class_to_weight.take(y_learn)
+            w_learn = class_to_weight.take(y_learn).astype(np.float32)
+            w_valid = class_to_weight.take(y_valid).astype(np.float32)
+        else:
+            print('no class weights')
+            w_learn = np.ones(len(X_learn)).astype(np.float32)
+            w_valid = np.ones(len(X_valid)).astype(np.float32)
 
         model._new_fit_session()
 
@@ -294,6 +307,7 @@ class _ModelFitter(object):
         else:
             print('Resuming training at epoch=%r' % (epoch,))
         # Begin training the neural network
+        print('model.arch_id = %r' % (model.arch_id,))
         print('model.batch_size = %r' % (model.batch_size,))
         print('model.hyperparams = %s' % (ut.repr4(model.hyperparams),))
         print('learn_state = %s' % ut.repr4(model.learn_state.asdict()))
@@ -307,9 +321,8 @@ class _ModelFitter(object):
         save_after_best_wait_epochs = model.hyperparams['era_size'] * 2
         save_after_best_countdown = None
 
-        printcol_info = utils.get_printcolinfo(model.requested_headers)
-
         model._new_era(X_learn, y_learn, X_valid, y_valid)
+        printcol_info = utils.get_printcolinfo(model.requested_headers)
         utils.print_header_columns(printcol_info)
 
         tt = ut.Timer(verbose=False)
@@ -318,21 +331,20 @@ class _ModelFitter(object):
                 # ---------------------------------------
                 # Execute backwards and forward passes
                 tt.tic()
-                learn_info = model._epoch_learn_step(theano_backprop, X_learn,
-                                                     y_learn)
+                learn_info = model._epoch_learn(theano_backprop, X_learn,
+                                                y_learn, w_learn)
                 if learn_info.get('diverged'):
                     break
-                valid_info = model._epoch_validate_step(theano_forward,
-                                                        X_valid, y_valid)
+                valid_info = model._epoch_validate(theano_forward, X_valid,
+                                                   y_valid, w_valid)
 
                 # ---------------------------------------
                 # Summarize the epoch
-                epoch_info = {
-                    'epoch': epoch,
-                }
+                epoch_info = {'epoch': epoch}
                 epoch_info.update(**learn_info)
                 epoch_info.update(**valid_info)
                 epoch_info['duration'] = tt.toc()
+                epoch_info['learn_state'] = model.learn_state.asdict()
                 epoch_info['learnval_rat'] = (
                     epoch_info['learn_loss'] / epoch_info['valid_loss'])
 
@@ -389,9 +401,8 @@ class _ModelFitter(object):
                     rate_schedule = model.hyperparams['rate_schedule']
                     rate_schedule = ut.ensure_iterable(rate_schedule)
                     frac = rate_schedule[min(era, len(rate_schedule) - 1)]
-                    learn_state = model.learn_state
-                    learn_state.learning_rate = (
-                        learn_state.learning_rate * frac)
+                    model.learn_state.learning_rate = (
+                        model.learn_state.learning_rate * frac)
                     # Increase number of epochs in the next era
                     max_era_size = np.ceil(max_era_size / (frac ** 2))
                     model._fit_session['max_era_size'] = max_era_size
@@ -409,47 +420,51 @@ class _ModelFitter(object):
 
             except KeyboardInterrupt:
                 print('\n[train] Caught CRTL+C')
-                resolution = ''
+                print('model.arch_id = %r' % (model.arch_id,))
+                print('learn_state = %s' % ut.repr4(model.learn_state.asdict()))
+                actions = ut.odict([
+                    ('resume', (['0', 'r'], 'resume training')),
+                    ('view',   (['v', 'view'], 'view session directory')),
+                    ('ipy',    (['ipy', 'ipython', 'cmd'], 'embed into IPython')),
+                    ('print',  (['p', 'print'], 'print model state')),
+                    ('shock',  (['shock'], 'shock the network')),
+                    ('save',   (['s', 'save'], 'save best weights')),
+                    ('quit',   (['q', 'exit', 'quit'], 'quit')),
+                ])
                 while True:
-                    print('\n[train] What do you want to do?')
-                    print('[train]     0 - Continue')
-                    print('[train]     1 - Shock weights')
-                    print('[train]     2 - Save best weights')
-                    print('[train]     3 - View session directory')
-                    print('[train]     4 - Embed into IPython')
-                    print('[train]     5 - Draw current weights')
-                    print('[train]     6 - Show training state')
-                    print('[train]     q - Stop network training')
-                    resolution = str(input('[train] Resolution: '))
+                    # prompt
+                    msg_list = ['enter %s to %s' % (
+                        ut.conj_phrase(ut.lmap(repr, map(str, tup[0])), 'or'), tup[1])
+                                for key, tup in actions.items()]
+                    msg = ut.indentjoin(msg_list, '\n | * ')
+                    msg = ''.join([' +-----------', msg, '\n L-----------\n'])
+                    print(msg)
+                    #
+                    ans = str(input()).strip()
+
                     # We have a resolution
-                    if resolution == 'q':
+                    if ans in actions['quit'][0]:
                         print('quit training...')
-                    if resolution == '0':
+                        return
+                    if ans in actions['resume'][0]:
                         print('resuming training...')
-                    elif resolution == '1':
-                        # Shock the weights of the network
-                        utils.shock_network(model.output_layer)
-                        learn_state = model.learn_state
-                        learn_state.learning_rate = learn_state.learning_rate * 2
-                        #epoch_marker = epoch
-                        utils.print_header_columns(printcol_info)
-                    elif resolution == '2':
+                    if ans in actions['ipy'][0]:
+                        ut.embed()
+                    if ans in actions['save'][0]:
                         # Save the weights of the network
                         model.checkpoint_save_model_info()
                         model.checkpoint_save_model_state()
                         model.save_model_info()
                         model.save_model_state()
-                    elif resolution == '3':
+                    if ans in actions['print'][0]:
+                        model.print_state_str()
+                    if ans in actions['shock'][0]:
+                        utils.shock_network(model.output_layer)
+                        model.learn_state.learning_rate = (
+                            model.learn_state.learning_rate * 2)
+                    if ans in actions['view'][0]:
                         session_dpath = model._fit_session['session_dpath']
                         ut.view_directory(session_dpath)
-                    elif resolution == '4':
-                        ut.embed()
-                    elif resolution == '5':
-                        output_fpath_list = model.imwrite_weights(index=0)
-                        for fpath in output_fpath_list:
-                            ut.startfile(fpath)
-                    elif resolution == '6':
-                        model.print_state_str()
                     else:
                         continue
                     # Handled the resolution
@@ -491,11 +506,13 @@ class _ModelFitter(object):
         return X_learn, y_learn, X_valid, y_valid
 
     def ensure_data_params(model, X_learn, y_learn):
+        if model.data_params is None:
+            model.data_params = {}
+
         # TODO: move to dataset. This is independant of the model.
         if model.hyperparams['whiten_on']:
             # Center the data by subtracting the mean
-            if model.data_params is None:
-                model.data_params = {}
+            if 'center_mean' not in model.data_params:
                 print('computing center mean/std. (hacks std=1)')
                 X_ = X_learn.astype(np.float32)
                 if ut.is_int(X_learn):
@@ -511,11 +528,22 @@ class _ModelFitter(object):
             # Hack to preconvert mean / std to 0-1 for old models
             model._fix_center_mean_std()
         else:
-            model.data_params = None
+            ut.delete_dict_keys(model.data_params, ['center_mean',
+                                                    'center_std'])
+
+        if model.hyperparams['class_weight'] == 'balanced':
+            print('Balancing class weights')
+            import sklearn.utils
+            unique_classes = sorted(ut.unique(y_learn))
+            class_to_weight = sklearn.utils.compute_class_weight(
+                'balanced', unique_classes, y_learn)
+            model.data_params['class_to_weight'] = class_to_weight
+        else:
+            ut.delete_dict_keys(model.data_params, ['class_to_weight'])
 
         if getattr(model, 'encoder', None) is None:
-            if hasattr(model, 'initialize_encoder'):
-                model.initialize_encoder(y_learn)
+            if hasattr(model, 'init_encoder'):
+                model.init_encoder(y_learn)
 
     def _new_fit_session(model):
         """
@@ -526,12 +554,14 @@ class _ModelFitter(object):
             'max_era_size': model.hyperparams['era_size'],
             'era_epoch_num': 0,
         }
-        ut.ensuredir(model.arch_dpath)
-        # Write feed-forward arch info to arch root
-        ut.writeto(join(model.arch_dpath, 'arch_info.json'),
-                   model.make_arch_json(with_noise=False), verbose=True)
+        model._rng = ut.ensure_rng(model.hyperparams['random_seed'])
 
         if model.monitor_config['monitor']:
+            ut.ensuredir(model.arch_dpath)
+            # Write feed-forward arch info to arch root
+            ut.writeto(join(model.arch_dpath, 'arch_info.json'),
+                       model.make_arch_json(with_noise=False), verbose=True)
+
             # Create a directory for this training session with a timestamp
             session_dname = 'fit_session_' + model._fit_session['start_time']
             session_dpath = join(model.saved_session_dpath, session_dname)
@@ -561,18 +591,18 @@ class _ModelFitter(object):
             except Exception as ex:
                 ut.printex(ex, iswarning=True)
 
-            progress_dirs = {
+            prog_dirs = {
                 'dream': dream_progress_dir,
                 'loss': loss_progress_dir,
                 'weights': weights_progress_dir,
             }
 
             model._fit_session.update(**{
-                'progress_dirs': progress_dirs,
+                'prog_dirs': prog_dirs,
                 'history_text_fpath': history_text_fpath,
             })
 
-            for dpath in progress_dirs.values():
+            for dpath in prog_dirs.values():
                 ut.ensuredir(dpath)
 
             if ut.get_argflag('--vd'):
@@ -580,13 +610,56 @@ class _ModelFitter(object):
 
             # Write initial states of the weights
             try:
-                fpath = model.imwrite_weights(
-                    dpath=weights_progress_dir,
-                    fname='weights_' + model.hist_id + '.png',
-                    fnum=2, verbose=0)
+                fig = model.show_weights_image(fnum=2)
+                fpath = join(prog_dirs['weights'], 'weights_' + model.hist_id + '.png')
+                fig.savefig(fpath)
                 model._overwrite_latest_image(fpath, 'weights')
             except Exception as ex:
                 ut.printex(ex, iswarning=True)
+
+    def _new_era(model, X_learn, y_learn, X_valid, y_valid):
+        """
+        Used to denote a change in hyperparameters during training.
+        """
+        y_hashid = ut.hashstr_arr(y_learn, 'y', alphabet=ut.ALPHABET_27)
+
+        learn_hashid =  str(model.arch_id) + '_' + y_hashid
+        if model.current_era is not None and len(model.current_era['epoch_list']) == 0:
+            print('Not starting new era (previous era has no epochs)')
+        else:
+            _new_era = {
+                'size': 0,
+                #'valid_loss_list': [],
+                #'learn_loss_list': [],
+                'epoch_list': [],
+                'learn_hashid': learn_hashid,
+                'arch_hashid': model.get_arch_hashid(),
+                'arch_id': model.arch_id,
+                'num_learn': len(y_learn),
+                'num_valid': len(y_valid),
+                'learn_state': model.learn_state.asdict(),
+                'epoch_info_list': []
+            }
+            num_eras = len(model.era_history)
+            print('starting new era %d' % (num_eras,))
+            #if model.current_era is not None:
+            model.current_era = _new_era
+            model.era_history.append(model.current_era)
+
+    def _record_epoch(model, epoch_info):
+        """
+        Records an epoch in an era.
+        """
+        # each key/val in epoch_info dict corresponds to a key/val_list in an
+        # era dict.
+        model.current_era['size'] += 1
+        model.current_era['epoch_info_list'].append(epoch_info)
+        # TODO: depricate
+        for key in epoch_info:
+            key_ = key + '_list'
+            if key_ not in model.current_era:
+                model.current_era[key_] = []
+            model.current_era[key_].append(epoch_info[key])
 
     def _overwrite_latest_image(model, fpath, new_name):
         """
@@ -602,30 +675,29 @@ class _ModelFitter(object):
         shutil.copy(fpath, join(model.arch_dpath, 'latest_' + new_name + ext))
 
     def _dump_slow_monitor(model):
-        progress_dirs = model._fit_session['progress_dirs']
-        try:
-            # Save class dreams
-            _fn = ut.get_method_func(model.show_class_dream)
-            fpath = imwrite_wrapper(_fn)(
-                model,
-                dpath=progress_dirs['dream'],
-                fname='dream_' + model.hist_id + '.png',
-                fnum=4, verbose=0)
-            model._overwrite_latest_image(fpath, 'class_dream')
-        except Exception as ex:
-            ut.printex(ex, iswarning=True)
+        prog_dirs = model._fit_session['prog_dirs']
+
+        if False:
+            try:
+                # Save class dreams
+                fpath = join(prog_dirs['dream'], 'class_dream_' + model.hist_id + '.png')
+                fig = model.show_class_dream(fnum=4)
+                fig.savefig(fpath, dpi=180)
+                model._overwrite_latest_image(fpath, 'class_dream')
+            except Exception as ex:
+                ut.printex(ex, iswarning=True)
 
         try:
             # Save weights images
-            fpath = model.imwrite_weights(dpath=progress_dirs['weights'],
-                                          fname='weights_' + model.hist_id + '.png',
-                                          fnum=2, verbose=0)
+            fpath = join(prog_dirs['weights'], 'weights_' + model.hist_id + '.png')
+            fig = model.show_weights_image(fnum=2)
+            fig.savefig(fpath, dpi=180)
             model._overwrite_latest_image(fpath, 'weights')
         except Exception as ex:
             ut.printex(ex, iswarning=True)
 
     def _dump_epoch_monitor(model):
-        progress_dirs = model._fit_session['progress_dirs']
+        prog_dirs = model._fit_session['prog_dirs']
 
         # Save text info
         text_fpath = model._fit_session['history_text_fpath']
@@ -634,100 +706,87 @@ class _ModelFitter(object):
 
         # Save loss graphs
         try:
-            fpath = imwrite_wrapper(ut.get_method_func(model.show_era_loss_history))(
-                model,
-                dpath=progress_dirs['loss'],
-                fname='loss_' + model.hist_id + '.png',
-                fnum=1, verbose=0)
+            fpath = join(prog_dirs['loss'], 'loss_' + model.hist_id + '.png')
+            fig = model.show_loss_history(fnum=1)
+            fig.savefig(fpath, dpi=180)
             model._overwrite_latest_image(fpath, 'loss')
+        except Exception as ex:
+            ut.printex(ex, iswarning=True)
+
+        try:
+            fpath = join(prog_dirs['loss'], 'pr_' + model.hist_id + '.png')
+            fig = model.show_pr_history(fnum=4)
+            fig.savefig(fpath, dpi=180)
+            model._overwrite_latest_image(fpath, 'pr')
         except Exception as ex:
             ut.printex(ex, iswarning=True)
 
         # Save weight updates
         try:
-            _fn = ut.get_method_func(model.show_era_update_mag_history)
-            fpath = imwrite_wrapper(_fn)(
-                model,
-                dpath=progress_dirs['loss'],
-                fname='update_mag_' + model.hist_id + '.png',
-                fnum=3, verbose=0)
+            fpath = join(prog_dirs['loss'], 'update_mag_' + model.hist_id + '.png')
+            fig = model.show_update_mag_history(fnum=3)
+            fig.savefig(fpath, dpi=180)
             model._overwrite_latest_image(fpath, 'update_mag')
         except Exception as ex:
             ut.printex(ex, iswarning=True)
 
-    def _new_era(model, X_learn, y_learn, X_valid, y_valid):
-        """
-        Used to denote a change in hyperparameters during training.
-        """
-        # TODO: fix the training data hashid stuff
-        y_hashid = ut.hashstr_arr(y_learn, 'y', alphabet=ut.ALPHABET_27)
-
-        learn_hashid =  str(model.arch_id) + '_' + y_hashid
-        # learn_hashid =  str(model.arch_tag) + '_' + y_hashid
-        if model.current_era is not None and len(model.current_era['epoch_list']) == 0:
-            print('Not starting new era (old one hasnt begun yet')
-        else:
-            _new_era = {
-                'learn_hashid': learn_hashid,
-                'arch_hashid': model.get_arch_hashid(),
-                'arch_id': model.arch_id,
-                'num_learn': len(y_learn),
-                'num_valid': len(y_valid),
-                'valid_loss_list': [],
-                'learn_loss_list': [],
-                'epoch_list': [],
-                'learn_state': model.learn_state.asdict(),
-                'size': 0,
-            }
-            num_eras = len(model.era_history)
-            print('starting new era %d' % (num_eras,))
-            #if model.current_era is not None:
-            model.current_era = _new_era
-            model.era_history.append(model.current_era)
-
-    def _record_epoch(model, epoch_info):
-        """
-        Records an epoch in an era.
-        """
-        # each key/val in an epoch_info dict corresponds to a key/val_list in
-        # an era dict.
-        model.current_era['size'] += 1
-        for key in epoch_info:
-            key_ = key + '_list'
-            if key_ not in model.current_era:
-                model.current_era[key_] = []
-            model.current_era[key_].append(epoch_info[key])
-
-    def _epoch_learn_step(model, theano_backprop, X_learn, y_learn):
+    def _epoch_learn(model, theano_backprop, X_learn, y_learn, w_learn):
         """
         Backwards propogate -- Run learning set through the backwards pass
+
+        Ignore:
+            >>> from ibeis_cnn.models.abstract_models import *  # NOQA
+            >>> from ibeis_cnn.models import mnist
+            >>> import ibeis_cnn.__THEANO__ as theano
+            >>> model, dataset = mnist.testdata_mnist(dropout=.5)
+            >>> model.monitor_config['monitor'] = False
+            >>> model.monitor_config['showprog'] = True
+            >>> model._behavior['buffered'] = False
+            >>> model.init_arch()
+            >>> model.learn_state.init()
+            >>> batch_size = 16
+            >>> X_learn, y_learn = dataset.subset('test')
+            >>> model.ensure_data_params(X_learn, y_learn)
+            >>> class_to_weight = model.data_params['class_to_weight']
+            >>> class_to_weight.take(y_learn)
+            >>> w_learn = class_to_weight.take(y_learn).astype(np.float32)
+            >>> model._new_fit_session()
+            >>> theano_backprop = model.build_backprop_func()
         """
-        # from ibeis_cnn import batch_processing as batch
+        buffered = model._behavior['buffered']
+        learn_outputs = model.process_batch(
+            theano_backprop, X_learn, y_learn, w_learn, shuffle=True,
+            augment_on=model.hyperparams['augment_on'], buffered=buffered)
 
-        learn_outputs = model.process_batch(theano_backprop, X_learn, y_learn,
-                                            shuffle=True,
-                                            augment_on=model.hyperparams['augment_on'],
-                                            buffered=True)
-
-        # compute the loss over all learning batches
+        # average loss over all learning batches
         learn_info = {}
         learn_info['learn_loss'] = learn_outputs['loss'].mean()
+        learn_info['learn_loss_std'] = learn_outputs['loss'].std()
 
-        if 'loss_regularized' in learn_outputs:
+        if 'loss_reg' in learn_outputs:
             # Regularization information
-            learn_info['learn_loss_regularized'] = (
-                learn_outputs['loss_regularized'].mean())
-            #if 'valid_acc' in model.requested_headers:
-            #    learn_info['test_acc']  = learn_outputs['accuracy']
-            regularization_amount = (
-                learn_outputs['loss_regularized'] - learn_outputs['loss'])
-            regularization_ratio = (
-                regularization_amount / learn_outputs['loss'])
-            regularization_percent = (
-                regularization_amount / learn_outputs['loss_regularized'])
+            learn_info['learn_loss_reg'] = learn_outputs['loss_reg']
+            reg_amount = (learn_outputs['loss_reg'] - learn_outputs['loss'])
+            reg_ratio = (reg_amount / learn_outputs['loss'])
+            reg_percent = (reg_amount / learn_outputs['loss_reg'])
 
-            learn_info['regularization_percent'] = regularization_percent
-            learn_info['regularization_ratio'] = regularization_ratio
+            if 'accuracy' in learn_outputs:
+                learn_info['learn_acc']  = learn_outputs['accuracy'].mean()
+                learn_info['learn_acc_std']  = learn_outputs['accuracy'].std()
+            if 'predictions' in learn_outputs:
+                p, r, f, s = sklearn.metrics.precision_recall_fscore_support(
+                    y_true=learn_outputs['auglbl_list'], y_pred=learn_outputs['predictions']
+                )
+                #report = sklearn.metrics.classification_report(
+                #    y_true=learn_outputs['auglbl_list'], y_pred=learn_outputs['predictions']
+                #)
+                learn_info['learn_precision'] = p
+                learn_info['learn_recall'] = r
+                learn_info['learn_fscore'] = f
+                learn_info['learn_support'] = s
+
+            learn_info['reg_percent'] = reg_percent
+            learn_info['reg_ratio'] = reg_ratio
 
         param_update_mags = {}
         for key, val in learn_outputs.items():
@@ -752,16 +811,25 @@ class _ModelFitter(object):
             learn_info['diverged'] = True
         return learn_info
 
-    def _epoch_validate_step(model, theano_forward, X_valid, y_valid):
+    def _epoch_validate(model, theano_forward, X_valid, y_valid, w_valid):
         """
         Forwards propogate -- Run validation set through the forwards pass
         """
-        valid_outputs = model.process_batch(theano_forward, X_valid, y_valid)
+        valid_outputs = model.process_batch(theano_forward, X_valid, y_valid, w_valid)
         valid_info = {}
         valid_info['valid_loss'] = valid_outputs['loss_determ'].mean()
         valid_info['valid_loss_std'] = valid_outputs['loss_determ'].std()
         if 'valid_acc' in model.requested_headers:
             valid_info['valid_acc'] = valid_outputs['accuracy'].mean()
+            valid_info['valid_acc_std'] = valid_outputs['accuracy'].std()
+        if 'predictions' in valid_outputs:
+            p, r, f, s = sklearn.metrics.precision_recall_fscore_support(
+                y_true=valid_outputs['auglbl_list'], y_pred=valid_outputs['predictions']
+            )
+            valid_info['valid_precision'] = p
+            valid_info['valid_recall'] = r
+            valid_info['valid_fscore'] = f
+            valid_info['valid_support'] = s
         return valid_info
 
 
@@ -780,7 +848,7 @@ class _BatchUtility(object):
         return data_idx
 
     @classmethod
-    def shuffle_input(cls, X, y, data_per_label=1, rng=None):
+    def shuffle_input(cls, X, y, w, data_per_label=1, rng=None):
         rng = ut.ensure_rng(rng)
         num_labels = X.shape[0] // data_per_label
         label_idx = ut.random_indexes(num_labels, rng=rng)
@@ -790,10 +858,13 @@ class _BatchUtility(object):
         if y is not None:
             y = y.take(label_idx, axis=0)
             y = np.ascontiguousarray(y)
-        return X, y
+        if w is not None:
+            w = w.take(label_idx, axis=0)
+            w = np.ascontiguousarray(w)
+        return X, y, w
 
     @classmethod
-    def slice_batch(cls, X, y, batch_size, batch_index, data_per_label,
+    def slice_batch(cls, X, y, w, batch_size, batch_index, data_per_label=1,
                     wraparound=False):
         start_x = batch_index * batch_size
         end_x = (batch_index + 1) * batch_size
@@ -803,6 +874,7 @@ class _BatchUtility(object):
         y_sl = slice(start_x // data_per_label, end_x // data_per_label)
         Xb = X[x_sl]
         yb = y if y is None else y[y_sl]
+        wb = w if w is None else w[y_sl]
         if wraparound:
             # Append extra data to ensure the batch size is full
             if Xb.shape[0] != batch_size:
@@ -812,7 +884,10 @@ class _BatchUtility(object):
                 if yb is not None:
                     yb_wrap = y[slice(0, extra // data_per_label)]
                     yb = np.concatenate([yb, yb_wrap], axis=0)
-        return Xb, yb
+                if wb is not None:
+                    wb_wrap = w[slice(0, extra // data_per_label)]
+                    wb = np.concatenate([wb, wb_wrap], axis=0)
+        return Xb, yb, wb
 
     def _pad_labels(model, yb):
         """
@@ -824,14 +899,6 @@ class _BatchUtility(object):
         yb_buffer = -np.ones(pad_size, dtype=yb.dtype)
         yb = np.hstack((yb, yb_buffer))
         return yb
-
-    def prepare_data(model, X):
-        is_int = ut.is_int(X)
-        is_cv2 = model.X_is_cv2_native
-        whiten_on = model.hyperparams['whiten_on']
-        Xb, _ = model._prepare_batch(X, None, is_int=is_int, is_cv2=is_cv2,
-                                     whiten_on=whiten_on)
-        return Xb
 
     def _stack_outputs(model, theano_fn, output_list):
         """
@@ -868,19 +935,19 @@ class _ModelBatch(_BatchUtility):
         model.pad_labels = False
         model.X_is_cv2_native = True
 
-    def process_batch(model, theano_fn, X, y=None, buffered=False,
+    def process_batch(model, theano_fn, X, y=None, w=None, buffered=False,
                       unwrap=False, shuffle=False, augment_on=False):
         """ Execute a theano function on batches of X and y """
         # Break data into generated batches
         # TODO: sliced batches when there is no shuffling
         # Create an iterator to generate batches of data
-        batch_iter = model.batch_iterator(X, y, shuffle=shuffle,
+        batch_iter = model.batch_iterator(X, y, w, shuffle=shuffle,
                                           augment_on=augment_on)
         if buffered:
             batch_iter = ut.buffered_generator(batch_iter)
         if model.monitor_config['showprog']:
             num_batches = (X.shape[0] + model.batch_size - 1) // model.batch_size
-            batch_iter = ut.ProgressIter(
+            batch_iter = ut.ProgIter(
                 batch_iter, nTotal=num_batches, lbl=theano_fn.name, freq=10,
                 bs=True, adjust=True)
 
@@ -888,14 +955,14 @@ class _ModelBatch(_BatchUtility):
         output_list = []
         if y is None:
             aug_yb_list = None
-            for Xb, yb in batch_iter:
-                batch_output = theano_fn(Xb)
-                output_list.append(batch_output)
+            for Xb, yb, wb in batch_iter:
+                batch_label = theano_fn(Xb)
+                output_list.append(batch_label)
         else:
             aug_yb_list = []
-            for Xb, yb in batch_iter:
-                batch_output = theano_fn(Xb, yb)
-                output_list.append(batch_output)
+            for Xb, yb, wb in batch_iter:
+                batch_label = theano_fn(Xb, yb, wb)
+                output_list.append(batch_label)
                 aug_yb_list.append(yb)
 
         # Combine results of batches into one big result
@@ -910,7 +977,8 @@ class _ModelBatch(_BatchUtility):
         return outputs
 
     @profile
-    def batch_iterator(model, X, y, shuffle=False, augment_on=False):
+    def batch_iterator(model, X, y=None, w=None, shuffle=False,
+                       augment_on=False):
         """
         Example:
             >>> # ENABLE_DOCTEST
@@ -944,32 +1012,35 @@ class _ModelBatch(_BatchUtility):
         batch_size = model.batch_size
         data_per_label = model.data_per_label_input
         wraparound = model.input_shape[0] is not None
-        model._validate_labels(X, y)
+        model._validate_labels(X, y, w)
+        rng = model._rng
 
         num_batches = (X.shape[0] + batch_size - 1) // batch_size
 
         if shuffle:
-            X, y = model.shuffle_input(X, y, data_per_label)
+            X, y, w = model.shuffle_input(X, y, w, data_per_label, rng=rng)
 
         is_int = ut.is_int(X)
         is_cv2 = model.X_is_cv2_native
-        whiten_on = model.data_params is not None
+        whiten_on = model.hyperparams['whiten_on']
 
         # Slice and preprocess data in batch
         for batch_index in range(num_batches):
             # Take a slice from the data
-            Xb, yb = model.slice_batch(X, y, batch_size, batch_index,
-                                       data_per_label, wraparound)
+            Xb_, yb_, wb_ = model.slice_batch(X, y, w, batch_size, batch_index,
+                                              data_per_label, wraparound)
             # Prepare data for the GPU
-            Xb, yb = model._prepare_batch(Xb, yb, is_int=is_int, is_cv2=is_cv2,
-                                          augment_on=augment_on,
-                                          whiten_on=whiten_on)
-            yield Xb, yb
+            Xb, yb, wb = model._prepare_batch(Xb_, yb_, wb_, is_int=is_int,
+                                              is_cv2=is_cv2,
+                                              augment_on=augment_on,
+                                              whiten_on=whiten_on)
+            yield Xb, yb, wb
 
-    def _prepare_batch(model, Xb, yb, is_int=True, is_cv2=True,
+    def _prepare_batch(model, Xb_, yb_, wb_, is_int=True, is_cv2=True,
                        augment_on=False, whiten_on=False):
-        Xb = Xb.astype(np.float32, copy=True)
-        yb = None if yb is None else yb.astype(np.int32, copy=True)
+        Xb = Xb_.astype(np.float32, copy=True)
+        yb = None if yb_ is None else yb_.astype(np.int32, copy=True)
+        wb = None if wb_ is None else wb_.astype(np.float32, copy=False)
         if is_int:
             # Rescale the batch data to the range 0 to 1
             Xb = Xb / 255.0
@@ -984,7 +1055,7 @@ class _ModelBatch(_BatchUtility):
             np.divide(Xb, std, out=Xb)
             #Xb = (Xb - mean) / (std)
         if is_cv2:
-            # Convert from cv2 to lasange format
+            # Convert from cv2 to lasagne format
             Xb = Xb.transpose((0, 3, 1, 2))
         if yb is not None:
             # if encoder is not None:
@@ -993,7 +1064,21 @@ class _ModelBatch(_BatchUtility):
             if model.data_per_label_input > 1 and model.pad_labels:
                 # Pad data for siamese networks
                 yb = model._pad_labels(yb)
-        return Xb, yb
+        return Xb, yb, wb
+
+    def prepare_data(model, X, y=None, w=None):
+        """ convenience function for external use """
+        is_int = ut.is_int(X)
+        is_cv2 = model.X_is_cv2_native
+        whiten_on = model.hyperparams['whiten_on']
+        Xb, yb, wb = model._prepare_batch(X, y, w, is_int=is_int,
+                                          is_cv2=is_cv2, whiten_on=whiten_on)
+        if y is None:
+            return Xb
+        elif w is None:
+            return Xb, yb
+        else:
+            return Xb, yb, wb
 
 
 class _ModelPredicter(object):
@@ -1002,7 +1087,6 @@ class _ModelPredicter(object):
         """
         Returns all prediction outputs of the network in a dictionary.
         """
-        # from ibeis_cnn import batch_processing as batch
         if ut.VERBOSE:
             print('\n[train] --- MODEL INFO ---')
             model.print_architecture_str()
@@ -1012,7 +1096,8 @@ class _ModelPredicter(object):
         # Begin testing with the neural network
         print('\n[test] predict with batch size %0.1f' % (
             model.batch_size))
-        test_outputs = model.process_batch(theano_predict, X_test, unwrap=True)
+        test_outputs = model.process_batch(
+            theano_predict, X_test, unwrap=True)
         return test_outputs
 
     def predict_proba(model, X_test):
@@ -1023,14 +1108,14 @@ class _ModelPredicter(object):
     def predict_proba_Xb(model, Xb):
         """ Accepts prepared inputs """
         theano_predict = model.build_predict_func()
-        batch_output = theano_predict(Xb)
+        batch_label = theano_predict(Xb)
         output_names = [
             str(outexpr.variable)
             if outexpr.variable.name is None else
             outexpr.variable.name
             for outexpr in theano_predict.outputs
         ]
-        test_outputs = dict(zip(output_names, batch_output))
+        test_outputs = dict(zip(output_names, batch_label))
         y_proba = test_outputs['network_output_determ']
         return y_proba
 
@@ -1040,9 +1125,381 @@ class _ModelPredicter(object):
         return y_predict
 
 
+class _ModelBackend(object):
+    """
+    Functions that build and compile theano exepressions
+    """
+
+    def _init_compile_vars(model, kwargs):
+        model._theano_exprs = ut.ddict(lambda: None)
+        model._theano_backprop = None
+        model._theano_forward = None
+        model._theano_predict = None
+        model._theano_mode = None
+        # theano.compile.FAST_COMPILE
+        # theano.compile.FAST_RUN
+
+    def build(model):
+        print('[model] --- BUILDING SYMBOLIC THEANO FUNCTIONS ---')
+        model.build_backprop_func()
+        model.build_forward_func()
+        model.build_predict_func()
+        print('[model] --- FINISHED BUILD ---')
+
+    def build_predict_func(model):
+        """ Computes predictions given unlabeled data """
+        if model._theano_predict is None:
+            print('[model.build] request_predict')
+            netout_exprs = model._get_network_output()
+            network_output_determ = netout_exprs['network_output_determ']
+            unlabeled_outputs = model._get_unlabeled_outputs()
+
+            fn_inputs = model._theano_fn_inputs
+            X_batch, X_given = ut.take(fn_inputs, ['X_batch', 'X_given'])
+
+            theano_predict = theano.function(
+                inputs=[theano.In(X_batch)],
+                outputs=[network_output_determ] + unlabeled_outputs,
+                givens={X_given: X_batch},
+                updates=None,
+                mode=model._theano_mode,
+                name=':predict'
+            )
+            model._theano_predict = theano_predict
+        return model._theano_predict
+
+    def build_forward_func(model):
+        """
+        Computes loss, but does not learn.
+        Returns diagnostic information.
+
+        Ignore:
+            >>> from ibeis_cnn.models.abstract_models import *  # NOQA
+            >>> from ibeis_cnn.models import mnist
+            >>> import ibeis_cnn.__THEANO__ as theano
+            >>> model, dataset = mnist.testdata_mnist(dropout=.5)
+            >>> model.init_arch()
+            >>> batch_size = 16
+            >>> model.learn_state.init()
+            >>> Xb, yb, wb = model._testdata_batch(dataset, batch_size)
+            >>> loss = model._theano_exprs['loss'] = None
+            >>> loss_item = model._theano_loss_exprs['loss_item']
+            >>> X_in = theano.In(model._theano_fn_inputs['X_batch'])
+            >>> y_in = theano.In(model._theano_fn_inputs['y_batch'])
+            >>> w_in = theano.In(model._theano_fn_inputs['w_batch'])
+            >>> loss_batch = loss_item.eval({X_in: Xb, y_in: yb})
+        """
+        if model._theano_forward is None:
+            print('[model.build] request_forward')
+            fn_inputs = model._theano_fn_inputs
+            X_batch, X_given = ut.take(fn_inputs, ['X_batch', 'X_given'])
+            y_batch, y_given = ut.take(fn_inputs, ['y_batch', 'y_given'])
+            w_batch, w_given = ut.take(fn_inputs, ['w_batch', 'w_given'])
+
+            labeled_outputs = model._get_labeled_outputs()
+            unlabeled_outputs = model._get_unlabeled_outputs()
+
+            loss_exprs = model._theano_loss_exprs
+            loss_determ = loss_exprs['loss_determ']
+            #loss_std_determ = loss_exprs['loss_std_determ']
+            forward_losses = [loss_determ]
+
+            In = theano.In
+            theano_forward = theano.function(
+                inputs=[In(X_batch), In(y_batch), In(w_batch)],
+                outputs=forward_losses + labeled_outputs + unlabeled_outputs,
+                givens={X_given: X_batch, y_given: y_batch, w_given: w_batch},
+                updates=None,
+                mode=model._theano_mode,
+                name=':feedforward'
+            )
+            model._theano_forward = theano_forward
+        return model._theano_forward
+
+    def build_backprop_func(model):
+        """
+        Computes loss and updates model parameters.
+        Returns diagnostic information.
+        """
+        if model._theano_backprop is None:
+            print('[model.build] request_backprop')
+            # Must have an initialized learning state
+            model.learn_state.init()
+
+            fn_inputs = model._theano_fn_inputs
+            X_batch, X_given = ut.take(fn_inputs, ['X_batch', 'X_given'])
+            y_batch, y_given = ut.take(fn_inputs, ['y_batch', 'y_given'])
+            w_batch, w_given = ut.take(fn_inputs, ['w_batch', 'w_given'])
+
+            labeled_outputs = model._get_labeled_outputs()
+
+            # Build backprop losses
+            loss_exprs = model._theano_loss_exprs
+            loss = loss_exprs['loss']
+            #loss_std = loss_exprs['loss_std']
+            loss_reg = loss_exprs['loss_reg']
+
+            backprop_loss_ = loss_reg
+            backprop_losses = [loss_reg, loss]
+
+            # Updates network parameters based on the training loss
+            parameters = model.get_all_params(trainable=True)
+
+            updates = model._make_updates(parameters, backprop_loss_)
+            monitor_outputs = model._make_monitor_outputs(parameters, updates)
+
+            In = theano.In
+            theano_backprop = theano.function(
+                inputs=[In(X_batch), In(y_batch), In(w_batch)],
+                outputs=(backprop_losses + labeled_outputs + monitor_outputs),
+                givens={X_given: X_batch, y_given: y_batch, w_given: w_batch},
+                updates=updates,
+                mode=model._theano_mode,
+                name=':backprop',
+            )
+            model._theano_backprop = theano_backprop
+        return model._theano_backprop
+
+    @property
+    def _theano_fn_inputs(model):
+        if model._theano_exprs['fn_inputs'] is None:
+            fn_inputs = {
+                # Data
+                'X_given': T.tensor4('X_given'),
+                'X_batch': T.tensor4('X_batch'),
+
+                # Labels
+                'y_given': T.ivector('y_given'),
+                'y_batch': T.ivector('y_batch'),
+
+                # Importance
+                'w_given': T.vector('w_given'),
+                'w_batch': T.vector('w_batch'),
+            }
+            model._theano_exprs['fn_inputs'] = fn_inputs
+        return model._theano_exprs['fn_inputs']
+
+    def _testdata_batch(model, dataset, batch_size=16):
+        data, labels = dataset.subset('test')
+        model.ensure_data_params(data, labels)
+        class_to_weight = model.data_params['class_to_weight']
+        class_to_weight.take(labels)
+        weights = class_to_weight.take(labels).astype(np.float32)
+        data_per_label = model.data_per_label_input
+        Xb_, yb_, wb_ = model.slice_batch(data, labels, weights, batch_size,
+                                          data_per_label)
+        Xb, yb, wb = model.prepare_data(Xb_, yb_, wb_)
+        return Xb, yb, wb
+        pass
+
+    @property
+    def _theano_loss_exprs(model):
+        r"""
+        Requires that a custom loss function is defined in the inherited class
+
+        Ignore:
+            >>> from ibeis_cnn.models.abstract_models import *  # NOQA
+            >>> from ibeis_cnn.models import mnist
+            >>> import ibeis_cnn.__THEANO__ as theano
+            >>> model, dataset = mnist.testdata_mnist(dropout=.5)
+            >>> model._init_compile_vars({})  # reset state
+            >>> model.init_arch()
+            >>> data, labels = dataset.subset('test')
+            >>> loss = model._theano_loss_exprs['loss']
+            >>> loss_item = model._theano_loss_exprs['loss_item']
+            >>> X_in = theano.In(model._theano_fn_inputs['X_batch'])
+            >>> y_in = theano.In(model._theano_fn_inputs['y_batch'])
+            >>> w_in = theano.In(model._theano_fn_inputs['w_batch'])
+            >>> # Eval
+            >>> input1 = {X_in: Xb, y_in: yb, w_in: wb}
+            >>> input2 = {X_in: Xb, y_in: yb}
+            >>> _loss = loss.eval(input1)
+            >>> _loss_item = loss_item.eval(input2)
+        """
+        if model._theano_exprs['loss'] is None:
+            with warnings.catch_warnings():
+                y_batch = model._theano_fn_inputs['y_batch']
+                w_batch = model._theano_fn_inputs['w_batch']
+
+                netout_exprs = model._get_network_output()
+                netout_learn = netout_exprs['network_output_learn']
+                netout_determ = netout_exprs['network_output_determ']
+
+                # In both learn and validate setting get:
+                # Loss of each iterm in the batch
+                # Standard deviation of the loss in the batch
+                # Weighted mean of the loss in the batch
+
+                # Loss of each example/item
+                # Record loss standard deviation over batch for diagnostics
+
+                print('Building symbolic loss function')
+                loss_item = model.loss_function(netout_learn, y_batch)
+                loss_item.name = 'loss_item'
+                #loss_std = loss_item.std()
+                #loss_std.name = 'loss_std'
+                loss = lasagne.objectives.aggregate(loss_item, weights=w_batch,
+                                                    mode='mean')
+                loss.name = 'loss'
+
+                print('Building symbolic loss function (determenistic)')
+                loss_item_determ = model.loss_function(netout_determ, y_batch)
+                loss_item_determ.name = 'loss_item_determ'
+                #loss_std_determ = loss_item_determ.std()
+                #loss_std_determ.name = 'loss_std_determ'
+                loss_determ = lasagne.objectives.aggregate(loss_item_determ,
+                                                           weights=w_batch,
+                                                           mode='mean')
+                loss_determ.name = 'loss_determ'
+
+                # Regularize the learning loss function
+
+                # TODO: L2 should one of many regularization options (Lp, L1)
+                L2 = lasagne.regularization.regularize_network_params(
+                    model.output_layer, lasagne.regularization.l2)
+                L2.name = 'reg_L2_param_mag'
+
+                weight_decay = model.learn_state.shared['weight_decay']
+                reg_L2_decay = weight_decay * L2
+                reg_L2_decay.name = 'reg_L2_decay'
+                loss_reg = loss + reg_L2_decay
+                loss_reg.name = 'loss_reg'
+
+                loss_exprs = {
+                    'loss_reg': loss_reg,
+                    'loss_determ': loss_determ,
+                    'loss': loss,
+                    #'loss_std': loss_std,
+                    #'loss_std_determ': loss_std_determ,
+                    'loss_item': loss_item,
+                    'loss_item_determ': loss_item,
+                }
+            model._theano_exprs['loss'] = loss_exprs
+        return model._theano_exprs['loss']
+
+    def _make_updates(model, parameters, backprop_loss_):
+        grads = theano.grad(backprop_loss_, parameters, add_names=True)
+
+        shared_learning_rate = model.learn_state.shared['learning_rate']
+        momentum = model.learn_state.shared['momentum']
+
+        updates = lasagne.updates.nesterov_momentum(
+            loss_or_grads=grads,
+            params=parameters,
+            learning_rate=shared_learning_rate,
+            momentum=momentum
+            # add_names=True  # TODO; commit to lasagne
+        )
+
+        # workaround for pylearn2 bug documented in
+        # https://github.com/Lasagne/Lasagne/issues/728
+        for param, update in updates.items():
+            if param.broadcastable != update.broadcastable:
+                updates[param] = T.patternbroadcast(update, param.broadcastable)
+        return updates
+
+    def _get_network_output(model):
+        """
+        gets the activations of the output neurons
+        """
+        if model._theano_exprs['netout'] is None:
+            X_batch = model._theano_fn_inputs['X_batch']
+
+            network_output_learn = lasagne.layers.get_output(
+                model.output_layer, X_batch)
+            network_output_learn.name = 'network_output_learn'
+
+            network_output_determ = lasagne.layers.get_output(
+                model.output_layer, X_batch, deterministic=True)
+            network_output_determ.name = 'network_output_determ'
+
+            netout_exprs = {
+                'network_output_learn': network_output_learn,
+                'network_output_determ': network_output_determ,
+            }
+            model._theano_exprs['netout'] = netout_exprs
+        return model._theano_exprs['netout']
+
+    def _get_unlabeled_outputs(model):
+        if model._theano_exprs['unlabeled_out'] is None:
+            netout_exprs = model._get_network_output()
+            network_output_determ = netout_exprs['network_output_determ']
+            out = model.custom_unlabeled_outputs(network_output_determ)
+            model._theano_exprs['unlabeled_out'] = out
+        return model._theano_exprs['unlabeled_out']
+
+    def _get_labeled_outputs(model):
+        if model._theano_exprs['labeled_out'] is None:
+            netout_exprs = model._get_network_output()
+            network_output_determ = netout_exprs['network_output_determ']
+            y_batch = model._theano_fn_inputs['y_batch']
+            model._theano_exprs['labeled_out'] = model.custom_labeled_outputs(
+                network_output_determ, y_batch)
+        return model._theano_exprs['labeled_out']
+
+    def _make_monitor_outputs(model, parameters, updates):
+        """
+        Builds parameters to monitor the magnitude of updates durning learning
+        """
+        # Build outputs to babysit training
+        monitor_outputs = []
+        if model.monitor_config['monitor_updates']:  # and False:
+            for param in parameters:
+                # The vector each param was udpated with
+                # (one vector per channel)
+                param_update_vec = updates[param] - param
+                param_update_vec.name = 'param_update_vector_' + param.name
+                flat_shape = (param_update_vec.shape[0],
+                              T.prod(param_update_vec.shape[1:]))
+                flat_param_update_vec = param_update_vec.reshape(flat_shape)
+                param_update_mag = (flat_param_update_vec ** 2).sum(-1)
+                param_update_mag.name = 'param_update_magnitude_' + param.name
+                monitor_outputs.append(param_update_mag)
+        return monitor_outputs
+
+    def custom_unlabeled_outputs(model, network_output):
+        """
+        override in inherited subclass to enable custom symbolic expressions
+        based on the network output alone
+        """
+        raise NotImplementedError('need override')
+        return []
+
+    def custom_labeled_outputs(model, network_output, y_batch):
+        """
+        override in inherited subclass to enable custom symbolic expressions
+        based on the network output and the labels
+        """
+        raise NotImplementedError('need override')
+        return []
+
+
 @ut.reloadable_class
 class _ModelVisualization(object):
     """
+
+    CommandLine:
+        python -m ibeis_cnn.models.abstract_models _ModelVisualization --show
+
+
+    Example:
+        >>> # DISABLE_DOCTEST
+        >>> from ibeis_cnn.models.abstract_models import *  # NOQA
+        >>> from ibeis_cnn.models import dummy
+        >>> model = dummy.DummyModel(batch_size=16, autoinit=False)
+        >>> #model._theano_mode = theano.compile.Mode(linker='py', optimizer='fast_compile')
+        >>> #model._theano_mode = theano.compile.Mode(linker='py', optimizer='fast_compile')
+        >>> #theano.compile.FAST_COMPILE
+        >>> model.init_arch()
+        >>> X, y = model.make_random_testdata(num=37, cv2_format=True, asint=False)
+        >>> model.fit(X, y, max_epochs=10, era_size=3)
+        >>> fnum = None
+        >>> import plottool as pt
+        >>> pt.qt4ensure()
+        >>> fnum = 1
+        >>> #model.show_loss_history(fnum)
+        >>> model.show_era_report(fnum)
+        >>> ut.show_if_requested()
     """
 
     def show_arch(model, fnum=None, fullinfo=True, **kwargs):
@@ -1062,7 +1519,7 @@ class _ModelVisualization(object):
             >>> from ibeis_cnn.draw_net import *  # NOQA
             >>> from ibeis_cnn.models import mnist
             >>> model, dataset = mnist.testdata_mnist(dropout=.5)
-            >>> model.initialize_architecture()
+            >>> model.init_arch()
             >>> model.load_model_state()
             >>> ut.quit_if_noshow()
             >>> import plottool as pt
@@ -1116,17 +1573,17 @@ class _ModelVisualization(object):
             for _ in ut.ProgIter(range(10)):
                 step_fn()
 
-    def show_era_update_mag_history(model, fnum=None):
+    def show_update_mag_history(model, fnum=None):
         """
         CommandLine:
-            python -m ibeis_cnn --tf _ModelVisualization.show_era_update_mag_history --show
+            python -m ibeis_cnn --tf _ModelVisualization.show_update_mag_history --show
 
         Example:
             >>> # DISABLE_DOCTEST
             >>> from ibeis_cnn.models.abstract_models import *  # NOQA
             >>> model = testdata_model_with_history()
             >>> fnum = None
-            >>> model.show_era_update_mag_history(fnum)
+            >>> model.show_update_mag_history(fnum)
             >>> ut.show_if_requested()
         """
         import plottool as pt
@@ -1149,12 +1606,13 @@ class _ModelVisualization(object):
         if len(model.era_history) > 0:
             #era = model.era_history[0]
             labels = {'rate': 'learning rate'}
-        ydatas = [
-            {
-                'rate': np.array([era['learn_state']['learning_rate']] * len(era['epoch_list'])),
-            }
-            for era in model.era_history
-        ]
+        ydatas = []
+        for era in model.era_history:
+            learn_state_list = ut.take_column(era['epoch_info_list'], 'learn_state')
+            learn_rate_list = ut.take_column(learn_state_list, 'learning_rate')
+            ydatas.append({
+                'rate': learn_rate_list,
+            })
         model._show_era_measure(ydatas, labels=labels, ylabel='learning rate',
                                 yscale='linear', fnum=fnum, pnum=next_pnum())
 
@@ -1164,7 +1622,32 @@ class _ModelVisualization(object):
         pt.set_figtitle('Weight Update History: ' + model.hist_id + '\n' + model.arch_id)
         return fig
 
-    def show_era_loss_history(model, fnum=None):
+    def show_pr_history(model, fnum=None):
+        """
+        CommandLine:
+            python -m ibeis_cnn --tf _ModelVisualization.show_pr_history --show
+
+        Example:
+            >>> # DISABLE_DOCTEST
+            >>> from ibeis_cnn.models.abstract_models import *  # NOQA
+            >>> model = testdata_model_with_history()
+            >>> fnum = None
+            >>> model.show_pr_history(fnum)
+            >>> ut.show_if_requested()
+        """
+        import plottool as pt
+        fnum = pt.ensure_fnum(fnum)
+        fig = pt.figure(fnum=fnum, pnum=(1, 1, 1), doclf=True, docla=True)
+        next_pnum = pt.make_pnum_nextgen(nRows=2, nCols=2)
+        if len(model.era_history) > 0:
+            model._show_era_class_pr(['valid'], ['precision'], fnum=fnum, pnum=next_pnum())
+            model._show_era_class_pr(['valid'], ['recall'], fnum=fnum, pnum=next_pnum())
+            model._show_era_class_pr(['learn'], ['precision'], fnum=fnum, pnum=next_pnum())
+            model._show_era_class_pr(['learn'], ['recall'], fnum=fnum, pnum=next_pnum())
+        pt.set_figtitle('Era PR History: ' + model.hist_id + '\n' + model.arch_id)
+        return fig
+
+    def show_loss_history(model, fnum=None):
         r"""
         Args:
             fnum (int):  figure number(default = None)
@@ -1173,14 +1656,14 @@ class _ModelVisualization(object):
             mpl.Figure: fig
 
         CommandLine:
-            python -m ibeis_cnn --tf _ModelVisualization.show_era_loss_history --show
+            python -m ibeis_cnn --tf _ModelVisualization.show_loss_history --show
 
         Example:
             >>> # DISABLE_DOCTEST
             >>> from ibeis_cnn.models.abstract_models import *  # NOQA
             >>> model = testdata_model_with_history()
             >>> fnum = None
-            >>> model.show_era_loss_history(fnum)
+            >>> model.show_loss_history(fnum)
             >>> ut.show_if_requested()
         """
         import plottool as pt
@@ -1202,32 +1685,98 @@ class _ModelVisualization(object):
         labels = None
         if len(model.era_history) > 0:
             labels = {'ratio': 'learn/valid'}
-        ydatas = [
-            {
-                'ratio': np.divide(era['learn_loss_list'],
-                                   era['valid_loss_list'])
-            }
-            for era in model.era_history
-        ]
+
+        ydatas = [{
+            'ratio': np.divide(
+                ut.take_column(era['epoch_info_list'], 'learn_loss'),
+                ut.take_column(era['epoch_info_list'], 'valid_loss'),)
+        } for era in model.era_history]
         return model._show_era_measure(ydatas, labels, ylabel='learn/valid', yscale='linear', **kwargs)
 
+    def _show_era_class_pr(model, types=['valid', 'learn'],
+                           measures=['precision', 'recall'],
+                           **kwargs):
+
+        if getattr(model, 'encoder', None):
+            class_idxs = model.encoder.transform(model.encoder.classes_)
+            class_lbls = model.encoder.classes_
+        else:
+            class_idxs = list(range(model.output_dims))
+            class_lbls = list(range(model.output_dims))
+
+        import plottool as pt
+        type_styles = {'learn': '-x', 'valid': '-o'}
+        styles = ut.odict(ut.flatten([
+            [
+                (('%s_%s_%d' % (t, m, y,)), type_styles[t])
+                for t in types for m in measures
+            ]
+            for y in class_idxs]
+        ))
+
+        colors = ut.odict(ut.flatten([
+            [
+                (('%s_%s_%d' % (t, m, y,)), color)
+                for t in types for m in measures
+            ]
+            for (y, color) in zip(class_idxs, pt.distinct_colors(len(class_idxs)))
+        ]))
+
+        if len(model.era_history) > 0:
+            labels = ut.odict(ut.flatten([[
+                ('%s_%s_%d' % (t, m, y,), '%s %s %s' % (t, m, category,))
+                for t in types for m in measures
+            ]
+                for y, category in zip(class_idxs, class_lbls)
+            ]))
+
+        epoch_infos_list = [era_['epoch_info_list']
+                            for era_ in model.era_history]
+
+        ydatas = [
+            ut.odict(ut.flatten([[
+                ('%s_%s_%d' % (t, m, y,), np.array(ut.take_column(epoch_infos, '%s_%s' % (t, m)))[:, y])
+                for t in types for m in measures
+            ]
+                for y in class_idxs
+            ]))
+            for epoch_infos in epoch_infos_list
+        ]
+
+        fig = model._show_era_measure(ydatas,
+                                      styles=styles,
+                                      labels=labels,
+                                      colors=colors,
+                                      #xdatas=xdatas,
+                                      ylabel='precision',
+                                      yscale='linear', **kwargs)
+        return fig
+
     def show_era_acc(model, **kwargs):
-        styles = {'valid': '-o'}
+        #styles = {'valid': '-o'}
+        styles = {'learn': '-x', 'valid': '-o'}
         labels = None
         if len(model.era_history) > 0:
-            era = model.era_history[0]
-            lastacc = era['valid_acc_list'][-1]
+            era = model.era_history[-1]
+            lastlearn_acc = ut.take_column(era['epoch_info_list'], 'learn_acc')[-1]
+            lastvalid_acc = ut.take_column(era['epoch_info_list'], 'valid_acc')[-1]
             labels = {
-                'valid': 'valid acc ' + str(era['num_valid']) + ' ' + ut.repr2(lastacc * 100, precision=2) + '%',
+                'valid': 'valid acc ' + str(era['num_valid']) + ' ' + ut.repr4(lastlearn_acc * 100) + '%',
+                'learn': 'learn acc ' + str(era['num_learn']) + ' ' + ut.repr4(lastvalid_acc * 100) + '%',
             }
-        ydatas = [
-            {
-                'valid': era_['valid_acc_list'],
-            }
-            for era_ in model.era_history
-        ]
+
+        ydatas = [{
+            'valid': ut.take_column(era_['epoch_info_list'], 'valid_acc'),
+            'learn': ut.take_column(era_['epoch_info_list'], 'learn_acc'),
+        } for era_ in model.era_history]
+
+        yspreads = [{
+            'valid': ut.take_column(era_['epoch_info_list'], 'valid_acc_std'),
+            'learn': ut.take_column(era_['epoch_info_list'], 'learn_acc_std'),
+        }
+            for era_ in model.era_history]
         fig = model._show_era_measure(ydatas, labels,  styles, ylabel='accuracy',
-                                       **kwargs)
+                                      yspreads=yspreads, **kwargs)
         #import plottool as pt
         #ax = pt.gca()
         #ymin, ymax = ax.get_ylim()
@@ -1242,15 +1791,21 @@ class _ModelVisualization(object):
                 'learn': 'learn ' + str(model.era_history[0]['num_learn']),
                 'valid': 'valid ' + str(model.era_history[0]['num_valid']),
             }
-        ydatas = [
-            {
-                'learn': era['learn_loss_list'],
-                'valid': era['valid_loss_list'],
-            }
-            for era in model.era_history
-        ]
+
+        ydatas = [{
+            'learn': ut.take_column(era_['epoch_info_list'], 'learn_loss'),
+            'valid': ut.take_column(era_['epoch_info_list'], 'valid_loss'),
+        }
+            for era_ in model.era_history]
+
+        yspreads = [{
+            'learn': ut.take_column(era_['epoch_info_list'], 'learn_loss_std'),
+            'valid': ut.take_column(era_['epoch_info_list'], 'valid_loss_std'),
+        }
+            for era_ in model.era_history]
+
         return model._show_era_measure(ydatas, labels,  styles, ylabel='loss',
-                                       **kwargs)
+                                       yspreads=yspreads, **kwargs)
 
     def show_weight_updates(model, param_keys=None, **kwargs):
         # has_mag_updates = False
@@ -1263,7 +1818,7 @@ class _ModelVisualization(object):
 
         if len(model.era_history) > 0:
             era = model.era_history[-1]
-            if 'param_update_mags_list' in era:
+            if 'param_update_mags' in era['epoch_info_list']:
                 if param_keys is None:
                     param_keys = list(set(ut.flatten([
                         dict_.keys() for dict_ in era['param_update_mags_list']
@@ -1273,7 +1828,7 @@ class _ModelVisualization(object):
 
         # colors = {}
         for index, era in enumerate(model.era_history):
-            if 'param_update_mags_list' not in era:
+            if 'param_update_mags' not in era['epoch_info_list']:
                 continue
             xdata = era['epoch_list']
             if index == 0:
@@ -1444,9 +1999,6 @@ class _ModelVisualization(object):
 
     # --- IMAGE WRITE
 
-    imwrite_weights = imwrite_wrapper(show_weights_image)
-    #imwrite_arch = imwrite_wrapper(show_arch)
-
     def render_arch(model):
         import plottool as pt
         with pt.RenderingContext() as render:
@@ -1467,7 +2019,7 @@ class _ModelVisualization(object):
             >>> from ibeis_cnn.models.mnist import MNISTModel
             >>> model = MNISTModel(batch_size=128, data_shape=(24, 24, 1),
             >>>                    output_dims=10, batch_norm=False, name='mnist')
-            >>> model.initialize_architecture()
+            >>> model.init_arch()
             >>> fapth = model.imwrite_arch()
             >>> ut.quit_if_noshow()
             >>> ut.startfile(fapth)
@@ -1517,7 +2069,7 @@ class _ModelStrings(object):
             >>> from ibeis_cnn.models.mnist import MNISTModel
             >>> model = MNISTModel(batch_size=128, data_shape=(24, 24, 1),
             >>>                    output_dims=10, batch_norm=False)
-            >>> model.initialize_architecture()
+            >>> model.init_arch()
             >>> json_str = model.make_arch_json()
             >>> print(json_str)
         """
@@ -1548,7 +2100,7 @@ class _ModelStrings(object):
             >>> from ibeis_cnn.models.mnist import MNISTModel
             >>> model = MNISTModel(batch_size=128, data_shape=(24, 24, 1),
             >>>                    output_dims=10, batch_norm=True)
-            >>> model.initialize_architecture()
+            >>> model.init_arch()
             >>> result = model.get_architecture_str(sep=ut.NEWLINE, with_noise=False)
             >>> print(result)
             InputLayer(name=I0,shape=(128, 1, 24, 24))
@@ -1578,7 +2130,7 @@ class _ModelStrings(object):
             >>> from ibeis_cnn.models.mnist import MNISTModel
             >>> model = MNISTModel(batch_size=128, data_shape=(24, 24, 1),
             >>>                    output_dims=10)
-            >>> model.initialize_architecture()
+            >>> model.init_arch()
             >>> result = model.get_layer_info_str()
             >>> print(result)
             Network Structure:
@@ -1662,7 +2214,7 @@ class _ModelIDs(object):
             >>> from ibeis_cnn.models.mnist import MNISTModel
             >>> model = MNISTModel(batch_size=128, data_shape=(24, 24, 1),
             >>>                    output_dims=10, name='bnorm')
-            >>> model.initialize_architecture()
+            >>> model.init_arch()
             >>> result = str(model.arch_id)
             >>> print(result)
         """
@@ -1728,7 +2280,7 @@ class _ModelIDs(object):
             >>> from ibeis_cnn.models.mnist import MNISTModel
             >>> model = MNISTModel(batch_size=128, data_shape=(24, 24, 1),
             >>>                    output_dims=10)
-            >>> model.initialize_architecture()
+            >>> model.init_arch()
             >>> result = str(model.get_arch_nice())
             >>> print(result)
             o10_d4_c107
@@ -1953,10 +2505,10 @@ class _ModelIO(object):
             # 'arch_tag': model.arch_tag,
         }
         model_state_fpath = model.get_model_state_fpath(**kwargs)
-        print('saving model state')
         #print('saving model state to: %s' % (model_state_fpath,))
         ut.save_cPkl(model_state_fpath, model_state, verbose=False)
-        print('finished saving')
+        print('saved model state')
+        #print('finished saving')
 
     def save_model_info(model, **kwargs):
         """ save model information (history and results but no weights) """
@@ -1967,10 +2519,9 @@ class _ModelIO(object):
             'era_history':  model.era_history,
         }
         model_info_fpath = model.get_model_state_fpath(**kwargs)
-        print('saving model info')
         #print('saving model info to: %s' % (model_info_fpath,))
         ut.save_cPkl(model_info_fpath, model_info, verbose=False)
-        print('finished saving')
+        print('saved model info')
 
     def load_model_state(model, **kwargs):
         """
@@ -1984,7 +2535,7 @@ class _ModelIO(object):
             >>> from ibeis_cnn.models.abstract_models import  *  # NOQA
             >>> from ibeis_cnn.models import mnist
             >>> model, dataset = mnist.testdata_mnist()
-            >>> model.initialize_architecture()
+            >>> model.init_arch()
             >>> model.load_model_state()
         """
         model_state_fpath = model.get_model_state_fpath(**kwargs)
@@ -2105,14 +2656,17 @@ class _ModelUtility(object):
                 ('given_item_shape = %r' % (given_item_shape,))
             )
 
-    def _validate_labels(model, X, y):
+    def _validate_labels(model, X, y, w):
         if y is not None:
             assert X.shape[0] == (y.shape[0] * model.data_per_label_input), (
                 'bad data / label alignment')
+        if w is not None:
+            assert X.shape[0] == (w.shape[0] * model.data_per_label_input), (
+                'bad data / label alignment')
 
-    def _validate_input(model, X, y=None):
+    def _validate_input(model, X, y=None, w=None):
         model._validate_data(X)
-        model._validate_labels(X, y)
+        model._validate_labels(X, y, w)
 
     def make_random_testdata(model, num=37, rng=0, cv2_format=False, asint=False):
         print('made random testdata')
@@ -2130,308 +2684,6 @@ class _ModelUtility(object):
         if not cv2_format:
             X = X.transpose((0, 3, 1, 2))
         return X, y
-
-
-class _ModelBackend(object):
-    """
-    Functions that build and compile theano exepressions
-    """
-
-    def _init_compile_vars(model, kwargs):
-        model._theano_exprs = ut.ddict(lambda: None)
-        model._theano_backprop = None
-        model._theano_forward = None
-        model._theano_predict = None
-        model._mode = None
-
-    @property
-    def theano_mode(model):
-        # http://deeplearning.net/software/theano/library/compile/
-        # function.html#theano.compile.function.function
-        # http://deeplearning.net/software/theano/tutorial/modes.html
-        # theano.compile.FAST_COMPILE / FAST_RUN
-        return model._mode
-
-    @theano_mode.setter
-    def theano_mode(model, mode):
-        import ibeis_cnn.__THEANO__ as theano
-        if mode is None:
-            pass
-        elif mode == 'FAST_COMPILE':
-            mode = theano.compile.FAST_COMPILE
-        elif mode == 'FAST_RUN':
-            mode = theano.compile.FAST_RUN
-        else:
-            raise ValueError('Unknown mode=%r' % (mode,))
-        return mode
-
-    def build(model):
-        print('[model] --- BUILDING SYMBOLIC THEANO FUNCTIONS ---')
-        model.build_backprop_func()
-        model.build_forward_func()
-        model.build_predict_func()
-        print('[model] --- FINISHED BUILD ---')
-
-    def build_predict_func(model):
-        if model._theano_predict is None:
-            import ibeis_cnn.__THEANO__ as theano
-            from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
-            print('[model.build] request_predict')
-
-            netout_exprs = model._get_network_output()
-            network_output_determ = netout_exprs['network_output_determ']
-            unlabeled_outputs = model._get_unlabeled_outputs()
-
-            X, X_batch = model._get_batch_input_exprs()
-            y, y_batch = model._get_batch_output_exprs()
-            theano_predict = theano.function(
-                inputs=[theano.In(X_batch)],
-                outputs=[network_output_determ] + unlabeled_outputs,
-                givens={X: X_batch},
-                updates=None,
-                mode=model.theano_mode,
-                name=':predict'
-            )
-            model._theano_predict = theano_predict
-        return model._theano_predict
-
-    def build_forward_func(model):
-        if model._theano_forward is None:
-            import ibeis_cnn.__THEANO__ as theano
-            from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
-
-            X, X_batch = model._get_batch_input_exprs()
-            y, y_batch = model._get_batch_output_exprs()
-            labeled_outputs = model._get_labeled_outputs()
-            unlabeled_outputs = model._get_unlabeled_outputs()
-
-            loss_exprs = model._get_loss_exprs()
-            loss_determ = loss_exprs['loss_determ']
-
-            print('[model.build] request_forward')
-            theano_forward = theano.function(
-                inputs=[theano.In(X_batch), theano.In(y_batch)],
-                outputs=[loss_determ] + labeled_outputs + unlabeled_outputs,
-                givens={X: X_batch, y: y_batch},
-                updates=None,
-                mode=model.theano_mode,
-                name=':feedforward'
-            )
-            model._theano_forward = theano_forward
-        return model._theano_forward
-
-    def build_backprop_func(model):
-        if model._theano_backprop is None:
-            print('[model.build] request_backprop')
-            import ibeis_cnn.__THEANO__ as theano
-            from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
-
-            model.learn_state.init()
-
-            X, X_batch = model._get_batch_input_exprs()
-            y, y_batch = model._get_batch_output_exprs()
-            labeled_outputs = model._get_labeled_outputs()
-
-            # Build backprop losses
-            loss_exprs = model._get_loss_exprs()
-            loss             = loss_exprs['loss']
-            loss_regularized = loss_exprs['loss_regularized']
-
-            if loss_regularized is not None:
-                backprop_loss_ = loss_regularized
-            else:
-                backprop_loss_ = loss
-
-            backprop_losses = []
-            if loss_regularized is not None:
-                backprop_losses.append(loss_regularized)
-            backprop_losses.append(loss)
-
-            # Updates network parameters based on the training loss
-            parameters = model.get_all_params(trainable=True)
-
-            updates = model._make_updates(parameters, backprop_loss_)
-            monitor_outputs = model._make_monitor_outputs(parameters, updates)
-
-            theano_backprop = theano.function(
-                inputs=[theano.In(X_batch), theano.In(y_batch)],
-                outputs=(backprop_losses + labeled_outputs + monitor_outputs),
-                givens={X: X_batch, y: y_batch},
-                updates=updates,
-                mode=model.theano_mode,
-                name=':backprop',
-            )
-            model._theano_backprop = theano_backprop
-        return model._theano_backprop
-
-    def _get_batch_input_exprs(model):
-        from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
-        if model._theano_exprs['batch_input'] is None:
-            #if input_type is None:
-            input_type = T.tensor4
-            X = input_type('x')
-            X_batch = input_type('x_batch')
-            model._theano_exprs['batch_input'] = X, X_batch
-        return model._theano_exprs['batch_input']
-
-    def _get_batch_output_exprs(model):
-        from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
-        if model._theano_exprs['batch_output'] is None:
-            #if output_type is None:
-            output_type = T.ivector
-            y = output_type('y')
-            y_batch = output_type('y_batch')
-            model._theano_exprs['batch_output'] = y, y_batch
-        return model._theano_exprs['batch_output']
-
-    def _get_loss_exprs(model):
-        r"""
-        Requires that a custom loss function is defined in the inherited class
-        """
-        if model._theano_exprs['loss'] is None:
-            import ibeis_cnn.__LASAGNE__ as lasagne
-            with warnings.catch_warnings():
-                X, X_batch = model._get_batch_input_exprs()
-                y, y_batch = model._get_batch_output_exprs()
-
-                netout_exprs = model._get_network_output()
-                network_output_learn = netout_exprs['network_output_learn']
-                network_output_determ = netout_exprs['network_output_determ']
-
-                print('Building symbolic loss function')
-                losses = model.loss_function(network_output_learn, y_batch)
-                loss = lasagne.objectives.aggregate(losses, mode='mean')
-                loss.name = 'loss'
-
-                print('Building symbolic loss function (determenistic)')
-                losses_determ = model.loss_function(network_output_determ, y_batch)
-                # TODO Weight classes
-                loss_determ = lasagne.objectives.aggregate(losses_determ,
-                                                           weights=None,
-                                                           mode='mean')
-                loss_determ.name = 'loss_determ'
-
-                # Regularize
-                # TODO: L2 should be one of many available options for
-                # regularization
-                L2 = lasagne.regularization.regularize_network_params(
-                    model.output_layer, lasagne.regularization.l2)
-                weight_decay = model.learn_state['weight_decay']
-                if weight_decay is not None or weight_decay == 0:
-                    regularization_term = weight_decay * L2
-                    regularization_term.name = 'regularization_term'
-                    #L2 = lasagne.regularization.l2(model.output_layer)
-                    loss_regularized = loss + regularization_term
-                    loss_regularized.name = 'loss_regularized'
-                else:
-                    loss_regularized = None
-
-                loss_exprs = {
-                    'loss': loss,
-                    'loss_determ': loss_determ,
-                    'loss_regularized': loss_regularized,
-                }
-            model._theano_exprs['loss'] = loss_exprs
-        return model._theano_exprs['loss']
-
-    def _make_updates(model, parameters, backprop_loss_):
-        import ibeis_cnn.__LASAGNE__ as lasagne
-        import ibeis_cnn.__THEANO__ as theano
-        from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
-
-        grads = theano.grad(backprop_loss_, parameters, add_names=True)
-
-        shared_learning_rate = model.learn_state.shared['learning_rate']
-        momentum = model.learn_state['momentum']
-
-        updates = lasagne.updates.nesterov_momentum(
-            loss_or_grads=grads,
-            params=parameters,
-            learning_rate=shared_learning_rate,
-            momentum=momentum
-            # add_names=True  # TODO; commit to lasange
-        )
-
-        # workaround for pylearn2 bug documented in
-        # https://github.com/Lasagne/Lasagne/issues/728
-        for param, update in updates.items():
-            if param.broadcastable != update.broadcastable:
-                updates[param] = T.patternbroadcast(update, param.broadcastable)
-        return updates
-
-    def _get_network_output(model):
-        if model._theano_exprs['netout'] is None:
-            import ibeis_cnn.__LASAGNE__ as lasagne
-            X, X_batch = model._get_batch_input_exprs()
-
-            network_output_learn = lasagne.layers.get_output(
-                model.output_layer, X_batch)
-            network_output_learn.name = 'network_output_learn'
-
-            network_output_determ = lasagne.layers.get_output(
-                model.output_layer, X_batch, deterministic=True)
-            network_output_determ.name = 'network_output_determ'
-
-            netout_exprs = {
-                'network_output_learn': network_output_learn,
-                'network_output_determ': network_output_determ,
-            }
-            model._theano_exprs['netout'] = netout_exprs
-        return model._theano_exprs['netout']
-
-    def _get_unlabeled_outputs(model):
-        if model._theano_exprs['unlabeled_out'] is None:
-            netout_exprs = model._get_network_output()
-            network_output_determ = netout_exprs['network_output_determ']
-            out = model.custom_unlabeled_outputs(network_output_determ)
-            model._theano_exprs['unlabeled_out'] = out
-        return model._theano_exprs['unlabeled_out']
-
-    def _get_labeled_outputs(model):
-        if model._theano_exprs['labeled_out'] is None:
-            netout_exprs = model._get_network_output()
-            network_output_determ = netout_exprs['network_output_determ']
-            y, y_batch = model._get_batch_output_exprs()
-            model._theano_exprs['labeled_out'] = model.custom_labeled_outputs(
-                network_output_determ, y_batch)
-        return model._theano_exprs['labeled_out']
-
-    def _make_monitor_outputs(model, parameters, updates):
-        """
-        Builds parameters to monitor the magnitude of updates durning learning
-        """
-        from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
-        # Build outputs to babysit training
-        monitor_outputs = []
-        if model.monitor_config['monitor_updates']:  # and False:
-            for param in parameters:
-                # The vector each param was udpated with
-                # (one vector per channel)
-                param_update_vec = updates[param] - param
-                param_update_vec.name = 'param_update_vector_' + param.name
-                flat_shape = (param_update_vec.shape[0],
-                              T.prod(param_update_vec.shape[1:]))
-                flat_param_update_vec = param_update_vec.reshape(flat_shape)
-                param_update_mag = (flat_param_update_vec ** 2).sum(-1)
-                param_update_mag.name = 'param_update_magnitude_' + param.name
-                monitor_outputs.append(param_update_mag)
-        return monitor_outputs
-
-    def custom_unlabeled_outputs(model, network_output):
-        """
-        override in inherited subclass to enable custom symbolic expressions
-        based on the network output alone
-        """
-        raise NotImplementedError('need override')
-        return []
-
-    def custom_labeled_outputs(model, network_output, y_batch):
-        """
-        override in inherited subclass to enable custom symbolic expressions
-        based on the network output and the labels
-        """
-        raise NotImplementedError('need override')
-        return []
 
 
 @ut.reloadable_class
@@ -2452,6 +2704,8 @@ class BaseModel(_model_legacy._ModelLegacy, _ModelVisualization, _ModelIO,
             import logging
             compile_logger = logging.getLogger('theano.compile')
             compile_logger.setLevel(-10)
+        # Should delayed import be moved? (or deleted)
+        delayed_import()
         model._init_io_vars(kwargs)
         model._init_id_vars(kwargs)
         model._init_shape_vars(kwargs)
@@ -2459,8 +2713,11 @@ class BaseModel(_model_legacy._ModelLegacy, _ModelVisualization, _ModelIO,
         model._init_fit_vars(kwargs)
         model._init_batch_vars(kwargs)
         model.output_layer = None
+        autoinit = kwargs.pop('autoinit', False)
         assert len(kwargs) == 0, (
             'Model was given unused keywords=%r' % (list(kwargs.keys())))
+        if autoinit:
+            model.init_arch()
 
     def _init_shape_vars(model, kwargs):
         input_shape = kwargs.pop('input_shape', None)
@@ -2472,8 +2729,14 @@ class BaseModel(_model_legacy._ModelLegacy, _ModelVisualization, _ModelIO,
             report_error(
                 'Must specify either input_shape or data_shape')
         elif input_shape is None:
-            input_shape = (batch_size, data_shape[2], data_shape[0],
-                           data_shape[1])
+            if False:
+                # Fixed batch size
+                input_shape = (batch_size, data_shape[2], data_shape[0],
+                               data_shape[1])
+            else:
+                # Dynamic batch size
+                input_shape = (None, data_shape[2], data_shape[0],
+                               data_shape[1])
         elif data_shape is None and batch_size is None:
             data_shape = (input_shape[2], input_shape[3], input_shape[1])
             batch_size = input_shape[0]
@@ -2508,17 +2771,6 @@ class BaseModel(_model_legacy._ModelLegacy, _ModelVisualization, _ModelIO,
     def input_width(model):
         return model.input_shape[3]
 
-    # --- INITIALIZATION
-
-    def initialize_architecture(model):
-        raise NotImplementedError('reimplement')
-
-    def augment(model, Xb, yb):
-        raise NotImplementedError('data augmentation not implemented')
-
-    def loss_function(model, network_output, truth):
-        raise NotImplementedError('need to implement a loss function')
-
     def reinit_weights(model, W=None):
         """
         initailizes weights after the architecture has been defined.
@@ -2538,7 +2790,16 @@ class BaseModel(_model_legacy._ModelLegacy, _ModelVisualization, _ModelIO,
             new_values = W.sample(shape)
             weights.set_value(new_values)
 
-    # ---- UTILITY
+    # --- ABSTRACT FUNCTIONS
+
+    def init_arch(model):
+        raise NotImplementedError('reimplement')
+
+    def augment(model, Xb, yb):
+        raise NotImplementedError('data augmentation not implemented')
+
+    def loss_function(model, network_output, truth):
+        raise NotImplementedError('need to implement a loss function')
 
 
 @ut.reloadable_class
@@ -2547,13 +2808,61 @@ class AbstractCategoricalModel(BaseModel):
 
     def __init__(model, **kwargs):
         # BaseModel.__init__(model, **kwargs)
-        super(AbstractCategoricalModel, model).__init__(**kwargs)
+        # HACKING
+        # <Prototype code to fix reload errors>
+        def fix_super_reload_error(this_class, self):
+            """
+            #this_class = AbstractCategoricalModel  # NOQA
+            #self = model  # NOQA
+            """
+
+            if not isinstance(self, this_class):
+                #print('Fixing')
+                def find_parent_class(leaf_class, target_name):
+                    target_class = None
+                    from collections import deque
+                    queue = deque()
+                    queue.append(leaf_class)
+                    seen_ = set([])
+                    while len(queue) > 0:
+                        related_class = queue.pop()
+                        if related_class.__name__ != target_name:
+                            for base in related_class.__bases__:
+                                if base not in seen_:
+                                    queue.append(base)
+                                    seen_.add(base)
+                        else:
+                            target_class = related_class
+                            break
+                    return target_class
+                # Find new version of class
+                leaf_class = self.__class__
+                target_name = this_class.__name__
+                target_class = find_parent_class(leaf_class, target_name)
+
+                this_class_now = target_class
+                #print('id(this_class)     = %r' % (id(this_class),))
+                #print('id(this_class_now) = %r' % (id(this_class_now),))
+            else:
+                this_class_now = this_class
+            assert isinstance(self, this_class_now), 'Failed to fix %r, %r, %r' % (self, this_class, this_class_now)
+            return this_class_now
+
+        this_class_now = fix_super_reload_error(AbstractCategoricalModel, model)
+
+        #import utool
+        #with utool.embed_on_exception_context:
+        #super(AbstractCategoricalModel, model).__init__(**kwargs)
+        super(this_class_now, model).__init__(**kwargs)
+
+        # </Prototype code to fix reload errors>
+
         model.encoder = None
         # categorical models have a concept of accuracy
         #model.requested_headers += ['valid_acc', 'test_acc']
         model.requested_headers += ['valid_acc']
 
-    def initialize_encoder(model, labels):
+    def init_encoder(model, labels):
         print('[model] encoding labels')
         from sklearn import preprocessing
         model.encoder = preprocessing.LabelEncoder()
@@ -2571,22 +2880,23 @@ class AbstractCategoricalModel(BaseModel):
     def custom_unlabeled_outputs(model, network_output):
         from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
         # Network outputs define category probabilities
-        probabilities = network_output
-        predictions = T.argmax(probabilities, axis=1)
-        predictions.name = 'predictions'
-        confidences = probabilities.max(axis=1)
-        confidences.name = 'confidences'
-        unlabeled_outputs = [predictions, confidences]
+        probs = network_output
+        preds = T.argmax(probs, axis=1)
+        preds.name = 'predictions'
+        confs = probs.max(axis=1)
+        confs.name = 'confidences'
+        unlabeled_outputs = [preds, confs]
         return unlabeled_outputs
 
     def custom_labeled_outputs(model, network_output, y_batch):
         from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
-        probabilities = network_output
-        predictions = T.argmax(probabilities, axis=1)
-        predictions.name = 'tmp_predictions'
-        accuracy = T.mean(T.eq(predictions, y_batch))
+        probs = network_output
+        preds = T.argmax(probs, axis=1)
+        preds.name = 'predictions'
+        is_success = T.eq(preds, y_batch)
+        accuracy = T.mean(is_success)
         accuracy.name = 'accuracy'
-        labeled_outputs = [accuracy]
+        labeled_outputs = [accuracy, preds]
         return labeled_outputs
 
 
@@ -2608,10 +2918,6 @@ def evaluate_layer_list(network_layers_def, verbose=None):
     if verbose:
         print('Evaluting List of %d Layers' % (total,))
     layer_fn_iter = iter(network_layers_def)
-    #if True:
-    #with warnings.catch_warnings():
-    #    warnings.filterwarnings(
-    #        'ignore', '.*The uniform initializer no longer uses Glorot.*')
     try:
         with ut.Indenter(' ' * 4, enabled=verbose):
             next_args = tuple()
@@ -2636,10 +2942,8 @@ def evaluate_layer_list(network_layers_def, verbose=None):
                         layer.output_shape,))
     except Exception as ex:
         keys = ['layer_fn', 'layer_fn.func', 'layer_fn.args',
-                'layer_fn.keywords', 'layer', 'count']
-        ut.printex(ex,
-                   ('Error buildling layers.\n'
-                    'layer.name=%r') % (layer),
+                'layer_fn.keywords', 'layer_fn.__dict__', 'layer', 'count']
+        ut.printex(ex, ('Error building layers.\n' 'layer.name=%r') % (layer),
                    keys=keys)
         raise
     return network_layers
@@ -2649,30 +2953,44 @@ def testdata_model_with_history():
     model = BaseModel()
     # make a dummy history
     X_train, y_train = [1, 2, 3], [0, 0, 1]
+    model.output_dims = 2
     rng = np.random.RandomState(0)
+
+    def rand():
+        return rng.rand() / 10
+
     def dummy_epoch_dict(num):
         from scipy.special import expit
         mean_loss = 1 / np.exp(num / 10)
         frac = (num / total_epochs)
-        def rand():
-            return rng.rand() / 10
         epoch_info = {
             'epoch': num,
-            # 'loss': 1 / np.exp(num / 10) + rng.rand() / 100,
             'learn_loss': mean_loss + rand(),
-            'learn_loss_regularized': (mean_loss + np.exp(rand() * num + rand())),
+            'learn_loss_reg': (mean_loss + np.exp(rand() * num + rand())),
             'valid_loss': mean_loss - rand(),
+            'valid_loss_std': rand(),
             'valid_acc': expit(-6 + 12 * np.clip(frac + rand(), 0, 1)),
+            'valid_acc_std': rand(),
+            'valid_precision': [rng.rand() for _ in range(model.output_dims)],
+            'valid_recall': [rng.rand() for _ in range(model.output_dims)],
+            'learn_precision': [rng.rand() for _ in range(model.output_dims)],
+            'learn_recall': [rng.rand() for _ in range(model.output_dims)],
             'param_update_mags': {
                 'C0': (rng.normal() ** 2, rng.rand()),
                 'F1': (rng.normal() ** 2, rng.rand()),
-            }
+            },
+            'learn_state': {
+                'learning_rate': .01
+            },
         }
         return epoch_info
+
     def dummy_get_all_layer_info(model):
         return [{'param_infos': [{'name': 'C0', 'tags': ['trainable']}]},
                 {'param_infos': [{'name': 'F1', 'tags': ['trainable']}]}]
-    ut.inject_func_as_method(model, dummy_get_all_layer_info, 'get_all_layer_info', allow_override=True)
+
+    ut.inject_func_as_method(model, dummy_get_all_layer_info,
+                             'get_all_layer_info', allow_override=True)
     epoch = 0
     eralens = [4, 4, 4]
     total_epochs = sum(eralens)
@@ -2681,11 +2999,6 @@ def testdata_model_with_history():
         for _ in range(era_length):
             model._record_epoch(dummy_epoch_dict(num=epoch))
             epoch += 1
-    #model._record_epoch({'epoch': 1, 'valid_loss': .8, 'learn_loss': .9})
-    #model._record_epoch({'epoch': 2, 'valid_loss': .5, 'learn_loss': .7})
-    #model._record_epoch({'epoch': 3, 'valid_loss': .3, 'learn_loss': .6})
-    #model._record_epoch({'epoch': 4, 'valid_loss': .2, 'learn_loss': .3})
-    #model._record_epoch({'epoch': 5, 'valid_loss': .1, 'learn_loss': .2})
     return model
 
 

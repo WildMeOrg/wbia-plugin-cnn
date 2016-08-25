@@ -1,65 +1,55 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function
-import functools
+from __future__ import absolute_import, division, print_function, unicode_literals
 import utool as ut
 from ibeis_cnn.models import abstract_models
-from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
-from ibeis_cnn.__LASAGNE__ import layers
-from ibeis_cnn.__LASAGNE__ import nonlinearities
-from ibeis_cnn.__LASAGNE__ import init
 print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.models.dummy]')
 
 
 @ut.reloadable_class
 class DummyModel(abstract_models.AbstractCategoricalModel):
-    def __init__(model, autoinit=False, batch_size=8, input_shape=None, data_shape=(4, 4, 1), **kwargs):
-        #if data_shape is not None:
-        #    input_shape = (batch_size, data_shape[2], data_shape[0], data_shape[1])
-        #if input_shape is None:
-        #    input_shape = (batch_size, data_shape[2], data_shape[0], data_shape[1])
-        super(DummyModel, model).__init__(input_shape=input_shape, data_shape=data_shape, batch_size=batch_size, **kwargs)
-        #model.network_layers = None
-        #model.input_shape = input_shape
-        model.output_dims = 5
-        #model.batch_size = 8
-        #model.learning_rate = .001
-        #model.momentum = .9
-        if autoinit:
-            model.initialize_architecture()
+    def __init__(model, batch_size=8, data_shape=(4, 4, 1), **kwargs):
+        #kwargs['autoinit'] = kwargs.get('autoinit', True)
+        kwargs['output_dims'] = kwargs.get('output_dims', 3)
+        kwargs['showprog'] = kwargs.get('showprog', False)
+        super(DummyModel, model).__init__(data_shape=data_shape,
+                                          batch_size=batch_size, **kwargs)
 
-    def make_prediction_expr(model, newtork_output):
-        prediction = T.argmax(newtork_output, axis=1)
-        prediction.name = 'prediction'
-        return prediction
+    def init_arch(model, verbose=True):
+        """
+        CommandLine:
+            python -m ibeis_cnn DummyModel.init_arch --verbcnn --show
 
-    def make_accuracy_expr(model, prediction, y_batch):
-        accuracy = T.mean(T.eq(prediction, y_batch))
-        accuracy.name = 'accuracy'
-        return accuracy
-
-    #def get_loss_function(model):
-    #    return T.nnet.categorical_crossentropy
-
-    def initialize_architecture(model, verbose=True):
+        Example:
+            >>> # ENABLE_DOCTEST
+            >>> from ibeis_cnn.models.dummy import *  # NOQA
+            >>> model = DummyModel(autoinit=True)
+            >>> model.print_model_info_str()
+            >>> print(model)
+            >>> ut.quit_if_noshow()
+            >>> model.show_arch()
+            >>> ut.show_if_requested()
+        """
+        import ibeis_cnn.__LASAGNE__ as lasange
         from ibeis_cnn import custom_layers
-        Conv2DLayer = custom_layers.Conv2DLayer
+        if verbose:
+            print('init arch')
 
-        input_shape = model.input_shape
-        _P = functools.partial
+        bundles = custom_layers.make_bundles(
+            nonlinearity=lasange.nonlinearities.rectify,
+            batch_norm=False,
+        )
+        b = ut.DynStruct(copy_dict=bundles)
+
         network_layers_def = [
-            _P(layers.InputLayer, shape=input_shape),
-            _P(Conv2DLayer, num_filters=16, filter_size=(3, 3)),
-            _P(Conv2DLayer, num_filters=16, filter_size=(2, 2)),
-            _P(layers.DenseLayer, num_units=8),
-            _P(layers.DenseLayer, num_units=model.output_dims,
-               nonlinearity=nonlinearities.softmax,
-               W=init.Orthogonal(),),
+            b.InputBundle(shape=model.input_shape),
+            b.ConvBundle(num_filters=5, filter_size=(3, 3)),
+            b.DenseBundle(num_units=8),
+            b.SoftmaxBundle(num_units=model.output_dims),
         ]
+
         network_layers = abstract_models.evaluate_layer_list(network_layers_def)
         #model.network_layers = network_layers
         model.output_layer = network_layers[-1]
-        if verbose:
-            print('initialize_architecture')
         if ut.VERBOSE:
             model.print_architecture_str()
             model.print_layer_info()

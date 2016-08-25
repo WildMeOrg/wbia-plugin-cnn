@@ -25,14 +25,14 @@ class DetectYoloModel(abstract_models.AbstractCategoricalModel):
     def __init__(model, autoinit=True, batch_size=128, data_shape=(448, 448, 3), arch_tag='detect_yolo', **kwargs):
         super(DetectYoloModel, model).__init__(batch_size=batch_size, data_shape=data_shape, arch_tag=arch_tag, **kwargs)
         if autoinit:
-            model.initialize_architecture()
+            model.init_arch()
         if model.preproc_kw is None:
             model.preproc_kw = {
                 'center_mean' : 1.0,
                 'center_std'  : 2.0,
             }
 
-    def initialize_architecture(model):
+    def init_arch(model):
 
         from ibeis_cnn import custom_layers
         Conv2DLayer = custom_layers.Conv2DLayer

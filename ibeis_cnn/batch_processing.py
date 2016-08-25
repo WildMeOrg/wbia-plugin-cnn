@@ -35,7 +35,7 @@ def process_batch(model, X, y, theano_fn, fix_output=False, buffered=False,
         >>> from ibeis_cnn import models
         >>> model = models.DummyModel(batch_size=128)
         >>> X, y = model.make_random_testdata(num=2000, seed=None)
-        >>> model.initialize_architecture()
+        >>> model.init_arch()
         >>> theano_fn = model.build_predict_func()
         >>> kwargs = {'X_is_cv2_native': False, 'showprog': True,
         ...           'randomize_batch_order': True}
@@ -50,7 +50,7 @@ def process_batch(model, X, y, theano_fn, fix_output=False, buffered=False,
         >>> model = models.SiameseL2(batch_size=128, data_shape=(32, 32, 1),
         ...                          strict_batch_size=True)
         >>> X, y = model.make_random_testdata(num=2000, seed=None)
-        >>> model.initialize_architecture()
+        >>> model.init_arch()
         >>> theano_fn = model.build_predict_func()
         >>> kwargs = {'X_is_cv2_native': False, 'showprog': True,
         ...           'randomize_batch_order': True}

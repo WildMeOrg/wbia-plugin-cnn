@@ -93,7 +93,7 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
         >>> from ibeis_cnn import models
         >>> model = models.mnist.MNISTModel(batch_size=128, output_dims=10,
         >>>                                 data_shape=(24, 24, 3))
-        >>> model.initialize_architecture()
+        >>> model.init_arch()
         >>> layers = model.get_all_layers()
         >>> show_arch_nx_graph(layers)
         >>> ut.quit_if_noshow()
@@ -648,7 +648,7 @@ class Dream(object):
         >>> from ibeis_cnn.draw_net import *  # NOQA
         >>> from ibeis_cnn.models import mnist
         >>> model, dataset = mnist.testdata_mnist(dropout=.5)
-        >>> model.initialize_architecture()
+        >>> model.init_arch()
         >>> model.load_model_state()
         >>> target_labels = 3
         >>> ut.quit_if_noshow()
@@ -776,7 +776,7 @@ class Dream(object):
             >>> from ibeis_cnn.draw_net import *  # NOQA
             >>> from ibeis_cnn.models import mnist
             >>> model, dataset = mnist.testdata_mnist(dropout=.5)
-            >>> model.initialize_architecture()
+            >>> model.init_arch()
             >>> dream = Dream(model, init='rgauss', niters=200)
             >>> ut.quit_if_noshow()
             >>> import plottool as pt
@@ -956,7 +956,7 @@ def show_saliency_heatmap(model, dataset):
         >>>                    batch_norm=True,
         >>>                    dataset_dpath=dataset.dataset_dpath)
         >>> model.encoder = None
-        >>> model.initialize_architecture()
+        >>> model.init_arch()
         >>> model.load_model_state()
         >>> import plottool as pt
         >>> pt.qt4ensure()
@@ -1006,7 +1006,7 @@ def show_convolutional_weights(all_weights, use_color=None, limit=144, fnum=None
         >>>                    batch_norm=True,
         >>>                    dataset_dpath=dataset.dataset_dpath)
         >>> model.encoder = None
-        >>> model.initialize_architecture()
+        >>> model.init_arch()
         >>> model.load_model_state()
         >>> nn_layers = model.get_all_layers()
         >>> weighted_layers = [layer for layer in nn_layers if hasattr(layer, 'W')]
