@@ -534,7 +534,7 @@ class _ModelFitter(object):
         if model.hyperparams['class_weight'] == 'balanced':
             print('Balancing class weights')
             import sklearn.utils
-            unique_classes = sorted(ut.unique(y_learn))
+            unique_classes = np.array(sorted(ut.unique(y_learn)))
             class_to_weight = sklearn.utils.compute_class_weight(
                 'balanced', unique_classes, y_learn)
             model.data_params['class_to_weight'] = class_to_weight
