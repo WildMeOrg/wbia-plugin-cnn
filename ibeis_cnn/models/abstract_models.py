@@ -1742,11 +1742,12 @@ class _ModelVisualization(object):
         param_groups = ut.compress(param_groups, param_groups)
 
         fig = pt.figure(fnum=fnum, pnum=(1, 1, 1), doclf=True, docla=True)
-        next_pnum = pt.make_pnum_nextgen(nSubplots=1 + len(param_groups))
+        #next_pnum = pt.make_pnum_nextgen(nSubplots=1 + len(param_groups))
+        next_pnum = pt.make_pnum_nextgen(nSubplots=1)
 
-        if len(model.era_history) > 0:
-            for param_keys in param_groups:
-                model.show_weight_updates(param_keys=param_keys, fnum=fnum, pnum=next_pnum())
+        #if len(model.era_history) > 0:
+        #    for param_keys in param_groups:
+        #        model.show_weight_updates(param_keys=param_keys, fnum=fnum, pnum=next_pnum())
 
         # Show learning rate
         labels = None
