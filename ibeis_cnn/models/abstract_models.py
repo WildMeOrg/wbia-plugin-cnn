@@ -225,9 +225,10 @@ class _ModelFitter(object):
         model.hyperparams = {
             'whiten_on': False,
             'augment_on': False,
-            'era_size': 100,  # epochs per era
+            'era_size': 10,  # epochs per era
             'max_epochs': None,
-            'rate_schedule': 0.8,
+            'rate_schedule': 0.9,
+            'stopping_patience': 100,
             #'class_weight': None,
             'class_weight': 'balanced',
             'random_seed': None,
