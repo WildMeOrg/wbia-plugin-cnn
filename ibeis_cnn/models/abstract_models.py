@@ -225,6 +225,7 @@ class _ModelFitter(object):
         model.hyperparams = {
             'whiten_on': False,
             'augment_on': False,
+            'augment_delay': 5,
             'era_size': 10,  # epochs per era
             'max_epochs': None,
             'rate_schedule': 0.9,
@@ -345,7 +346,7 @@ class _ModelFitter(object):
                 # Execute backwards and forward passes
                 tt.tic()
                 learn_info = model._epoch_learn(theano_backprop, X_learn,
-                                                y_learn, w_learn)
+                                                y_learn, w_learn, epoch)
                 if learn_info.get('diverged'):
                     break
                 valid_info = model._epoch_validate(theano_forward, X_valid,
@@ -672,7 +673,7 @@ class _ModelFitter(object):
         y_hashid = ut.hashstr_arr(y_learn, 'y', alphabet=ut.ALPHABET_27)
 
         learn_hashid =  str(model.arch_id) + '_' + y_hashid
-        if model.current_era is not None and len(model.current_era['size']) == 0:
+        if model.current_era is not None and model.current_era['size'] == 0:
             print('Not starting new era (previous era has no epochs)')
         else:
             _new_era = {
@@ -782,7 +783,7 @@ class _ModelFitter(object):
         except Exception as ex:
             ut.printex(ex, 'failed to dump update mags ', iswarning=True)
 
-    def _epoch_learn(model, theano_backprop, X_learn, y_learn, w_learn):
+    def _epoch_learn(model, theano_backprop, X_learn, y_learn, w_learn, epoch):
         """
         Backwards propogate -- Run learning set through the backwards pass
 
@@ -806,9 +807,16 @@ class _ModelFitter(object):
             >>> theano_backprop = model.build_backprop_func()
         """
         buffered = model._behavior['buffered']
+        augment_on = model.hyperparams['augment_on']
+        if epoch < model.hyperparams['augment_delay']:
+            # Dont augment in the first few epochs so the model can start to
+            # get somewhere. This will hopefully help training initialize
+            # faster.
+            augment_on = False
+
         learn_outputs = model.process_batch(
             theano_backprop, X_learn, y_learn, w_learn, shuffle=True,
-            augment_on=model.hyperparams['augment_on'], buffered=buffered)
+            augment_on=augment_on, buffered=buffered)
 
         # average loss over all learning batches
         learn_info = {}
