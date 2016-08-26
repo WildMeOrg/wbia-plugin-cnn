@@ -168,8 +168,8 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
         lines = []
         if layer_info['name'] is not None:
             lines.append(layer_info['name'])
-        lines.append(layer_info['classalias'])
         if fullinfo:
+            lines.append(layer_info['classalias'])
             for attr, val in layer_info['layer_attrs'].items():
                 if attr == 'shape' and REMOVE_BATCH_SIZE:
                     val = val[1:]

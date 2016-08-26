@@ -210,8 +210,9 @@ class _ModelFitter(object):
         model.monitor_config = {
             'monitor': ut.get_argflag('--monitor'),
             'monitor_updates': False,
-            'checkpoint_freq': 200,
-            'slowdump_freq': 10,
+            'checkpoint_freq': 50,
+            'case_dump_freq': 25,
+            'weight_dump_freq': 5,
             'showprog': True,
         }
         ut.update_existing(model.monitor_config, kwargs)
@@ -225,7 +226,7 @@ class _ModelFitter(object):
         model.hyperparams = {
             'whiten_on': False,
             'augment_on': False,
-            'augment_delay': 5,
+            'augment_delay': 2,
             'era_size': 10,  # epochs per era
             'max_epochs': None,
             'rate_schedule': 0.9,
@@ -413,10 +414,10 @@ class _ModelFitter(object):
                     # and another function to visualize it.
 
                 if model.monitor_config['monitor']:
-                    if utils.checkfreq(model.monitor_config['slowdump_freq'], epoch):
-                        model._dump_slow_monitor()
-                        model.dump_cases(X_learn, y_learn, 'learn')
-                        model.dump_cases(X_valid, y_valid, 'valid')
+                    if utils.checkfreq(model.monitor_config['weight_dump_freq'], epoch):
+                        model._dump_weight_monitor()
+                    if utils.checkfreq(model.monitor_config['case_dump_freq'], epoch):
+                        model._dump_case_monitor(X_learn, y_learn, X_valid, y_valid)
 
                 # Check if the era is done
                 max_era_size = model._fit_session['max_era_size']
@@ -638,7 +639,7 @@ class _ModelFitter(object):
             # Write arch graph to root
             try:
                 back_archimg_fpath  = join(session_dpath, 'fit_arch_graph.jpg')
-                model.imwrite_arch(fpath=back_archimg_fpath)
+                model.imwrite_arch(fpath=back_archimg_fpath, fullinfo=False)
                 model._overwrite_latest_image(back_archimg_fpath, 'arch_graph')
             except Exception as ex:
                 ut.printex(ex, iswarning=True)
@@ -725,9 +726,11 @@ class _ModelFitter(object):
         # Copy latest image to the main arch dir
         shutil.copy(fpath, join(model.arch_dpath, 'latest_' + new_name + ext))
 
-    def _dump_slow_monitor(model):
+    def _dump_case_monitor(model, X_learn, y_learn, X_valid, y_valid):
         prog_dirs = model._fit_session['prog_dirs']
 
+        model.dump_cases(X_learn, y_learn, 'learn')
+        model.dump_cases(X_valid, y_valid, 'valid')
         if False:
             try:
                 # Save class dreams
@@ -738,6 +741,8 @@ class _ModelFitter(object):
             except Exception as ex:
                 ut.printex(ex, 'failed to dump dream', iswarning=True)
 
+    def _dump_weight_monitor(model):
+        prog_dirs = model._fit_session['prog_dirs']
         try:
             # Save weights images
             fpath = join(prog_dirs['weights'], 'weights_' + model.hist_id + '.png')
@@ -2164,13 +2169,13 @@ class _ModelVisualization(object):
 
     # --- IMAGE WRITE
 
-    def render_arch(model):
+    def render_arch(model, fullinfo=True):
         import plottool as pt
         with pt.RenderingContext() as render:
-            model.show_arch(fnum=render.fig.number)
+            model.show_arch(fnum=render.fig.number, fullinfo=fullinfo)
         return render.image
 
-    def imwrite_arch(model, fpath=None):
+    def imwrite_arch(model, fpath=None, fullinfo=True):
         r"""
         Args:
             fpath (str):  file path string(default = None)
@@ -2193,7 +2198,7 @@ class _ModelVisualization(object):
         import vtool as vt
         if fpath is None:
             fpath = './' + model.arch_id + '.jpg'
-        image = model.render_arch()
+        image = model.render_arch(fullinfo=fullinfo)
         vt.imwrite(fpath, image)
         return fpath
 
