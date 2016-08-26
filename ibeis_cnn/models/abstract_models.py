@@ -1479,8 +1479,8 @@ class _ModelVisualization(object):
     """
 
     CommandLine:
+        python -m ibeis_cnn.models.abstract_models _ModelVisualization
         python -m ibeis_cnn.models.abstract_models _ModelVisualization --show
-
 
     Example:
         >>> # DISABLE_DOCTEST
@@ -1489,16 +1489,16 @@ class _ModelVisualization(object):
         >>> model = dummy.DummyModel(batch_size=16, autoinit=False)
         >>> #model._theano_mode = theano.compile.Mode(linker='py', optimizer='fast_compile')
         >>> #model._theano_mode = theano.compile.Mode(linker='py', optimizer='fast_compile')
-        >>> #theano.compile.FAST_COMPILE
+        >>> model_theano_mode = theano.compile.FAST_COMPILE
         >>> model.init_arch()
-        >>> X, y = model.make_random_testdata(num=37, cv2_format=True, asint=False)
-        >>> model.fit(X, y, max_epochs=10, era_size=3)
+        >>> X, y = model.make_random_testdata(num=27, cv2_format=True, asint=False)
+        >>> model.fit(X, y, max_epochs=10, era_size=3, buffered=False)
         >>> fnum = None
         >>> import plottool as pt
         >>> pt.qt4ensure()
         >>> fnum = 1
-        >>> #model.show_loss_history(fnum)
-        >>> model.show_era_report(fnum)
+        >>> model.show_loss_history(fnum)
+        >>> #model.show_era_report(fnum)
         >>> ut.show_if_requested()
     """
 
@@ -2673,14 +2673,14 @@ class _ModelUtility(object):
         rng = ut.ensure_rng(rng)
         num_labels = num
         num_data   = num * model.data_per_label_input
-        X = rng.rand(num_data, *model.data_shape)
-        y = rng.rand(num_labels) * (model.output_dims + 1)
+        X = rng.rand(num_data, * model.data_shape)
+        y = rng.rand(num_labels) * (model.output_dims - 1)
         X = (X * 100).astype(np.int) / 100
         if asint:
             X = (X * 255).astype(np.uint8)
         else:
             X = X.astype(np.float32)
-        y = y.astype(np.int32)
+        y = np.round(y).astype(np.int32)
         if not cv2_format:
             X = X.transpose((0, 3, 1, 2))
         return X, y
@@ -2729,7 +2729,8 @@ class BaseModel(_model_legacy._ModelLegacy, _ModelVisualization, _ModelIO,
             report_error(
                 'Must specify either input_shape or data_shape')
         elif input_shape is None:
-            if False:
+            CONST_BATCH = False
+            if CONST_BATCH:
                 # Fixed batch size
                 input_shape = (batch_size, data_shape[2], data_shape[0],
                                data_shape[1])
