@@ -253,8 +253,8 @@ class _ModelFitter(object):
         Trains the network with backprop.
 
         CommandLine:
-            python -m ibeis_cnn _ModelFitter.fit --name=dropout
             python -m ibeis_cnn _ModelFitter.fit --name=bnorm --vd --monitor
+            python -m ibeis_cnn _ModelFitter.fit --name=dropout
             python -m ibeis_cnn _ModelFitter.fit --name=incep
 
         Example1:
@@ -388,6 +388,13 @@ class _ModelFitter(object):
 
                 if model.monitor_config['monitor']:
                     model._dump_epoch_monitor()
+                    #if epoch > 10:
+                    # TODO: can dump case info every epoch
+                    # But we want to dump the images less often
+                    # Make function to just grab the failure case info
+                    # and another function to visualize it.
+                    model.dump_cases(X_learn, y_learn, 'learn')
+                    model.dump_cases(X_valid, y_valid, 'valid')
 
                 if model.monitor_config['monitor']:
                     if utils.checkfreq(model.monitor_config['slowdump_freq'], epoch):
@@ -422,6 +429,7 @@ class _ModelFitter(object):
                 print('\n[train] Caught CRTL+C')
                 print('model.arch_id = %r' % (model.arch_id,))
                 print('learn_state = %s' % ut.repr4(model.learn_state.asdict()))
+                from six.moves import input
                 actions = ut.odict([
                     ('resume', (['0', 'r'], 'resume training')),
                     ('view',   (['v', 'view'], 'view session directory')),
@@ -447,7 +455,7 @@ class _ModelFitter(object):
                         print('quit training...')
                         return
                     if ans in actions['resume'][0]:
-                        print('resuming training...')
+                        pass
                     if ans in actions['ipy'][0]:
                         ut.embed()
                     if ans in actions['save'][0]:
@@ -468,6 +476,7 @@ class _ModelFitter(object):
                     else:
                         continue
                     # Handled the resolution
+                    print('resuming training...')
                     break
         # Save the best network
         model.checkpoint_save_model_state()
@@ -545,6 +554,26 @@ class _ModelFitter(object):
             if hasattr(model, 'init_encoder'):
                 model.init_encoder(y_learn)
 
+    def _rename_old_sessions(model):
+        import re
+        dpath_list = ut.glob(model.saved_session_dpath, '*', with_files=False)
+        for dpath in dpath_list:
+            if True or not re.match('^.*_nEpochs_[0-9]*$', dpath):
+                report_fpath = join(dpath, 'era_history.json')
+                if exists(report_fpath):
+                    report_dict = ut.load_data(report_fpath)
+                    # TODO: try to read from history report
+                    nEpochs = report_dict['nEpochs']
+                else:
+                    nEpochs = len(ut.glob(join(dpath, 'history'), 'loss_*'))
+                # Add suffix to session to indicate what happened?
+                # Maybe this should be done via symlink?
+                dpath_new = dpath + '_nEpochs_%04d' % (nEpochs,)
+                ut.move(dpath, dpath_new)
+
+        model.saved_session_dpath
+        pass
+
     def _new_fit_session(model):
         """
         Starts a model training session
@@ -554,6 +583,7 @@ class _ModelFitter(object):
             'max_era_size': model.hyperparams['era_size'],
             'era_epoch_num': 0,
         }
+        # TODO: ensure this somewhere else?
         model._rng = ut.ensure_rng(model.hyperparams['random_seed'])
 
         if model.monitor_config['monitor']:
@@ -562,51 +592,52 @@ class _ModelFitter(object):
             ut.writeto(join(model.arch_dpath, 'arch_info.json'),
                        model.make_arch_json(with_noise=False), verbose=True)
 
+            # Rename old sessions to distinguish this one
+            # TODO: put a lock file on any existing sessions
+            model._rename_old_sessions()
+
             # Create a directory for this training session with a timestamp
             session_dname = 'fit_session_' + model._fit_session['start_time']
             session_dpath = join(model.saved_session_dpath, session_dname)
             session_dpath = ut.get_nonconflicting_path(session_dpath, offset=1,
                                                        suffix='_conflict%d')
-            ut.symlink(session_dpath, join(model.arch_dpath, 'latest_session'))
 
             ut.ensuredir(session_dpath)
             model._fit_session['session_dpath'] = session_dpath
 
-            loss_progress_dir = join(session_dpath, 'history')
-            weights_progress_dir = join(session_dpath, 'weights')
-            dream_progress_dir = join(session_dpath, 'dream')
+            if ut.get_argflag('--vd'):
+                ut.vd(session_dpath)
 
-            history_text_fpath = join(session_dpath, 'era_history.txt')
-            back_archinfo_fpath = join(session_dpath, 'fit_arch_info.json')
-            back_archimg_fpath = join(session_dpath, 'fit_arch_graph.jpg')
+            # Make a symlink to the latest session
+            session_lpath = join(model.arch_dpath, 'latest_session')
+            ut.symlink(session_dpath, session_lpath, overwrite=True)
 
             # Write backprop arch info to arch root
+            back_archinfo_fpath = join(session_dpath, 'fit_arch_info.json')
             back_archinfo_json = model.make_arch_json(with_noise=True)
             ut.writeto(back_archinfo_fpath, back_archinfo_json, verbose=True)
 
             # Write arch graph to root
             try:
+                back_archimg_fpath  = join(session_dpath, 'fit_arch_graph.jpg')
                 model.imwrite_arch(fpath=back_archimg_fpath)
                 model._overwrite_latest_image(back_archimg_fpath, 'arch_graph')
             except Exception as ex:
                 ut.printex(ex, iswarning=True)
 
             prog_dirs = {
-                'dream': dream_progress_dir,
-                'loss': loss_progress_dir,
-                'weights': weights_progress_dir,
+                'dream': join(session_dpath, 'dream'),
+                'loss': join(session_dpath, 'history'),
+                'weights': join(session_dpath, 'weights'),
             }
 
             model._fit_session.update(**{
                 'prog_dirs': prog_dirs,
-                'history_text_fpath': history_text_fpath,
+                'history_text_fpath': join(session_dpath, 'era_history.txt'),
             })
 
             for dpath in prog_dirs.values():
                 ut.ensuredir(dpath)
-
-            if ut.get_argflag('--vd'):
-                ut.vd(session_dpath)
 
             # Write initial states of the weights
             try:
@@ -655,11 +686,11 @@ class _ModelFitter(object):
         model.current_era['size'] += 1
         model.current_era['epoch_info_list'].append(epoch_info)
         # TODO: depricate
-        for key in epoch_info:
-            key_ = key + '_list'
-            if key_ not in model.current_era:
-                model.current_era[key_] = []
-            model.current_era[key_].append(epoch_info[key])
+        #for key in epoch_info:
+        #    key_ = key + '_list'
+        #    if key_ not in model.current_era:
+        #        model.current_era[key_] = []
+        #    model.current_era[key_].append(epoch_info[key])
 
     def _overwrite_latest_image(model, fpath, new_name):
         """
@@ -670,8 +701,10 @@ class _ModelFitter(object):
         dpath, fname = split(fpath)
         ext = splitext(fpath)[1]
         session_dpath = model._fit_session['session_dpath']
-        # Copy latest image to the session dir and the main arch dir
-        shutil.copy(fpath, join(session_dpath, 'latest_' + new_name + ext))
+        if session_dpath != dirname(fpath):
+            # Copy latest image to the session dir if it isn't there
+            shutil.copy(fpath, join(session_dpath, 'latest_' + new_name + ext))
+        # Copy latest image to the main arch dir
         shutil.copy(fpath, join(model.arch_dpath, 'latest_' + new_name + ext))
 
     def _dump_slow_monitor(model):
@@ -685,7 +718,7 @@ class _ModelFitter(object):
                 fig.savefig(fpath, dpi=180)
                 model._overwrite_latest_image(fpath, 'class_dream')
             except Exception as ex:
-                ut.printex(ex, iswarning=True)
+                ut.printex(ex, 'failed to dump dream', iswarning=True)
 
         try:
             # Save weights images
@@ -694,7 +727,7 @@ class _ModelFitter(object):
             fig.savefig(fpath, dpi=180)
             model._overwrite_latest_image(fpath, 'weights')
         except Exception as ex:
-            ut.printex(ex, iswarning=True)
+            ut.printex(ex, 'failed to dump weights', iswarning=True)
 
     def _dump_epoch_monitor(model):
         prog_dirs = model._fit_session['prog_dirs']
@@ -711,7 +744,8 @@ class _ModelFitter(object):
             fig.savefig(fpath, dpi=180)
             model._overwrite_latest_image(fpath, 'loss')
         except Exception as ex:
-            ut.printex(ex, iswarning=True)
+            ut.printex(ex, 'failed to dump loss', iswarning=True)
+            raise
 
         try:
             fpath = join(prog_dirs['loss'], 'pr_' + model.hist_id + '.png')
@@ -719,7 +753,8 @@ class _ModelFitter(object):
             fig.savefig(fpath, dpi=180)
             model._overwrite_latest_image(fpath, 'pr')
         except Exception as ex:
-            ut.printex(ex, iswarning=True)
+            ut.printex(ex, 'failed to dump pr', iswarning=True)
+            raise
 
         # Save weight updates
         try:
@@ -728,7 +763,7 @@ class _ModelFitter(object):
             fig.savefig(fpath, dpi=180)
             model._overwrite_latest_image(fpath, 'update_mag')
         except Exception as ex:
-            ut.printex(ex, iswarning=True)
+            ut.printex(ex, 'failed to dump update mags ', iswarning=True)
 
     def _epoch_learn(model, theano_backprop, X_learn, y_learn, w_learn):
         """
@@ -831,6 +866,99 @@ class _ModelFitter(object):
             valid_info['valid_fscore'] = f
             valid_info['valid_support'] = s
         return valid_info
+
+    def dump_cases(model, X, y, subset_id='unknown'):
+        """
+        For each class find:
+            * the most-hard  failures
+            * the mid-level failures
+            * the critical cases (least-hard failures / most-hard successes)
+            * the mid-level successes
+            * the least-hard successs
+
+        """
+        import vtool as vt
+        import pandas as pd
+        #pd.set_option("display.max_rows", 20)
+        #pd.set_option("display.precision", 2)
+        #pd.set_option('expand_frame_repr', False)
+        #pd.set_option('display.float_format', lambda x: '%.2f' % x)
+
+        session_dpath = model._fit_session['session_dpath']
+        case_dpath = ut.ensuredir((session_dpath, 'cases', model.hist_id, subset_id))
+
+        y_true = y
+        y_conf = model._predict(X)['network_output_determ']
+        data_idx = np.arange(len(y))
+        y_pred = y_conf.argmax(axis=1)
+
+        if getattr(model, 'encoder', None):
+            class_idxs = model.encoder.transform(model.encoder.classes_)
+            class_lbls = model.encoder.classes_
+        else:
+            class_idxs = list(range(model.output_dims))
+            class_lbls = list(range(model.output_dims))
+        target_classes = ut.take(class_lbls, class_idxs)
+
+        index = pd.Series(data_idx, name='data_idx')
+        decision = pd.DataFrame(y_conf, index=index, columns=target_classes)
+
+        easiness = np.array(ut.ziptake(decision.values, y_true))
+        columns = ['pred', 'target', 'easiness']
+        column_data = [y_pred, y_true, easiness]
+        data = dict(zip(columns, column_data))
+        df = pd.DataFrame(data, index, columns)
+        df['failed'] = df['pred'] != df['target']
+
+        def target_partition(df, target):
+            df_chunk = df if target is None else df[df['target'] == target]
+            df_chunk = df_chunk.take(df_chunk['easiness'].argsort()[::-1])
+            return df_chunk
+
+        def snapped_slice(size, frac, n):
+            start = int(size * frac - np.ceil(n / 2))
+            stop  = int(size * frac + np.floor(n / 2))
+            buf = 0
+            if stop >= size:
+                buf = (size - stop - 1)
+            elif start < 0:
+                buf = 0 - start
+            stop += buf
+            start += buf
+            assert stop < size, 'out of bounds'
+            sl = slice(start, stop)
+            return sl
+
+        for y in class_idxs:
+            class_case_dpath = ut.ensuredir((case_dpath, 'class_%r' % (y,)))
+            df_chunk = target_partition(df, y)
+            # Find the first failure
+            if any(df_chunk['failed']):
+                critical_index = np.where(df_chunk['failed'])[0][0]
+            else:
+                critical_index = 0
+            critical_frac = critical_index / len(df_chunk)
+            midlevel_easy = critical_frac / 2
+            midlevel_hard = critical_frac + (1 - critical_frac) / 2
+            # 0 is easy, 1 is hard
+            fracs = [0, midlevel_easy, critical_frac, midlevel_hard, 1.0]
+            n = 4
+            size = len(df_chunk)
+            slices = [snapped_slice(size, frac, n) for frac in fracs]
+
+            hard_idx = np.array(ut.unique(ut.flatten([list(range(*sl.indices(len(df_chunk)))) for sl in slices])))
+            hard_frac = hard_idx / len(df_chunk)
+            selected = df_chunk.iloc[hard_idx]
+
+            selected['hard_idx'] = hard_idx
+            selected['hard_frac'] = hard_frac
+
+            for idx, row in selected.iterrows():
+                img = X[idx]
+                type_ = 'fail' if row['failed'] else 'success'
+                fname = 'hardidx_%04d_hardfrac_%.2f_pred_%d_case_%s.jpg' % (row['hard_idx'], row['hard_frac'], row['pred'], type_)
+                fpath = join(class_case_dpath, fname)
+                vt.imwrite(fpath, img)
 
 
 @ut.reloadable_class
@@ -1013,11 +1141,11 @@ class _ModelBatch(_BatchUtility):
         data_per_label = model.data_per_label_input
         wraparound = model.input_shape[0] is not None
         model._validate_labels(X, y, w)
-        rng = model._rng
 
         num_batches = (X.shape[0] + batch_size - 1) // batch_size
 
         if shuffle:
+            rng = model._rng
             X, y, w = model.shuffle_input(X, y, w, data_per_label, rng=rng)
 
         is_int = ut.is_int(X)
@@ -1640,10 +1768,10 @@ class _ModelVisualization(object):
         fig = pt.figure(fnum=fnum, pnum=(1, 1, 1), doclf=True, docla=True)
         next_pnum = pt.make_pnum_nextgen(nRows=2, nCols=2)
         if len(model.era_history) > 0:
-            model._show_era_class_pr(['valid'], ['precision'], fnum=fnum, pnum=next_pnum())
-            model._show_era_class_pr(['valid'], ['recall'], fnum=fnum, pnum=next_pnum())
             model._show_era_class_pr(['learn'], ['precision'], fnum=fnum, pnum=next_pnum())
             model._show_era_class_pr(['learn'], ['recall'], fnum=fnum, pnum=next_pnum())
+            model._show_era_class_pr(['valid'], ['precision'], fnum=fnum, pnum=next_pnum())
+            model._show_era_class_pr(['valid'], ['recall'], fnum=fnum, pnum=next_pnum())
         pt.set_figtitle('Era PR History: ' + model.hist_id + '\n' + model.arch_id)
         return fig
 
@@ -1792,20 +1920,25 @@ class _ModelVisualization(object):
                 'valid': 'valid ' + str(model.era_history[0]['num_valid']),
             }
 
+        epoch_infos_list = [era_['epoch_info_list']
+                            for era_ in model.era_history]
+
         ydatas = [{
-            'learn': ut.take_column(era_['epoch_info_list'], 'learn_loss'),
-            'valid': ut.take_column(era_['epoch_info_list'], 'valid_loss'),
+            'learn': ut.take_column(epoch_infos, 'learn_loss'),
+            'valid': ut.take_column(epoch_infos, 'valid_loss'),
         }
-            for era_ in model.era_history]
+            for epoch_infos in epoch_infos_list]
 
         yspreads = [{
-            'learn': ut.take_column(era_['epoch_info_list'], 'learn_loss_std'),
-            'valid': ut.take_column(era_['epoch_info_list'], 'valid_loss_std'),
+            'learn': ut.take_column(epoch_infos, 'learn_loss_std'),
+            'valid': ut.take_column(epoch_infos, 'valid_loss_std'),
         }
-            for era_ in model.era_history]
+            for epoch_infos in epoch_infos_list]
 
-        return model._show_era_measure(ydatas, labels,  styles, ylabel='loss',
-                                       yspreads=yspreads, **kwargs)
+        fig = model._show_era_measure(ydatas, labels, styles,
+                                      ylabel='loss', yspreads=yspreads,
+                                      **kwargs)
+        return fig
 
     def show_weight_updates(model, param_keys=None, **kwargs):
         # has_mag_updates = False
@@ -1874,7 +2007,10 @@ class _ModelVisualization(object):
             styles = ut.ddict(lambda: '-o')
 
         if xdatas is None:
-            xdatas = [era['epoch_list'] for era in model.era_history]
+            epoch_infos_list = [era_['epoch_info_list']
+                                for era_ in model.era_history]
+            xdatas = [ut.take_column(epoch_infos, 'epoch')
+                      for epoch_infos in epoch_infos_list]
 
         if colors is None:
             colors = pt.distinct_colors(num_eras)
@@ -2151,7 +2287,7 @@ class _ModelStrings(object):
 
     @property
     def total_epochs(model):
-        return sum([len(era['epoch_list']) for era in model.era_history])
+        return sum([len(era['epoch_info_list']) for era in model.era_history])
 
     @property
     def total_eras(model):
@@ -2968,10 +3104,13 @@ def testdata_model_with_history():
             'epoch': num,
             'learn_loss': mean_loss + rand(),
             'learn_loss_reg': (mean_loss + np.exp(rand() * num + rand())),
+            'learn_loss_std': rand(),
             'valid_loss': mean_loss - rand(),
             'valid_loss_std': rand(),
             'valid_acc': expit(-6 + 12 * np.clip(frac + rand(), 0, 1)),
             'valid_acc_std': rand(),
+            'learn_acc': expit(-6 + 12 * np.clip(frac + rand(), 0, 1)),
+            'learn_acc_std': rand(),
             'valid_precision': [rng.rand() for _ in range(model.output_dims)],
             'valid_recall': [rng.rand() for _ in range(model.output_dims)],
             'learn_precision': [rng.rand() for _ in range(model.output_dims)],

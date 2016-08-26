@@ -505,7 +505,7 @@ def stratified_shuffle_split(y, fractions, rng=None, class_weights=None):
     return index_sets
 
 
-def stratified_label_shuffle_split(y, labels, fractions, idx=None, rng=None):
+def stratified_label_shuffle_split(y, labels, fractions, y_idx=None, rng=None):
     """
     modified from sklearn to make n splits instaed of 2.
     Also enforces that labels are not broken into separate groups.
@@ -542,21 +542,20 @@ def stratified_label_shuffle_split(y, labels, fractions, idx=None, rng=None):
 
     unique_idxs = stratified_shuffle_split(unique_ys, fractions, rng)
     index_sets = [np.array(ut.flatten(ut.take(groupxs, idxs))) for idxs in unique_idxs]
-    if idx is not None:
+    if y_idx is not None:
         # These indicies subindex into parent set of indicies
-        index_sets = [np.take(idx, idxs, axis=0) for idxs in index_sets]
+        index_sets = [np.take(y_idx, idxs, axis=0) for idxs in index_sets]
     return index_sets
 
 
-def stratified_kfold_label_split(y, labels, n_folds=2, idx=None, rng=None):
+def stratified_kfold_label_split(y, labels, n_folds=2, y_idx=None, rng=None):
     """
-    modified from sklearn to make n splits instaed of 2.
     Also enforces that labels are not broken into separate groups.
 
     Args:
         y (ndarray):  labels
         labels (?):
-        fractions (?):
+        y_idx (array): indexes associated with y if it was already presampled
         rng (RandomState):  random number generator(default = None)
 
     Returns:
@@ -585,7 +584,7 @@ def stratified_kfold_label_split(y, labels, n_folds=2, idx=None, rng=None):
     #class_weights = [ut.dict_hist(ys) for ys in grouped_ys]
 
     import sklearn.cross_validation
-    xvalkw = dict(n_folds=n_folds, shuffle=True, random_state=43432)
+    xvalkw = dict(n_folds=n_folds, shuffle=True, random_state=rng)
     skf = sklearn.cross_validation.StratifiedKFold(unique_ys, **xvalkw)
     _iter = skf
 
@@ -594,9 +593,6 @@ def stratified_kfold_label_split(y, labels, n_folds=2, idx=None, rng=None):
     for label_idx_set in _iter:
         index_sets = [np.array(ut.flatten(ut.take(groupxs, idxs)))
                       for idxs in label_idx_set]
-        if idx is not None:
-            # These indicies subindex into parent set of indicies
-            index_sets = [np.take(idx, idxs, axis=0) for idxs in index_sets]
         folded_index_sets.append(index_sets)
 
     for train_idx, test_idx in folded_index_sets:
@@ -604,6 +600,14 @@ def stratified_kfold_label_split(y, labels, n_folds=2, idx=None, rng=None):
         test_labels = set(ut.take(labels, test_idx))
         assert len(test_labels.intersection(train_labels)) == 0, 'same labels appeared in both train and test'
         pass
+
+    if y_idx is not None:
+        # These indicies subindex into parent set of indicies
+        folded_index_sets2 = []
+        for index_sets in folded_index_sets:
+            index_sets = [np.take(y_idx, idxs, axis=0) for idxs in index_sets]
+            folded_index_sets2.append(index_sets)
+        folded_index_sets = folded_index_sets2
     #import sklearn.model_selection
     #skf = sklearn.model_selection.StratifiedKFold(**xvalkw)
     #_iter = skf.split(X=np.empty(len(target)), y=target)
