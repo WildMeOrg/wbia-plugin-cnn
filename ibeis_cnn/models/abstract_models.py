@@ -672,14 +672,14 @@ class _ModelFitter(object):
         y_hashid = ut.hashstr_arr(y_learn, 'y', alphabet=ut.ALPHABET_27)
 
         learn_hashid =  str(model.arch_id) + '_' + y_hashid
-        if model.current_era is not None and len(model.current_era['epoch_list']) == 0:
+        if model.current_era is not None and len(model.current_era['size']) == 0:
             print('Not starting new era (previous era has no epochs)')
         else:
             _new_era = {
                 'size': 0,
                 #'valid_loss_list': [],
                 #'learn_loss_list': [],
-                'epoch_list': [],
+                #'epoch_list': [],
                 'learn_hashid': learn_hashid,
                 'arch_hashid': model.get_arch_hashid(),
                 'arch_id': model.arch_id,
@@ -1896,7 +1896,7 @@ class _ModelVisualization(object):
                                       labels=labels,
                                       colors=colors,
                                       #xdatas=xdatas,
-                                      ylabel='precision',
+                                      ylabel='/'.join(measures),
                                       yscale='linear', **kwargs)
         return fig
 
@@ -1983,7 +1983,7 @@ class _ModelVisualization(object):
         for index, era in enumerate(model.era_history):
             if 'param_update_mags' not in era['epoch_info_list']:
                 continue
-            xdata = era['epoch_list']
+            xdata = ut.take_column(era['epoch_info_list'], 'epoch')
             if index == 0:
                 xdata = xdata[1:]
             xdatas.append(xdata)
@@ -2105,7 +2105,8 @@ class _ModelVisualization(object):
         fig = pt.figure(fnum=fnum, pnum=pnum)
         num_eras = len(model.era_history)
         for index, era in enumerate(model.era_history):
-            epochs = era['epoch_list']
+            #epochs = era['epoch_list']
+            epochs = ut.take_column(era['epoch_info_list'], 'epoch')
             if 'update_mags_list' not in era:
                 continue
             update_mags_list = era['update_mags_list']
