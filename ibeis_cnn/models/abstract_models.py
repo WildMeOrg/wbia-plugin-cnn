@@ -896,6 +896,7 @@ class _ModelFitter(object):
         """
         import vtool as vt
         import pandas as pd
+        print('Dumping %s cases' % (subset_id,))
         #pd.set_option("display.max_rows", 20)
         #pd.set_option("display.precision", 2)
         #pd.set_option('expand_frame_repr', False)
@@ -1237,11 +1238,11 @@ class _ModelPredicter(object):
             print('\n[train] --- MODEL INFO ---')
             model.print_architecture_str()
             model.print_layer_info()
+            print('\n[test] predict with batch size %0.1f' % (
+                model.batch_size))
         # create theano symbolic expressions that define the network
         theano_predict = model.build_predict_func()
         # Begin testing with the neural network
-        print('\n[test] predict with batch size %0.1f' % (
-            model.batch_size))
         test_outputs = model.process_batch(
             theano_predict, X_test, unwrap=True)
         return test_outputs

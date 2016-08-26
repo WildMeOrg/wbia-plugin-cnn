@@ -707,12 +707,18 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
                  stride=(1, 1),
                  pool_stride=(2, 2),
                  pool_size=(2, 2),
+                 branches=None,
+                 W=None,
                  ):
 
     # FIXME; dropout is a pre-operation
     import ibeis_cnn.__LASAGNE__ as lasange
     import itertools
     import six
+
+    if W is None:
+        #W = init.GlorotUniform()
+        W = lasange.init.Orthogonal()
 
     # Rectify default inputs
     if nonlinearity == 'lru':
@@ -803,7 +809,7 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
         def __init__(self, num_filters, filter_size=filter_size,
                      stride=stride, nonlinearity=nonlinearity,
                      batch_norm=batch_norm, pool_size=pool_size,
-                     pool_stride=pool_stride, dropout=None, pool=False):
+                     W=W, pool_stride=pool_stride, dropout=None, pool=False):
             self.num_filters = num_filters
             self.filter_size = filter_size
             self.stride = stride
@@ -813,6 +819,7 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
             self.pool_stride = pool_stride
             self.dropout = dropout
             self.pool = pool
+            self.W = W
             super(ConvBundle, self).__init__()
             self.name = 'C' + self.name
 
@@ -824,7 +831,7 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
             outgoing = Conv2DLayer(outgoing, num_filters=self.num_filters,
                                    filter_size=self.filter_size,
                                    stride=self.stride, name=self.name,
-                                   nonlinearity=self.nonlinearity)
+                                   W=W, nonlinearity=self.nonlinearity)
             if self.batch_norm:
                 outgoing = self.apply_batch_norm(outgoing)
             if self.pool:
@@ -837,10 +844,10 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
     class InceptionBundle(Bundle):
         # https://github.com/317070/lasagne-googlenet/blob/master/googlenet.py
 
-        def __init__(self, branches=None,
+        def __init__(self, branches=branches,
                      nonlinearity=nonlinearity, batch_norm=batch_norm,
                      dropout=None, pool=False, pool_size=pool_size,
-                     pool_stride=pool_stride):
+                     pool_stride=pool_stride, W=W):
             # standard
             self.branches = branches
             self.nonlinearity = nonlinearity
@@ -848,6 +855,7 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
             self.batch_norm = batch_norm
             self.pool = pool
             self.pool_size = pool_size
+            self.W = W
             self.pool_stride = pool_stride
             super(InceptionBundle, self).__init__()
             self.name = 'INCEP' + self.name
@@ -896,11 +904,10 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
             name_aug = 'x'.join([str(s) for s in filter_size])
             if num_reduce > 0:
                 if False:
-                    gain = 1.0
                     bias = .1
                     redu = lasange.layers.NINLayer(
                         incoming, num_units=num_reduce,
-                        W=lasange.init.Orthogonal(gain),
+                        W=self.W,
                         b=lasange.init.Constant(bias),
                         nonlinearity=self.nonlinearity,
                         name=name + '/' + name_aug + '_reduce',)
@@ -909,6 +916,7 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
                     redu = Conv2DLayer(incoming, num_filters=num_reduce,
                                        filter_size=(1, 1), pad=0, stride=(1, 1),
                                        nonlinearity=self.nonlinearity,
+                                       W=self.W,
                                        name=name + '/' + name_aug + '_reduce',)
                 if self.batch_norm:
                     redu = self.apply_batch_norm(redu)
@@ -920,6 +928,7 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
                 conv = Conv2DLayer(conv, num_filters=num_filters,
                                    filter_size=filter_size, pad=pad, stride=(1, 1),
                                    nonlinearity=self.nonlinearity,
+                                   W=self.W,
                                    name=name + '/' + name_aug + '_' + str(d))
                 if d > 0:
                     conv._is_main_layer = False
@@ -974,11 +983,12 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
     @register_bundle
     class DenseBundle(Bundle):
         def __init__(self, num_units, batch_norm=batch_norm,
-                     nonlinearity=nonlinearity, dropout=None):
+                     nonlinearity=nonlinearity, W=W, dropout=None):
             self.num_units = num_units
             self.batch_norm = batch_norm
             self.nonlinearity = nonlinearity
             self.dropout = dropout
+            self.W = W
             super(DenseBundle, self).__init__()
 
         def __call__(self, incoming):
@@ -987,17 +997,18 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
                 outgoing = self.apply_dropout(outgoing)
             outgoing = lasange.layers.DenseLayer(
                 outgoing, num_units=self.num_units, name='F' + self.name,
-                nonlinearity=self.nonlinearity)
+                nonlinearity=self.nonlinearity, W=self.W)
             if self.batch_norm:
                 outgoing = self.apply_batch_norm(outgoing)
             return outgoing
 
     @register_bundle
     class SoftmaxBundle(Bundle):
-        def __init__(self, num_units, dropout=None):
+        def __init__(self, num_units, dropout=None, W=W):
             self.num_units = num_units
             self.batch_norm = batch_norm
             self.dropout = dropout
+            self.W = W
             super(SoftmaxBundle, self).__init__()
 
         def __call__(self, incoming):
@@ -1006,7 +1017,7 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
                 outgoing = self.apply_dropout(outgoing)
             outgoing = lasange.layers.DenseLayer(
                 outgoing, num_units=self.num_units, name='F' + self.name,
-                nonlinearity=lasange.nonlinearities.softmax)
+                W=self.W, nonlinearity=lasange.nonlinearities.softmax)
             return outgoing
 
     @register_bundle
@@ -1041,37 +1052,6 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
                 name='P' + self.name,
             )
 
-    #class MLPConvBundle(object):
-    #    """ mplconv part of the NIN structure """
-    #    def __init__(self, num_filters, filter_size=filter_size,
-    #                 stride=stride, nonlinearity=nonlinearity,
-    #                 batch_norm=batch_norm, pool_size=pool_size,
-    #                 pool_stride=pool_stride, dropout=None, pool=False):
-    #        self.num_filters = num_filters
-    #        self.filter_size = filter_size
-    #        self.stride = stride
-    #        self.nonlinearity = nonlinearity
-    #        self.batch_norm = batch_norm
-    #        self.pool_size = pool_size
-    #        self.pool_stride = pool_stride
-    #        self.dropout = dropout
-    #        self.pool = pool
-
-    #    def __call__(self, incoming):
-    #        outgoing = Conv2DLayer(incoming, num_filters=self.num_filters,
-    #                               filter_size=self.filter_size,
-    #                               stride=self.stride, name='C' + self.name,
-    #                               nonlinearity=self.nonlinearity)
-    #        if self.batch_norm:
-    #            outgoing = apply_batch_norm(self, outgoing)
-    #        if self.pool:
-    #            outgoing = MaxPool2DLayer(outgoing, pool_size=self.pool_size,
-    #                                      name='P' + self.name,
-    #                                      stride=self.pool_stride)
-    #        if self.dropout is not None and self.dropout > 0:
-    #            outgoing = apply_dropout(self, outgoing)
-    #        return outgoing
-
     #def inception_module(l_in, num_1x1, reduce_3x3, num_3x3, reduce_5x5,
     #                     num_5x5, gain=1.0, bias=0.1):
     #    """
@@ -1080,62 +1060,6 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
 
     #    http://www.cv-foundation.org/openaccess/content_cvpr_2015/papers/Szegedy_Going_Deeper_With_2015_CVPR_paper.pdf
     #    """
-    #    import lasagne as nn
-    #    shape = l_in.get_output_shape()  # NOQA
-    #    out_layers = []
-
-    #    # 1x1
-    #    if num_1x1 > 0:
-    #        l_1x1 = nn.layers.NINLayer(l_in, num_units=num_1x1,
-    #                                   W=nn.init.Orthogonal(gain),
-    #                                   b=nn.init.Constant(bias))
-    #        out_layers.append(l_1x1)
-
-    #        l_inc_out = nn.layers.concat([l_conv_inc, l_conv_inc2b, l_conv_inc2d, l_conv_inc2e])
-
-    #    # 3x3
-    #    if num_3x3 > 0:
-    #        if reduce_3x3 > 0:
-    #            l_reduce_3x3 = nn.layers.NINLayer(l_in, num_units=reduce_3x3,
-    #                                              W=nn.init.Orthogonal(gain),
-    #                                              b=nn.init.Constant(bias))
-    #        else:
-    #            l_reduce_3x3 = l_in
-    #        l_3x3 = Conv2DLayer(l_reduce_3x3, num_filters=num_3x3,
-    #                            filter_size=(3, 3), border_mode="same",
-    #                            W=nn.init.Orthogonal(gain),
-    #                            b=nn.init.Constant(bias))
-    #        out_layers.append(l_3x3)
-
-    #    # 5x5
-    #    if num_5x5 > 0:
-    #        if reduce_5x5 > 0:
-    #            l_reduce_5x5 = nn.layers.NINLayer(l_in, num_units=reduce_5x5,
-    #                                              W=nn.init.Orthogonal(gain),
-    #                                              b=nn.init.Constant(bias))
-    #        else:
-    #            l_reduce_5x5 = l_in
-    #        l_5x5 = Conv2DLayer(l_reduce_5x5, num_filters=num_5x5,
-    #                            filter_size=(5, 5), border_mode="same",
-    #                            W=nn.init.Orthogonal(gain),
-    #                            b=nn.init.Constant(bias))
-    #        out_layers.append(l_5x5)
-
-    #    # stack
-    #    l_out = nn.layers.concat(out_layers)
-    #    return l_out
-
-    #def wrap_layer():
-    #    pass
-
-    #bundles = {
-    #    'SoftmaxBundle': SoftmaxBundle,
-    #    'DenseBundle': DenseBundle,
-    #    'ConvBundle': ConvBundle,
-    #    'InputBundle': InputBundle,
-    #    'InceptionBundle': InceptionBundle,
-    #    'SoftmaxLayer': SoftmaxLayer,
-    #}
     return bundles
 
 
