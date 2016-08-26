@@ -410,12 +410,12 @@ class _ModelFitter(object):
                     # But we want to dump the images less often
                     # Make function to just grab the failure case info
                     # and another function to visualize it.
-                    model.dump_cases(X_learn, y_learn, 'learn')
-                    model.dump_cases(X_valid, y_valid, 'valid')
 
                 if model.monitor_config['monitor']:
                     if utils.checkfreq(model.monitor_config['slowdump_freq'], epoch):
                         model._dump_slow_monitor()
+                        model.dump_cases(X_learn, y_learn, 'learn')
+                        model.dump_cases(X_valid, y_valid, 'valid')
 
                 # Check if the era is done
                 max_era_size = model._fit_session['max_era_size']
