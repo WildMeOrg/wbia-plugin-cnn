@@ -288,6 +288,7 @@ class _ModelFitter(object):
         print('Learn y histogram: ' + ut.repr2(ut.dict_hist(y_learn)))
         print('Valid y histogram: ' + ut.repr2(ut.dict_hist(y_valid)))
 
+        # FIXME: make class weights more ellegant and customizable
         if 'class_to_weight' in model.data_params:
             # Hack, assuming a classification task
             class_to_weight = model.data_params['class_to_weight']
@@ -319,8 +320,19 @@ class _ModelFitter(object):
 
         # number of non-best iterations after, that triggers a best save
         # This prevents strings of best-saves one after another
-        save_after_best_wait_epochs = model.hyperparams['era_size'] * 2
-        save_after_best_countdown = None
+        countdown_defaults = {
+            'checkpoint': model.hyperparams['era_size'] * 2,
+            'stop': model.hyperparams['stopping_patience'],
+        }
+        countdowns = {key: None for key in countdown_defaults.keys()}
+
+        def check_countdown(key):
+            if countdowns[key] is not None:
+                if countdowns[key] > 0:
+                    countdowns[key] -= 1
+                else:
+                    countdowns[key] = countdown_defaults[key]
+                    return True
 
         model._new_era(X_learn, y_learn, X_valid, y_valid)
         printcol_info = utils.get_printcolinfo(model.requested_headers)
@@ -356,22 +368,26 @@ class _ModelFitter(object):
                 # ---------------------------------------
                 # Check how we are learning
                 if epoch_info['valid_loss'] < model.best_results['valid_loss']:
+                    # Found a better model. Reset countdowns.
+                    for key in countdowns.keys():
+                        countdowns[key] = countdown_defaults[key]
+                    # Cache best results
                     model.best_results['weights'] = model.get_all_param_values()
                     model.best_results['epoch'] = epoch_info['epoch']
                     for key in model.requested_headers:
                         model.best_results[key] = epoch_info[key]
-                    save_after_best_countdown = save_after_best_wait_epochs
 
                 # Check frequencies and countdowns
                 checkpoint_flag = utils.checkfreq(
                     model.monitor_config['checkpoint_freq'], epoch)
-                if save_after_best_countdown is not None:
-                    if save_after_best_countdown == 0:
-                        ## Callbacks on best found
-                        save_after_best_countdown = None
-                        checkpoint_flag = True
-                    else:
-                        save_after_best_countdown -= 1
+
+                if check_countdown('stop'):
+                    print('Early stopping')
+                    break
+
+                if check_countdown('checkpoint'):
+                    countdowns['checkpoint'] = None
+                    checkpoint_flag = True
 
                 # ---------------------------------------
                 # Output Diagnostics
@@ -889,7 +905,8 @@ class _ModelFitter(object):
         case_dpath = ut.ensuredir((session_dpath, 'cases', model.hist_id, subset_id))
 
         y_true = y
-        y_conf = model._predict(X)['network_output_determ']
+        netout = model._predict(X)
+        y_conf = netout['network_output_determ']
         data_idx = np.arange(len(y))
         y_pred = y_conf.argmax(axis=1)
 
