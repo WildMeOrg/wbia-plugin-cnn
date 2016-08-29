@@ -353,7 +353,7 @@ def testdata_mnist(defaultname='lenet', batch_size=128, dropout=None):
     model.monitor_config['showprog'] = False
     model.monitor_config['slowdump_freq'] = 10
 
-    model.learn_state['learning_rate'] = .1
+    model.learn_state['learning_rate'] = .01
     model.hyperparams['weight_decay'] = .001
     if name == 'bnorm':
         model.hyperparams['era_size'] = 4
@@ -367,7 +367,7 @@ def testdata_mnist(defaultname='lenet', batch_size=128, dropout=None):
     elif name.startswith('resnet'):
         model.hyperparams['era_size'] = 10
         model.hyperparams['rate_schedule'] = [.5]
-        model.learn_state['learning_rate'] = .1
+        model.learn_state['learning_rate'] = .01
         model.hyperparams['weight_decay'] = 0
         model.hyperparams['augment_on'] = True
     else:

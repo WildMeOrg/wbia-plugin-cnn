@@ -785,6 +785,9 @@ class _ModelFitter(object):
         for key in report_dict['best'].keys():
             if hasattr(report_dict['best'][key], 'tolist'):
                 report_dict['best'][key] = report_dict['best'][key].tolist()
+        if len(model.era_history) > 0:
+            report_dict['num_learn'] = model.era_history[-1]['num_learn']
+            report_dict['num_valid'] = model.era_history[-1]['num_valid']
         report_dict['hyperparams'] = model.hyperparams
         report_dict['arch_hashid'] = model.get_arch_hashid()
         report_dict['model_name'] = model.name
