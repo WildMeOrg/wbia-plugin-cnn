@@ -287,6 +287,7 @@ def show_augmented_patches(Xb, Xb_, yb, yb_, data_per_label=1, shadows=None):
     diff = np.abs((sample1 - sample2))
     diff_batches = diff.sum(-1).sum(-1).sum(-1) > 0
     modified_indexes = np.where(diff_batches > 0)[0]
+    print('modified_indexes = %r' % (modified_indexes,))
     #modified_indexes = np.arange(num_examples)
 
     Xb_old = vt.rectify_to_uint8(Xb_old)
@@ -300,19 +301,22 @@ def show_augmented_patches(Xb, Xb_, yb, yb_, data_per_label=1, shadows=None):
 
     import six
     #chunck_sizes = (4, 10)
-    chunk_sizes = pt.get_square_row_cols(len(modified_indexes), max_cols=10,
-                                         fix=False, inclusive=False)
-    multiindices = six.next(ut.iter_multichunks(modified_indexes, chunk_sizes))
+    import utool
+    with utool.embed_on_exception_context:
+        chunk_sizes = pt.get_square_row_cols(len(modified_indexes), max_cols=10,
+                                             fix=False, inclusive=False)
+        _iter = ut.iter_multichunks(modified_indexes, chunk_sizes)
+        multiindices = six.next(_iter)
 
-    from ibeis_cnn import draw_results
-    tup = draw_results.get_patch_multichunks(data_lists_old, yb, {},
-                                             multiindices)
-    orig_stack = tup[0]
-    #stacked_img, stacked_offsets, stacked_sfs = tup
+        from ibeis_cnn import draw_results
+        tup = draw_results.get_patch_multichunks(data_lists_old, yb, {},
+                                                 multiindices)
+        orig_stack = tup[0]
+        #stacked_img, stacked_offsets, stacked_sfs = tup
 
-    tup = draw_results.get_patch_multichunks(data_lists_new, yb_, {},
-                                             multiindices)
-    warp_stack = tup[0]
+        tup = draw_results.get_patch_multichunks(data_lists_new, yb_, {},
+                                                 multiindices)
+        warp_stack = tup[0]
     #stacked_img, stacked_offsets, stacked_sfs = tup
 
     #orig_stack = stacked_img_pairs(Xb_old, modified_indexes, yb)

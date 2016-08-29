@@ -311,10 +311,11 @@ class _ModelFitter(object):
         else:
             print('Resuming training at epoch=%r' % (epoch,))
         # Begin training the neural network
-        print('model.arch_id = %r' % (model.arch_id,))
+        print('model.monitor_config = %s' % (ut.repr4(model.monitor_config),))
         print('model.batch_size = %r' % (model.batch_size,))
         print('model.hyperparams = %s' % (ut.repr4(model.hyperparams),))
         print('learn_state = %s' % ut.repr4(model.learn_state.asdict()))
+        print('model.arch_id = %r' % (model.arch_id,))
 
         # create theano symbolic expressions that define the network
         theano_backprop = model.build_backprop_func()
@@ -376,6 +377,16 @@ class _ModelFitter(object):
                     # Cache best results
                     model.best_results['weights'] = model.get_all_param_values()
                     model.best_results['epoch'] = epoch_info['epoch']
+                    if 'valid_precision' in epoch_info:
+                        model.best_results['valid_precision'] = epoch_info['valid_precision']
+                        model.best_results['valid_recall'] = epoch_info['valid_recall']
+                        model.best_results['valid_fscore'] = epoch_info['valid_fscore']
+                        model.best_results['valid_support'] = epoch_info['valid_support']
+                    if 'learn_precision' in epoch_info:
+                        model.best_results['learn_precision'] = epoch_info['learn_precision']
+                        model.best_results['learn_recall'] = epoch_info['learn_recall']
+                        model.best_results['learn_fscore'] = epoch_info['learn_fscore']
+                        model.best_results['learn_support'] = epoch_info['learn_support']
                     for key in model.requested_headers:
                         model.best_results[key] = epoch_info[key]
 
@@ -636,6 +647,10 @@ class _ModelFitter(object):
             back_archinfo_json = model.make_arch_json(with_noise=True)
             ut.writeto(back_archinfo_fpath, back_archinfo_json, verbose=True)
 
+            pred_archinfo_fpath = join(session_dpath, 'predict_arch_info.json')
+            pred_archinfo_json = model.make_arch_json(with_noise=False)
+            ut.writeto(pred_archinfo_fpath, pred_archinfo_json, verbose=False)
+
             # Write arch graph to root
             try:
                 back_archimg_fpath  = join(session_dpath, 'fit_arch_graph.jpg')
@@ -652,14 +667,14 @@ class _ModelFitter(object):
 
             model._fit_session.update(**{
                 'prog_dirs': prog_dirs,
-                'history_text_fpath': join(session_dpath, 'era_history.txt'),
             })
 
-            for dpath in prog_dirs.values():
-                ut.ensuredir(dpath)
+            #for dpath in prog_dirs.values():
+            #    ut.ensuredir(dpath)
 
             # Write initial states of the weights
             try:
+                ut.ensuredir(prog_dirs['weights'])
                 fig = model.show_weights_image(fnum=2)
                 fpath = join(prog_dirs['weights'], 'weights_' + model.hist_id + '.png')
                 fig.savefig(fpath)
@@ -734,6 +749,7 @@ class _ModelFitter(object):
         if False:
             try:
                 # Save class dreams
+                ut.ensuredir(prog_dirs['dream'])
                 fpath = join(prog_dirs['dream'], 'class_dream_' + model.hist_id + '.png')
                 fig = model.show_class_dream(fnum=4)
                 fig.savefig(fpath, dpi=180)
@@ -745,6 +761,7 @@ class _ModelFitter(object):
         prog_dirs = model._fit_session['prog_dirs']
         try:
             # Save weights images
+            ut.ensuredir(prog_dirs['weights'])
             fpath = join(prog_dirs['weights'], 'weights_' + model.hist_id + '.png')
             fig = model.show_weights_image(fnum=2)
             fig.savefig(fpath, dpi=180)
@@ -754,14 +771,30 @@ class _ModelFitter(object):
 
     def _dump_epoch_monitor(model):
         prog_dirs = model._fit_session['prog_dirs']
+        session_dpath = model._fit_session['session_dpath']
 
-        # Save text info
-        text_fpath = model._fit_session['history_text_fpath']
+        # Save text history info
+        text_fpath = join(session_dpath, 'era_history.txt')
         history_text = ut.list_str(model.era_history, newlines=True)
         ut.write_to(text_fpath, history_text, verbose=False)
 
+        # Save text best info
+        report_fpath = join(session_dpath, 'best_report.json')
+        report_dict = {}
+        report_dict['best'] = ut.delete_keys(model.best_results.copy(), ['weights'])
+        for key in report_dict['best'].keys():
+            if hasattr(report_dict['best'][key], 'tolist'):
+                report_dict['best'][key] = report_dict['best'][key].tolist()
+        report_dict['hyperparams'] = model.hyperparams
+        report_dict['arch_hashid'] = model.get_arch_hashid()
+        report_dict['model_name'] = model.name
+        report_json = ut.repr2(report_dict, precision=4, nl=2)
+        report_json = str(report_json.replace('\'', '"').replace('(', '[').replace(')', ']'))
+        ut.write_to(report_fpath, report_json, verbose=False)
+
         # Save loss graphs
         try:
+            ut.ensuredir(prog_dirs['loss'])
             fpath = join(prog_dirs['loss'], 'loss_' + model.hist_id + '.png')
             fig = model.show_loss_history(fnum=1)
             fig.savefig(fpath, dpi=180)
@@ -771,6 +804,7 @@ class _ModelFitter(object):
             raise
 
         try:
+            ut.ensuredir(prog_dirs['loss'])
             fpath = join(prog_dirs['loss'], 'pr_' + model.hist_id + '.png')
             fig = model.show_pr_history(fnum=4)
             fig.savefig(fpath, dpi=180)
@@ -781,6 +815,7 @@ class _ModelFitter(object):
 
         # Save weight updates
         try:
+            ut.ensuredir(prog_dirs['loss'])
             fpath = join(prog_dirs['loss'], 'update_mag_' + model.hist_id + '.png')
             fig = model.show_update_mag_history(fnum=3)
             fig.savefig(fpath, dpi=180)
@@ -2171,7 +2206,8 @@ class _ModelVisualization(object):
 
     def render_arch(model, fullinfo=True):
         import plottool as pt
-        with pt.RenderingContext() as render:
+        savekw = dict(dpi=180)
+        with pt.RenderingContext(**savekw) as render:
             model.show_arch(fnum=render.fig.number, fullinfo=fullinfo)
         return render.image
 
@@ -2317,7 +2353,7 @@ class _ModelStrings(object):
             ...this model has 103,018 learnable parameters
             ...this model will use 10,050,984 bytes = 9.59 MB
         """
-        return net_strs.get_layer_info_str(model.get_all_layers())
+        return net_strs.get_layer_info_str(model.get_all_layers(), model.batch_size)
 
     @property
     def total_epochs(model):

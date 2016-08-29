@@ -718,7 +718,7 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
 
     if W is None:
         #W = init.GlorotUniform()
-        W = lasange.init.Orthogonal()
+        W = lasange.init.Orthogonal('relu')
 
     # Rectify default inputs
     if nonlinearity == 'lru':
@@ -756,7 +756,19 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
 
     class Bundle(object):
         def __init__(self):
-            self.name = namer()
+            self.suffix = namer()
+            self.name = self.suffix
+
+        def debug_layer(self, layer):
+            if False:
+                print('layer = %r' % layer)
+                if hasattr(layer, 'name'):
+                    print('  * layer.name = %r' % layer.name)
+                if hasattr(layer, 'input_shape'):
+                    print('  * layer.input_shape = %r' % (layer.input_shape,))
+                if hasattr(layer, 'shape'):
+                    print('  * layer.shape = %r' % (layer.shape,))
+                print('  * layer.output_shape = %r' % (layer.output_shape,))
 
         def apply_dropout(self, layer):
             # change name standard
@@ -777,7 +789,7 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
             bn_name = layer.name + '/bn'
             layer = BatchNormLayer2(layer, name=bn_name,
                                     nonlinearity=nonlinearity, **kwargs)
-            layer._is_main_layer = False
+            #layer._is_main_layer = False
             #if nonlinearity is not None:
             #    nonlin_name = 'g' + self.name
             #    layer = lasange.layers.special.NonlinearityLayer(layer,
@@ -809,7 +821,8 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
         def __init__(self, num_filters, filter_size=filter_size,
                      stride=stride, nonlinearity=nonlinearity,
                      batch_norm=batch_norm, pool_size=pool_size,
-                     W=W, pool_stride=pool_stride, dropout=None, pool=False):
+                     W=W, pool_stride=pool_stride, dropout=None,
+                     pool=False, preactivate=False, pad=0, name=None):
             self.num_filters = num_filters
             self.filter_size = filter_size
             self.stride = stride
@@ -818,26 +831,149 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
             self.pool_size = pool_size
             self.pool_stride = pool_stride
             self.dropout = dropout
+            self.preactivate = preactivate
             self.pool = pool
+            self.pad = pad
             self.W = W
-            super(ConvBundle, self).__init__()
-            self.name = 'C' + self.name
+            if name is None:
+                super(ConvBundle, self).__init__()
+                self.name = 'C' + self.suffix
+            else:
+                self.name = name
 
         def __call__(self, incoming):
             outgoing = incoming
+
+            if self.preactivate or self.batch_norm:
+                b = None
+                nonlinearity = None
+            else:
+                b = lasange.init.Constant(0)
+                nonlinearity = self.nonlinearity
+
+            if self.preactivate:
+                outgoing = BatchNormLayer2(outgoing,
+                                           nonlinearity=self.nonlinearity,
+                                           name=self.name + '/_bn')
+
             if self.dropout is not None and self.dropout > 0:
                 outgoing = self.apply_dropout(outgoing)
 
             outgoing = Conv2DLayer(outgoing, num_filters=self.num_filters,
                                    filter_size=self.filter_size,
                                    stride=self.stride, name=self.name,
-                                   W=W, nonlinearity=self.nonlinearity)
-            if self.batch_norm:
-                outgoing = self.apply_batch_norm(outgoing)
+                                   pad=self.pad, W=W,
+                                   nonlinearity=nonlinearity, b=b)
+
+            if self.batch_norm and not self.preactivate:
+                outgoing = BatchNormLayer2(outgoing,
+                                           nonlinearity=self.nonlinearity,
+                                           name=self.name + '/bn_')
+
             if self.pool:
                 outgoing = MaxPool2DLayer(outgoing, pool_size=self.pool_size,
                                           name=self.name + '/P',
                                           stride=self.pool_stride)
+            return outgoing
+
+    @register_bundle
+    class ResidualBundle(Bundle):
+        def __init__(self, num_filters, filter_size=filter_size,
+                     stride=stride, nonlinearity=nonlinearity,
+                     pool_size=pool_size, W=W, pool_stride=pool_stride,
+                     dropout=None, pool=False,
+                     preactivate=True,
+                     postactivate=False):
+            self.num_filters = num_filters
+            self.filter_size = filter_size
+            self.stride = stride
+            self.nonlinearity = nonlinearity
+            self.pool_size = pool_size
+            self.pool_stride = pool_stride
+            self.dropout = dropout
+            self.pool = pool
+            self.W = W
+            self.preactivate = preactivate
+            self.postactivate = postactivate
+            super(ResidualBundle, self).__init__()
+            self.name = 'R' + self.name
+
+        #def projectionA(l_inp):
+        #    n_filters = l_inp.output_shape[1] * 2
+
+        #    def ceildiv(a, b):
+        #        return -(-a // b)
+
+        #    l = lasagne.layers.ExpressionLayer(
+        #        l_inp,
+        #        lambda X: X[:, :, ::2, ::2],
+        #        lambda s: (s[0], s[1], ceildiv(s[2], 2), ceildiv(s[3], 2)))
+        #    l = lasagne.layers.PadLayer(l, [n_filters // 4, 0, 0], batch_ndim=1)
+        #    return l
+
+        def projectionB(self, incoming):
+            """
+            The projection shortcut in Eqn.(2) is used to match dimensions
+            (done by 1x1 convolutions). When the shortcuts go across feature
+            maps of two sizes, they are performed with a stride of 2.
+            """
+            # Projection is a strided 1x1 convolution.
+            # I think preactivation should not trigger any nonlinearities. Just
+            # batch normalization. But I haven't been able to confirm.
+            projector = ConvBundle(
+                filter_size=(1, 1), num_filters=self.num_filters,
+                stride=self.stride, W=self.W, pad='same',
+                dropout=self.dropout, name=self.name + '/proj',
+                nonlinearity=None, preactivate=self.preactivate)
+            shortcut = projector(incoming)
+            return shortcut
+
+        def __call__(self, incoming):
+            """
+            https://github.com/Lasagne/Lasagne/issues/531
+            https://github.com/alrojo/lasagne_residual_network/search?utf8=%E2%9C%93&q=residual
+            https://github.com/FlorianMuellerklein/Identity-Mapping-ResNet-Lasagne/blob/master/models.py
+            """
+
+            # Check if this bundle is going to reduce the spatial dimensions
+            size_reduced = (np.prod(self.stride) != 1)
+
+            # Define convolvers
+            convkw = dict(W=self.W, pad='same', dropout=self.dropout,
+                          batch_norm=False, filter_size=self.filter_size,
+                          num_filters=self.num_filters)
+
+            # Do not preactivate if this is the first layer in the network
+            convolver1 = ConvBundle(stride=self.stride, preactivate=self.preactivate,
+                                    name=self.name + '/C1', **convkw)
+            convolver2 = ConvBundle(stride=(1, 1), preactivate=True,
+                                    name=self.name + '/C2', **convkw)
+
+            branch = incoming
+            branch = convolver1(branch)
+            branch = convolver2(branch)
+            branch._is_main_layer = False
+
+            # Need to project the shortcut branch
+            if size_reduced:
+                shortcut = self.projectionB(incoming)
+            else:
+                shortcut = incoming
+
+            outgoing = lasange.layers.ElemwiseSumLayer(
+                [branch, shortcut], name=self.name + '/sum')
+
+            # Postactivate if this is the last residual layer.
+            if self.postactivate:
+                outgoing = BatchNormLayer2(
+                    outgoing, name=self.name + '/bn_',
+                    nonlinearity=nonlinearity)
+
+            if self.pool:
+                outgoing = MaxPool2DLayer(outgoing, pool_size=self.pool_size,
+                                          name=self.name + '/P',
+                                          stride=self.pool_stride)
+
             return outgoing
 
     @register_bundle
@@ -1031,11 +1167,23 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
 
     @register_bundle
     class GlobalPool(Bundle):
-        def __call__(self, incoming):
-            return lasagne.layers.GlobalPoolLayer(
+        def __call__(self, incoming, ):
+            outgoing = lasagne.layers.GlobalPoolLayer(
                 incoming,
                 name='GP' + self.name,
             )
+            outgoing._is_main_layer = True
+            return outgoing
+
+    @register_bundle
+    class AveragePool(Bundle):
+        def __call__(self, incoming, ):
+            outgoing = lasagne.layers.GlobalPoolLayer(
+                incoming,
+                name='AP' + self.name,
+            )
+            outgoing._is_main_layer = True
+            return outgoing
 
     @register_bundle
     class MaxPool2D(Bundle):

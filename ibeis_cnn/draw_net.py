@@ -195,12 +195,19 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
             is_main_layer = False
         if layer_info['classname'] in lasange.layers.special.__all__:
             is_main_layer = False
+        if layer_info['classname'].startswith('BatchNorm'):
+            is_main_layer = False
+        if layer_info['classname'].startswith('ElemwiseSum'):
+            is_main_layer = True
 
         if layer_type == 'Input':
             is_main_layer = True
 
         if hasattr(layer, '_is_main_layer'):
             is_main_layer = layer._is_main_layer
+
+        #if getattr(layer, 'name', '') is not None and getattr(layer, 'name', '') .endswith('/sum'):
+        #    is_main_layer = True
 
         node_attr = dict(name=key, label=label, color=color,
                          fillcolor=color, style='filled',
@@ -211,7 +218,7 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
             main_nodes.append(key)
         node_attr['classalias'] = layer_info['classalias']
 
-        if is_main_layer:
+        if is_main_layer or node_attr['classalias'].startswith('Conv'):
             if hasattr(layer, 'shape'):
                 if len(layer.shape) == 3:
                     node_attr['out_size'] = (layer.shape[2],
@@ -262,7 +269,7 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
     scale_dense_min = 8
 
     for k, v in node_dict.items():
-        if v['is_main_layer']:
+        if v['is_main_layer'] or v['classalias'].startswith('Conv'):
             if 'out_size' in v:
                 # Make dense layers more visible
                 if v['classalias'] == 'Dense':
@@ -274,9 +281,13 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
                         v['height'] = scale_dense_min * v['out_size'][1]
                     else:
                         v['height'] = v['out_size'][1]
-                else:
+                elif v['classalias'].startswith('Conv'):
                     v['shape'] = 'stack'
                     #v['shape'] = 'rect'
+                    v['width'] = v['out_size'][0] * scale[0]
+                    v['height'] =  v['out_size'][1] * scale[1]
+                else:
+                    v['shape'] = 'rect'
                     v['width'] = v['out_size'][0] * scale[0]
                     v['height'] =  v['out_size'][1] * scale[1]
             else:
@@ -306,7 +317,21 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
     #main_nodes = [key for key, val in
     #              nx.get_node_attributes(G, 'is_main_layer').items() if val]
 
-    main_children = {}
+    main_children = ut.odict()
+
+    #for n1, n2 in ut.itertwo(main_nodes):
+    #    print('n1, n2 = %r %r' % (n1, n2))
+    #    import utool
+    #    utool.embed()
+    #    children = ut.nx_all_nodes_between(G, n1, n2)
+    #    if n1 in children:
+    #        children.remove(n1)
+    #    if n2 in children:
+    #        children.remove(n2)
+    #    main_children[n1] = children
+
+    #    #pass
+    #main_children[main_nodes[-1]] = []
 
     for n1 in main_nodes:
         main_children[n1] = []
@@ -319,6 +344,10 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
                 if n2 in main_nodes:
                     next_main = n2
                 else:
+                    G.node[n2]['group'] = n1
+                    main_children[n1].append(n2)
+            else:
+                if n2 not in list(nx.descendants(G, next_main)):
                     G.node[n2]['group'] = n1
                     main_children[n1].append(n2)
 
@@ -372,12 +401,13 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
     _labels = nx.get_node_attributes(G_, 'label')
     ut.nx_delete_node_attr(G_, 'label')
     nx.set_node_attributes(G_, 'label', '')
-    if 0:
+    nolayout = False
+    if nolayout:
         G_.remove_edges_from(list(G_.edges()))
     else:
         layout_info = pt.nx_agraph_layout(G_, inplace=True, **layoutkw)  # NOQA
     # reset labels
-    if 1:
+    if not nolayout:
         nx.set_node_attributes(G_, 'label', _labels)
     _ = pt.show_nx(G_, fontsize=8, arrow_width=.3, layout='custom', fnum=fnum)  # NOQA
     #pt.adjust_subplots2(top=1, bot=0, left=0, right=1)

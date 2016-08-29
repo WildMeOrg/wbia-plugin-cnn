@@ -33,7 +33,7 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         >>> # ENABLE_DOCTEST
         >>> from ibeis_cnn.models.mnist import *  # NOQA
         >>> from ibeis_cnn.models import mnist
-        >>> model, dataset = mnist.testdata_mnist(name='bnorm')
+        >>> model, dataset = mnist.testdata_mnist()
         >>> model.init_arch()
         >>> model.print_layer_info()
         >>> model.print_model_info_str()
@@ -46,7 +46,7 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         >>> model.monitor_config.update(**ut.argparse_dict(dict(
         >>>     era_size=100,
         >>>     max_epochs=5,
-        >>>     rate_decay=.8,
+        >>>     rate_schedule=.8,
         >>> )))
         >>> X_train, y_train = dataset.subset('train')
         >>> model.fit(X_train, y_train)
@@ -57,34 +57,67 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         model.dropout = kwargs.pop('dropout', .5)
         super(MNISTModel, model).__init__(**kwargs)
 
-    def augment(model, Xb, yb=None):
+    def fit(model, *args, **kwargs):
         """
-        X_valid, y_valid = dataset.subset('valid')
-        num = 10
-        Xb = X_valid[:num]
-        Xb = Xb / 255.0 if ut.is_int(Xb) else Xb
-        Xb = Xb.astype(np.float32, copy=True)
-        yb = None if yb is None else yb.astype(np.int32, copy=True)
-        # Rescale the batch data to the range 0 to 1
-        Xb_, yb_ = model.augment(Xb)
-        yb_ = None
-        >>> ut.quit_if_noshow()
-        >>> import plottool as pt
-        >>> pt.qt4ensure()
-        >>> from ibeis_cnn import augment
-        >>> augment.show_augmented_patches(Xb, Xb_, yb, yb_, data_per_label=1)
-        >>> ut.show_if_requested()
+        CommandLine:
+            python -m ibeis_cnn.models.mnist MNISTModel.fit --show
+
+        Example:
+            >>> # ENABLE_DOCTEST
+            >>> from ibeis_cnn.models.mnist import *  # NOQA
+            >>> from ibeis_cnn.models import mnist
+            >>> model, dataset = mnist.testdata_mnist()
+            >>> model.init_arch()
+            >>> # parse training arguments
+            >>> model.monitor_config.update(**ut.argparse_dict(dict(
+            >>>     era_size=20,
+            >>>     max_epochs=100,
+            >>>     rate_schedule=.9,
+            >>> )))
+            >>> X_train, y_train = dataset.subset('train')
+            >>> model.fit(X_train, y_train)
+        """
+        super(MNISTModel, model).fit(*args, **kwargs)
+
+    def augment(model, Xb, yb=None):
+        r"""
+        CommandLine:
+            python -m ibeis_cnn.models.mnist MNISTModel.augment --show
+
+        Example:
+            >>> from ibeis_cnn.models.mnist import *  # NOQA
+            >>> from ibeis_cnn.models import mnist
+            >>> import numpy as np
+            >>> model, dataset = mnist.testdata_mnist()
+            >>> model._rng = ut.ensure_rng(model.hyperparams['random_seed'])
+            >>> X_valid, y_valid = dataset.subset('test')
+            >>> num = 10
+            >>> Xb = X_valid[:num]
+            >>> yb = None
+            >>> Xb = Xb / 255.0 if ut.is_int(Xb) else Xb
+            >>> Xb = Xb.astype(np.float32, copy=True)
+            >>> yb = None if yb is None else yb.astype(np.int32, copy=True)
+            >>> # Rescale the batch data to the range 0 to 1
+            >>> Xb_, yb_ = model.augment(Xb.copy())
+            >>> yb_ = None
+            >>> ut.quit_if_noshow()
+            >>> import plottool as pt
+            >>> pt.qt4ensure()
+            >>> from ibeis_cnn import augment
+            >>> augment.show_augmented_patches(Xb, Xb_, yb, yb_, data_per_label=1)
+            >>> ut.show_if_requested()
         """
         from ibeis_cnn import augment
         rng = model._rng
         affperterb_ranges = dict(
-            zoom_range=(1.3, 1.2),
-            max_tx=2,
-            max_ty=2,
-            max_shear=ut.TAU / 32,
-            max_theta=ut.TAU,
-            enable_stretch=True,
-            enable_flip=True,
+            #zoom_range=(1.1, 0.9),
+            zoom_range=(1.0, 1.0),
+            max_tx=0,
+            max_ty=0,
+            max_shear=0,
+            max_theta=ut.TAU / 64,
+            enable_stretch=False,
+            enable_flip=False,
         )
         Xb_, yb_ = augment.augment_affine(
             Xb, yb, rng=rng, inplace=True, data_per_label=1,
@@ -127,15 +160,49 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
             print('[model]   * output_dims    = %r' % (model.output_dims,))
         if model.name.startswith('incep'):
             network_layers_def = model.get_inception_def()
+        elif model.name.startswith('resnet'):
+            network_layers_def = model.get_resnet_def()
+        elif model.name.startswith('mnist'):
+            network_layers_def = model.get_mnist_def()
         else:
-            network_layers_def = model.get_mnist_model_def1()
+            network_layers_def = model.get_lenet_def()
         network_layers = abstract_models.evaluate_layer_list(network_layers_def)
         model.output_layer = network_layers[-1]
         return model.output_layer
 
-    def get_mnist_model_def1(model):
+    def get_mnist_def(model):
         """
         Follows https://github.com/Lasagne/Lasagne/blob/master/examples/mnist.py
+
+        python -m ibeis_cnn MNISTModel.init_arch --verbcnn --name=mnist --show
+        python -m ibeis_cnn.models.mnist MNISTModel.fit:0 --name=mnist --vd --monitor
+        """
+        import ibeis_cnn.__LASAGNE__ as lasange
+        from ibeis_cnn import custom_layers
+        batch_norm = False
+
+        bundles = custom_layers.make_bundles(
+            nonlinearity=lasange.nonlinearities.rectify,
+            batch_norm=batch_norm,
+            W=lasange.init.Orthogonal('relu'),
+        )
+        b = ut.DynStruct(copy_dict=bundles)
+
+        network_layers_def = [
+            b.InputBundle(shape=model.input_shape),
+            b.ConvBundle(num_filters=32, filter_size=(5, 5), pool=True),
+            b.ConvBundle(num_filters=32, filter_size=(5, 5), pool=True),
+            # A fully-connected layer and 50% dropout of its inputs
+            b.DenseBundle(num_units=256, dropout=.5),
+            # And, finally, the 10-unit output layer with 50% dropout on its inputs
+            b.SoftmaxBundle(num_units=model.output_dims, dropout=.5),
+        ]
+        return network_layers_def
+
+    def get_lenet_def(model):
+        """
+        python -m ibeis_cnn MNISTModel.init_arch --verbcnn --name=lenet --show
+        python -m ibeis_cnn.models.mnist MNISTModel.fit:0 --name=lenet --vd --monitor
         """
         import ibeis_cnn.__LASAGNE__ as lasange
         from ibeis_cnn import custom_layers
@@ -152,22 +219,64 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
 
         network_layers_def = [
             b.InputBundle(shape=model.input_shape, noise=False),
-            b.ConvBundle(num_filters=N, filter_size=(3, 3), pool=False),
-            b.ConvBundle(num_filters=N, filter_size=(3, 3), pool=False),
             b.ConvBundle(num_filters=N, filter_size=(3, 3), pool=True),
             b.ConvBundle(num_filters=N, filter_size=(3, 3), pool=False),
             b.ConvBundle(num_filters=N, filter_size=(3, 3), pool=True),
             b.ConvBundle(num_filters=N, filter_size=(3, 3), pool=False),
-            # A fully-connected layer of 256 units and 50% dropout of its inputs
-            b.DenseBundle(num_units=N * 4, dropout=dropout),
-            # A fully-connected layer of 256 units and 50% dropout of its inputs
-            b.DenseBundle(num_units=N * 4, dropout=dropout),
+            b.ConvBundle(num_filters=N, filter_size=(2, 2), pool=False),
+            # A fully-connected layer and 50% dropout of its inputs
+            b.DenseBundle(num_units=N * 2, dropout=dropout),
+            # A fully-connected layer and 50% dropout of its inputs
+            b.DenseBundle(num_units=N * 2, dropout=dropout),
             # And, finally, the 10-unit output layer with 50% dropout on its inputs
             b.SoftmaxBundle(num_units=model.output_dims, dropout=dropout),
         ]
         return network_layers_def
 
+    def get_resnet_def(model):
+        """
+        A residual network with pre-activations
+
+        python -m ibeis_cnn MNISTModel.init_arch --verbcnn --name=resnet --show
+        python -m ibeis_cnn.models.mnist MNISTModel.fit:0 --name=resnet --vd --monitor
+        """
+        import ibeis_cnn.__LASAGNE__ as lasange
+        from ibeis_cnn import custom_layers
+        batch_norm = model.batch_norm
+        #if model.dropout is None:
+        #    dropout = 0 if batch_norm else .5
+        #else:
+        dropout = model.dropout
+
+        bundles = custom_layers.make_bundles(
+            filter_size=(3, 3),
+            nonlinearity=lasange.nonlinearities.rectify,
+            batch_norm=batch_norm,
+        )
+        b = ut.DynStruct(copy_dict=bundles)
+
+        N = 16
+
+        network_layers_def = [
+            b.InputBundle(shape=model.input_shape, noise=False),
+            b.ConvBundle(num_filters=N, pool=False),
+            b.ResidualBundle(num_filters=N, stride=(2, 2), preactivate=False),
+            b.ResidualBundle(num_filters=N),
+            b.ResidualBundle(num_filters=N, stride=(2, 2)),
+            #b.ResidualBundle(num_filters=N),
+            b.ResidualBundle(num_filters=N, stride=(2, 2), dropout=None),
+            b.ResidualBundle(num_filters=N, stride=(2, 2), dropout=None, postactivate=True),
+            b.AveragePool(),
+            b.SoftmaxBundle(num_units=model.output_dims, dropout=dropout),
+        ]
+        return network_layers_def
+
     def get_inception_def(model):
+        """
+        python -m ibeis_cnn MNISTModel.init_arch --verbcnn --name=resnet --show
+        python -m ibeis_cnn.models.mnist MNISTModel.fit:0 --name=resnet --vd --monitor
+
+        """
         import ibeis_cnn.__LASAGNE__ as lasange
         from ibeis_cnn import custom_layers
         batch_norm = model.batch_norm
@@ -213,11 +322,15 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         return network_layers_def
 
 
-def testdata_mnist(name='bnorm', batch_size=128, dropout=None):
+def testdata_mnist(defaultname='lenet', batch_size=128, dropout=None):
     from ibeis_cnn import ingest_data
     from ibeis_cnn.models import mnist
     dataset = ingest_data.grab_mnist_category_dataset()
-    if name == 'bnorm':
+    name = ut.get_argval('--name', default=defaultname)
+    if name.startswith('lenet'):
+        batch_norm = True
+        dropout = .5
+    elif name == 'bnorm':
         batch_norm = True
         dropout = dropout
     elif name == 'dropout':
@@ -245,6 +358,12 @@ def testdata_mnist(name='bnorm', batch_size=128, dropout=None):
     if name == 'bnorm':
         model.hyperparams['era_size'] = 4
         model.hyperparams['rate_schedule'] = [.9]
+    elif name.startswith('mnist'):
+        model.hyperparams['rate_schedule'] = [1.0]
+        model.learn_state['learning_rate'] = .01
+        model.hyperparams['weight_decay'] = 0
+        model.hyperparams['augment_on'] = False
+        model.hyperparams['whiten_on'] = False
     else:
         model.hyperparams['era_size'] = 20
         model.hyperparams['rate_schedule'] = [.9]

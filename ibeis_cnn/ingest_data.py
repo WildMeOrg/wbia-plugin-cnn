@@ -272,8 +272,8 @@ def grab_mnist_category_dataset():
     except IOError:
         data, labels, metadata = ingest_helpers.grab_mnist1()
         # Get indicies of test / train split
-        train_idxs = np.arange(6000)
-        test_idxs = np.arange(1000) + 6000
+        train_idxs = np.arange(60000)
+        test_idxs = np.arange(10000) + 60000
         # Give dataset the full data
         dataset.save(data, labels, metadata, data_per_label=1)
         # And the split sets

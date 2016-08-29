@@ -155,6 +155,7 @@ def get_layer_info(layer):
     num_params = sum([info['size'] for info in param_infos])
 
     classalias_map = {
+        'ElemwiseSumLayer': 'ElemwiseSum',
         'Conv2DCCLayer'    : 'Conv2D',
         'Conv2DDNNLayer'   : 'Conv2D',
         'Conv2DLayer'   : 'Conv2D',
@@ -178,8 +179,11 @@ def get_layer_info(layer):
         'Conv2D'   : ['convolution'],
         'BatchNorm': ['epsilon', 'mean', 'inv_std', 'axes', 'beta', 'gamma'],
         'BatchNorm2': ['epsilon', 'mean', 'inv_std', 'axes', 'beta', 'gamma'],
+        'ElemwiseSum': ['merge_function', 'cropping'],
+        'FeaturePoolLayer': ['axis'],
     }
     layer_attrs_dict = {
+        'ElemwiseSum': ['coeffs'],
         'Noise'     : ['sigma'],
         'Input'     : ['shape'],
         'Dropout'   : ['p'],
@@ -190,6 +194,7 @@ def get_layer_info(layer):
         'L2Norm'    : ['axis'],
         'BatchNorm' : ['alpha'],
         'BatchNorm2' : ['alpha'],
+        'FeaturePoolLayer': ['pool_size', 'pool_function']
     }
     all_ignore_attrs = ['nonlinearity', 'b', 'W', 'get_output_kwargs', 'name',
                         'input_shapes', 'input_layers', 'input_shape',
@@ -198,8 +203,8 @@ def get_layer_info(layer):
 
     classname = layer.__class__.__name__
     classalias = classalias_map.get(classname, classname)
-    if classalias == 'FeaturePoolLayer' and ut.get_funcname(layer.pool_function) == 'max':
-        classalias = 'MaxOut'
+    #if classalias == 'FeaturePoolLayer' and ut.get_funcname(layer.pool_function) == 'max':
+    #    classalias = 'MaxOut'
     if classalias == 'Dense' and ut.get_funcname(layer.nonlinearity) == 'softmax':
         classalias = 'SoftMax'
 
@@ -214,6 +219,11 @@ def get_layer_info(layer):
         layer_attrs = layer.__dict__.copy()
         ut.delete_dict_keys(layer_attrs, ignore_attrs)
 
+    for key in list(layer_attrs.keys()):
+        val = layer_attrs[key]
+        if ut.is_funclike(val):
+            layer_attrs[key] = ut.get_funcname(val)
+
     attr_key_list = list(layer_attrs.keys())
     missing_keys = (set(layer.__dict__.keys()) - set(ignore_attrs) - set(attr_key_list))
     missing_keys = [k for k in missing_keys if not k.startswith('_')]
@@ -227,9 +237,10 @@ def get_layer_info(layer):
         print(' * missing keys: %r' % (missing_keys,))
         print(' * has keys: %r' % (attr_key_list,))
         if True:
-            import utool
-            with utool.embed_on_exception_context:
-                raise AssertionError('MISSING KEYS')
+            #import utool
+            #with utool.embed_on_exception_context:
+            #raise AssertionError('MISSING KEYS')
+            pass
 
     # handle None batch sizes
     if output_shape[0] is None:
@@ -277,7 +288,7 @@ def get_layer_info(layer):
     return layer_info
 
 
-def get_layer_info_str(output_layer):
+def get_layer_info_str(output_layer, batch_size=128):
     r"""
     Args:
         output_layer (lasange.layers.Layer):
@@ -398,8 +409,10 @@ def get_layer_info_str(output_layer):
         num_params = lasagne.layers.count_params(output_layer)
 
         _print('...this model has {:,} learnable parameters'.format(num_params))
-        _print('...this model will use {:,} bytes = {}'.format(
+        _print('...this model will use ~{:,} bytes = {} per input'.format(
             total_bytes, ut.byte_str2(total_bytes)))
+        _print('...this model will use ~{:,} bytes = {} per batch with a batch size of {}'.format(
+            total_bytes * batch_size, ut.byte_str2(total_bytes * batch_size), batch_size))
     info_str = '\n'.join(info_lines)
     return info_str
 
