@@ -264,7 +264,7 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
             b.ResidualBundle(num_filters=N),
             b.ResidualBundle(num_filters=N, stride=(2, 2)),
             #b.ResidualBundle(num_filters=N),
-            b.ResidualBundle(num_filters=N, stride=(2, 2), dropout=.5),
+            b.ResidualBundle(num_filters=N, stride=(2, 2), dropout=.2),
             b.ResidualBundle(num_filters=N, stride=(2, 2), dropout=.5, postactivate=True),
             b.AveragePool(),
             b.SoftmaxBundle(num_units=model.output_dims, dropout=.5),
