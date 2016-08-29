@@ -209,9 +209,12 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         batch_norm = model.batch_norm
         dropout = model.dropout
 
+        W = lasange.init.Orthogonal('relu'),
+
         bundles = custom_layers.make_bundles(
             nonlinearity=lasange.nonlinearities.rectify,
             batch_norm=batch_norm,
+            W=W,
         )
         b = ut.DynStruct(copy_dict=bundles)
 
@@ -243,15 +246,12 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         import ibeis_cnn.__LASAGNE__ as lasange
         from ibeis_cnn import custom_layers
         batch_norm = model.batch_norm
-        #if model.dropout is None:
-        #    dropout = 0 if batch_norm else .5
-        #else:
-        dropout = model.dropout
 
+        W = lasange.init.HeNormal(gain='relu')
         bundles = custom_layers.make_bundles(
             filter_size=(3, 3),
             nonlinearity=lasange.nonlinearities.rectify,
-            batch_norm=batch_norm,
+            batch_norm=batch_norm, W=W,
         )
         b = ut.DynStruct(copy_dict=bundles)
 
@@ -264,10 +264,10 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
             b.ResidualBundle(num_filters=N),
             b.ResidualBundle(num_filters=N, stride=(2, 2)),
             #b.ResidualBundle(num_filters=N),
-            b.ResidualBundle(num_filters=N, stride=(2, 2), dropout=None),
-            b.ResidualBundle(num_filters=N, stride=(2, 2), dropout=None, postactivate=True),
+            b.ResidualBundle(num_filters=N, stride=(2, 2), dropout=.5),
+            b.ResidualBundle(num_filters=N, stride=(2, 2), dropout=.5, postactivate=True),
             b.AveragePool(),
-            b.SoftmaxBundle(num_units=model.output_dims, dropout=dropout),
+            b.SoftmaxBundle(num_units=model.output_dims, dropout=.5),
         ]
         return network_layers_def
 
@@ -364,6 +364,12 @@ def testdata_mnist(defaultname='lenet', batch_size=128, dropout=None):
         model.hyperparams['weight_decay'] = 0
         model.hyperparams['augment_on'] = False
         model.hyperparams['whiten_on'] = False
+    elif name.startswith('resnet'):
+        model.hyperparams['era_size'] = 10
+        model.hyperparams['rate_schedule'] = [.5]
+        model.learn_state['learning_rate'] = .1
+        model.hyperparams['weight_decay'] = 0
+        model.hyperparams['augment_on'] = True
     else:
         model.hyperparams['era_size'] = 20
         model.hyperparams['rate_schedule'] = [.9]
