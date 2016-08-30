@@ -441,7 +441,8 @@ class SiameseL2(AbstractSiameseModel):
         #elif model.arch_tag == 'mnist_siaml2':
         #    network_layers_def = model.get_mnist_siaml2_def(verbose=verbose, **kwargs)
         # connect and record layers
-        network_layers = abstract_models.evaluate_layer_list(network_layers_def, verbose=verbose)
+        from ibeis_cnn import custom_layers
+        network_layers = custom_layers.evaluate_layer_list(network_layers_def, verbose=verbose)
         #model.network_layers = network_layers
         output_layer = network_layers[-1]
         model.output_layer = output_layer
@@ -762,7 +763,8 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
             print('[model]   * output_dims    = %r' % (model.output_dims,))
         network_layers_def = model.get_siam2stream_def(verbose=verbose, **kwargs)
         # connect and record layers
-        network_layers = abstract_models.evaluate_layer_list(network_layers_def)
+        from ibeis_cnn import custom_layers
+        network_layers = custom_layers.evaluate_layer_list(network_layers_def)
         #model.network_layers = network_layers
         output_layer = network_layers[-1]
         model.output_layer = output_layer

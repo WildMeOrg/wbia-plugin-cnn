@@ -95,7 +95,7 @@ class SiameseCenterSurroundModel(BaseModel):
             >>> # execute function
             >>> output_layer = model.build_model(batch_size, input_width, input_height, input_channels, output_dims, verbose)
             >>> print('\n---- Arch Str')
-            >>> model.print_architecture_str(sep='\n')
+            >>> model.print_arch_str(sep='\n')
             >>> print('\n---- Layer Info')
             >>> model.print_layer_info()
             >>> print('\n---- HashID')
@@ -401,7 +401,7 @@ class SiameseModel(BaseModel):
             >>> verbose = True
             >>> output_layer = model.build_model(batch_size, input_width, input_height, input_channels, output_dims, verbose)
             >>> print('----')
-            >>> model.print_architecture_str(sep='\n')
+            >>> model.print_arch_str(sep='\n')
             >>> print('hashid=%r' % (model.get_architecture_hashid()),)
             >>> print('----')
             >>> result = str(output_layer)

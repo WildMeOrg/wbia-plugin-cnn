@@ -7,21 +7,27 @@ import utool as ut
 print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.net_strs]')
 
 
-def make_layer_str(layer):
+def make_layer_str(layer, with_name=True):
     r"""
     Args:
         layer (lasange.Layer): a network layer
     """
+    #layer_dict = make_layer_json_dict(layer, extra=with_name)
+    #layer_str = layer_dict['type']
+
     layer_info = get_layer_info(layer)
     layer_type = layer_info['classname']
-    attr_key_list = layer_info['layer_attrs']
+    layer_attrs = layer_info['layer_attrs']
+    attr_str_list =  ['%s=%s' % item for item in layer_attrs.items()]
 
-    attr_val_list = [getattr(layer, attr) for attr in attr_key_list]
-    attr_str_list = ['%s=%r' % item for item in zip(attr_key_list, attr_val_list)]
+    #attr_key_list = layer_info['layer_attrs']
+    #attr_val_list = [getattr(layer, attr) for attr in attr_key_list]
+    #attr_str_list = ['%s=%r' % item for item in zip(attr_key_list, attr_val_list)]
 
-    layer_name = getattr(layer, 'name', None)
-    if layer_name is not None:
-        attr_str_list = ['name=%s' % (layer_name,)] + attr_str_list
+    if with_name:
+        layer_name = getattr(layer, 'name', None)
+        if layer_name is not None:
+            attr_str_list = ['name=%s' % (layer_name,)] + attr_str_list
 
     if hasattr(layer, 'nonlinearity'):
         try:
@@ -35,16 +41,68 @@ def make_layer_str(layer):
     return layer_str
 
 
-def make_layer_json_dict(layer):
-    layer_info = get_layer_info(layer)
+def make_layers_json(layer_list, extra=True):
+    # Make persistant ids
+    layer_to_id = {layer: count for count, layer in enumerate(layer_list)}
+
+    layer_info_list = [get_layer_info(layer) for layer in layer_list]
+
+    layer_json_list = []
+    for layer_info, layer in zip(layer_info_list, layer_list):
+        json_dict = make_layer_json_dict(layer, layer_info, layer_to_id, extra=extra)
+        layer_json_list.append(json_dict)
+    return layer_json_list
+
+
+def make_layer_json_dict(layer, layer_info, layer_to_id, extra=True):
+    """
+    >>> from ibeis_cnn.net_strs import *  # NOQA
+    """
     #layer_type = layer_info['classname']
     #attr_key_list = layer_info['layer_attrs']
     json_dict = ut.odict([])
+    if extra:
+        json_dict['name'] = layer_info['name']
+
     json_dict['type'] = layer_info['classname']
+    json_dict['id'] = layer_to_id[layer]
+
+    if hasattr(layer, 'input_layer'):
+        #json_dict['input_layer'] = layer.input_layer.name
+        # HACK FOR WHEN DROPOUT LAYERS DONT EXIST
+        def get_mrp_id(in_layer):
+            if in_layer in layer_to_id:
+                return layer_to_id[in_layer]
+            else:
+                return get_mrp_id(in_layer.input_layer)
+        json_dict['input_layer'] = get_mrp_id(layer.input_layer)
+    if hasattr(layer, 'input_layers'):
+        #json_dict['input_layers'] = [l.name for l in layer.input_layers]
+        json_dict['input_layers'] = [layer_to_id[l] for l in layer.input_layers]
+
     json_dict.update(**layer_info['layer_attrs'])
     nonlin = layer_info.get('nonlinearity', None)
     if nonlin is not None:
         json_dict['nonlinearity'] = nonlin
+
+    json_params = []
+    for param_info in layer_info['param_infos']:
+        p = ut.odict()
+        p['name'] = param_info['basename']
+        if extra:
+            init = param_info.get('init', None)
+            if init is not None:
+                p['init'] = init
+        tags = param_info.get('tags', None)
+        if tags is not None:
+            if extra:
+                p['tags'] = list(tags)
+            else:
+                if len(tags) > 0:
+                    p['tags'] = list(tags)
+        json_params.append(p)
+    if len(json_params) > 0:
+        json_dict['params'] = json_params
     return json_dict
 
 
@@ -83,12 +141,17 @@ def shapestr(shape):
     return ','.join(map(str, shape))
 
 
-def paramstr(layer, p, tags):
+def param_basename(layer, p):
     pname = p.name
     if layer.name is not None:
         if pname.startswith(layer.name + '.'):
             pname = pname[len(layer.name) + 1:]
+    return pname
+
+
+def paramstr(layer, p, tags):
     inner_parts = [shapestr(p.get_value().shape)]
+    pname = param_basename(layer, p)
     if tags:
         inner_parts.append(tagstr(tags))
     return pname + surround('; '.join(inner_parts), '()')
@@ -137,8 +200,10 @@ def get_layer_info(layer):
     param_infos = []
     for param, tags in layer.params.items():
         value = param.get_value()
+        pbasename = param_basename(layer, param)
         param_info = ut.odict([
             ('name', param.name),
+            ('basename', pbasename),
             ('tags', tags),
             ('shape', value.shape),
             ('size', value.size),
@@ -146,6 +211,30 @@ def get_layer_info(layer):
             ('dtype', str(value.dtype)),
             ('bytes', value.size * value.dtype.itemsize),
         ])
+
+        def initializer_info(initclass):
+            initclassname = initclass.__class__.__name__
+            if initclassname == 'Constant':
+                spec = initclass.val
+            else:
+                spec = ut.odict()
+                spec['type'] = initclassname
+                for key, val in initclass.__dict__.items():
+                    if isinstance(val, lasagne.init.Initializer):
+                        spec[key] = initializer_info(val)
+                    elif isinstance(val, type) and issubclass(val, lasagne.init.Initializer):
+                        spec[key] = val.__name__
+                        #initializer_info(val())
+                    else:
+                        spec[key] = val
+            return spec
+
+        if hasattr(layer, '_initializers'):
+            #print('layer = %r' % (layer,))
+            initclass = layer._initializers[param]
+            spec = initializer_info(initclass)
+            param_info['init'] = spec
+
         param_infos.append(param_info)
     # Combine param infos
     param_str = surround(', '.join(
@@ -179,11 +268,13 @@ def get_layer_info(layer):
         'Conv2D'   : ['convolution'],
         'BatchNorm': ['epsilon', 'mean', 'inv_std', 'axes', 'beta', 'gamma'],
         'BatchNorm2': ['epsilon', 'mean', 'inv_std', 'axes', 'beta', 'gamma'],
-        'ElemwiseSum': ['merge_function', 'cropping'],
+        #'ElemwiseSum': ['merge_function', 'cropping'],
+        #'ElemwiseSum': [],
         'FeaturePoolLayer': ['axis'],
     }
     layer_attrs_dict = {
-        'ElemwiseSum': ['coeffs'],
+        #'ElemwiseSum': ['coeffs'],
+        #'ElemwiseSum': ['coeffs', 'merge_function', 'cropping'],
         'Noise'     : ['sigma'],
         'Input'     : ['shape'],
         'Dropout'   : ['p'],
@@ -196,9 +287,11 @@ def get_layer_info(layer):
         'BatchNorm2' : ['alpha'],
         'FeaturePoolLayer': ['pool_size', 'pool_function']
     }
+    #layer_attrs_dict = {}
     all_ignore_attrs = ['nonlinearity', 'b', 'W', 'get_output_kwargs', 'name',
                         'input_shapes', 'input_layers', 'input_shape',
                         'input_layer', 'input_var', 'untie_biases',
+                        '_initializers',
                         'flip_filters', 'pad', 'params', 'n', '_is_main_layer']
 
     classname = layer.__class__.__name__
@@ -215,7 +308,7 @@ def get_layer_info(layer):
     ignore_attrs = (all_ignore_attrs +
                     layer_attrs_ignore_dict.get(classalias, []))
 
-    if classalias == classname and len(layer_attrs) == 0:
+    if classalias not in layer_attrs_dict or (classalias == classname and len(layer_attrs) == 0):
         layer_attrs = layer.__dict__.copy()
         ut.delete_dict_keys(layer_attrs, ignore_attrs)
 

@@ -122,7 +122,8 @@ class BackgroundModel(abstract_models.AbstractCategoricalModel):
 
         network_layers_def = model.get_background_def(verbose=verbose, **kwargs)
         # connect and record layers
-        network_layers = abstract_models.evaluate_layer_list(network_layers_def, verbose=verbose)
+        from ibeis_cnn import custom_layers
+        network_layers = custom_layers.evaluate_layer_list(network_layers_def, verbose=verbose)
         #model.network_layers = network_layers
         output_layer = network_layers[-1]
         model.output_layer = output_layer

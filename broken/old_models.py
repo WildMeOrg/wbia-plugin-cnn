@@ -371,7 +371,7 @@ class SiameseModel(abstract_models.BaseModel):
             >>> verbose = True
             >>> output_layer = model.build_model(batch_size, input_width, input_height, input_channels, output_dims, verbose)
             >>> print('----')
-            >>> model.print_architecture_str(sep='\n')
+            >>> model.print_arch_str(sep='\n')
             >>> print('hashid=%r' % (model.architecture_hashid),)
             >>> print('----')
             >>> result = str(output_layer)
@@ -421,7 +421,8 @@ class SiameseModel(abstract_models.BaseModel):
         ]
 
         # connect and record layers
-        network_layers = abstract_models.evaluate_layer_list(network_layers_def)
+        from ibeis_cnn import custom_layers
+        network_layers = custom_layers.evaluate_layer_list(network_layers_def)
         model.network_layers = network_layers
         output_layer = model.network_layers[-1]
         model.output_layer = output_layer

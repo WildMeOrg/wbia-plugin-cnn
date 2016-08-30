@@ -250,8 +250,23 @@ class _ModelFitter(object):
         # session
         model._fit_session = None
 
-    def fit(model, X_train, y_train, X_valid=None, y_valid=None,
-            valid_idx=None, verbose=True, **kwargs):
+    def _default_input_weights(model, X, y, w=None):
+        if w is None:
+            # Hack, assuming a classification task
+            if 'class_to_weight' in model.data_params:
+                class_to_weight = model.data_params['class_to_weight']
+                w = class_to_weight.take(y).astype(np.float32)
+            else:
+                #print('no class weights')
+                w = np.ones(len(X)).astype(np.float32)
+        return w
+
+    def fit(model,
+            X_train, y_train,
+            X_valid=None, y_valid=None,
+            valid_idx=None,
+            X_test=None, y_test=None,
+            verbose=True, **kwargs):
         r"""
         Trains the network with backprop.
 
@@ -291,16 +306,8 @@ class _ModelFitter(object):
         print('Valid y histogram: ' + ut.repr2(ut.dict_hist(y_valid)))
 
         # FIXME: make class weights more ellegant and customizable
-        if 'class_to_weight' in model.data_params:
-            # Hack, assuming a classification task
-            class_to_weight = model.data_params['class_to_weight']
-            class_to_weight.take(y_learn)
-            w_learn = class_to_weight.take(y_learn).astype(np.float32)
-            w_valid = class_to_weight.take(y_valid).astype(np.float32)
-        else:
-            print('no class weights')
-            w_learn = np.ones(len(X_learn)).astype(np.float32)
-            w_valid = np.ones(len(X_valid)).astype(np.float32)
+        w_learn = model._default_input_weights(X_learn, y_learn)
+        w_valid = model._default_input_weights(X_valid, y_valid)
 
         model._new_fit_session()
 
@@ -394,10 +401,6 @@ class _ModelFitter(object):
                 checkpoint_flag = utils.checkfreq(
                     model.monitor_config['checkpoint_freq'], epoch)
 
-                if check_countdown('stop'):
-                    print('Early stopping')
-                    break
-
                 if check_countdown('checkpoint'):
                     countdowns['checkpoint'] = None
                     checkpoint_flag = True
@@ -411,6 +414,8 @@ class _ModelFitter(object):
                 # Output any diagnostics
                 if checkpoint_flag:
                     # FIXME: just move it to the second location
+                    if model.monitor_config['monitor']:
+                        model._dump_best_monitor()
                     model.checkpoint_save_model_info()
                     model.checkpoint_save_model_state()
                     model.save_model_info()
@@ -429,6 +434,10 @@ class _ModelFitter(object):
                         model._dump_weight_monitor()
                     if utils.checkfreq(model.monitor_config['case_dump_freq'], epoch):
                         model._dump_case_monitor(X_learn, y_learn, X_valid, y_valid)
+
+                if check_countdown('stop'):
+                    print('Early stopping')
+                    break
 
                 # Check if the era is done
                 max_era_size = model._fit_session['max_era_size']
@@ -512,6 +521,43 @@ class _ModelFitter(object):
         model.checkpoint_save_model_state()
         model.save_model_state()
 
+        # Set model to best weights
+        model.set_all_param_values(model.best_results['weights'])
+
+        # Remove history after overfitting starts
+        epoch = model.best_results['epoch']
+        model.orig_history = model.era_history
+        history = model.era_history
+        eralen = [era_['size'] for era_ in history]
+        cumlen = np.cumsum(eralen)
+        idx = np.where(cumlen > epoch)[0][0]
+        import copy
+        history = copy.deepcopy(model.era_history[:idx + 1])
+
+        idx2 = np.where(np.array(
+            ut.take_column(history[-1]['epoch_info_list'], 'epoch')) == epoch)[0][0]
+        history[-1]['size'] = idx2 + 1
+        history[-1]['epoch_info_list'] = history[-1]['epoch_info_list'][:idx2 + 1]
+        model.era_history = history
+
+        if X_test is not None and y_test is not None:
+            w_test = model._default_input_weights(X_test, y_test)
+            theano_forward = model.build_forward_func()
+            model._epoch_validate(theano_forward, X_test, y_test, w_test)
+            model.dump_cases(X_test, y_test, 'test', dpath=model.arch_dpath)
+            #model._run_test(X_test, y_test)
+
+    #def _run_test(model, X_test, y_test):
+    #    # Perform a test on the fitted model
+    #    test_outptuts = model._predict(X_test)
+    #    y_pred = test_outptuts['predictions']
+    #    print(model.name)
+    #    report = sklearn.metrics.classification_report(
+    #        y_true=y_test, y_pred=y_pred,
+    #    )
+    #    print(report)
+    #    pass
+
     def _ensure_learnval_split(model, X_train, y_train, X_valid=None,
                                y_valid=None, valid_idx=None):
         if X_valid is not None:
@@ -540,7 +586,7 @@ class _ModelFitter(object):
             X_valid = X_train.take(valid_idx, axis=0)
             y_valid = y_train.take(valid_idx, axis=0)
         # print('\n[train] --- MODEL INFO ---')
-        # model.print_architecture_str()
+        # model.print_arch_str()
         # model.print_layer_info()
         return X_learn, y_learn, X_valid, y_valid
 
@@ -643,17 +689,17 @@ class _ModelFitter(object):
             ut.symlink(session_dpath, session_lpath, overwrite=True)
 
             # Write backprop arch info to arch root
-            back_archinfo_fpath = join(session_dpath, 'fit_arch_info.json')
+            back_archinfo_fpath = join(session_dpath, 'arch_info_fit.json')
             back_archinfo_json = model.make_arch_json(with_noise=True)
             ut.writeto(back_archinfo_fpath, back_archinfo_json, verbose=True)
 
-            pred_archinfo_fpath = join(session_dpath, 'predict_arch_info.json')
+            pred_archinfo_fpath = join(session_dpath, 'arch_info_predict.json')
             pred_archinfo_json = model.make_arch_json(with_noise=False)
             ut.writeto(pred_archinfo_fpath, pred_archinfo_json, verbose=False)
 
             # Write arch graph to root
             try:
-                back_archimg_fpath  = join(session_dpath, 'fit_arch_graph.jpg')
+                back_archimg_fpath  = join(session_dpath, 'arch_graph_fit.jpg')
                 model.imwrite_arch(fpath=back_archimg_fpath, fullinfo=False)
                 model._overwrite_latest_image(back_archimg_fpath, 'arch_graph')
             except Exception as ex:
@@ -769,17 +815,7 @@ class _ModelFitter(object):
         except Exception as ex:
             ut.printex(ex, 'failed to dump weights', iswarning=True)
 
-    def _dump_epoch_monitor(model):
-        prog_dirs = model._fit_session['prog_dirs']
-        session_dpath = model._fit_session['session_dpath']
-
-        # Save text history info
-        text_fpath = join(session_dpath, 'era_history.txt')
-        history_text = ut.list_str(model.era_history, newlines=True)
-        ut.write_to(text_fpath, history_text, verbose=False)
-
-        # Save text best info
-        report_fpath = join(session_dpath, 'best_report.json')
+    def get_report_json(model):
         report_dict = {}
         report_dict['best'] = ut.delete_keys(model.best_results.copy(), ['weights'])
         for key in report_dict['best'].keys():
@@ -791,9 +827,24 @@ class _ModelFitter(object):
         report_dict['hyperparams'] = model.hyperparams
         report_dict['arch_hashid'] = model.get_arch_hashid()
         report_dict['model_name'] = model.name
-        report_json = ut.repr2(report_dict, precision=4, nl=2)
-        report_json = str(report_json.replace('\'', '"').replace('(', '[').replace(')', ']'))
+        report_json = ut.repr2_json(report_dict, nl=2, precision=4)
+        return report_json
+
+    def _dump_best_monitor(model):
+        session_dpath = model._fit_session['session_dpath']
+        # Save text best info
+        report_fpath = join(session_dpath, 'best_report.json')
+        report_json = model.get_report_json()
         ut.write_to(report_fpath, report_json, verbose=False)
+
+    def _dump_epoch_monitor(model):
+        prog_dirs = model._fit_session['prog_dirs']
+        session_dpath = model._fit_session['session_dpath']
+
+        # Save text history info
+        text_fpath = join(session_dpath, 'era_history.txt')
+        history_text = ut.list_str(model.era_history, newlines=True)
+        ut.write_to(text_fpath, history_text, verbose=False)
 
         # Save loss graphs
         try:
@@ -935,7 +986,7 @@ class _ModelFitter(object):
             valid_info['valid_support'] = s
         return valid_info
 
-    def dump_cases(model, X, y, subset_id='unknown'):
+    def dump_cases(model, X, y, subset_id='unknown', dpath=None):
         """
         For each class find:
             * the most-hard  failures
@@ -953,8 +1004,9 @@ class _ModelFitter(object):
         #pd.set_option('expand_frame_repr', False)
         #pd.set_option('display.float_format', lambda x: '%.2f' % x)
 
-        session_dpath = model._fit_session['session_dpath']
-        case_dpath = ut.ensuredir((session_dpath, 'cases', model.hist_id, subset_id))
+        if dpath is None:
+            dpath = model._fit_session['session_dpath']
+        case_dpath = ut.ensuredir((dpath, 'cases', model.hist_id, subset_id))
 
         y_true = y
         netout = model._predict(X)
@@ -1287,7 +1339,7 @@ class _ModelPredicter(object):
         """
         if ut.VERBOSE:
             print('\n[train] --- MODEL INFO ---')
-            model.print_architecture_str()
+            model.print_arch_str()
             model.print_layer_info()
             print('\n[test] predict with batch size %0.1f' % (
                 model.batch_size))
@@ -1389,6 +1441,7 @@ class _ModelBackend(object):
         """
         if model._theano_forward is None:
             print('[model.build] request_forward')
+            model.learn_state.init()
             fn_inputs = model._theano_fn_inputs
             X_batch, X_given = ut.take(fn_inputs, ['X_batch', 'X_given'])
             y_batch, y_given = ut.take(fn_inputs, ['y_batch', 'y_given'])
@@ -2272,45 +2325,68 @@ class _ModelStrings(object):
 
     def make_arch_json(model, with_noise=False):
         """
+        CommandLine:
+            python -m ibeis_cnn.models.abstract_models make_arch_json --show
+
         Example:
             >>> # ENABLE_DOCTEST
             >>> from ibeis_cnn.models.abstract_models import *  # NOQA
-            >>> from ibeis_cnn.models.mnist import MNISTModel
-            >>> model = MNISTModel(batch_size=128, data_shape=(24, 24, 1),
-            >>>                    output_dims=10, batch_norm=False)
+            >>> from ibeis_cnn.models import mnist
+            >>> model, dataset = mnist.testdata_mnist(defaultname='resnet')
+            >>> #model = mnist.MNISTModel(batch_size=128, data_shape=(28, 28, 1),
+            >>> #                         output_dims=10, batch_norm=True)
             >>> model.init_arch()
-            >>> json_str = model.make_arch_json()
+            >>> json_str = model.make_arch_json(with_noise=True)
             >>> print(json_str)
         """
         layer_list = model.get_all_layers(with_noise=with_noise)
-        layer_json_list = [net_strs.make_layer_json_dict(layer)
-                           for layer in layer_list]
+        layer_json_list = net_strs.make_layers_json(layer_list, extra=with_noise)
         json_dict = ut.odict()
         json_dict['arch_hashid'] = model.get_arch_hashid()
         json_dict['layers'] = layer_json_list
-        #json_str1 = ut.to_json(json_dict, pretty=False)
-        # prettier json
-        json_str = ut.repr2(json_dict, nl=2)
-        json_str = str(json_str.replace('\'', '"').replace('(', '[').replace(')', ']'))
+
+        if False:
+            raw_json = ut.to_json(json_dict, pretty=True)
+            lines = raw_json.split('\n')
+            levels = np.array([ut.get_indentation(l) for l in lines]) / 4
+            # Collapse newlines past indent 4
+            nl = 4
+            newlines = []
+            prev = False
+            for l, v in zip(lines, levels):
+                if v >= nl:
+                    if prev:
+                        l = l.lstrip(' ')
+                        newlines[-1] += ('' + l)
+                    else:
+                        newlines.append(l)
+                        prev = True
+                else:
+                    newlines.append(l)
+                    prev = False
+            json_str = '\n'.join(newlines)
+        else:
+            # prettier json
+            json_str = ut.repr2_json(json_dict, nl=3)
         return json_str
 
-    def get_architecture_str(model, sep='_', with_noise=False):
+    def get_arch_str(model, sep='_', with_noise=False):
         r"""
         with_noise is a boolean that specifies if layers that doesnt
         affect the flow of information in the determenistic setting are to be
         included. IE get rid of dropout.
 
         CommandLine:
-            python -m ibeis_cnn.models.abstract_models _ModelStrings.get_architecture_str:0
+            python -m ibeis_cnn.models.abstract_models _ModelStrings.get_arch_str:0
 
         Example:
             >>> # ENABLE_DOCTEST
             >>> from ibeis_cnn.models.abstract_models import *  # NOQA
             >>> from ibeis_cnn.models.mnist import MNISTModel
-            >>> model = MNISTModel(batch_size=128, data_shape=(24, 24, 1),
+            >>> model = MNISTModel(batch_size=128, data_shape=(28, 28, 1),
             >>>                    output_dims=10, batch_norm=True)
             >>> model.init_arch()
-            >>> result = model.get_architecture_str(sep=ut.NEWLINE, with_noise=False)
+            >>> result = model.get_arch_str(sep=ut.NEWLINE, with_noise=False)
             >>> print(result)
             InputLayer(name=I0,shape=(128, 1, 24, 24))
             Conv2DDNNLayer(name=C1,num_filters=32,stride=(1, 1),nonlinearity=rectify)
@@ -2323,7 +2399,7 @@ class _ModelStrings(object):
         if model.output_layer is None:
             return ''
         layer_list = model.get_all_layers(with_noise=with_noise)
-        layer_str_list = [net_strs.make_layer_str(layer)
+        layer_str_list = [net_strs.make_layer_str(layer, with_name=with_noise)
                           for layer in layer_list]
         architecture_str = sep.join(layer_str_list)
         return architecture_str
@@ -2374,15 +2450,15 @@ class _ModelStrings(object):
     def print_layer_info(model):
         net_strs.print_layer_info(model.get_all_layers())
 
-    def print_architecture_str(model, sep='\n  '):
-        architecture_str = model.get_architecture_str(sep=sep)
+    def print_arch_str(model, sep='\n  '):
+        architecture_str = model.get_arch_str(sep=sep)
         if architecture_str is None or architecture_str == '':
             architecture_str = 'UNDEFINED'
         print('\nArchitecture:' + sep + architecture_str)
 
     def print_model_info_str(model):
         print('\n---- Arch Str')
-        model.print_architecture_str(sep='\n')
+        model.print_arch_str(sep='\n')
         print('\n---- Layer Info')
         model.print_layer_info()
         print('\n---- Arch HashID')
@@ -2459,7 +2535,7 @@ class _ModelIDs(object):
         This does not involve any dropout or noise layers, nor does the
         initialization of the weights matter.
         """
-        arch_str = model.get_architecture_str(with_noise=False)
+        arch_str = model.get_arch_str(with_noise=False)
         arch_hashid = ut.hashstr27(arch_str, hashlen=8)
         return arch_hashid
 
@@ -2537,6 +2613,7 @@ class _ModelIO(object):
     def _init_io_vars(model, kwargs):
         model.dataset_dpath = kwargs.pop('dataset_dpath', '.')
         model.training_dpath = kwargs.pop('training_dpath', '.')
+        model._arch_dpath = kwargs.pop('arch_dpath', '.')
 
     def print_structure(model):
         """
@@ -2555,7 +2632,7 @@ class _ModelIO(object):
             >>> model.print_structure()
 
         """
-        print(model.model_dpath)
+        #print(model.model_dpath)
         print(model.arch_dpath)
         print(model.best_dpath)
         print(model.saved_session_dpath)
@@ -2572,13 +2649,21 @@ class _ModelIO(object):
     def trained_arch_dpath(model):
         return join(model.trained_model_dpath, model.arch_id)
 
-    @property
-    def model_dpath(model):
-        return join(model.dataset_dpath, 'models')
+    #@property
+    #def model_dpath(model):
+    #    return join(model.dataset_dpath, 'models')
 
     @property
     def arch_dpath(model):
-        return join(model.model_dpath, model.arch_id)
+        #return join(model.model_dpath, model.arch_id)
+        if model._arch_dpath is None:
+            return join(model.dataset_dpath, 'models', model.arch_id)
+        else:
+            return model._arch_dpath
+
+    @arch_dpath.setter
+    def arch_dpath(model, arch_dpath):
+        model._arch_dpath = arch_dpath
 
     @property
     def best_dpath(model):
@@ -2964,6 +3049,29 @@ class BaseModel(_model_legacy._ModelLegacy, _ModelVisualization, _ModelIO,
         model.data_per_label_input  = 1  # state of network input
         model.data_per_label_output = 1  # state of network output
 
+    #@classmethod
+    #def from_saved_state(cls, fpath):
+    #    """
+    #    fpath = ut.truepath('~/Desktop/manually_saved/arch_injur-shark-resnet_o2_d27_c2942_jzuddodd/model_state_arch_jzuddodd.pkl')
+    #    """
+    #    arch_dpath = dirname(fpath)
+    #    pass
+
+    #@classmethod
+    def init_from_json(model, fpath):
+        """
+        fpath = ut.truepath('~/Desktop/manually_saved/arch_injur-shark-resnet_o2_d27_c2942_jzuddodd/model_state_arch_jzuddodd.pkl')
+        """
+        #import ibeis_cnn.__LASAGNE__ as lasagne
+        #arch_dpath = dirname(fpath)
+        from ibeis_cnn import custom_layers
+        arch_json_fpath = '/home/joncrall/Desktop/manually_saved/arch_injur-shark-lenet_o2_d11_c688_acioqbst/arch_info.json'
+        state_fpath = '/home/joncrall/Desktop/manually_saved/arch_injur-shark-lenet_o2_d11_c688_acioqbst/model_state_arch_acioqbst.pkl'
+        output_layer = custom_layers.load_json_arch_def(arch_json_fpath)
+        model.output_layer = output_layer
+
+        model.load_model_state(fpath=state_fpath)
+
     # --- OTHER
     @property
     def input_batchsize(model):
@@ -3020,46 +3128,8 @@ class AbstractCategoricalModel(BaseModel):
         # BaseModel.__init__(model, **kwargs)
         # HACKING
         # <Prototype code to fix reload errors>
-        def fix_super_reload_error(this_class, self):
-            """
-            #this_class = AbstractCategoricalModel  # NOQA
-            #self = model  # NOQA
-            """
-
-            if not isinstance(self, this_class):
-                #print('Fixing')
-                def find_parent_class(leaf_class, target_name):
-                    target_class = None
-                    from collections import deque
-                    queue = deque()
-                    queue.append(leaf_class)
-                    seen_ = set([])
-                    while len(queue) > 0:
-                        related_class = queue.pop()
-                        if related_class.__name__ != target_name:
-                            for base in related_class.__bases__:
-                                if base not in seen_:
-                                    queue.append(base)
-                                    seen_.add(base)
-                        else:
-                            target_class = related_class
-                            break
-                    return target_class
-                # Find new version of class
-                leaf_class = self.__class__
-                target_name = this_class.__name__
-                target_class = find_parent_class(leaf_class, target_name)
-
-                this_class_now = target_class
-                #print('id(this_class)     = %r' % (id(this_class),))
-                #print('id(this_class_now) = %r' % (id(this_class_now),))
-            else:
-                this_class_now = this_class
-            assert isinstance(self, this_class_now), 'Failed to fix %r, %r, %r' % (self, this_class, this_class_now)
-            return this_class_now
-
-        this_class_now = fix_super_reload_error(AbstractCategoricalModel, model)
-
+        #this_class_now = ut.fix_super_reload_error(AbstractCategoricalModel, model)
+        this_class_now = AbstractCategoricalModel
         #import utool
         #with utool.embed_on_exception_context:
         #super(AbstractCategoricalModel, model).__init__(**kwargs)
@@ -3117,46 +3187,46 @@ def report_error(msg):
         print('WARNING:' + msg)
 
 
-def evaluate_layer_list(network_layers_def, verbose=None):
-    r"""
-    compiles a sequence of partial functions into a network
-    """
-    if verbose is None:
-        verbose = VERBOSE_CNN
-    total = len(network_layers_def)
-    network_layers = []
-    if verbose:
-        print('Evaluting List of %d Layers' % (total,))
-    layer_fn_iter = iter(network_layers_def)
-    try:
-        with ut.Indenter(' ' * 4, enabled=verbose):
-            next_args = tuple()
-            for count, layer_fn in enumerate(layer_fn_iter, start=1):
-                if verbose:
-                    print('Evaluating layer %d/%d (%s) ' %
-                          (count, total, ut.get_funcname(layer_fn), ))
-                with ut.Timer(verbose=False) as tt:
-                    layer = layer_fn(*next_args)
-                next_args = (layer,)
-                network_layers.append(layer)
-                if verbose:
-                    print('  * took %.4fs' % (tt.toc(),))
-                    print('  * layer = %r' % (layer,))
-                    if hasattr(layer, 'input_shape'):
-                        print('  * layer.input_shape = %r' % (
-                            layer.input_shape,))
-                    if hasattr(layer, 'shape'):
-                        print('  * layer.shape = %r' % (
-                            layer.shape,))
-                    print('  * layer.output_shape = %r' % (
-                        layer.output_shape,))
-    except Exception as ex:
-        keys = ['layer_fn', 'layer_fn.func', 'layer_fn.args',
-                'layer_fn.keywords', 'layer_fn.__dict__', 'layer', 'count']
-        ut.printex(ex, ('Error building layers.\n' 'layer.name=%r') % (layer),
-                   keys=keys)
-        raise
-    return network_layers
+#def evaluate_layer_list(network_layers_def, verbose=None):
+#    r"""
+#    compiles a sequence of partial functions into a network
+#    """
+#    if verbose is None:
+#        verbose = VERBOSE_CNN
+#    total = len(network_layers_def)
+#    network_layers = []
+#    if verbose:
+#        print('Evaluting List of %d Layers' % (total,))
+#    layer_fn_iter = iter(network_layers_def)
+#    try:
+#        with ut.Indenter(' ' * 4, enabled=verbose):
+#            next_args = tuple()
+#            for count, layer_fn in enumerate(layer_fn_iter, start=1):
+#                if verbose:
+#                    print('Evaluating layer %d/%d (%s) ' %
+#                          (count, total, ut.get_funcname(layer_fn), ))
+#                with ut.Timer(verbose=False) as tt:
+#                    layer = layer_fn(*next_args)
+#                next_args = (layer,)
+#                network_layers.append(layer)
+#                if verbose:
+#                    print('  * took %.4fs' % (tt.toc(),))
+#                    print('  * layer = %r' % (layer,))
+#                    if hasattr(layer, 'input_shape'):
+#                        print('  * layer.input_shape = %r' % (
+#                            layer.input_shape,))
+#                    if hasattr(layer, 'shape'):
+#                        print('  * layer.shape = %r' % (
+#                            layer.shape,))
+#                    print('  * layer.output_shape = %r' % (
+#                        layer.output_shape,))
+#    except Exception as ex:
+#        keys = ['layer_fn', 'layer_fn.func', 'layer_fn.args',
+#                'layer_fn.keywords', 'layer_fn.__dict__', 'layer', 'count']
+#        ut.printex(ex, ('Error building layers.\n' 'layer.name=%r') % (layer),
+#                   keys=keys)
+#        raise
+#    return network_layers
 
 
 def testdata_model_with_history():

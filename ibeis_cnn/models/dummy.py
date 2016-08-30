@@ -47,11 +47,12 @@ class DummyModel(abstract_models.AbstractCategoricalModel):
             b.SoftmaxBundle(num_units=model.output_dims),
         ]
 
-        network_layers = abstract_models.evaluate_layer_list(network_layers_def)
+        from ibeis_cnn import custom_layers
+        network_layers = custom_layers.evaluate_layer_list(network_layers_def)
         #model.network_layers = network_layers
         model.output_layer = network_layers[-1]
         if ut.VERBOSE:
-            model.print_architecture_str()
+            model.print_arch_str()
             model.print_layer_info()
         return model.output_layer
 

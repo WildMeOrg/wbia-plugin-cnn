@@ -158,15 +158,21 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
             print('[model]   * input_height   = %r' % (model.input_height,))
             print('[model]   * input_channels = %r' % (model.input_channels,))
             print('[model]   * output_dims    = %r' % (model.output_dims,))
-        if model.name.startswith('incep'):
+        name = model.name
+
+        if name is None:
+            name = 'lenet'
+
+        if name.startswith('incep'):
             network_layers_def = model.get_inception_def()
-        elif model.name.startswith('resnet'):
+        elif name.startswith('resnet'):
             network_layers_def = model.get_resnet_def()
-        elif model.name.startswith('mnist'):
+        elif name.startswith('mnist'):
             network_layers_def = model.get_mnist_def()
         else:
             network_layers_def = model.get_lenet_def()
-        network_layers = abstract_models.evaluate_layer_list(network_layers_def)
+        from ibeis_cnn import custom_layers
+        network_layers = custom_layers.evaluate_layer_list(network_layers_def)
         model.output_layer = network_layers[-1]
         return model.output_layer
 
@@ -177,14 +183,14 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         python -m ibeis_cnn MNISTModel.init_arch --verbcnn --name=mnist --show
         python -m ibeis_cnn.models.mnist MNISTModel.fit:0 --name=mnist --vd --monitor
         """
-        import ibeis_cnn.__LASAGNE__ as lasange
+        import ibeis_cnn.__LASAGNE__ as lasagne
         from ibeis_cnn import custom_layers
         batch_norm = False
 
         bundles = custom_layers.make_bundles(
-            nonlinearity=lasange.nonlinearities.rectify,
+            nonlinearity=lasagne.nonlinearities.rectify,
             batch_norm=batch_norm,
-            W=lasange.init.Orthogonal('relu'),
+            W=lasagne.init.Orthogonal('relu'),
         )
         b = ut.DynStruct(copy_dict=bundles)
 
@@ -204,15 +210,15 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         python -m ibeis_cnn MNISTModel.init_arch --verbcnn --name=lenet --show
         python -m ibeis_cnn.models.mnist MNISTModel.fit:0 --name=lenet --vd --monitor
         """
-        import ibeis_cnn.__LASAGNE__ as lasange
+        import ibeis_cnn.__LASAGNE__ as lasagne
         from ibeis_cnn import custom_layers
         batch_norm = model.batch_norm
         dropout = model.dropout
 
-        W = lasange.init.Orthogonal('relu'),
+        W = lasagne.init.Orthogonal('relu')
 
         bundles = custom_layers.make_bundles(
-            nonlinearity=lasange.nonlinearities.rectify,
+            nonlinearity=lasagne.nonlinearities.rectify,
             batch_norm=batch_norm,
             W=W,
         )
@@ -243,14 +249,14 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         python -m ibeis_cnn MNISTModel.init_arch --verbcnn --name=resnet --show
         python -m ibeis_cnn.models.mnist MNISTModel.fit:0 --name=resnet --vd --monitor
         """
-        import ibeis_cnn.__LASAGNE__ as lasange
+        import ibeis_cnn.__LASAGNE__ as lasagne
         from ibeis_cnn import custom_layers
         batch_norm = model.batch_norm
 
-        W = lasange.init.HeNormal(gain='relu')
+        W = lasagne.init.HeNormal(gain='relu')
         bundles = custom_layers.make_bundles(
             filter_size=(3, 3),
-            nonlinearity=lasange.nonlinearities.rectify,
+            nonlinearity=lasagne.nonlinearities.rectify,
             batch_norm=batch_norm, W=W,
         )
         b = ut.DynStruct(copy_dict=bundles)
@@ -277,7 +283,7 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         python -m ibeis_cnn.models.mnist MNISTModel.fit:0 --name=resnet --vd --monitor
 
         """
-        import ibeis_cnn.__LASAGNE__ as lasange
+        import ibeis_cnn.__LASAGNE__ as lasagne
         from ibeis_cnn import custom_layers
         batch_norm = model.batch_norm
         if model.dropout is None:
@@ -286,7 +292,7 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
             dropout = model.dropout
 
         bundles = custom_layers.make_bundles(
-            nonlinearity=lasange.nonlinearities.rectify,
+            nonlinearity=lasagne.nonlinearities.rectify,
             batch_norm=batch_norm,
         )
         b = ut.DynStruct(copy_dict=bundles)
@@ -355,7 +361,12 @@ def testdata_mnist(defaultname='lenet', batch_size=128, dropout=None):
 
     model.learn_state['learning_rate'] = .01
     model.hyperparams['weight_decay'] = .001
-    if name == 'bnorm':
+    model.hyperparams['era_size'] = 20
+    model.hyperparams['rate_schedule'] = [.9]
+
+    if model.name is None:
+        pass
+    elif model.name == 'bnorm':
         model.hyperparams['era_size'] = 4
         model.hyperparams['rate_schedule'] = [.9]
     elif name.startswith('mnist'):
@@ -370,9 +381,6 @@ def testdata_mnist(defaultname='lenet', batch_size=128, dropout=None):
         model.learn_state['learning_rate'] = .01
         model.hyperparams['weight_decay'] = 0
         model.hyperparams['augment_on'] = True
-    else:
-        model.hyperparams['era_size'] = 20
-        model.hyperparams['rate_schedule'] = [.9]
     return model, dataset
 
 
