@@ -2613,7 +2613,7 @@ class _ModelIO(object):
     def _init_io_vars(model, kwargs):
         model.dataset_dpath = kwargs.pop('dataset_dpath', '.')
         model.training_dpath = kwargs.pop('training_dpath', '.')
-        model._arch_dpath = kwargs.pop('arch_dpath', '.')
+        model._arch_dpath = kwargs.pop('arch_dpath', None)
 
     def print_structure(model):
         """
