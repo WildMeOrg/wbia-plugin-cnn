@@ -801,6 +801,7 @@ def evaluate_layer_list(network_layers_def, verbose=None):
     if verbose:
         print('Evaluting List of %d Layers' % (total,))
     layer_fn_iter = iter(network_layers_def)
+    layer = None
     try:
         with ut.Indenter(' ' * 4, enabled=verbose):
             next_args = tuple()
@@ -826,7 +827,7 @@ def evaluate_layer_list(network_layers_def, verbose=None):
     except Exception as ex:
         keys = ['layer_fn', 'layer_fn.func', 'layer_fn.args',
                 'layer_fn.keywords', 'layer_fn.__dict__', 'layer', 'count']
-        ut.printex(ex, ('Error building layers.\n' 'layer.name=%r') % (layer),
+        ut.printex(ex, ('Error building layers.\n' 'layer=%r') % (layer,),
                    keys=keys)
         raise
     return network_layers

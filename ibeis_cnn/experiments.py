@@ -132,7 +132,8 @@ def test_siamese_performance(model, data, labels, flat_metadata, dataname=''):
 
     # TODO: save in model.trainind_dpath/diagnostics/figures
     ut.colorprint('\n[siam_perf] Testing Siamese Performance', 'white')
-    epoch_dpath = model.get_epoch_diagnostic_dpath()
+    #epoch_dpath = model.get_epoch_diagnostic_dpath()
+    epoch_dpath = model.arch_dpath
     ut.vd(epoch_dpath)
 
     dataname += ' ' + model.get_history_hashid() + '\n'

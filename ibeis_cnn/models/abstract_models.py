@@ -105,6 +105,172 @@ if 'theano' in sys.modules:
 
 
 @ut.reloadable_class
+class History(ut.NiceRepr):
+    """
+    Manages bookkeeping for training history
+    """
+    def __init__(history):
+        # an era is a group of epochs
+        history.era_list = []
+        history.epoch_list = []
+        # Marks the start of the era
+        history._start_epoch = 0
+
+    def __len__(history):
+        return history.total_epochs
+
+    def __nice__(history):
+        return '(' + history.get_history_nice() + ')'
+
+    #def __iter__(history):
+    #    for epochs in history.grouped_epochs():
+    #        yield epochs
+
+    @classmethod
+    def from_oldstyle(cls, era_history):
+        history = cls()
+        for era_num, era in enumerate(era_history):
+            epoch_info_list = era['epoch_info_list']
+            era = ut.delete_dict_keys(era.copy(), ['epoch_info_list', 'size'])
+            # Append new information
+            era['era_num'] = era_num
+            for epoch in epoch_info_list:
+                epoch = epoch.copy()
+                epoch['era_num'] = era_num
+                if 'epoch' in epoch:
+                    epoch['epoch_num'] = epoch['epoch']
+                    del epoch['epoch']
+                history.epoch_list.append(epoch)
+            history.era_list.append(era)
+        history._start_epoch = len(history.epoch_list)
+        return history
+
+    @property
+    def total_epochs(history):
+        return len(history.epoch_list)
+
+    @property
+    def total_eras(history):
+        return len(history.era_list)
+
+    @property
+    def hist_id(history):
+        r"""
+        CommandLine:
+            python -m ibeis_cnn.models.abstract_models --test-History.hist_id:0
+
+        Example:
+            >>> # ENABLE_DOCTEST
+            >>> from ibeis_cnn.models.abstract_models import *  # NOQA
+            >>> model = testdata_model_with_history()
+            >>> history = model.history
+            >>> result = str(model.history.hist_id)
+            >>> print(result)
+            epoch0002_era012_qewrbbgy
+        """
+        hashid = history.get_history_hashid()
+        nice = history.get_history_nice()
+        history_id = nice + '_' + hashid
+        return history_id
+
+    @property
+    def current_era_size(history):
+        return history.total_epochs - history._start_epoch
+
+    def get_history_hashid(history):
+        r"""
+        Builds a hashid that uniquely identifies the architecture and the
+        training procedure this model has gone through to produce the current
+        architecture weights.
+        """
+        era_hash_list = [ut.hashstr27(ut.repr2(era)) for era in history.era_list]
+        #epoch_hash_list = [ut.hashstr27(ut.repr2(epoch)) for epoch in history.epoch_list]
+        #epoch_hash_str = ''.join(epoch_hash_list)
+        era_hash_str = ''.join(era_hash_list)
+        era_hash_str += str(history.total_epochs)
+        history_hashid = ut.hashstr27(era_hash_str, hashlen=8)
+        return history_hashid
+
+    def get_history_nice(history):
+        if history.total_epochs == 0:
+            nice = 'NoHist'
+        else:
+            nice = 'epoch%04d_era%03d' % (history.total_eras, history.total_epochs)
+        return nice
+
+    def grouped_epochs(history):
+        era_num = ut.take_column(history.epoch_list, 'era_num')
+        unique, groupxs = ut.group_indices(era_num)
+        grouped_epochs = ut.apply_grouping(history.epoch_list, groupxs)
+        return grouped_epochs
+
+    def grouped_epochsT(history):
+        for epochs in history.grouped_epochs():
+            yield ut.dict_stack2(epochs)
+
+    def record_epoch(history, epoch_info):
+        epoch_info['epoch_num'] = len(history.epoch_list)
+        history.epoch_list.append(epoch_info)
+
+    def _new_era(history, model, X_learn, y_learn, X_valid, y_valid):
+        """
+        Used to denote a change in hyperparameters during training.
+        """
+        y_hashid = ut.hashstr_arr(y_learn, 'y', alphabet=ut.ALPHABET_27)
+
+        learn_hashid =  str(model.arch_id) + '_' + y_hashid
+        if history.current_era_size == 0:
+            print('Not starting new era (previous era has no epochs)')
+        else:
+            _new_era = {
+                'size': 0,
+                'learn_hashid': learn_hashid,
+                'arch_hashid': model.get_arch_hashid(),
+                'arch_id': model.arch_id,
+                'num_learn': len(y_learn),
+                'num_valid': len(y_valid),
+                'learn_state': model.learn_state.asdict(),
+            }
+            num_eras = history.total_eras
+            print('starting new era %d' % (num_eras,))
+            model.current_era = _new_era
+            history.era_list.append(_new_era)
+            history._start_epoch = history.total_epochs
+
+    def _record_epoch(history, epoch_info):
+        """
+        Records an epoch in an era.
+        """
+        # each key/val in epoch_info dict corresponds to a key/val_list in an
+        # era dict.
+        #history.current_era['size'] += 1
+        #history.current_era['epoch_info_list'].append(epoch_info)
+        epoch_info['era_num'] = history.total_eras
+        history.epoch_list.append(epoch_info)
+
+    def rewind_to(history, epoch_num):
+        target_epoch = history.epoch_list[epoch_num]
+        era_num = target_epoch['era_num']
+        history.epoch_list = history.epoch_list[:epoch_num + 1]
+        history.era_list = history.era_list[:era_num + 1]
+        history._start_epoch = history.total_epochs
+        #model.orig_history = model.era_history
+        #history = model.era_history
+        #eralen = [era_['size'] for era_ in history]
+        #cumlen = np.cumsum(eralen)
+        #idx = np.where(cumlen > epoch)[0][0]
+        #import copy
+        #history = copy.deepcopy(model.era_history[:idx + 1])
+
+        #idx2 = np.where(np.array(
+        #    ut.take_column(history[-1]['epoch_info_list'], 'epoch_num')) == epoch)[0][0]
+        #history[-1]['size'] = idx2 + 1
+        #history[-1]['epoch_info_list'] = history[-1]['epoch_info_list'][:idx2 + 1]
+        #model.era_history = history
+        pass
+
+
+@ut.reloadable_class
 class LearnState(ut.DictLike):
     """
     Keeps track of parameters that can be changed during theano execution
@@ -186,15 +352,14 @@ class _ModelFitter(object):
         python -m ibeis_cnn _ModelFitter.fit:0
     """
     def _init_fit_vars(model, kwargs):
-        model.current_era = None
-        # an era is a group of epochs
-        model.era_history = []
+        model._rng = ut.ensure_rng(0)
+        model.history = History()
         # Training state
         model.requested_headers = ['learn_loss', 'valid_loss', 'learnval_rat']
         model.data_params = None
         # Stores current result
         model.best_results = {
-            'epoch'      : None,
+            'epoch_num'  : None,
             'learn_loss' : np.inf,
             'valid_loss' : np.inf,
             'weights'    : None
@@ -311,7 +476,7 @@ class _ModelFitter(object):
 
         model._new_fit_session()
 
-        epoch = model.best_results['epoch']
+        epoch = model.best_results['epoch_num']
         if epoch is None:
             epoch = 0
             print('Initializng training at epoch=%r' % (epoch,))
@@ -344,7 +509,7 @@ class _ModelFitter(object):
                     countdowns[key] = countdown_defaults[key]
                     return True
 
-        model._new_era(X_learn, y_learn, X_valid, y_valid)
+        model.history._new_era(model, X_train, y_train, X_train, y_train)
         printcol_info = utils.get_printcolinfo(model.requested_headers)
         utils.print_header_columns(printcol_info)
 
@@ -363,7 +528,7 @@ class _ModelFitter(object):
 
                 # ---------------------------------------
                 # Summarize the epoch
-                epoch_info = {'epoch': epoch}
+                epoch_info = {'epoch_num': epoch}
                 epoch_info.update(**learn_info)
                 epoch_info.update(**valid_info)
                 epoch_info['duration'] = tt.toc()
@@ -373,7 +538,7 @@ class _ModelFitter(object):
 
                 # ---------------------------------------
                 # Record this epoch in history
-                model._record_epoch(epoch_info)
+                model.history._record_epoch(epoch_info)
 
                 # ---------------------------------------
                 # Check how we are learning
@@ -383,7 +548,7 @@ class _ModelFitter(object):
                         countdowns[key] = countdown_defaults[key]
                     # Cache best results
                     model.best_results['weights'] = model.get_all_param_values()
-                    model.best_results['epoch'] = epoch_info['epoch']
+                    model.best_results['epoch_num'] = epoch_info['epoch_num']
                     if 'valid_precision' in epoch_info:
                         model.best_results['valid_precision'] = epoch_info['valid_precision']
                         model.best_results['valid_recall'] = epoch_info['valid_recall']
@@ -441,7 +606,7 @@ class _ModelFitter(object):
 
                 # Check if the era is done
                 max_era_size = model._fit_session['max_era_size']
-                if model.current_era['size'] >= max_era_size:
+                if model.history.current_era_size >= max_era_size:
                     # Decay learning rate
                     era = model.total_eras
                     rate_schedule = model.hyperparams['rate_schedule']
@@ -453,7 +618,7 @@ class _ModelFitter(object):
                     max_era_size = np.ceil(max_era_size / (frac ** 2))
                     model._fit_session['max_era_size'] = max_era_size
                     # Start a new era
-                    model._new_era(X_learn, y_learn, X_valid, y_valid)
+                    model.history._new_era(model, X_train, y_train, X_train, y_train)
                     utils.print_header_columns(printcol_info)
 
                 # Break on max epochs
@@ -525,25 +690,17 @@ class _ModelFitter(object):
         model.set_all_param_values(model.best_results['weights'])
 
         # Remove history after overfitting starts
-        epoch = model.best_results['epoch']
-        model.orig_history = model.era_history
-        history = model.era_history
-        eralen = [era_['size'] for era_ in history]
-        cumlen = np.cumsum(eralen)
-        idx = np.where(cumlen > epoch)[0][0]
-        import copy
-        history = copy.deepcopy(model.era_history[:idx + 1])
-
-        idx2 = np.where(np.array(
-            ut.take_column(history[-1]['epoch_info_list'], 'epoch')) == epoch)[0][0]
-        history[-1]['size'] = idx2 + 1
-        history[-1]['epoch_info_list'] = history[-1]['epoch_info_list'][:idx2 + 1]
-        model.era_history = history
+        if 'epoch_num' not in model.best_results:
+            model.best_results['epoch_num'] = model.best_results['epoch']
+        epoch_num = model.best_results['epoch_num']
+        model.history.rewind_to(epoch_num)
 
         if X_test is not None and y_test is not None:
+            # TODO: dump test output in a standard way
             w_test = model._default_input_weights(X_test, y_test)
             theano_forward = model.build_forward_func()
-            model._epoch_validate(theano_forward, X_test, y_test, w_test)
+            info = model._epoch_validate(theano_forward, X_test, y_test, w_test)
+            print('train info = %r' % (info,))
             model.dump_cases(X_test, y_test, 'test', dpath=model.arch_dpath)
             #model._run_test(X_test, y_test)
 
@@ -654,6 +811,7 @@ class _ModelFitter(object):
         """
         Starts a model training session
         """
+        print('Starting new fit session')
         model._fit_session = {
             'start_time': ut.get_timestamp(),
             'max_era_size': model.hyperparams['era_size'],
@@ -664,9 +822,6 @@ class _ModelFitter(object):
 
         if model.monitor_config['monitor']:
             ut.ensuredir(model.arch_dpath)
-            # Write feed-forward arch info to arch root
-            ut.writeto(join(model.arch_dpath, 'arch_info.json'),
-                       model.make_arch_json(with_noise=False), verbose=True)
 
             # Rename old sessions to distinguish this one
             # TODO: put a lock file on any existing sessions
@@ -677,33 +832,6 @@ class _ModelFitter(object):
             session_dpath = join(model.saved_session_dpath, session_dname)
             session_dpath = ut.get_nonconflicting_path(session_dpath, offset=1,
                                                        suffix='_conflict%d')
-
-            ut.ensuredir(session_dpath)
-            model._fit_session['session_dpath'] = session_dpath
-
-            if ut.get_argflag('--vd'):
-                ut.vd(session_dpath)
-
-            # Make a symlink to the latest session
-            session_lpath = join(model.arch_dpath, 'latest_session')
-            ut.symlink(session_dpath, session_lpath, overwrite=True)
-
-            # Write backprop arch info to arch root
-            back_archinfo_fpath = join(session_dpath, 'arch_info_fit.json')
-            back_archinfo_json = model.make_arch_json(with_noise=True)
-            ut.writeto(back_archinfo_fpath, back_archinfo_json, verbose=True)
-
-            pred_archinfo_fpath = join(session_dpath, 'arch_info_predict.json')
-            pred_archinfo_json = model.make_arch_json(with_noise=False)
-            ut.writeto(pred_archinfo_fpath, pred_archinfo_json, verbose=False)
-
-            # Write arch graph to root
-            try:
-                back_archimg_fpath  = join(session_dpath, 'arch_graph_fit.jpg')
-                model.imwrite_arch(fpath=back_archimg_fpath, fullinfo=False)
-                model._overwrite_latest_image(back_archimg_fpath, 'arch_graph')
-            except Exception as ex:
-                ut.printex(ex, iswarning=True)
 
             prog_dirs = {
                 'dream': join(session_dpath, 'dream'),
@@ -718,59 +846,44 @@ class _ModelFitter(object):
             #for dpath in prog_dirs.values():
             #    ut.ensuredir(dpath)
 
+            ut.ensuredir(session_dpath)
+            model._fit_session['session_dpath'] = session_dpath
+
+            if ut.get_argflag('--vd'):
+                # Open session in file explorer
+                ut.view_directory(session_dpath)
+
+            # Make a symlink to the latest session
+            session_link = join(model.arch_dpath, 'latest_session')
+            ut.symlink(session_dpath, session_link, overwrite=True)
+
+            # Write backprop arch info to arch root
+            back_archinfo_fpath = join(session_dpath, 'arch_info_fit.json')
+            back_archinfo_json = model.make_arch_json(with_noise=True)
+            ut.writeto(back_archinfo_fpath, back_archinfo_json, verbose=True)
+
+            # Write feed-forward arch info to arch root
+            pred_archinfo_fpath = join(session_dpath, 'arch_info_predict.json')
+            pred_archinfo_json = model.make_arch_json(with_noise=False)
+            ut.writeto(pred_archinfo_fpath, pred_archinfo_json, verbose=False)
+
+            # Write arch graph to root
+            try:
+                back_archimg_fpath  = join(session_dpath, 'arch_graph_fit.jpg')
+                model.imwrite_arch(fpath=back_archimg_fpath, fullinfo=False)
+                model._overwrite_latest_image(back_archimg_fpath, 'arch_graph')
+            except Exception as ex:
+                ut.printex(ex, iswarning=True)
+
             # Write initial states of the weights
             try:
                 ut.ensuredir(prog_dirs['weights'])
                 fig = model.show_weights_image(fnum=2)
-                fpath = join(prog_dirs['weights'], 'weights_' + model.hist_id + '.png')
+                fpath = join(prog_dirs['weights'], 'weights_' + model.history.hist_id + '.png')
                 fig.savefig(fpath)
                 model._overwrite_latest_image(fpath, 'weights')
             except Exception as ex:
                 ut.printex(ex, iswarning=True)
-
-    def _new_era(model, X_learn, y_learn, X_valid, y_valid):
-        """
-        Used to denote a change in hyperparameters during training.
-        """
-        y_hashid = ut.hashstr_arr(y_learn, 'y', alphabet=ut.ALPHABET_27)
-
-        learn_hashid =  str(model.arch_id) + '_' + y_hashid
-        if model.current_era is not None and model.current_era['size'] == 0:
-            print('Not starting new era (previous era has no epochs)')
-        else:
-            _new_era = {
-                'size': 0,
-                #'valid_loss_list': [],
-                #'learn_loss_list': [],
-                #'epoch_list': [],
-                'learn_hashid': learn_hashid,
-                'arch_hashid': model.get_arch_hashid(),
-                'arch_id': model.arch_id,
-                'num_learn': len(y_learn),
-                'num_valid': len(y_valid),
-                'learn_state': model.learn_state.asdict(),
-                'epoch_info_list': []
-            }
-            num_eras = len(model.era_history)
-            print('starting new era %d' % (num_eras,))
-            #if model.current_era is not None:
-            model.current_era = _new_era
-            model.era_history.append(model.current_era)
-
-    def _record_epoch(model, epoch_info):
-        """
-        Records an epoch in an era.
-        """
-        # each key/val in epoch_info dict corresponds to a key/val_list in an
-        # era dict.
-        model.current_era['size'] += 1
-        model.current_era['epoch_info_list'].append(epoch_info)
-        # TODO: depricate
-        #for key in epoch_info:
-        #    key_ = key + '_list'
-        #    if key_ not in model.current_era:
-        #        model.current_era[key_] = []
-        #    model.current_era[key_].append(epoch_info[key])
 
     def _overwrite_latest_image(model, fpath, new_name):
         """
@@ -796,7 +909,7 @@ class _ModelFitter(object):
             try:
                 # Save class dreams
                 ut.ensuredir(prog_dirs['dream'])
-                fpath = join(prog_dirs['dream'], 'class_dream_' + model.hist_id + '.png')
+                fpath = join(prog_dirs['dream'], 'class_dream_' + model.history.hist_id + '.png')
                 fig = model.show_class_dream(fnum=4)
                 fig.savefig(fpath, dpi=180)
                 model._overwrite_latest_image(fpath, 'class_dream')
@@ -808,7 +921,7 @@ class _ModelFitter(object):
         try:
             # Save weights images
             ut.ensuredir(prog_dirs['weights'])
-            fpath = join(prog_dirs['weights'], 'weights_' + model.hist_id + '.png')
+            fpath = join(prog_dirs['weights'], 'weights_' + model.history.hist_id + '.png')
             fig = model.show_weights_image(fnum=2)
             fig.savefig(fpath, dpi=180)
             model._overwrite_latest_image(fpath, 'weights')
@@ -821,9 +934,9 @@ class _ModelFitter(object):
         for key in report_dict['best'].keys():
             if hasattr(report_dict['best'][key], 'tolist'):
                 report_dict['best'][key] = report_dict['best'][key].tolist()
-        if len(model.era_history) > 0:
-            report_dict['num_learn'] = model.era_history[-1]['num_learn']
-            report_dict['num_valid'] = model.era_history[-1]['num_valid']
+        if len(model.history) > 0:
+            report_dict['num_learn'] = model.history[-1]['num_learn']
+            report_dict['num_valid'] = model.history[-1]['num_valid']
         report_dict['hyperparams'] = model.hyperparams
         report_dict['arch_hashid'] = model.get_arch_hashid()
         report_dict['model_name'] = model.name
@@ -843,13 +956,13 @@ class _ModelFitter(object):
 
         # Save text history info
         text_fpath = join(session_dpath, 'era_history.txt')
-        history_text = ut.list_str(model.era_history, newlines=True)
+        history_text = model.history.to_json()
         ut.write_to(text_fpath, history_text, verbose=False)
 
         # Save loss graphs
         try:
             ut.ensuredir(prog_dirs['loss'])
-            fpath = join(prog_dirs['loss'], 'loss_' + model.hist_id + '.png')
+            fpath = join(prog_dirs['loss'], 'loss_' + model.history.hist_id + '.png')
             fig = model.show_loss_history(fnum=1)
             fig.savefig(fpath, dpi=180)
             model._overwrite_latest_image(fpath, 'loss')
@@ -859,7 +972,7 @@ class _ModelFitter(object):
 
         try:
             ut.ensuredir(prog_dirs['loss'])
-            fpath = join(prog_dirs['loss'], 'pr_' + model.hist_id + '.png')
+            fpath = join(prog_dirs['loss'], 'pr_' + model.history.hist_id + '.png')
             fig = model.show_pr_history(fnum=4)
             fig.savefig(fpath, dpi=180)
             model._overwrite_latest_image(fpath, 'pr')
@@ -870,7 +983,7 @@ class _ModelFitter(object):
         # Save weight updates
         try:
             ut.ensuredir(prog_dirs['loss'])
-            fpath = join(prog_dirs['loss'], 'update_mag_' + model.hist_id + '.png')
+            fpath = join(prog_dirs['loss'], 'update_mag_' + model.history.hist_id + '.png')
             fig = model.show_update_mag_history(fnum=3)
             fig.savefig(fpath, dpi=180)
             model._overwrite_latest_image(fpath, 'update_mag')
@@ -952,8 +1065,6 @@ class _ModelFitter(object):
 
         # If the training loss is nan, the training has diverged
         if np.isnan(learn_info['learn_loss']):
-            #import utool
-            #utool.embed()
             print('\n[train] train loss is Nan. training diverged\n')
             print('learn_outputs = %r' % (learn_outputs,))
             print('\n[train] train loss is Nan. training diverged\n')
@@ -1006,7 +1117,7 @@ class _ModelFitter(object):
 
         if dpath is None:
             dpath = model._fit_session['session_dpath']
-        case_dpath = ut.ensuredir((dpath, 'cases', model.hist_id, subset_id))
+        case_dpath = ut.ensuredir((dpath, 'cases', model.history.hist_id, subset_id))
 
         y_true = y
         netout = model._predict(X)
@@ -1824,6 +1935,21 @@ class _ModelVisualization(object):
             for _ in ut.ProgIter(range(10)):
                 step_fn()
 
+    def show_weights_image(model, index=0, *args, **kwargs):
+        import plottool as pt
+        network_layers = model.get_all_layers()
+        cnn_layers = [layer_ for layer_ in network_layers
+                      if hasattr(layer_, 'W')]
+        layer = cnn_layers[index]
+        all_weights = layer.W.get_value()
+        layername = net_strs.make_layer_str(layer)
+        fig = draw_net.show_convolutional_weights(all_weights, **kwargs)
+        figtitle = layername + '\n' + model.arch_id + '\n' + model.history.hist_id
+        pt.set_figtitle(figtitle, subtitle='shape=%r, sum=%.4f, l2=%.4f' %
+                        (all_weights.shape, all_weights.sum(),
+                         (all_weights ** 2).sum()))
+        return fig
+
     def show_update_mag_history(model, fnum=None):
         """
         CommandLine:
@@ -1848,30 +1974,22 @@ class _ModelVisualization(object):
         fig = pt.figure(fnum=fnum, pnum=(1, 1, 1), doclf=True, docla=True)
         #next_pnum = pt.make_pnum_nextgen(nSubplots=1 + len(param_groups))
         next_pnum = pt.make_pnum_nextgen(nSubplots=1)
-
         #if len(model.era_history) > 0:
         #    for param_keys in param_groups:
         #        model.show_weight_updates(param_keys=param_keys, fnum=fnum, pnum=next_pnum())
-
         # Show learning rate
         labels = None
-        if len(model.era_history) > 0:
-            #era = model.era_history[0]
+        if len(model.history) > 0:
             labels = {'rate': 'learning rate'}
         ydatas = []
-        for era in model.era_history:
-            learn_state_list = ut.take_column(era['epoch_info_list'], 'learn_state')
-            learn_rate_list = ut.take_column(learn_state_list, 'learning_rate')
-            ydatas.append({
-                'rate': learn_rate_list,
-            })
+        for epochsT in model.history.grouped_epochsT():
+            learn_rate_list = ut.take_column(epochsT['learn_state'], 'learning_rate')
+            ydatas.append({'rate': learn_rate_list})
         model._show_era_measure(ydatas, labels=labels, ylabel='learning rate',
                                 yscale='linear', fnum=fnum, pnum=next_pnum())
-
-        # TODO: dont do this if off
         #model.show_weight_updates(fnum=fnum, pnum=next_pnum())
         # TODO: add confusion
-        pt.set_figtitle('Weight Update History: ' + model.hist_id + '\n' + model.arch_id)
+        pt.set_figtitle('Weight Update History: ' + model.history.hist_id + '\n' + model.arch_id)
         return fig
 
     def show_pr_history(model, fnum=None):
@@ -1891,12 +2009,12 @@ class _ModelVisualization(object):
         fnum = pt.ensure_fnum(fnum)
         fig = pt.figure(fnum=fnum, pnum=(1, 1, 1), doclf=True, docla=True)
         next_pnum = pt.make_pnum_nextgen(nRows=2, nCols=2)
-        if len(model.era_history) > 0:
+        if len(model.history) > 0:
             model._show_era_class_pr(['learn'], ['precision'], fnum=fnum, pnum=next_pnum())
             model._show_era_class_pr(['learn'], ['recall'], fnum=fnum, pnum=next_pnum())
             model._show_era_class_pr(['valid'], ['precision'], fnum=fnum, pnum=next_pnum())
             model._show_era_class_pr(['valid'], ['recall'], fnum=fnum, pnum=next_pnum())
-        pt.set_figtitle('Era PR History: ' + model.hist_id + '\n' + model.arch_id)
+        pt.set_figtitle('Era PR History: ' + model.history.hist_id + '\n' + model.arch_id)
         return fig
 
     def show_loss_history(model, fnum=None):
@@ -1908,7 +2026,7 @@ class _ModelVisualization(object):
             mpl.Figure: fig
 
         CommandLine:
-            python -m ibeis_cnn --tf _ModelVisualization.show_loss_history --show
+            python -m ibeis_cnn _ModelVisualization.show_loss_history --show
 
         Example:
             >>> # DISABLE_DOCTEST
@@ -1922,111 +2040,89 @@ class _ModelVisualization(object):
         fnum = pt.ensure_fnum(fnum)
         fig = pt.figure(fnum=fnum, pnum=(1, 1, 1), doclf=True, docla=True)
         next_pnum = pt.make_pnum_nextgen(nRows=2, nCols=2)
-        if len(model.era_history) > 0:
-            model.show_era_loss(fnum=fnum, pnum=next_pnum(), yscale='log')
-            model.show_era_loss(fnum=fnum, pnum=next_pnum(), yscale='linear')
-            model.show_era_acc(fnum=fnum, pnum=next_pnum(), yscale='linear')
-            model.show_era_lossratio(fnum=fnum, pnum=next_pnum())
-
-        # TODO: dont do this if off
-        #model.show_weight_updates(fnum=fnum, pnum=next_pnum())
-        pt.set_figtitle('Era Loss History: ' + model.hist_id + '\n' + model.arch_id)
+        if len(model.history) > 0:
+            model._show_era_loss(fnum=fnum, pnum=next_pnum(), yscale='log')
+            model._show_era_loss(fnum=fnum, pnum=next_pnum(), yscale='linear')
+            model._show_era_acc(fnum=fnum, pnum=next_pnum(), yscale='linear')
+            model._show_era_lossratio(fnum=fnum, pnum=next_pnum())
+        pt.set_figtitle('Era Loss History: ' + model.history.hist_id + '\n' + model.arch_id)
         return fig
 
-    def show_era_lossratio(model, **kwargs):
+    def _show_era_lossratio(model, **kwargs):
         labels = None
-        if len(model.era_history) > 0:
+        if len(model.history) > 0:
             labels = {'ratio': 'learn/valid'}
 
         ydatas = [{
-            'ratio': np.divide(
-                ut.take_column(era['epoch_info_list'], 'learn_loss'),
-                ut.take_column(era['epoch_info_list'], 'valid_loss'),)
-        } for era in model.era_history]
+            'ratio': np.divide(ut.take_column(epochs, 'learn_loss'),
+                               ut.take_column(epochs, 'valid_loss'),)
+        } for epochs in model.history.grouped_epochs()]
         return model._show_era_measure(ydatas, labels, ylabel='learn/valid', yscale='linear', **kwargs)
 
     def _show_era_class_pr(model, types=['valid', 'learn'],
                            measures=['precision', 'recall'],
                            **kwargs):
-
+        import plottool as pt
         if getattr(model, 'encoder', None):
+            # TODO: keep in data_params?
             class_idxs = model.encoder.transform(model.encoder.classes_)
             class_lbls = model.encoder.classes_
         else:
             class_idxs = list(range(model.output_dims))
             class_lbls = list(range(model.output_dims))
 
-        import plottool as pt
         type_styles = {'learn': '-x', 'valid': '-o'}
         styles = ut.odict(ut.flatten([
-            [
-                (('%s_%s_%d' % (t, m, y,)), type_styles[t])
-                for t in types for m in measures
-            ]
-            for y in class_idxs]
-        ))
+            [(('%s_%s_%d' % (t, m, y,)), type_styles[t])
+             for t in types for m in measures]
+            for y in class_idxs]))
 
+        class_colors = pt.distinct_colors(len(class_idxs))
         colors = ut.odict(ut.flatten([
-            [
-                (('%s_%s_%d' % (t, m, y,)), color)
-                for t in types for m in measures
-            ]
-            for (y, color) in zip(class_idxs, pt.distinct_colors(len(class_idxs)))
-        ]))
+            [(('%s_%s_%d' % (t, m, y,)), color)
+             for t in types for m in measures]
+            for (y, color) in zip(class_idxs, class_colors)]))
 
-        if len(model.era_history) > 0:
+        if len(model.history) > 0:
             labels = ut.odict(ut.flatten([[
                 ('%s_%s_%d' % (t, m, y,), '%s %s %s' % (t, m, category,))
-                for t in types for m in measures
-            ]
-                for y, category in zip(class_idxs, class_lbls)
-            ]))
-
-        epoch_infos_list = [era_['epoch_info_list']
-                            for era_ in model.era_history]
+                for t in types for m in measures]
+                for y, category in zip(class_idxs, class_lbls)]))
 
         ydatas = [
             ut.odict(ut.flatten([[
-                ('%s_%s_%d' % (t, m, y,), np.array(ut.take_column(epoch_infos, '%s_%s' % (t, m)))[:, y])
-                for t in types for m in measures
-            ]
-                for y in class_idxs
-            ]))
-            for epoch_infos in epoch_infos_list
-        ]
+                ('%s_%s_%d' % (t, m, y,), np.array(ut.take_column(epochs, '%s_%s' % (t, m)))[:, y])
+                for t in types for m in measures]
+                for y in class_idxs]))
+            for epochs in model.history.grouped_epochs()]
 
-        fig = model._show_era_measure(ydatas,
-                                      styles=styles,
-                                      labels=labels,
-                                      colors=colors,
-                                      #xdatas=xdatas,
-                                      ylabel='/'.join(measures),
-                                      yscale='linear', **kwargs)
+        fig = model._show_era_measure(
+            ydatas, styles=styles, labels=labels, colors=colors,
+            ylabel='/'.join(measures), yscale='linear', **kwargs)
         return fig
 
-    def show_era_acc(model, **kwargs):
+    def _show_era_acc(model, **kwargs):
         #styles = {'valid': '-o'}
         styles = {'learn': '-x', 'valid': '-o'}
         labels = None
-        if len(model.era_history) > 0:
-            era = model.era_history[-1]
-            lastlearn_acc = ut.take_column(era['epoch_info_list'], 'learn_acc')[-1]
-            lastvalid_acc = ut.take_column(era['epoch_info_list'], 'valid_acc')[-1]
+        if len(model.history) > 0:
+            last_epoch = model.history.epoch_list[-1]
+            last_era = model.history.era_list[-1]
             labels = {
-                'valid': 'valid acc ' + str(era['num_valid']) + ' ' + ut.repr4(lastlearn_acc * 100) + '%',
-                'learn': 'learn acc ' + str(era['num_learn']) + ' ' + ut.repr4(lastvalid_acc * 100) + '%',
+                'valid': 'valid acc ' + str(last_era['num_valid']) + ' ' + ut.repr4(last_epoch['learn_acc'] * 100) + '%',
+                'learn': 'learn acc ' + str(last_era['num_learn']) + ' ' + ut.repr4(last_epoch['valid_acc'] * 100) + '%',
             }
 
         ydatas = [{
-            'valid': ut.take_column(era_['epoch_info_list'], 'valid_acc'),
-            'learn': ut.take_column(era_['epoch_info_list'], 'learn_acc'),
-        } for era_ in model.era_history]
+            'valid': ut.take_column(epochs, 'valid_acc'),
+            'learn': ut.take_column(epochs, 'learn_acc'),
+        } for epochs in model.history.grouped_epochs()]
 
         yspreads = [{
-            'valid': ut.take_column(era_['epoch_info_list'], 'valid_acc_std'),
-            'learn': ut.take_column(era_['epoch_info_list'], 'learn_acc_std'),
+            'valid': ut.take_column(epochs, 'valid_acc_std'),
+            'learn': ut.take_column(epochs, 'learn_acc_std'),
         }
-            for era_ in model.era_history]
+            for era_ in model.history.grouped_epochs()]
         fig = model._show_era_measure(ydatas, labels,  styles, ylabel='accuracy',
                                       yspreads=yspreads, **kwargs)
         #import plottool as pt
@@ -2035,33 +2131,28 @@ class _ModelVisualization(object):
         #pt.gca().set_ylim((ymin, 100))
         return fig
 
-    def show_era_loss(model, **kwargs):
+    def _show_era_loss(model, **kwargs):
         styles = {'learn': '-x', 'valid': '-o'}
         labels = None
-        if len(model.era_history) > 0:
+        if len(model.history) > 0:
             labels = {
-                'learn': 'learn ' + str(model.era_history[0]['num_learn']),
-                'valid': 'valid ' + str(model.era_history[0]['num_valid']),
+                'learn': 'learn ' + str(model.history.era_list[-1]['num_learn']),
+                'valid': 'valid ' + str(model.history.era_list[-1]['num_valid']),
             }
+        epochsT_list = list(model.history.grouped_epochsT())
 
-        epoch_infos_list = [era_['epoch_info_list']
-                            for era_ in model.era_history]
+        ydatas = [{'learn': epochsT['learn_loss'],
+                   'valid': epochsT['valid_loss']}
+                  for epochsT in epochsT_list]
 
-        ydatas = [{
-            'learn': ut.take_column(epoch_infos, 'learn_loss'),
-            'valid': ut.take_column(epoch_infos, 'valid_loss'),
-        }
-            for epoch_infos in epoch_infos_list]
+        yspreads = [{'learn': epochsT['learn_loss_std'],
+                     'valid': epochsT['valid_loss_std']}
+                    for epochs in epochsT_list]
 
-        yspreads = [{
-            'learn': ut.take_column(epoch_infos, 'learn_loss_std'),
-            'valid': ut.take_column(epoch_infos, 'valid_loss_std'),
-        }
-            for epoch_infos in epoch_infos_list]
-
-        fig = model._show_era_measure(ydatas, labels, styles,
-                                      ylabel='loss', yspreads=yspreads,
-                                      **kwargs)
+        import utool
+        with utool.embed_on_exception_context:
+            fig = model._show_era_measure(ydatas, labels, styles, ylabel='loss',
+                                          yspreads=yspreads, **kwargs)
         return fig
 
     def show_weight_updates(model, param_keys=None, **kwargs):
@@ -2073,8 +2164,8 @@ class _ModelVisualization(object):
         labels = None
         colors = None
 
-        if len(model.era_history) > 0:
-            era = model.era_history[-1]
+        if len(model.history) > 0:
+            era = model.history.era_list[-1]
             if 'param_update_mags' in era['epoch_info_list']:
                 if param_keys is None:
                     param_keys = list(set(ut.flatten([
@@ -2084,13 +2175,14 @@ class _ModelVisualization(object):
                 colors = dict(zip(param_keys, pt.distinct_colors(len(param_keys))))
 
         # colors = {}
-        for index, era in enumerate(model.era_history):
+        for index, epochs in enumerate(model.history):
             if 'param_update_mags' not in era['epoch_info_list']:
                 continue
-            xdata = ut.take_column(era['epoch_info_list'], 'epoch')
+            xdata = ut.take_column(epochs, 'epoch_num')
             if index == 0:
                 xdata = xdata[1:]
             xdatas.append(xdata)
+            # FIXME
             update_mags_list = era['param_update_mags_list']
             # Transpose keys and positions
             #param_keys = list(set(ut.flatten([
@@ -2122,7 +2214,7 @@ class _ModelVisualization(object):
 
         # print('Show Era Measure ylabel = %r' % (ylabel,))
         import plottool as pt
-        num_eras = len(model.era_history)
+        num_eras = model.history.total_eras
 
         if labels is None:
             pass
@@ -2131,10 +2223,8 @@ class _ModelVisualization(object):
             styles = ut.ddict(lambda: '-o')
 
         if xdatas is None:
-            epoch_infos_list = [era_['epoch_info_list']
-                                for era_ in model.era_history]
-            xdatas = [ut.take_column(epoch_infos, 'epoch')
-                      for epoch_infos in epoch_infos_list]
+            xdatas = [epochsT['epoch_num'] for epochsT in
+                      model.history.grouped_epochsT()]
 
         if colors is None:
             colors = pt.distinct_colors(num_eras)
@@ -2155,11 +2245,7 @@ class _ModelVisualization(object):
                 break
             xdata = xdatas[index]
             ydata = ydatas[index]
-
-            if isinstance(colors, list):
-                color_ = colors[index]
-            else:
-                color_ = colors
+            color_ = colors[index] if isinstance(colors, list) else colors
 
             # Draw lines between eras
             if len(prev_xdata) > 0:
@@ -2198,7 +2284,7 @@ class _ModelVisualization(object):
         # append_phantom_legend_label
         pt.set_xlabel(xlabel)
         pt.set_ylabel(ylabel)
-        if num_eras > 0 and can_plot:
+        if len(model.history) > 0 and can_plot:
             pt.legend()
         pt.dark_background()
         return fig
@@ -2207,8 +2293,7 @@ class _ModelVisualization(object):
         import plottool as pt
         fnum = pt.ensure_fnum(fnum)
         fig = pt.figure(fnum=fnum, pnum=pnum)
-        num_eras = len(model.era_history)
-        for index, era in enumerate(model.era_history):
+        for index, era in enumerate(model.history):
             #epochs = era['epoch_list']
             epochs = ut.take_column(era['epoch_info_list'], 'epoch')
             if 'update_mags_list' not in era:
@@ -2227,7 +2312,7 @@ class _ModelVisualization(object):
             for key, val, color in zip(param_keys, param_val_list, colors):
                 update_mag_mean = ut.get_list_column(val, 0)
                 update_mag_std = ut.get_list_column(val, 1)
-                if index == len(model.era_history) - 1:
+                if index == len(model.history) - 1:
                     pt.interval_line_plot(epochs, update_mag_mean,
                                           update_mag_std, marker='x',
                                           linestyle='-', color=color,
@@ -2237,25 +2322,10 @@ class _ModelVisualization(object):
                                           update_mag_std, marker='x',
                                           linestyle='-', color=color)
             pass
-        if num_eras > 0:
+        if len(model.history) > 0:
             pt.legend()
 
         pt.dark_background()
-        return fig
-
-    def show_weights_image(model, index=0, *args, **kwargs):
-        import plottool as pt
-        network_layers = model.get_all_layers()
-        cnn_layers = [layer_ for layer_ in network_layers
-                      if hasattr(layer_, 'W')]
-        layer = cnn_layers[index]
-        all_weights = layer.W.get_value()
-        layername = net_strs.make_layer_str(layer)
-        fig = draw_net.show_convolutional_weights(all_weights, **kwargs)
-        figtitle = layername + '\n' + model.arch_id + '\n' + model.hist_id
-        pt.set_figtitle(figtitle, subtitle='shape=%r, sum=%.4f, l2=%.4f' %
-                        (all_weights.shape, all_weights.sum(),
-                         (all_weights ** 2).sum()))
         return fig
 
     # --- IMAGE WRITE
@@ -2434,14 +2504,6 @@ class _ModelStrings(object):
         """
         return net_strs.get_layer_info_str(model.get_all_layers(), model.batch_size)
 
-    @property
-    def total_epochs(model):
-        return sum([len(era['epoch_info_list']) for era in model.era_history])
-
-    @property
-    def total_eras(model):
-        return len(model.era_history)
-
     # --- PRINTING
 
     def print_state_str(model, **kwargs):
@@ -2475,7 +2537,7 @@ class _ModelIDs(object):
         #    model.name = ut.get_classname(model.__class__, local=True)
 
     def __nice__(model):
-        parts = [model.get_arch_nice(), model.get_history_nice()]
+        parts = [model.get_arch_nice(), model.history.get_history_nice()]
         if model.name is not None:
             parts = [model.name] + parts
         return '(' + ' '.join(parts) + ')'
@@ -2483,7 +2545,7 @@ class _ModelIDs(object):
     @property
     def hash_id(model):
         arch_hashid = model.get_arch_hashid()
-        history_hashid = model.get_history_hashid()
+        history_hashid = model.history.get_history_hashid()
         hashid = ut.hashstr27(history_hashid + arch_hashid)
         return hashid
 
@@ -2510,25 +2572,6 @@ class _ModelIDs(object):
         arch_id = '_'.join(parts)
         return arch_id
 
-    @property
-    def hist_id(model):
-        r"""
-        CommandLine:
-            python -m ibeis_cnn.models.abstract_models --test-_ModelIDs.hist_id:0
-
-        Example:
-            >>> # ENABLE_DOCTEST
-            >>> from ibeis_cnn.models.abstract_models import *  # NOQA
-            >>> model = testdata_model_with_history()
-            >>> result = str(history_hashid)
-            >>> print(result)
-            eras003_epochs0012_eeeejtddhhhkoaim
-        """
-        hashid = model.get_history_hashid()
-        nice = model.get_history_nice()
-        history_id = nice + hashid
-        return history_id
-
     def get_arch_hashid(model):
         """
         Returns a hash identifying the architecture of the determenistic net.
@@ -2538,18 +2581,6 @@ class _ModelIDs(object):
         arch_str = model.get_arch_str(with_noise=False)
         arch_hashid = ut.hashstr27(arch_str, hashlen=8)
         return arch_hashid
-
-    def get_history_hashid(model):
-        r"""
-        Builds a hashid that uniquely identifies the architecture and the
-        training procedure this model has gone through to produce the current
-        architecture weights.
-        """
-        era_hash_list = [ut.hashstr27(ut.repr2(era))
-                         for era in model.era_history]
-        era_hash_str = ''.join(era_hash_list)
-        history_hashid = ut.hashstr27(era_hash_str, hashlen=8)
-        return history_hashid
 
     def get_arch_nice(model):
         """
@@ -2599,13 +2630,6 @@ class _ModelIDs(object):
             nice = 'o{nout}_d{depth}_c{mcomplex}'.format(**fmtdict)
             return nice
 
-    def get_history_nice(model):
-        if model.total_epochs == 0:
-            nice = 'NoHist'
-        else:
-            nice = 'era%03d_epoch%04d' % (model.total_eras, model.total_epochs)
-        return nice
-
 
 @ut.reloadable_class
 class _ModelIO(object):
@@ -2634,7 +2658,7 @@ class _ModelIO(object):
         """
         #print(model.model_dpath)
         print(model.arch_dpath)
-        print(model.best_dpath)
+        #print(model.best_dpath)
         print(model.saved_session_dpath)
         print(model.checkpoint_dpath)
         print(model.diagnostic_dpath)
@@ -2665,9 +2689,9 @@ class _ModelIO(object):
     def arch_dpath(model, arch_dpath):
         model._arch_dpath = arch_dpath
 
-    @property
-    def best_dpath(model):
-        return join(model.arch_dpath, 'best')
+    #@property
+    #def best_dpath(model):
+    #    return join(model.arch_dpath, 'best')
 
     @property
     def checkpoint_dpath(model):
@@ -2677,17 +2701,17 @@ class _ModelIO(object):
     def saved_session_dpath(model):
         return join(model.arch_dpath, 'saved_sessions')
 
-    @property
-    def diagnostic_dpath(model):
-        return join(model.arch_dpath, 'diagnostics')
+    #@property
+    #def diagnostic_dpath(model):
+    #    return join(model.arch_dpath, 'diagnostics')
 
-    def get_epoch_diagnostic_dpath(model, epoch=None):
-        import utool as ut
-        diagnostic_dpath = model.diagnostic_dpath
-        ut.ensuredir(diagnostic_dpath)
-        epoch_dpath = ut.unixjoin(diagnostic_dpath, model.hist_id)
-        ut.ensuredir(epoch_dpath)
-        return epoch_dpath
+    #def get_epoch_diagnostic_dpath(model, epoch=None):
+    #    import utool as ut
+    #    diagnostic_dpath = model.diagnostic_dpath
+    #    ut.ensuredir(diagnostic_dpath)
+    #    epoch_dpath = ut.unixjoin(diagnostic_dpath, model.history.hist_id)
+    #    ut.ensuredir(epoch_dpath)
+    #    return epoch_dpath
 
     def list_saved_checkpoints(model):
         dpath = model._get_model_dpath(None, True)
@@ -2772,13 +2796,13 @@ class _ModelIO(object):
         return model_state_fpath
 
     def checkpoint_save_model_state(model):
-        fpath = model.get_model_state_fpath(checkpoint_tag=model.hist_id)
+        fpath = model.get_model_state_fpath(checkpoint_tag=model.history.hist_id)
         ut.ensuredir(dirname(fpath))
         model.save_model_state(fpath=fpath)
         return fpath
 
     def checkpoint_save_model_info(model):
-        fpath = model.get_model_info_fpath(checkpoint_tag=model.hist_id)
+        fpath = model.get_model_info_fpath(checkpoint_tag=model.history.hist_id)
         ut.ensuredir(dirname(fpath))
         model.save_model_info(fpath=fpath)
 
@@ -2851,7 +2875,12 @@ class _ModelIO(object):
         model.best_results = model_state['best_results']
         model.input_shape  = model_state['input_shape']
         model.output_dims  = model_state['output_dims']
-        model.era_history  = model_state.get('era_history', [None])
+        #model.era_history  = model_state.get('era_history', [None])
+        if 'era_history' in model_state:
+            model.history = History.from_oldstyle(model_state['era_history'])
+        else:
+            model.history = History()
+            model.history.__dict__.update(**model_state['history'])
         if model.__class__.__name__ != 'BaseModel':
             # hack for abstract model
             # model.output_layer is not None
@@ -2879,7 +2908,12 @@ class _ModelIO(object):
             model._fix_center_mean_std()
         else:
             model.data_params = model_state['data_params']
-        model.era_history = model_state['era_history']
+
+        if 'era_history' in model_state:
+            model.history = History.from_oldstyle(model_state['era_history'])
+        else:
+            model.history = History()
+            model.history.__dict__.update(**model_state['history'])
 
 
 class _ModelUtility(object):
@@ -3130,8 +3164,6 @@ class AbstractCategoricalModel(BaseModel):
         # <Prototype code to fix reload errors>
         #this_class_now = ut.fix_super_reload_error(AbstractCategoricalModel, model)
         this_class_now = AbstractCategoricalModel
-        #import utool
-        #with utool.embed_on_exception_context:
         #super(AbstractCategoricalModel, model).__init__(**kwargs)
         super(this_class_now, model).__init__(**kwargs)
 
@@ -3244,7 +3276,7 @@ def testdata_model_with_history():
         mean_loss = 1 / np.exp(num / 10)
         frac = (num / total_epochs)
         epoch_info = {
-            'epoch': num,
+            'epoch_num': num,
             'learn_loss': mean_loss + rand(),
             'learn_loss_reg': (mean_loss + np.exp(rand() * num + rand())),
             'learn_loss_std': rand(),
@@ -3278,9 +3310,10 @@ def testdata_model_with_history():
     eralens = [4, 4, 4]
     total_epochs = sum(eralens)
     for era_length in eralens:
-        model._new_era(X_train, y_train, X_train, y_train)
+        model.history._new_era(model, X_train, y_train, X_train, y_train)
         for _ in range(era_length):
-            model._record_epoch(dummy_epoch_dict(num=epoch))
+            epoch_info = dummy_epoch_dict(num=epoch)
+            model.history._record_epoch(epoch_info)
             epoch += 1
     return model
 
