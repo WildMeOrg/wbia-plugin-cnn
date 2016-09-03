@@ -292,9 +292,9 @@ def get_printcolinfo(requested_headers_):
     """
     if requested_headers_ is None:
         requested_headers_ = ['learn_loss', 'valid_loss', 'learnval_rat', 'valid_acc', 'test_acc']
-    requested_headers = ['epoch'] + requested_headers_ + ['duration']
+    requested_headers = ['epoch_num'] + requested_headers_ + ['duration']
     header_dict = {
-        'epoch'        : '   Epoch ',
+        'epoch_num'     : '   Epoch ',
         #'learn_loss'   : '  Learn Loss (determ)  ',
         # We always use determenistic reporting, so dont be redundant
         'learn_loss'   : '  Learn Loss  ',
@@ -318,7 +318,7 @@ def get_printcolinfo(requested_headers_):
         return sep.join((lspace, middle_fmt, rspace))
 
     format_dict = {
-        'epoch'        : datafmt(header_dict['epoch'], '>'),
+        'epoch_num'    : datafmt(header_dict['epoch_num'], '>'),
         'learn_loss'   : datafmt(header_dict['learn_loss'], '<', colored=True),
         'valid_loss'   : datafmt(header_dict['valid_loss'], '>', 6, 'f', colored=True),
         'learnval_rat' : datafmt(header_dict['learnval_rat'], '<', colored=True),
@@ -347,14 +347,14 @@ def print_header_columns(printcol_info):
 
 def print_epoch_info(model, printcol_info, epoch_info):
     requested_headers = printcol_info['requested_headers']
-    keys = ut.setdiff_ordered(requested_headers, ['epoch', 'duration'])
+    keys = ut.setdiff_ordered(requested_headers, ['epoch_num', 'duration'])
     data_fmt_list = printcol_info['data_fmt_list']
     data_fmtstr = '[info] ' +  '|'.join(data_fmt_list)
     import colorama
     ANSI = colorama.Fore
 
     def epoch_str():
-        return (epoch_info['epoch'],)
+        return (epoch_info['epoch_num'],)
 
     def learn_loss_str():
         key = 'learn_loss'
