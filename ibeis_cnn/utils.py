@@ -353,7 +353,7 @@ def print_epoch_info(model, printcol_info, epoch_info):
     import colorama
     ANSI = colorama.Fore
 
-    def epoch_str():
+    def epoch_num_str():
         return (epoch_info['epoch_num'],)
 
     def learn_loss_str():
