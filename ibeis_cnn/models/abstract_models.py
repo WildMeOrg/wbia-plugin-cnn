@@ -219,7 +219,7 @@ class History(ut.NiceRepr):
         y_hashid = ut.hashstr_arr(y_learn, 'y', alphabet=ut.ALPHABET_27)
 
         learn_hashid =  str(model.arch_id) + '_' + y_hashid
-        if history.current_era_size == 0:
+        if history.total_epochs > 0 and history.current_era_size == 0:
             print('Not starting new era (previous era has no epochs)')
         else:
             _new_era = {
@@ -254,20 +254,9 @@ class History(ut.NiceRepr):
         history.epoch_list = history.epoch_list[:epoch_num + 1]
         history.era_list = history.era_list[:era_num + 1]
         history._start_epoch = history.total_epochs
-        #model.orig_history = model.era_history
-        #history = model.era_history
-        #eralen = [era_['size'] for era_ in history]
-        #cumlen = np.cumsum(eralen)
-        #idx = np.where(cumlen > epoch)[0][0]
-        #import copy
-        #history = copy.deepcopy(model.era_history[:idx + 1])
 
-        #idx2 = np.where(np.array(
-        #    ut.take_column(history[-1]['epoch_info_list'], 'epoch_num')) == epoch)[0][0]
-        #history[-1]['size'] = idx2 + 1
-        #history[-1]['epoch_info_list'] = history[-1]['epoch_info_list'][:idx2 + 1]
-        #model.era_history = history
-        pass
+    def to_json(history):
+        return ut.to_json(history.__dict__)
 
 
 @ut.reloadable_class
@@ -442,8 +431,7 @@ class _ModelFitter(object):
 
         Example1:
             >>> from ibeis_cnn.models import mnist
-            >>> name = ut.get_argval('--name', default='bnorm')
-            >>> model, dataset = mnist.testdata_mnist(name=name, dropout=.5)
+            >>> model, dataset = mnist.testdata_mnist(defaultname='bnorm', dropout=.5)
             >>> model.init_arch()
             >>> model.print_layer_info()
             >>> model.print_model_info_str()
@@ -608,7 +596,7 @@ class _ModelFitter(object):
                 max_era_size = model._fit_session['max_era_size']
                 if model.history.current_era_size >= max_era_size:
                     # Decay learning rate
-                    era = model.total_eras
+                    era = model.history.total_eras
                     rate_schedule = model.hyperparams['rate_schedule']
                     rate_schedule = ut.ensure_iterable(rate_schedule)
                     frac = rate_schedule[min(era, len(rate_schedule) - 1)]
@@ -682,6 +670,13 @@ class _ModelFitter(object):
                     # Handled the resolution
                     print('resuming training...')
                     break
+            except (IndexError, ValueError, Exception) as ex:
+                ut.printex(ex, 'Error Occurred Embedding to enable debugging')
+                is_fixed = False
+                import utool
+                utool.embed()
+                if not is_fixed:
+                    raise
         # Save the best network
         model.checkpoint_save_model_state()
         model.save_model_state()
@@ -2122,7 +2117,7 @@ class _ModelVisualization(object):
             'valid': ut.take_column(epochs, 'valid_acc_std'),
             'learn': ut.take_column(epochs, 'learn_acc_std'),
         }
-            for era_ in model.history.grouped_epochs()]
+            for epochs in model.history.grouped_epochs()]
         fig = model._show_era_measure(ydatas, labels,  styles, ylabel='accuracy',
                                       yspreads=yspreads, **kwargs)
         #import plottool as pt
@@ -2147,12 +2142,10 @@ class _ModelVisualization(object):
 
         yspreads = [{'learn': epochsT['learn_loss_std'],
                      'valid': epochsT['valid_loss_std']}
-                    for epochs in epochsT_list]
+                    for epochsT in epochsT_list]
 
-        import utool
-        with utool.embed_on_exception_context:
-            fig = model._show_era_measure(ydatas, labels, styles, ylabel='loss',
-                                          yspreads=yspreads, **kwargs)
+        fig = model._show_era_measure(ydatas, labels, styles, ylabel='loss',
+                                      yspreads=yspreads, **kwargs)
         return fig
 
     def show_weight_updates(model, param_keys=None, **kwargs):
@@ -2373,7 +2366,7 @@ class _ModelStrings(object):
     def get_state_str(model, other_override_reprs={}):
         era_history_str = ut.list_str(
             [ut.dict_str(era, truncate=True, sorted_=True)
-             for era in model.era_history], strvals=True)
+             for era in model.history], strvals=True)
 
         override_reprs = {
             'best_results': ut.repr3(model.best_results),
@@ -2819,7 +2812,7 @@ class _ModelIO(object):
             'batch_size': model.data_shape,
             'output_dims':  model.output_dims,
 
-            'era_history':  model.era_history,
+            'era_history':  model.history,
             # 'arch_tag': model.arch_tag,
         }
         model_state_fpath = model.get_model_state_fpath(**kwargs)
@@ -2834,7 +2827,7 @@ class _ModelIO(object):
             'best_results': model.best_results,
             'input_shape':  model.input_shape,
             'output_dims':  model.output_dims,
-            'era_history':  model.era_history,
+            'era_history':  model.history,
         }
         model_info_fpath = model.get_model_state_fpath(**kwargs)
         #print('saving model info to: %s' % (model_info_fpath,))
@@ -2875,7 +2868,6 @@ class _ModelIO(object):
         model.best_results = model_state['best_results']
         model.input_shape  = model_state['input_shape']
         model.output_dims  = model_state['output_dims']
-        #model.era_history  = model_state.get('era_history', [None])
         if 'era_history' in model_state:
             model.history = History.from_oldstyle(model_state['era_history'])
         else:
