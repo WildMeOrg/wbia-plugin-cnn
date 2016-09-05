@@ -646,23 +646,23 @@ class _ModelFitter(object):
                     if ans in actions['quit'][0]:
                         print('quit training...')
                         return
-                    if ans in actions['resume'][0]:
+                    elif ans in actions['resume'][0]:
                         break
-                    if ans in actions['ipy'][0]:
+                    elif ans in actions['ipy'][0]:
                         ut.embed()
-                    if ans in actions['save'][0]:
+                    elif ans in actions['save'][0]:
                         # Save the weights of the network
                         model.checkpoint_save_model_info()
                         model.checkpoint_save_model_state()
                         model.save_model_info()
                         model.save_model_state()
-                    if ans in actions['print'][0]:
+                    elif ans in actions['print'][0]:
                         model.print_state_str()
-                    if ans in actions['shock'][0]:
+                    elif ans in actions['shock'][0]:
                         utils.shock_network(model.output_layer)
                         model.learn_state.learning_rate = (
                             model.learn_state.learning_rate * 2)
-                    if ans in actions['view'][0]:
+                    elif ans in actions['view'][0]:
                         session_dpath = model._fit_session['session_dpath']
                         ut.view_directory(session_dpath)
                     else:
@@ -672,10 +672,11 @@ class _ModelFitter(object):
                     break
             except (IndexError, ValueError, Exception) as ex:
                 ut.printex(ex, 'Error Occurred Embedding to enable debugging', tb=True)
-                is_fixed = False
+                errorstate = {'is_fixed': False}
+                # is_fixed = False
                 import utool
                 utool.embed()
-                if not is_fixed:
+                if not errorstate['is_fixed']:
                     raise
         # Save the best network
         model.checkpoint_save_model_state()
