@@ -647,7 +647,7 @@ class _ModelFitter(object):
                         print('quit training...')
                         return
                     if ans in actions['resume'][0]:
-                        pass
+                        break
                     if ans in actions['ipy'][0]:
                         ut.embed()
                     if ans in actions['save'][0]:
