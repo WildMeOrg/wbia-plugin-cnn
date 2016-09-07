@@ -79,8 +79,8 @@ def get_aidpairs_partmatch(ibs, acfg_name):
         'affine_invariance': False,
         'fg_on': not ut.WIN32,
     }
-    cm_list, qreq_ = ibs.query_chips(
-        qaid_list, daid_list, return_request=True, cfgdict=cfgdict)
+    qreq_ = ibs.new_query_request(qaid_list, daid_list, cfgdict=cfgdict)
+    cm_list = qreq_.execute()
     hardneg_aids1 = [[cm.qaid] for cm in (cm_list)]
     hardneg_aids2 = [cm.get_top_gf_aids(ibs, ntop=num_hard_neg_per_aid)
                      for cm in cm_list]
@@ -880,8 +880,8 @@ def get_aidpairs_and_matches(ibs, max_examples=None, num_top=3,
             'fg_on': not ut.WIN32,
         }
         ibs.print_annotconfig_stats(qaid_list, daid_list, bigstr=True)
-        cm_list, qreq_ = ibs.query_chips(
-            qaid_list, daid_list, return_request=True, cfgdict=cfgdict)
+        qreq_ = ibs.new_query_request(qaid_list, daid_list, cfgdict=cfgdict)
+        cm_list = qreq_.execute()
         return cm_list, qreq_
     cm_list, qreq_ = get_query_results()
 
