@@ -120,7 +120,7 @@ class History(ut.NiceRepr):
         return history.total_epochs
 
     def __nice__(history):
-        return '(' + history.get_history_nice() + ')'
+        return history.get_history_nice()
 
     #def __iter__(history):
     #    for epochs in history.grouped_epochs():
@@ -2534,7 +2534,7 @@ class _ModelIDs(object):
         parts = [model.get_arch_nice(), model.history.get_history_nice()]
         if model.name is not None:
             parts = [model.name] + parts
-        return '(' + ' '.join(parts) + ')'
+        return ' '.join(parts)
 
     @property
     def hash_id(model):
