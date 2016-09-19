@@ -1024,25 +1024,14 @@ def generate_siam_l2_128_feats(ibs, cid_list, config2_=None):
         >>> cid_list = ibs.depc_annot.get_rowids('chips', ibs.get_valid_aids())
         >>> config2_ = None
         >>> # megahack
+        >>> cfg = Config.FeatureConfig() # fixme
         >>> config2_ = dict(feat_type='hesaff+siam128',
-        >>>                 feat_cfgstr=ibs.cfg.feat_cfg.get_cfgstr().replace('sift', 'siam128'),
-        >>>                 hesaff_params=ibs.cfg.feat_cfg.get_hesaff_params())
+        >>>                 feat_cfgstr=cfg.feat_cfg.get_cfgstr().replace('sift', 'siam128'),
+        >>>                 hesaff_params=cfg.feat_cfg.get_hesaff_params())
         >>> featgen = generate_siam_l2_128_feats(ibs, cid_list, config2_)
         >>> result = ut.depth_profile(list(featgen))
         >>> print(result)
     """
-    #if config2_ is not None:
-    #    # Get config from config2_ object
-    #    #print('id(config2_) = ' + str(id(config2_)))
-    #    feat_cfgstr     = config2_.get('feat_cfgstr')
-    #    hesaff_params   = config2_.get('hesaff_params')
-    #    assert feat_cfgstr is not None
-    #    assert hesaff_params is not None
-    #else:
-    #    # Get config from IBEIS controller
-    #    feat_cfgstr     = ibs.cfg.feat_cfg.get_cfgstr()
-    #    hesaff_params   = ibs.cfg.feat_cfg.get_hesaff_params()
-
     # hack because we need the old features
     import vtool as vt
     model = get_siam_l2_model()
@@ -1056,9 +1045,7 @@ def generate_siam_l2_128_feats(ibs, cid_list, config2_=None):
         assert feat_cfgstr is not None
         assert hesaff_params is not None
     else:
-        # Get config from IBEIS controller
-        feat_cfgstr     = ibs.cfg.feat_cfg.get_cfgstr()
-        hesaff_params   = ibs.cfg.feat_cfg.get_hesaff_params()
+        assert False
     hack_config2_ = dict(feat_type='hesaff+sift',
                          feat_cfgstr=feat_cfgstr.replace('siam128', 'sift'),
                          hesaff_params=hesaff_params)
