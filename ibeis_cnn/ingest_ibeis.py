@@ -214,13 +214,13 @@ def extract_annotpair_training_chips(ibs, aid_pairs, **kwargs):
         annot2 = pair_metadata['annot2']
         aid1, aid2 = annot1['aid'], annot2['aid']
         print('Computing alignment aidpair=(%r, %r)' % (aid1, aid2))
-        matches, match_metadata = ibeis.algo.hots.vsone_pipeline.vsone_single(
+        match = ibeis.algo.hots.vsone_pipeline.vsone_single(
             aid1, aid2, qreq_, verbose=False)
-        fm = matches['RAT+SV'].fm
-        match_metadata['fm'] = fm
-        match_metadata['annot1'].clear_stored(['vecs', 'kpts'])
-        match_metadata['annot2'].clear_stored(['dlen_sqrd', 'vecs', 'kpts'])
-        return match_metadata
+        fm = match.matches['RAT+SV'].fm
+        match.match_metadata['fm'] = fm
+        match.match_metadata['annot1'].clear_stored(['vecs', 'kpts'])
+        match.match_metadata['annot2'].clear_stored(['dlen_sqrd', 'vecs', 'kpts'])
+        return match.match_metadata
 
     def make_warped_chips(pair_metadata, size=size):
         match_metadata = pair_metadata['match_metadata']
