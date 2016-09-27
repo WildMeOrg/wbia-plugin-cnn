@@ -31,7 +31,7 @@ from ibeis_cnn import ingest_data
 from ibeis_cnn import experiments
 import utool as ut
 import sys
-print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.train]')
+print, rrr, profile = ut.inject2(__name__)
 
 
 # This is more of a history tag

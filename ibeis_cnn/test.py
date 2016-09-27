@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 from ibeis_cnn import utils
 import utool as ut
 import six  # NOQA
-print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.test]')
+print, rrr, profile = ut.inject2(__name__)
 
 
 def test(data_fpath, model, weights_fpath, results_dpath=None, labels_fpath=None, **kwargs):

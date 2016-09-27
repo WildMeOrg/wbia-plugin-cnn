@@ -80,7 +80,7 @@ import sklearn
 from ibeis_cnn import net_strs
 from ibeis_cnn import draw_net
 from ibeis_cnn.models import _model_legacy
-print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.abstract_models]')
+print, rrr, profile = ut.inject2(__name__)
 
 
 VERBOSE_CNN = ut.get_module_verbosity_flags('cnn')[0] or ut.VERBOSE

@@ -5,7 +5,7 @@ import numpy as np
 import six
 import utool as ut
 #import warnings
-print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.batch_processing]')
+print, rrr, profile = ut.inject2(__name__)
 
 
 VERBOSE_BATCH = ut.get_module_verbosity_flags('batch')[0] or utils.VERBOSE_CNN

@@ -13,7 +13,7 @@ import cv2
 import numpy as np
 import random
 import ibeis.constants as const
-print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn._plugin]')
+print, rrr, profile = ut.inject2(__name__)
 
 
 try:

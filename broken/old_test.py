@@ -14,7 +14,7 @@ import utool as ut
 import cv2
 import six  # NOQA
 from os.path import join, abspath
-print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.test]')
+print, rrr, profile = ut.inject2(__name__)
 
 
 def load_ids(id_fpath, labels_fpath=None):

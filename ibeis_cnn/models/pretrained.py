@@ -5,7 +5,7 @@ import numpy as np
 import utool as ut
 from six.moves import cPickle as pickle  # NOQA
 from ibeis_cnn import net_strs
-print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.pretrained]')
+print, rrr, profile = ut.inject2(__name__)
 
 
 class PretrainedNetwork(object):

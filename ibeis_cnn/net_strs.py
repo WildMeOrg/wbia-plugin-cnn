@@ -4,7 +4,7 @@ import warnings
 import six
 import functools
 import utool as ut
-print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.net_strs]')
+print, rrr, profile = ut.inject2(__name__)
 
 
 def make_layer_str(layer, with_name=True):

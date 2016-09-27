@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import utool as ut
 import numpy as np
 import six
-print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.draw_results]')
+print, rrr, profile = ut.inject2(__name__)
 
 
 def interact_siamsese_data_patches(labels, data, flat_metadata, **kwargs):

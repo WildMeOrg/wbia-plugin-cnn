@@ -15,7 +15,7 @@ Pretrained Models:
 from __future__ import absolute_import, division, print_function
 from six.moves import input, zip, range  # NOQA
 import utool as ut
-print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.harness]')
+print, rrr, profile = ut.inject2(__name__)
 
 
 def _clean(model, theano_forward, X_list, y_list, min_conf=0.95):

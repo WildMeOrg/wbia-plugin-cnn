@@ -5,7 +5,7 @@ from ibeis_cnn.__LASAGNE__ import layers
 from ibeis_cnn.__LASAGNE__ import nonlinearities
 from ibeis_cnn.models import abstract_models
 import utool as ut
-print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.models.detect_yolo]')
+print, rrr, profile = ut.inject2(__name__)
 
 
 class DetectionLayer(layers.Layer):

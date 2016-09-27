@@ -10,7 +10,7 @@ from __future__ import absolute_import, division, print_function
 import functools
 import numpy as np
 import utool as ut
-print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.augment]')
+print, rrr, profile = ut.inject2(__name__)
 
 
 rot_transforms  = [functools.partial(np.rot90, k=k) for k in range(1, 4)]

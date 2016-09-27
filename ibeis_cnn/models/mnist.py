@@ -2,7 +2,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 from ibeis_cnn.models import abstract_models
 import utool as ut
-print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.models.dummy]')
+print, rrr, profile = ut.inject2(__name__)
 
 
 class MNISTModel(abstract_models.AbstractCategoricalModel):

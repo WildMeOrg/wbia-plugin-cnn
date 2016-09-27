@@ -16,7 +16,7 @@ import numpy as np
 import cv2
 import utool as ut
 from ibeis_cnn import utils
-print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.draw_net]')
+print, rrr, profile = ut.inject2(__name__)
 
 
 def imwrite_theano_symbolic_graph(thean_expr):

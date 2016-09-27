@@ -10,7 +10,7 @@ from six.moves import zip, map, range
 from functools import partial
 import dtool
 from ibeis_cnn import draw_results  # NOQA
-print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.ingest_ibeis]')
+print, rrr, profile = ut.inject2(__name__)
 
 
 FIX_HASH = True

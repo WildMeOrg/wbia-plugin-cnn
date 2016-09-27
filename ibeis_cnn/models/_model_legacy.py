@@ -2,7 +2,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import utool as ut
 from six.moves import cPickle as pickle  # NOQA
-print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn._lecacy_model]')
+print, rrr, profile = ut.inject2(__name__)
 
 
 @ut.reloadable_class

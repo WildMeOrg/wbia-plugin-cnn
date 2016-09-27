@@ -13,7 +13,7 @@ import utool as ut
 import six
 from ibeis_cnn import net_strs
 import cv2
-print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.utils]')
+print, rrr, profile = ut.inject2(__name__)
 
 
 #VERBOSE_CNN = ut.get_argflag(('--verbose-cnn', '--verbcnn')) or ut.VERBOSE

@@ -32,7 +32,7 @@ import numpy as np
 from ibeis_cnn.models import abstract_models
 import utool as ut
 from ibeis_cnn import augment
-print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.models]')
+print, rrr, profile = ut.inject2(__name__)
 
 
 @six.add_metaclass(ut.ReloadingMetaclass)

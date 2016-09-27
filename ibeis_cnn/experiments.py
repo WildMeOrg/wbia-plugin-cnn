@@ -4,7 +4,7 @@ import numpy as np
 import functools
 from ibeis_cnn import draw_results
 import utool as ut
-print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.experiments]')
+print, rrr, profile = ut.inject2(__name__)
 
 
 def sift_dataset_separability(dataset):

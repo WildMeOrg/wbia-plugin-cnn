@@ -8,7 +8,7 @@ from ibeis_cnn.__LASAGNE__ import layers
 from ibeis_cnn.__LASAGNE__ import nonlinearities
 from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
 from ibeis_cnn.models import abstract_models
-print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.models.background]')
+print, rrr, profile = ut.inject2(__name__)
 
 
 class NonlinearityLayerSpatial(lasagne.layers.NonlinearityLayer):

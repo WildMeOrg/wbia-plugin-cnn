@@ -6,7 +6,7 @@ from ibeis_cnn import ingest_ibeis
 from ibeis_cnn.dataset import DataSet
 from os.path import join, basename, splitext
 import utool as ut
-print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.ingest]')
+print, rrr, profile = ut.inject2(__name__)
 
 
 NOCACHE_DATASET = ut.get_argflag(('--nocache-cnn', '--nocache-dataset'))

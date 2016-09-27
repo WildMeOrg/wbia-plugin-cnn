@@ -4,7 +4,7 @@ from os.path import join
 import numpy as np
 import utool as ut
 from six.moves import range, zip
-print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.ingest_helpers]')
+print, rrr, profile = ut.inject2(__name__)
 
 
 def load_mnist_images(gz_fpath):
