@@ -242,8 +242,8 @@ def extract_annotpair_training_chips(ibs, aid_pairs, **kwargs):
             wh2 = vt.get_size(rchip2)
             try:
                 raise IndexError('force off')
-                (minx1, maxx1, miny1, maxy1) = vt.get_kpts_image_extent2(kpts2_m)
-                (minx2, maxx2, miny2, maxy2) = vt.get_kpts_image_extent2(kpts1_m)
+                (minx1, maxx1, miny1, maxy1) = vt.get_kpts_image_extent(kpts2_m)
+                (minx2, maxx2, miny2, maxy2) = vt.get_kpts_image_extent(kpts1_m)
                 (tl_xy1, br_xy1) = np.array((minx1, miny1)), np.array((maxx1, maxy1))
                 (tl_xy2, br_xy2) = np.array((minx2, miny2)), np.array((maxx2, maxy2))
                 tl_xy1_t = vt.transform_points_with_homography(H1, tl_xy1[:, None]).T
