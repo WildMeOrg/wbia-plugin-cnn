@@ -410,7 +410,7 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
     if not nolayout:
         nx.set_node_attributes(G_, 'label', _labels)
     _ = pt.show_nx(G_, fontsize=8, arrow_width=.3, layout='custom', fnum=fnum)  # NOQA
-    #pt.adjust_subplots2(top=1, bot=0, left=0, right=1)
+    #pt.adjust_subplots(top=1, bot=0, left=0, right=1)
     pt.plt.tight_layout()
 
 

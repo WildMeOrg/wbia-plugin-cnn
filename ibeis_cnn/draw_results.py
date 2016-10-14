@@ -366,7 +366,7 @@ def make_InteractClasses(*args, **kwargs):
                 fig, ax = pt.imshow(img, fnum=inter.fnum, pnum=pnum_())
                 ax.set_title(getattr(df_chunk, 'nice', 'no-title'))
                 inter.ax_list.append(ax)
-            pt.adjust_subplots2(top=.95, left=0, right=1, bottom=.00,
+            pt.adjust_subplots(top=.95, left=0, right=1, bottom=.00,
                                 hspace=.1, wspace=0)
 
         def on_click_inside(inter, event, ax):
