@@ -64,3 +64,4 @@ raw_profile*
 *.lprof
  
 failed_doctests.txt
+timeings.txt
