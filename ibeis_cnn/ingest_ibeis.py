@@ -35,7 +35,7 @@ def get_aidpairs_partmatch(ibs, acfg_name):
         >>> #ibs = ibeis.opendb(defaultdb='PZ_FlankHack')
         >>> acfg_name = ut.get_argval(('--aidcfg', '--acfg', '-a'),
         ...                             type_=str,
-        ...                             default='ctrl:pername=None,excluderef=False,contrib_contains=FlankHack')
+        ...                             default='ctrl:pername=None,excluderef=False,contributor_contains=FlankHack')
         >>> aid_pairs, label_list, flat_metadata = get_aidpairs_partmatch(ibs, acfg_name)
     """
     print('NEW WAY OF FILTERING')
@@ -171,7 +171,7 @@ def extract_annotpair_training_chips(ibs, aid_pairs, **kwargs):
         >>>     ibs = ibeis.opendb(defaultdb='PZ_Master1')
         >>>     acfg_name = ut.get_argval(('--aidcfg', '--acfg', '-a'),
         >>>                                 type_=str,
-        >>>                                 default='ctrl:pername=None,excluderef=False,contrib_contains=FlankHack')
+        >>>                                 default='ctrl:pername=None,excluderef=False,contributor_contains=FlankHack')
         >>> else:
         >>>     ibs = ibeis.opendb(defaultdb='PZ_MTEST')
         >>>     acfg_name = ut.get_argval(('--aidcfg', '--acfg', '-a'),

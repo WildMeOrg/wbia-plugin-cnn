@@ -43,7 +43,7 @@ CHECKPOINT_TAG_ALIAS = {
 # second level of alias indirection
 # This is more of a dataset tag
 DS_TAG_ALIAS2 = {
-    'flankhack'    : "dict(acfg_name='ctrl:pername=None,excluderef=False,contrib_contains=FlankHack', colorspace='gray', db='PZ_Master1')",
+    'flankhack'    : "dict(acfg_name='ctrl:pername=None,excluderef=False,contributor_contains=FlankHack', colorspace='gray', db='PZ_Master1')",
     'pzmtest-bgr'  : "PZ_MTEST;dict(colorspace='bgr', controlled=True, max_examples=None, num_top=None)",  # NOQA
 
     'pzmtest'      : "PZ_MTEST;dict(colorspace='gray', controlled=True, max_examples=None, num_top=None)",  # NOQA
@@ -76,7 +76,7 @@ def netrun():
         python -m ibeis_cnn --tf netrun --db mnist --ensuredata --show --datatype=category
         python -m ibeis_cnn --tf netrun --db mnist --ensuredata --show --datatype=siam-patch
 
-        python -m ibeis_cnn --tf netrun --db PZ_Master1 --acfg ctrl:pername=None,excluderef=False,contrib_contains=FlankHack --ensuredata --show --datatype=siam-part
+        python -m ibeis_cnn --tf netrun --db PZ_Master1 --acfg ctrl:pername=None,excluderef=False,contributor_contains=FlankHack --ensuredata --show --datatype=siam-part
 
         # Parts based datasets
         python -m ibeis_cnn --tf netrun --db PZ_MTEST --acfg ctrl --datatype=siam-part --ensuredata --show
@@ -90,7 +90,7 @@ def netrun():
         # --- TRAINING ---
         python -m ibeis_cnn --tf netrun --db PZ_Master1 --acfg default:is_known=True,qmin_pername=2,view=primary,species=primary,minqual=ok --weights=new --arch=siaml2_128 --train --monitor
 
-        python -m ibeis_cnn --tf netrun --ds timectrl_pzmaster1 --acfg ctrl:pername=None,excluderef=False,contrib_contains=FlankHack --train --weights=new --arch=siaml2_128  --monitor  # NOQA
+        python -m ibeis_cnn --tf netrun --ds timectrl_pzmaster1 --acfg ctrl:pername=None,excluderef=False,contributor_contains=FlankHack --train --weights=new --arch=siaml2_128  --monitor  # NOQA
         python -m ibeis_cnn --tf netrun --ds timectrl_pzmaster1 --acfg ctrl:pername=None,excluderef=False --train --weights=new --arch=siaml2_128  --monitor  # NOQA
         python -m ibeis_cnn --tf netrun --ds pzmtest --weights=new --arch=siaml2_128 --train --monitor --DEBUG_AUGMENTATION
         python -m ibeis_cnn --tf netrun --ds pzmtest --weights=new --arch=siaml2_128 --train --monitor
