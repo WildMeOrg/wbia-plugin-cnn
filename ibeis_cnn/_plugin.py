@@ -241,7 +241,9 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
     # batch_size = int(min(128, 2 ** np.floor(np.log2(nInput))))
     batch_size = None
 
+    LEGACY = True
     NEW = True
+    confidence_thresh = 0.5
     print(species)
     if species in ['zebra_plains', 'zebra_grevys']:
         if NEW:
@@ -263,12 +265,33 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_whale_fluke', redownload=False)
         canvas_key = species
-
+    elif species in ['lynx']:
+        LEGACY = False
+        species = 'lynx'
+        confidence_thresh = 0.2
+        model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
+        weights_path = grabmodels.ensure_model('background_lynx', redownload=False)
+        canvas_key = 0
     else:
         raise ValueError('species key does not have a trained model')
 
-    old_weights_fpath = weights_path
-    model.load_old_weights_kw2(old_weights_fpath)
+    if LEGACY:
+        old_weights_fpath = weights_path
+        model.load_old_weights_kw2(old_weights_fpath)
+    else:
+        model_state_fpath = model.get_model_state_fpath(fpath=weights_path)
+        print('[model] loading model state from: %s' % (model_state_fpath,))
+        model_state = ut.load_cPkl(model_state_fpath)
+
+        model.output_dims  = model_state['output_dims']
+        model.data_params = model_state['data_params']
+        model._fix_center_mean_std()
+
+        model.best_results = model_state['best_results']
+
+        model.init_arch()
+        model.batch_size = 128
+        model.set_all_param_values(model.best_results['weights'])
 
     # Create the Theano primitives
     # create theano symbolic expressions that define the network
@@ -281,8 +304,11 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
     _iter = ut.ProgressIter(chip_list, nTotal=nInput, lbl=species + ' fgdetect', adjust=True, freq=10, time_thresh=30.0)
     for chip in _iter:
         try:
-            samples, canvas_dict = test_convolutional(model, chip, padding=24)
-            if NEW:
+            if LEGACY:
+                samples, canvas_dict = test_convolutional(model, chip, padding=24, confidence_thresh=confidence_thresh)
+            else:
+                samples, canvas_dict = test_convolutional(model, chip, padding=25, confidence_thresh=confidence_thresh)
+            if NEW and LEGACY:
                 mask = np.maximum(255 - canvas_dict['negative'], canvas_dict[canvas_key])
             else:
                 mask = canvas_dict[canvas_key]
@@ -295,7 +321,8 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
 
 
 def test_convolutional(model, image, patch_size='auto', stride='auto',
-                       padding=32, batch_size=None, verbose=False, **kwargs):
+                       padding=32, batch_size=None, verbose=False,
+                       confidence_thresh=0.5, **kwargs):
     """ Using a network, test an entire image full convolutionally
 
     This function will test an entire image full convolutionally (or a close
@@ -419,13 +446,19 @@ def test_convolutional(model, image, patch_size='auto', stride='auto',
         #test_results2 = batch.process_batch(model, data_list_, None,
         #                                   theano_predict, **batchiter_kw)
         #label_list.extend(test_results['labeled_predictions'])
-        labeld_predictions = model.encoder.inverse_transform(test_results['predictions'])
+        if model.encoder is not None:
+            labeld_predictions = model.encoder.inverse_transform(test_results['predictions'])
+        else:
+            labeld_predictions = test_results['predictions']
         label_list.extend(labeld_predictions)
         confidence_list.extend(test_results['confidences'])
         start += batch_size
 
     # Get all of the labels for the data, inheritted from the model
-    label_list_ = list(model.encoder.classes_)
+    if model.encoder is not None:
+        label_list_ = list(model.encoder.classes_)
+    else:
+        label_list_ = list(range(model.output_dims))
     # Create a dictionary of canvases
     canvas_dict = {}
     for label in label_list_:
@@ -439,8 +472,17 @@ def test_convolutional(model, image, patch_size='auto', stride='auto',
             x1, y1, x2, y2 = coord
             # Get label and apply to confidence
             confidence_ = np.copy(confidence)
-            confidence_[label_ != label] = 0
+
+            # OLD
+            # confidence_[label_ != label] = 0
+
+            # NEW
+            flip_index = label_ != label
+            confidence_[flip_index] = 1.0 - confidence_[flip_index]
+            confidence_[confidence_ <= confidence_thresh] = 0
+
             confidence_ *= 255.0
+
             # Blow up canvas
             mask = cv2.resize(confidence_, data.shape[0:2])
             # Get the current values

@@ -13,6 +13,7 @@ MODEL_URLS = {
     'background_zebra_plains':        'zebra_plains_background.npy',
     'background_zebra_plains_grevys': 'zebra_plains_grevys_background.npy',
     'background_whale_fluke':         'whale_fluke_background.npy',
+    'background_lynx':                'lynx_background.pkl',
     'detect_yolo':                    'detect.yolo.pickle',
     'viewpoint':                      'viewpoint.pickle',
     'caffenet':                       'caffenet.caffe.slice_0_6_None.pickle',
