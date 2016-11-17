@@ -30,6 +30,7 @@ from ibeis_cnn import models
 from ibeis_cnn import ingest_data
 from ibeis_cnn import experiments
 import utool as ut
+import numpy as np
 import sys
 print, rrr, profile = ut.inject2(__name__)
 
@@ -388,8 +389,6 @@ def train_background(output_path, data_fpath, labels_fpath):
     dataset = ingest_data.get_numpy_dataset2('background', data_fpath, labels_fpath, output_path)
     print('dataset.training_dpath = %r' % (dataset.training_dpath,))
 
-    ut.embed()
-
     ut.colorprint('[netrun] Architecture Specification', 'yellow')
     model = models.BackgroundModel(
         data_shape=dataset.data_shape,
@@ -404,9 +403,9 @@ def train_background(output_path, data_fpath, labels_fpath):
     else:
         model.reinit_weights()
 
-    ut.colorprint('[netrun] Need to initialize training state', 'yellow')
-    X_train, y_train = dataset.subset('train')
-    model.ensure_data_params(X_train, y_train)
+    # ut.colorprint('[netrun] Need to initialize training state', 'yellow')
+    # X_train, y_train = dataset.subset('train')
+    # model.ensure_data_params(X_train, y_train)
 
     ut.colorprint('[netrun] Training Requested', 'yellow')
     # parse training arguments
@@ -418,6 +417,17 @@ def train_background(output_path, data_fpath, labels_fpath):
     model.monitor_config.update(**config)
     X_train, y_train = dataset.subset('train')
     X_valid, y_valid = dataset.subset('valid')
+
+    ut.colorprint('[netrun] Init encoder and convert labels', 'yellow')
+    if hasattr(model, 'init_encoder'):
+        model.init_encoder(y_train)
+
+    if getattr(model, 'encoder', None) is not None:
+        class_list = list(model.encoder.classes_)
+        y_train = np.array([class_list.index(_) for _ in y_train ])
+        y_valid = np.array([class_list.index(_) for _ in y_valid ])
+
+    ut.colorprint('[netrun] Begin training', 'yellow')
     model.fit(X_train, y_train, X_valid=X_valid, y_valid=y_valid)
 
     model_path = model.save_model_state()
