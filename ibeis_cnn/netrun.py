@@ -364,7 +364,7 @@ def merge_ds_tags(ds_alias_list):
     return merged_dataset
 
 
-def train_background():
+def train_background(output_path, data_fpath, labels_fpath):
     r"""
     CommandLine:
         python -m ibeis_cnn.train --test-train_background
@@ -384,39 +384,44 @@ def train_background():
         }
     )
 
-    from os.path import join
-    source_path = join('data', 'numpy', 'background_patches')
-    data_fpath = join(source_path, 'X.npy')
-    labels_fpath = join(source_path, 'y.npy')
-    training_dpath = join('data', 'results', 'backgound_patches')
-    dataset = ingest_data.get_numpy_dataset(data_fpath, labels_fpath, training_dpath)
+    ut.colorprint('[netrun] Ensuring Dataset', 'yellow')
+    dataset = ingest_data.get_numpy_dataset2('background', data_fpath, labels_fpath, output_path)
+    print('dataset.training_dpath = %r' % (dataset.training_dpath,))
 
-    data_shape = dataset.data_shape
-    input_shape = (None, data_shape[2], data_shape[0], data_shape[1])
+    ut.embed()
 
-    # Choose model
+    ut.colorprint('[netrun] Architecture Specification', 'yellow')
     model = models.BackgroundModel(
-        input_shape=input_shape, output_dims=dataset.output_dims,
+        data_shape=dataset.data_shape,
         training_dpath=dataset.training_dpath, **hyperparams)
 
-    # Initialize architecture
+    ut.colorprint('[netrun] Initialize archchitecture', 'yellow')
     model.init_arch()
 
-    # Load previously learned weights or initialize new weights
+    ut.colorprint('[netrun] * Initializing new weights', 'lightgray')
     if model.has_saved_state():
         model.load_model_state()
     else:
         model.reinit_weights()
 
-    model.monitor_config.update(**dict(
+    ut.colorprint('[netrun] Need to initialize training state', 'yellow')
+    X_train, y_train = dataset.subset('train')
+    model.ensure_data_params(X_train, y_train)
+
+    ut.colorprint('[netrun] Training Requested', 'yellow')
+    # parse training arguments
+    config = ut.argparse_dict(dict(
         era_size=15,
         max_epochs=120,
         show_confusion=False,
     ))
-
+    model.monitor_config.update(**config)
     X_train, y_train = dataset.subset('train')
     X_valid, y_valid = dataset.subset('valid')
     model.fit(X_train, y_train, X_valid=X_valid, y_valid=y_valid)
+
+    model_path = model.save_model_state()
+    return model_path
 
 
 if __name__ == '__main__':

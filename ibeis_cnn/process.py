@@ -116,6 +116,82 @@ def numpy_processed_directory(project_name, numpy_ids_file_name='ids.npy',
     np.save(project_numpy_y_file_name, y)
 
 
+def numpy_processed_directory2(dest_path, numpy_ids_file_name='ids.npy',
+                               numpy_x_file_name='X.npy',
+                               numpy_y_file_name='y.npy', labels_file_name='labels.csv',
+                               reset=True, verbose=False):
+    print('Caching images into Numpy files...')
+
+    name = 'background'
+    raw_path = join(dest_path, 'raw', name)
+    labels_path = join(dest_path, 'labels', name)
+
+    # Project files
+    project_numpy_ids_file_name = join(raw_path, numpy_ids_file_name)
+    project_numpy_x_file_name = join(raw_path, numpy_x_file_name)
+    project_numpy_y_file_name = join(labels_path, numpy_y_file_name)
+    project_numpy_labels_file_name = join(labels_path, labels_file_name)
+
+    # Load raw data
+    direct = Directory(raw_path, include_extensions='images')
+    label_dict = {}
+    for line in open(project_numpy_labels_file_name):
+        line = line.strip().split(',')
+        file_name = line[0].strip()
+        label = line[1].strip()
+        label_dict[file_name] = label
+
+    # Get shape for all images
+    shape_x = list(cv2.imread(direct.files()[0]).shape)
+    if len(shape_x) == 2:
+        shape_x = shape_x + [1]
+    shape_x = tuple([len(direct.files())] + shape_x[::-1])  # NOQA
+    shape_y = shape_x[0:1]  # NOQA
+
+    # Create numpy arrays
+    # X = np.empty(shape_x, dtype=np.uint8)
+    # y = np.empty(shape_y, dtype=np.uint8)
+    ids = []
+    X = []
+    y = []
+
+    # Process by loading images into the numpy array for saving
+    for index, file_path in enumerate(direct.files()):
+        file_name = basename(file_path)
+        if verbose:
+            print('Processing %r' % (file_name, ))
+        image = cv2.imread(file_path)
+        try:
+            label = label_dict[file_name]
+            # X[index] = np.array(cv2.split(image))
+            # y[index] = label
+            # X.append(np.array(cv2.split(image)))  # Lasange format
+            ids.append(file_name)
+            X.append(image)  # cv2 format
+            y.append(label)
+        except KeyError:
+            print('Cannot find label...skipping')
+            # raw_input()
+
+    ids = np.array(ids)
+    X = np.array(X, dtype=np.uint8)
+    # y = np.array(y, dtype=np.uint8)
+    y = np.array(y)
+
+    # Save numpy array
+    print('  ids.shape = %r' % (ids.shape,))
+    print('  ids.dtype = %r' % (ids.dtype,))
+    print('  X.shape   = %r' % (X.shape,))
+    print('  X.dtype   = %r' % (X.dtype,))
+    print('  y.shape   = %r' % (y.shape,))
+    print('  y.dtype   = %r' % (y.dtype,))
+    np.save(project_numpy_ids_file_name, ids)
+    np.save(project_numpy_x_file_name, X)
+    np.save(project_numpy_y_file_name, y)
+
+    return project_numpy_ids_file_name, project_numpy_x_file_name, project_numpy_y_file_name
+
+
 def view_numpy_data(project_namel, numpy_x_file_name='X.npy', numpy_y_file_name='y.npy'):
     # Raw folders
     numpy_path = abspath(join('..', 'data', 'numpy'))

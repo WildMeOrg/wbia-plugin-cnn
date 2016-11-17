@@ -1213,6 +1213,7 @@ def get_background_training_patches2(ibs, dest_path=None, patch_size=48,
         'GZ_Master'      : 'zebra_grevys',
         'NNP_MasterGIRM' : 'giraffe_masai',
         'PZ_Master1'     : 'zebra_plains',
+        'WWF_Lynx'       : 'lynx',
     }
 
     if dest_path is None:
@@ -1222,10 +1223,11 @@ def get_background_training_patches2(ibs, dest_path=None, patch_size=48,
     positive_category = dbname_mapping.get(dbname, 'positive')
     negative_category = 'negative'
 
-    name = 'background_patches'
+    name = 'background'
     raw_path = join(dest_path, 'raw', name)
     labels_path = join(dest_path, 'labels', name)
 
+    print(dest_path)
     # ut.remove_dirs(dest_path)
     ut.ensuredir(dest_path)
     ut.ensuredir(raw_path)

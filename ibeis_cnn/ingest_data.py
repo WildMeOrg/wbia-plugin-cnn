@@ -642,6 +642,43 @@ def get_numpy_dataset(data_fpath, labels_fpath, training_dpath):
     return dataset
 
 
+def get_numpy_dataset2(name, data_fpath, labels_fpath, training_dpath):
+    """
+    """
+    import numpy as np
+    # hack for caching num_labels
+    data = np.load(data_fpath)
+    data_shape = data.shape[1:]
+    labels = np.load(labels_fpath)
+    num_labels = len(labels)
+    metadata = None
+
+    dataset = DataSet(
+        name=name,
+        training_dpath=training_dpath,
+        data_shape=data_shape,
+    )
+    try:
+        dataset.load()
+    except IOError:
+        import random
+        # Get indicies of test / train split
+        idx_list = list(range(num_labels))
+        random.shuffle(idx_list)
+
+        split_idx = int(num_labels * 0.80)
+        train_idxs = np.array(idx_list[:split_idx])
+        test_idxs = np.array(idx_list[split_idx:])
+        # Give dataset the full data
+        dataset.save(data, labels, metadata, data_per_label=1)
+        # And the split sets
+        dataset.add_split('train', train_idxs)
+        dataset.add_split('test', test_idxs)
+        dataset.clear_cache()
+    dataset.ensure_symlinked()
+    return dataset
+
+
 if __name__ == '__main__':
     """
     CommandLine:
