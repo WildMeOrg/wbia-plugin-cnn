@@ -378,10 +378,13 @@ def train_background(output_path, data_fpath, labels_fpath):
     """
     hyperparams = ut.argparse_dict(
         {
-            'batch_size': 128,
-            'learning_rate': .001,
-            'momentum': .9,
-            'weight_decay': 0.0005,
+            'era_size'      : 8,
+            'batch_size'    : 128,
+            'learning_rate' : .01,
+            'momentum'      : .9,
+            'weight_decay'  : 0.0005,
+            'augment_on'    : True,
+            'whiten_on'     : True,
         }
     )
 
