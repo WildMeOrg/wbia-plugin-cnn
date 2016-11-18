@@ -610,11 +610,10 @@ class _ModelFitter(object):
                     model.history._new_era(model, X_train, y_train, X_train, y_train)
 
                     if model.hyperparams.get('era_clean', False):
-                        learn_info = model._epoch_validate(theano_forward, X_learn,
-                                                           y_learn, w_learn)
-                        valid_info = model._epoch_validate(theano_forward, X_valid,
-                                                           y_valid, w_valid)
-                        ut.embed()
+                        y_learn = model._epoch_clean(theano_forward, X_learn,
+                                                     y_learn, w_learn)
+                        y_valid = model._epoch_clean(theano_forward, X_valid,
+                                                     y_valid, w_valid)
 
                     utils.print_header_columns(printcol_info)
 
@@ -1101,6 +1100,22 @@ class _ModelFitter(object):
             valid_info['valid_fscore'] = f
             valid_info['valid_support'] = s
         return valid_info
+
+    def _epoch_clean(model, theano_forward, X_general, y_general, w_general,
+                     conf_thresh=0.90):
+        """
+        Forwards propogate -- Run set through the forwards pass and clean
+        """
+        valid_outputs = model.process_batch(theano_forward, X_general, y_general, w_general)
+        predictions = valid_outputs['predictions']
+        confidences = valid_outputs['confidences']
+        y_cleaned = np.array([
+            pred if y != pred and conf > conf_thresh else y
+            for y, pred, conf in zip(y_general, predictions, confidences)
+        ])
+        num_cleaned = len(np.nonzero(y_general != y_cleaned)[0])
+        print('Cleaned %d instances' % (num_cleaned, ))
+        return y_cleaned
 
     def dump_cases(model, X, y, subset_id='unknown', dpath=None):
         """
