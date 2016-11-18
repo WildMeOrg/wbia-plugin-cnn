@@ -607,6 +607,14 @@ class _ModelFitter(object):
                     model._fit_session['max_era_size'] = max_era_size
                     # Start a new era
                     model.history._new_era(model, X_train, y_train, X_train, y_train)
+
+                    if model.hyperparams.get('era_clean', False):
+                        learn_info = model._epoch_validate(theano_forward, X_learn,
+                                                           y_learn, w_learn)
+                        valid_info = model._epoch_validate(theano_forward, X_valid,
+                                                           y_valid, w_valid)
+                        ut.embed()
+
                     utils.print_header_columns(printcol_info)
 
                 # Break on max epochs
@@ -2821,6 +2829,7 @@ class _ModelIO(object):
         ut.save_cPkl(model_state_fpath, model_state, verbose=False)
         print('saved model state')
         #print('finished saving')
+        return model_state_fpath
 
     def save_model_info(model, **kwargs):
         """ save model information (history and results but no weights) """

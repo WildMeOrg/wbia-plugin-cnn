@@ -379,6 +379,7 @@ def train_background(output_path, data_fpath, labels_fpath):
     hyperparams = ut.argparse_dict(
         {
             'era_size'      : 8,
+            'era_clean'     : True,
             'batch_size'    : 128,
             'learning_rate' : .01,
             'momentum'      : .9,
