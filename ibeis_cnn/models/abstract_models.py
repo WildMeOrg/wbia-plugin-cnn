@@ -382,6 +382,7 @@ class _ModelFitter(object):
             'augment_on': False,
             'augment_delay': 2,
             'era_size': 10,  # epochs per era
+            'era_clean': False,
             'max_epochs': None,
             'rate_schedule': 0.9,
             'stopping_patience': 100,
