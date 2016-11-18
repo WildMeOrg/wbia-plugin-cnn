@@ -1102,7 +1102,7 @@ class _ModelFitter(object):
         return valid_info
 
     def _epoch_clean(model, theano_forward, X_general, y_general, w_general,
-                     conf_thresh=0.90):
+                     conf_thresh=0.95):
         """
         Forwards propogate -- Run set through the forwards pass and clean
         """
@@ -1110,7 +1110,7 @@ class _ModelFitter(object):
         predictions = valid_outputs['predictions']
         confidences = valid_outputs['confidences']
         y_cleaned = np.array([
-            pred if y != pred and conf > conf_thresh else y
+            pred if y == 0 and y != pred and conf > conf_thresh else y
             for y, pred, conf in zip(y_general, predictions, confidences)
         ])
         num_cleaned = len(np.nonzero(y_general != y_cleaned)[0])
