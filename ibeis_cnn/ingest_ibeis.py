@@ -1349,6 +1349,10 @@ def get_background_training_patches2(ibs, dest_path=None, patch_size=48,
                     patch_size_final = int(round(patch_size_random))
 
                     radius = patch_size_final // 2
+
+                    if radius >= w or radius >= h:
+                        continue
+
                     centerx = random.randint(radius, w - radius)
                     centery = random.randint(radius, h - radius)
 
