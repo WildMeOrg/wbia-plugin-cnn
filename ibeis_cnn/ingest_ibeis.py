@@ -1178,7 +1178,8 @@ def get_aidpairs_and_matches(ibs, max_examples=None, num_top=3,
 def get_background_training_patches2(ibs, dest_path=None, patch_size=48,
                                      patch_size_min=0.80, patch_size_max=1.25,
                                      annot_size=300, patience=20,
-                                     patches_per_annotation=30):
+                                     patches_per_annotation=30,
+                                     global_limit=None):
     """
     Get data for bg
     """
@@ -1249,6 +1250,11 @@ def get_background_training_patches2(ibs, dest_path=None, patch_size=48,
         print('Processing GID: %r [ %r / %r = %r]' % args)
         print('\tAIDS  : %r' % (aid_list, ))
         print('\tBBOXES: %r' % (bbox_list, ))
+
+        if global_limit is not None:
+            if global_negatives + global_positives >= global_limit:
+                print('\tHIT GLOBAL LIMIT')
+                continue
 
         if len(aid_list) == 0 and len(bbox_list) == 0:
             aid_list = [None]
@@ -1350,7 +1356,7 @@ def get_background_training_patches2(ibs, dest_path=None, patch_size=48,
 
                     radius = patch_size_final // 2
 
-                    if radius >= w or radius >= h:
+                    if radius >= w // 2 or radius >= h // 2:
                         continue
 
                     centerx = random.randint(radius, w - radius)
