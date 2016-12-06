@@ -278,7 +278,7 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_cheetah', redownload=False)
-        canvas_key = 0
+        canvas_key = 1
     else:
         raise ValueError('species key does not have a trained model')
 
