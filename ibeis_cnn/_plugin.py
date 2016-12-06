@@ -272,6 +272,13 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_lynx', redownload=False)
         canvas_key = 0
+    elif species in ['cheetah']:
+        LEGACY = False
+        species = 'cheetah'
+        confidence_thresh = 0.2
+        model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
+        weights_path = grabmodels.ensure_model('background_cheetah', redownload=False)
+        canvas_key = 0
     else:
         raise ValueError('species key does not have a trained model')
 
