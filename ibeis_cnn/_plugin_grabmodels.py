@@ -30,7 +30,9 @@ MODEL_URLS = {
 def ensure_model(model, redownload=False):
     try:
         url = MODEL_DOMAIN + MODEL_URLS[model]
-        extracted_fpath = ut.grab_file_url(url, appname='ibeis_cnn', redownload=redownload)
+        extracted_fpath = ut.grab_file_url(url, appname='ibeis_cnn',
+                                           redownload=redownload,
+                                           check_hash=True)
     except KeyError as ex:
         ut.printex(ex, 'model is not uploaded', iswarning=True)
         extracted_fpath = ut.unixjoin(ut.get_app_resource_dir('ibeis_cnn'), model)
