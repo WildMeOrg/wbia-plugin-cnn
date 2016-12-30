@@ -1617,8 +1617,10 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
     ut.ensuredir(raw_path)
     ut.ensuredir(labels_path)
 
-    gid_list = ibs.get_valid_gids()
-    aids_list = ibs.get_image_aids(gid_list)
+    # train_gid_set = ibs.get_valid_gids()
+    train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
+
+    aids_list = ibs.get_image_aids(train_gid_set)
     # bboxes_list = [ ibs.get_annot_bboxes(aid_list) for aid_list in aids_list ]
     # aid_list = ibs.get_valid_aids()
     aid_list = ut.flatten(aids_list)
