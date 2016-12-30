@@ -1599,11 +1599,6 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
     if dest_path is None:
         dest_path = expanduser(join('~', 'Desktop', 'extracted'))
 
-    if category_list is None:
-        aid_list = ibs.get_valid_aids()
-        species_list = ibs.get_annot_species_texts(aid_list)
-        category_list = sorted(list(set(species_list)))
-
     name = 'labeler'
     dbname = ibs.dbname
     name_path = join(dest_path, name)
@@ -1629,6 +1624,10 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
     # aid_list = sorted(aid_list[:100])
     species_list = ibs.get_annot_species_texts(aid_list)
     yaw_list = ibs.get_annot_yaw_texts(aid_list)
+
+    if category_list is None:
+        species_list = ibs.get_annot_species_texts(aid_list)
+        category_list = sorted(list(set(species_list)))
 
     skipped = 0
     label_list = []
