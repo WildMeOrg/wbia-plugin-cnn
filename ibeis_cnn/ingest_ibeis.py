@@ -1592,11 +1592,17 @@ def get_cnn_classifier_training_images(ibs, dest_path=None, image_size=192,
 
 
 def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
-                                    category_list=['zebra_grevys', 'zebra_plains'],
+                                    # category_list=['zebra_grevys', 'zebra_plains'],
+                                    category_list=None,
                                     purge=True):
     from os.path import join, expanduser
     if dest_path is None:
         dest_path = expanduser(join('~', 'Desktop', 'extracted'))
+
+    if category_list is None:
+        aid_list = ibs.get_valid_aids()
+        species_list = ibs.get_annot_species_texts(aid_list)
+        category_list = sorted(list(set(species_list)))
 
     name = 'labeler'
     dbname = ibs.dbname
