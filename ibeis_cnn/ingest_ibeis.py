@@ -629,7 +629,7 @@ class PatchMetricDataConfig(dtool.Config):
 
 def cached_part_match_training_data_fpaths(ibs, aid_pairs, label_list,
                                             flat_metadata, **kwargs):
-    """
+    r"""
     CommandLine:
         python -m ibeis_cnn --tf netrun --db PZ_MTEST \
                 --acfg ctrl:pername=None,excluderef=False --ensuredata \
@@ -777,7 +777,7 @@ def remove_unknown_training_pairs(ibs, aid1_list, aid2_list):
 def get_aidpairs_and_matches(ibs, max_examples=None, num_top=3,
                              controlled=True, min_featweight=None,
                              acfg_name=None):
-    """
+    r"""
     Gets data for training a patch match network.
 
     Args:
@@ -1541,13 +1541,12 @@ def get_cnn_detector_training_images(ibs, dest_path=None, image_size=128):
 
 
 def get_cnn_classifier_training_images(ibs, dest_path=None, image_size=192,
-                                       category_list=['zebra_grevys', 'zebra_plains'],
+                                       category_list=None,
                                        purge=True):
     from os.path import join, expanduser
     if dest_path is None:
         dest_path = expanduser(join('~', 'Desktop', 'extracted'))
 
-    category_set = set(category_list)
     name = 'classifier'
     dbname = ibs.dbname
     name_path = join(dest_path, name)
@@ -1563,9 +1562,16 @@ def get_cnn_classifier_training_images(ibs, dest_path=None, image_size=192,
 
     gid_list = ibs.get_valid_gids()
     aids_list = ibs.get_image_aids(gid_list)
+
+    if category_list is None:
+        aid_list = ut.flatten(aids_list)
+        species_list = ibs.get_annot_species_texts(aid_list)
+        category_list = sorted(list(set(species_list)))
+    category_set = set(category_list)
+
     species_set_list = [
-        set(ibs.get_annot_species_texts(aid_list))
-        for aid_list in aids_list
+        set(ibs.get_annot_species_texts(aid_list_))
+        for aid_list_ in aids_list
     ]
 
     label_list = []
@@ -1592,7 +1598,6 @@ def get_cnn_classifier_training_images(ibs, dest_path=None, image_size=192,
 
 
 def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
-                                    # category_list=['zebra_grevys', 'zebra_plains'],
                                     category_list=None,
                                     purge=True):
     from os.path import join, expanduser
