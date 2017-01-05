@@ -1110,7 +1110,7 @@ class _ModelFitter(object):
         predictions = valid_outputs['predictions']
         confidences = valid_outputs['confidences']
         y_cleaned = np.array([
-            pred if y == 0 and y != pred and conf > conf_thresh else y
+            pred if y != pred and conf > conf_thresh else y
             for y, pred, conf in zip(y_general, predictions, confidences)
         ])
         num_cleaned = len(np.nonzero(y_general != y_cleaned)[0])
