@@ -80,7 +80,6 @@ def augment_wrapper(Xb, yb):
         # Reshape
         X = X.reshape(Xb[index].shape)
         X = X.astype(Xb[index].dtype)
-        y = y.astype(yb[index].dtype)
         # Show image
         canvas = np.hstack((Xb[index], X))
         cv2.imwrite('/home/jason/Desktop/temp.png', canvas)
