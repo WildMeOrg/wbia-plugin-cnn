@@ -138,7 +138,7 @@ class LabelerModel(abstract_models.AbstractCategoricalModel):
                 _P(layers.DenseLayer, num_units=768, name='F1', **hidden_initkw),
                 _P(layers.FeaturePoolLayer, pool_size=0.5),
                 _P(layers.DropoutLayer, p=0.5),
-                _P(layers.DenseLayer, num_units=model.num_output, name='F2', nonlinearity=nonlinearities.softmax, **hidden_initkw),
+                _P(layers.DenseLayer, num_units=model.output_dims, name='F2', nonlinearity=nonlinearities.softmax, **hidden_initkw),
             ]
         )
         return network_layers_def
