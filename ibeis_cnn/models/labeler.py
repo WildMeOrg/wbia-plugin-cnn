@@ -92,9 +92,9 @@ class LabelerModel(abstract_models.AbstractCategoricalModel):
             X = X.astype(Xb[index].dtype)
             y = y.astype(yb[index].dtype)
             # Show image
-            # canvas = np.hstack((Xb[index], X))
-            # cv2.imshow('', canvas)
-            # cv2.waitKey(0)
+            canvas = np.hstack((Xb[index], X))
+            cv2.imshow('', canvas)
+            cv2.waitKey(0)
             # Save
             Xb[index] = X
             yb[index] = y
@@ -177,12 +177,11 @@ def train_labeler(output_path, data_fpath, labels_fpath):
     """
     hyperparams = ut.argparse_dict(
         {
-            'era_size'      : 8,
-            'era_clean'     : False,
-            'batch_size'    : 128,
-            'learning_rate' : .01,
+            'era_size'      : 32,
+            'batch_size'    : 64,
+            'learning_rate' : .005,
             'momentum'      : .9,
-            'weight_decay'  : 0.0005,
+            'weight_decay'  : 0.0001,
             'augment_on'    : False,
             'whiten_on'     : True,
             'augment_delay' : 2,
@@ -235,7 +234,6 @@ def train_labeler(output_path, data_fpath, labels_fpath):
         y_valid = np.array([class_list.index(_) for _ in y_valid ])
 
     print('\n[netrun] Model Info')
-    model.print_arch_str()
     model.print_layer_info()
 
     ut.colorprint('[netrun] Begin training', 'yellow')
