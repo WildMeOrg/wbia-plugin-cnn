@@ -182,7 +182,7 @@ def train_labeler(output_path, data_fpath, labels_fpath):
             'learning_rate' : .005,
             'momentum'      : .9,
             'weight_decay'  : 0.0001,
-            'augment_on'    : False,
+            'augment_on'    : True,
             'whiten_on'     : True,
             'augment_delay' : 2,
         }
