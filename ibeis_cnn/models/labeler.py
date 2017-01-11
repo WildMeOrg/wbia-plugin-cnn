@@ -234,6 +234,10 @@ def train_labeler(output_path, data_fpath, labels_fpath):
         y_train = np.array([class_list.index(_) for _ in y_train ])
         y_valid = np.array([class_list.index(_) for _ in y_valid ])
 
+    print('\n[netrun] Model Info')
+    model.print_arch_str()
+    model.print_layer_info()
+
     ut.colorprint('[netrun] Begin training', 'yellow')
     model.fit(X_train, y_train, X_valid=X_valid, y_valid=y_valid)
 
