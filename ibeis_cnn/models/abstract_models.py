@@ -521,6 +521,25 @@ class _ModelFitter(object):
         epoch_info['learnval_rat'] = (
             epoch_info['learn_loss'] / epoch_info['valid_loss'])
 
+        ut.embed()
+        # ---------------------------------------
+        # EPOCH 0: Check how we are learning
+        # Cache best results
+        model.best_results['weights'] = model.get_all_param_values()
+        model.best_results['epoch_num'] = epoch_info['epoch_num']
+        if 'valid_precision' in epoch_info:
+            model.best_results['valid_precision'] = epoch_info['valid_precision']
+            model.best_results['valid_recall'] = epoch_info['valid_recall']
+            model.best_results['valid_fscore'] = epoch_info['valid_fscore']
+            model.best_results['valid_support'] = epoch_info['valid_support']
+        if 'learn_precision' in epoch_info:
+            model.best_results['learn_precision'] = epoch_info['learn_precision']
+            model.best_results['learn_recall'] = epoch_info['learn_recall']
+            model.best_results['learn_fscore'] = epoch_info['learn_fscore']
+            model.best_results['learn_support'] = epoch_info['learn_support']
+        for key in model.requested_headers:
+            model.best_results[key] = epoch_info[key]
+
         # ---------------------------------------
         # EPOCH 0: Record this epoch in history and print info
         model.history._record_epoch(epoch_info)
@@ -1108,7 +1127,6 @@ class _ModelFitter(object):
         Forwards propagate -- Run validation set through the forwards pass
         """
         learn_outputs = model.process_batch(theano_forward, X_learn, y_learn, w_learn)
-        ut.embed()
         # average loss over all learning batches
         learn_info = {}
         learn_info['learn_loss'] = learn_outputs['loss_determ'].mean()
