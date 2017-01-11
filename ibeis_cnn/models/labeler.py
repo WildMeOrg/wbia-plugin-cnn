@@ -68,6 +68,9 @@ class LabelerModel(abstract_models.AbstractCategoricalModel):
                 X_ = X_[padding: -1 * padding, padding: -1 * padding]
                 X[:, :, channel] = X_
             # Horizontal flip
+            print(X.shape)
+            print(y)
+            ut.embed()
             if random.uniform(0.0, 1.0) <= 0.5:
                 X = cv2.flip(X, 1)
                 if ':' in y:
