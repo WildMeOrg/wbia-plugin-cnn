@@ -29,16 +29,10 @@ LABEL_MAPPING_DICT = {
 @six.add_metaclass(ut.ReloadingMetaclass)
 class LabelerModel(abstract_models.AbstractCategoricalModel):
     def __init__(model, autoinit=False, batch_size=128, data_shape=(64, 64, 3),
-                 arch_tag='labeler', **kwargs):
+                 name='labeler', **kwargs):
         super(LabelerModel, model).__init__(batch_size=batch_size,
                                             data_shape=data_shape,
-                                            arch_tag=arch_tag, **kwargs)
-
-    def learning_rate_update(model, x):
-        return x / 2.0
-
-    def learning_rate_shock(model, x):
-        return x * 2.0
+                                            name=name, **kwargs)
 
     def augment(model, Xb, yb=None):
         import random

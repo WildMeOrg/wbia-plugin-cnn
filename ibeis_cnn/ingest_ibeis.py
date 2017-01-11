@@ -1599,6 +1599,8 @@ def get_cnn_classifier_training_images(ibs, dest_path=None, image_size=192,
         label_str = '\n'.join(label_list) + '\n'
         labels.write(label_str)
 
+    return name_path
+
 
 def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
                                     category_list=None,
