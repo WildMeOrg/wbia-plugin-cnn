@@ -68,19 +68,12 @@ class LabelerModel(abstract_models.AbstractCategoricalModel):
                 X_ = X_[padding: -1 * padding, padding: -1 * padding]
                 X[:, :, channel] = X_
             # Horizontal flip
-            if model.encoder is not None:
-                if random.uniform(0.0, 1.0) <= 0.5:
-                    y_str = model.encoder.inverse_transform(y)
-                    if ':' in y_str:
-                        species, viewpoint = y_str.split(':')
-                        viewpoint = LABEL_MAPPING_DICT[viewpoint]
-                        y_str_ = '%s:%s' % (species, viewpoint)
-                        try:
-                            assert y_str_ in model.encoder.classes_
-                            X = cv2.flip(X, 1)
-                            y = model.encoder.transform([y_str])[0]
-                        except AssertionError:
-                            pass
+            if random.uniform(0.0, 1.0) <= 0.5:
+                if ':' in y:
+                    species, viewpoint = y.split(':')
+                    viewpoint = LABEL_MAPPING_DICT[viewpoint]
+                    X = cv2.flip(X, 1)
+                    y = '%s:%s' % (species, viewpoint)
             # # Blur
             # if random.uniform(0.0, 1.0) <= 0.1:
             #     if random.uniform(0.0, 1.0) <= 0.5:
@@ -190,15 +183,19 @@ def train_labeler(output_path, data_fpath, labels_fpath):
 
     ut.colorprint('[netrun] Ensuring Dataset', 'yellow')
     dataset = ingest_data.get_numpy_dataset2('labeler', data_fpath, labels_fpath, output_path)
-    output_dims = len(set(dataset.labels))
+    X_train, y_train = dataset.subset('train')
+    X_valid, y_valid = dataset.subset('valid')
     print('dataset.training_dpath = %r' % (dataset.training_dpath,))
 
     ut.colorprint('[netrun] Architecture Specification', 'yellow')
     model = LabelerModel(
         data_shape=dataset.data_shape,
         training_dpath=dataset.training_dpath,
-        output_dims=output_dims,
         **hyperparams)
+
+    ut.colorprint('[netrun] Init encoder and convert labels', 'yellow')
+    if hasattr(model, 'init_encoder'):
+        model.init_encoder(y_train)
 
     ut.colorprint('[netrun] Initialize archchitecture', 'yellow')
     model.init_arch()
@@ -221,8 +218,6 @@ def train_labeler(output_path, data_fpath, labels_fpath):
         show_confusion=False,
     ))
     model.monitor_config.update(**config)
-    X_train, y_train = dataset.subset('train')
-    X_valid, y_valid = dataset.subset('valid')
 
     ut.colorprint('[netrun] Init encoder and convert labels', 'yellow')
     if hasattr(model, 'init_encoder'):

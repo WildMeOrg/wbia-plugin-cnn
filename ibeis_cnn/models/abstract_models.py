@@ -1508,11 +1508,14 @@ class _ModelBatch(_BatchUtility):
         Xb = Xb_.astype(np.float32, copy=True)
         yb = None if yb_ is None else yb_.astype(np.int32, copy=True)
         wb = None if wb_ is None else wb_.astype(np.float32, copy=False)
+        if augment_on:
+            has_encoder = getattr(model, 'encoder', None) is not None
+            yb_ = model.encoder.inverse_transform(yb) if has_encoder else yb
+            Xb, yb_ = model.augment(Xb, yb_)
+            yb = model.encoder.inverse_transform(yb_) if has_encoder else yb_
         if is_int:
             # Rescale the batch data to the range 0 to 1
             Xb = Xb / 255.0
-        if augment_on:
-            Xb, yb = model.augment(Xb, yb)
         if whiten_on:
             mean = model.data_params['center_mean']
             std  = model.data_params['center_std']
