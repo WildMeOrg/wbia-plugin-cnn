@@ -118,7 +118,7 @@ class LabelerModel(abstract_models.AbstractCategoricalModel):
 
                 _P(Conv2DLayer, num_filters=64, filter_size=(3, 3), name='C2', W=_CaffeNet.get_pretrained_layer(4), **hidden_initkw),  # NOQA
                 _P(Conv2DLayer, num_filters=32, filter_size=(3, 3), name='C3', W=_CaffeNet.get_pretrained_layer(6), **hidden_initkw),  # NOQA
-                _P(layers.DropoutLayer, p=0.[1, name='D1'),
+                _P(layers.DropoutLayer, p=0.1, name='D1'),
                 _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P1'),
 
                 _P(Conv2DLayer, num_filters=128, filter_size=(3, 3), name='C4', **hidden_initkw),
