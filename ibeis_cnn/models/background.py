@@ -187,7 +187,6 @@ def train_background(output_path, data_fpath, labels_fpath):
         show_confusion=False,
     ))
     model.monitor_config.update(**config)
-    ut.embed()
     X_train, y_train = dataset.subset('train')
     X_valid, y_valid = dataset.subset('valid')
 

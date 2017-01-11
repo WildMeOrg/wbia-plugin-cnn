@@ -68,15 +68,19 @@ class LabelerModel(abstract_models.AbstractCategoricalModel):
                 X_ = X_[padding: -1 * padding, padding: -1 * padding]
                 X[:, :, channel] = X_
             # Horizontal flip
-            print(X.shape)
-            print(y)
-            ut.embed()
-            if random.uniform(0.0, 1.0) <= 0.5:
-                X = cv2.flip(X, 1)
-                if ':' in y:
-                    species, viewpoint = y.split(':')
-                    viewpoint = LABEL_MAPPING_DICT[viewpoint]
-                    y = '%s:%s' % (species, viewpoint)
+            if model.encoder is not None:
+                if random.uniform(0.0, 1.0) <= 0.5:
+                    y_str = model.encoder.inverse_transform(y)
+                    if ':' in y_str:
+                        species, viewpoint = y_str.split(':')
+                        viewpoint = LABEL_MAPPING_DICT[viewpoint]
+                        y_str_ = '%s:%s' % (species, viewpoint)
+                        try:
+                            assert y_str_ in model.encoder.classes_
+                            X = cv2.flip(X, 1)
+                            y = model.encoder.transform([y_str])[0]
+                        except AssertionError:
+                            pass
             # Blur
             if random.uniform(0.0, 1.0) <= 0.1:
                 if random.uniform(0.0, 1.0) <= 0.5:
@@ -85,6 +89,8 @@ class LabelerModel(abstract_models.AbstractCategoricalModel):
                     X = cv2.blur(X, (5, 5))
             # Reshape
             X = X.reshape(Xb[index].shape)
+            X = X.astype(Xb[index].dtype)
+            y = y.astype(yb[index].dtype)
             # Show image
             # canvas = np.hstack((Xb[index], X))
             # cv2.imshow('', canvas)
@@ -226,7 +232,6 @@ def train_labeler(output_path, data_fpath, labels_fpath):
         show_confusion=False,
     ))
     model.monitor_config.update(**config)
-    ut.embed()
     X_train, y_train = dataset.subset('train')
     X_valid, y_valid = dataset.subset('valid')
 
