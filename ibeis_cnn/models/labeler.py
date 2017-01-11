@@ -92,9 +92,9 @@ class LabelerModel(abstract_models.AbstractCategoricalModel):
             X = X.astype(Xb[index].dtype)
             y = y.astype(yb[index].dtype)
             # Show image
-            canvas = np.hstack((Xb[index], X))
-            cv2.imshow('', canvas)
-            cv2.waitKey(0)
+            # canvas = np.hstack((Xb[index], X))
+            # cv2.imshow('', canvas)
+            # cv2.waitKey(0)
             # Save
             Xb[index] = X
             yb[index] = y
