@@ -111,7 +111,7 @@ class LabelerModel(abstract_models.AbstractCategoricalModel):
             [
                 _P(layers.InputLayer, shape=model.input_shape),
 
-                _P(Conv2DLayer, num_filters=32, filter_size=(11, 11), stride=(2, 2), name='C0', W=_CaffeNet.get_pretrained_layer(0), **hidden_initkw),  # NOQA
+                _P(Conv2DLayer, num_filters=32, filter_size=(11, 11), name='C0', W=_CaffeNet.get_pretrained_layer(0), **hidden_initkw),  # NOQA
                 _P(Conv2DLayer, num_filters=16, filter_size=(5, 5), name='C1', W=_CaffeNet.get_pretrained_layer(2), **hidden_initkw),  # NOQA
                 _P(layers.DropoutLayer, p=0.1, name='D0'),
                 _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P0'),
@@ -132,10 +132,10 @@ class LabelerModel(abstract_models.AbstractCategoricalModel):
                 _P(layers.DropoutLayer, p=0.4, name='D3'),
                 _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P3'),
 
-                _P(layers.DenseLayer, num_units=768, name='F0',  **hidden_initkw),
+                _P(layers.DenseLayer, num_units=512, name='F0',  **hidden_initkw),
                 _P(layers.FeaturePoolLayer, pool_size=0.5),
                 _P(layers.DropoutLayer, p=0.5),
-                _P(layers.DenseLayer, num_units=768, name='F1', **hidden_initkw),
+                _P(layers.DenseLayer, num_units=512, name='F1', **hidden_initkw),
                 _P(layers.FeaturePoolLayer, pool_size=0.5),
                 _P(layers.DropoutLayer, p=0.5),
                 _P(layers.DenseLayer, num_units=model.output_dims, name='F2', nonlinearity=nonlinearities.softmax),
