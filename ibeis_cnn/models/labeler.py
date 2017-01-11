@@ -26,6 +26,71 @@ LABEL_MAPPING_DICT = {
 }
 
 
+def augment_parallel(values):
+    X, y = values
+    return augment_wrapper([X], [y])
+
+
+def augment_wrapper(Xb, yb):
+    import random
+    for index, y in enumerate(yb):
+        X = np.copy(Xb[index])
+        # Adjust the exposure
+        X_Lab = cv2.cvtColor(X, cv2.COLOR_BGR2LAB)
+        X_L = X_Lab[:, :, 0].astype(dtype=np.float32)
+        # margin = np.min([np.min(X_L), 255.0 - np.max(X_L), 64.0])
+        margin = 64.0
+        exposure = random.uniform(-margin, margin)
+        X_L += exposure
+        X_L = np.around(X_L)
+        X_L[X_L < 0.0] = 0.0
+        X_L[X_L > 255.0] = 255.0
+        X_Lab[:, :, 0] = X_L.astype(dtype=X_Lab.dtype)
+        X = cv2.cvtColor(X_Lab, cv2.COLOR_LAB2BGR)
+        # Rotate and Scale
+        h, w, c = X.shape
+        degree = random.randint(-30, 30)
+        scale = random.uniform(0.80, 1.25)
+        padding = np.sqrt((w) ** 2 / 4 - 2 * (w) ** 2 / 16)
+        padding /= scale
+        padding = int(np.ceil(padding))
+        for channel in range(c):
+            X_ = X[:, :, channel]
+            X_ = np.pad(X_, padding, 'reflect', reflect_type='even')
+            h_, w_ = X_.shape
+            # Calculate Affine transform
+            center = (w_ // 2, h_ // 2)
+            A = cv2.getRotationMatrix2D(center, degree, scale)
+            X_ = cv2.warpAffine(X_, A, (w_, h_), flags=cv2.INTER_LANCZOS4, borderValue=0)
+            X_ = X_[padding: -1 * padding, padding: -1 * padding]
+            X[:, :, channel] = X_
+        # Horizontal flip
+        if random.uniform(0.0, 1.0) <= 0.5:
+            if ':' in y:
+                species, viewpoint = y.split(':')
+                viewpoint = LABEL_MAPPING_DICT[viewpoint]
+                X = cv2.flip(X, 1)
+                y = '%s:%s' % (species, viewpoint)
+        # # Blur
+        # if random.uniform(0.0, 1.0) <= 0.1:
+        #     if random.uniform(0.0, 1.0) <= 0.5:
+        #         X = cv2.blur(X, (3, 3))
+        #     else:
+        #         X = cv2.blur(X, (5, 5))
+        # Reshape
+        X = X.reshape(Xb[index].shape)
+        X = X.astype(Xb[index].dtype)
+        y = y.astype(yb[index].dtype)
+        # Show image
+        canvas = np.hstack((Xb[index], X))
+        cv2.imwrite('/home/jason/Desktop/temp.png', canvas)
+        ut.embed()
+        # Save
+        Xb[index] = X
+        yb[index] = y
+    return Xb, yb
+
+
 @six.add_metaclass(ut.ReloadingMetaclass)
 class LabelerModel(abstract_models.AbstractCategoricalModel):
     def __init__(model, autoinit=False, batch_size=128, data_shape=(64, 64, 3),
@@ -34,64 +99,20 @@ class LabelerModel(abstract_models.AbstractCategoricalModel):
                                             data_shape=data_shape,
                                             name=name, **kwargs)
 
-    def augment(model, Xb, yb=None):
-        import random
-        for index, y in enumerate(yb):
-            X = np.copy(Xb[index])
-            # Adjust the exposure
-            X_Lab = cv2.cvtColor(X, cv2.COLOR_BGR2LAB)
-            X_L = X_Lab[:, :, 0].astype(dtype=np.float32)
-            # margin = np.min([np.min(X_L), 255.0 - np.max(X_L), 64.0])
-            margin = 64.0
-            exposure = random.uniform(-margin, margin)
-            X_L += exposure
-            X_L = np.around(X_L)
-            X_L[X_L < 0.0] = 0.0
-            X_L[X_L > 255.0] = 255.0
-            X_Lab[:, :, 0] = X_L.astype(dtype=X_Lab.dtype)
-            X = cv2.cvtColor(X_Lab, cv2.COLOR_LAB2BGR)
-            # Rotate and Scale
-            h, w, c = X.shape
-            degree = random.randint(-30, 30)
-            scale = random.uniform(0.80, 1.25)
-            padding = np.sqrt((w) ** 2 / 4 - 2 * (w) ** 2 / 16)
-            padding /= scale
-            padding = int(np.ceil(padding))
-            for channel in range(c):
-                X_ = X[:, :, channel]
-                X_ = np.pad(X_, padding, 'reflect', reflect_type='even')
-                h_, w_ = X_.shape
-                # Calculate Affine transform
-                center = (w_ // 2, h_ // 2)
-                A = cv2.getRotationMatrix2D(center, degree, scale)
-                X_ = cv2.warpAffine(X_, A, (w_, h_), flags=cv2.INTER_LANCZOS4, borderValue=0)
-                X_ = X_[padding: -1 * padding, padding: -1 * padding]
-                X[:, :, channel] = X_
-            # Horizontal flip
-            if random.uniform(0.0, 1.0) <= 0.5:
-                if ':' in y:
-                    species, viewpoint = y.split(':')
-                    viewpoint = LABEL_MAPPING_DICT[viewpoint]
-                    X = cv2.flip(X, 1)
-                    y = '%s:%s' % (species, viewpoint)
-            # # Blur
-            # if random.uniform(0.0, 1.0) <= 0.1:
-            #     if random.uniform(0.0, 1.0) <= 0.5:
-            #         X = cv2.blur(X, (3, 3))
-            #     else:
-            #         X = cv2.blur(X, (5, 5))
-            # Reshape
-            X = X.reshape(Xb[index].shape)
-            X = X.astype(Xb[index].dtype)
-            y = y.astype(yb[index].dtype)
-            # Show image
-            canvas = np.hstack((Xb[index], X))
-            cv2.imwrite('/home/jason/Desktop/temp.png', canvas)
-            ut.embed()
-            # Save
-            Xb[index] = X
-            yb[index] = y
-        return Xb, yb
+    def augment(model, Xb, yb=None, parallel=False):
+        if not parallel:
+            return augment_wrapper(Xb, yb)
+        # Run in parallel
+        arg_iter = list(zip(Xb, yb))
+        result_list = ut.util_parallel.generate(augment_parallel, arg_iter,
+                                                ordered=True, verbose=False,
+                                                quiet=True)
+        result_list = list(result_list)
+        X = [ result[0][0] for result in result_list ]
+        y = [ result[1] for result in result_list ]
+        X = np.array(X)
+        y = np.hstack(y)
+        return X, y
 
     def get_labeler_def(model, verbose=ut.VERBOSE, **kwargs):
         # _CaffeNet = abstract_models.PretrainedNetwork('caffenet')
@@ -218,10 +239,6 @@ def train_labeler(output_path, data_fpath, labels_fpath):
         show_confusion=False,
     ))
     model.monitor_config.update(**config)
-
-    ut.colorprint('[netrun] Init encoder and convert labels', 'yellow')
-    if hasattr(model, 'init_encoder'):
-        model.init_encoder(y_train)
 
     if getattr(model, 'encoder', None) is not None:
         class_list = list(model.encoder.classes_)
