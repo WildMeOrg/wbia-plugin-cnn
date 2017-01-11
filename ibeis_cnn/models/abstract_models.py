@@ -506,8 +506,8 @@ class _ModelFitter(object):
         # ---------------------------------------
         # EPOCH 0: Execute backwards and forward passes
         tt.tic()
-        learn_info = model._epoch_validate(theano_forward, X_learn,
-                                           y_learn, w_learn)
+        learn_info = model._epoch_validate_learn(theano_forward, X_learn,
+                                                 y_learn, w_learn)
         valid_info = model._epoch_validate(theano_forward, X_valid,
                                            y_valid, w_valid)
 
@@ -1103,9 +1103,30 @@ class _ModelFitter(object):
             learn_info['diverged'] = True
         return learn_info
 
+    def _epoch_validate_learn(model, theano_forward, X_learn, y_learn, w_learn):
+        """
+        Forwards propagate -- Run validation set through the forwards pass
+        """
+        learn_outputs = model.process_batch(theano_forward, X_learn, y_learn, w_learn)
+        learn_info = {}
+        learn_info['learn_loss'] = learn_outputs['loss_determ'].mean()
+        learn_info['learn_loss_std'] = learn_outputs['loss_determ'].std()
+        if 'learn_acc' in model.requested_headers:
+            learn_info['learn_acc'] = learn_outputs['accuracy'].mean()
+            learn_info['learn_acc_std'] = learn_outputs['accuracy'].std()
+        if 'predictions' in learn_outputs:
+            p, r, f, s = sklearn.metrics.precision_recall_fscore_support(
+                y_true=learn_outputs['auglbl_list'], y_pred=learn_outputs['predictions']
+            )
+            learn_info['learn_precision'] = p
+            learn_info['learn_recall'] = r
+            learn_info['learn_fscore'] = f
+            learn_info['learn_support'] = s
+        return learn_info
+
     def _epoch_validate(model, theano_forward, X_valid, y_valid, w_valid):
         """
-        Forwards propogate -- Run validation set through the forwards pass
+        Forwards propagate -- Run validation set through the forwards pass
         """
         valid_outputs = model.process_batch(theano_forward, X_valid, y_valid, w_valid)
         valid_info = {}
