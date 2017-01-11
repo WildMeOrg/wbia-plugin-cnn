@@ -1111,8 +1111,8 @@ class _ModelFitter(object):
         ut.embed()
         # average loss over all learning batches
         learn_info = {}
-        learn_info['learn_loss'] = learn_outputs['loss'].mean()
-        learn_info['learn_loss_std'] = learn_outputs['loss'].std()
+        learn_info['learn_loss'] = learn_outputs['loss_determ'].mean()
+        learn_info['learn_loss_std'] = learn_outputs['loss_determ'].std()
 
         if 'loss_reg' in learn_outputs:
             # Regularization information
