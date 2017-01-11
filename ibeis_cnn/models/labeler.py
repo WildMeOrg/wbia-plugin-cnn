@@ -111,7 +111,7 @@ class LabelerModel(abstract_models.AbstractCategoricalModel):
             return augment_wrapper(Xb, yb)
         # Run in parallel
         arg_iter = list(zip(Xb, yb))
-        result_list = ut.util_parallel.generate(augment_wrapper, arg_iter,
+        result_list = ut.util_parallel.generate(augment_parallel, arg_iter,
                                                 ordered=True, verbose=False,
                                                 quiet=True)
         result_list = list(result_list)
@@ -217,7 +217,7 @@ def train_labeler(output_path, data_fpath, labels_fpath):
             'weight_decay'  : 0.0005,
             'augment_on'    : True,
             'whiten_on'     : True,
-            'augment_delay' : 0,
+            'augment_delay' : 2,
         }
     )
 
