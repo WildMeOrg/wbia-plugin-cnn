@@ -112,8 +112,8 @@ class PretrainedNetwork(object):
                             self.pretrained_layer.shape, shape))
                     fanout, fanin = shape[:2]
                     fanout_, fanin_ = self.pretrained_layer.shape[:2]
-                    assert fanout <= fanout_, ('Cannot increase weight fan-out dimension')
-                    assert fanin <= fanin_,  ('Cannot increase weight fan-in dimension')
+                    assert fanout <= fanout_, ('Cannot increase weight fan-out dimension from %d to %d' % (fanout, fanout_, ))  # NOQA
+                    assert fanin <= fanin_,  ('Cannot increase weight fan-in dimension from %d to %d' % (fanin, fanin_, ))  # NOQA
                     if is_conv:
                         height, width = shape[2:]
                         height_, width_ = self.pretrained_layer.shape[2:]
