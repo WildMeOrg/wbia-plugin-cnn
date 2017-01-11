@@ -118,19 +118,19 @@ class LabelerModel(abstract_models.AbstractCategoricalModel):
 
                 _P(Conv2DLayer, num_filters=64, filter_size=(3, 3), name='C2', W=_CaffeNet.get_pretrained_layer(4), **hidden_initkw),  # NOQA
                 _P(Conv2DLayer, num_filters=32, filter_size=(3, 3), name='C3', W=_CaffeNet.get_pretrained_layer(6), **hidden_initkw),  # NOQA
-                _P(layers.DropoutLayer, p=0.2, name='D1'),
+                _P(layers.DropoutLayer, p=0.[1, name='D1'),
                 _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P1'),
 
                 _P(Conv2DLayer, num_filters=128, filter_size=(3, 3), name='C4', **hidden_initkw),
                 _P(Conv2DLayer, num_filters=64, filter_size=(3, 3), name='C5', **hidden_initkw),
-                _P(layers.DropoutLayer, p=0.3, name='D2'),
+                _P(layers.DropoutLayer, p=0.1, name='D2'),
                 _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P2'),
 
                 _P(Conv2DLayer, num_filters=256, filter_size=(3, 3), name='C6', **hidden_initkw),
                 _P(Conv2DLayer, num_filters=256, filter_size=(3, 3), name='C7', **hidden_initkw),
                 _P(Conv2DLayer, num_filters=128, filter_size=(3, 3), name='C8', **hidden_initkw),
-                _P(layers.DropoutLayer, p=0.4, name='D3'),
-                _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P3'),
+                # _P(layers.DropoutLayer, p=0.4, name='D3'),
+                # _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P3'),
 
                 _P(layers.DenseLayer, num_units=512, name='F0',  **hidden_initkw),
                 _P(layers.FeaturePoolLayer, pool_size=0.5),
@@ -191,12 +191,15 @@ def train_labeler(output_path, data_fpath, labels_fpath):
 
     ut.colorprint('[netrun] Ensuring Dataset', 'yellow')
     dataset = ingest_data.get_numpy_dataset2('labeler', data_fpath, labels_fpath, output_path)
+    output_dims = len(set(dataset.labels))
     print('dataset.training_dpath = %r' % (dataset.training_dpath,))
 
     ut.colorprint('[netrun] Architecture Specification', 'yellow')
     model = LabelerModel(
         data_shape=dataset.data_shape,
-        training_dpath=dataset.training_dpath, **hyperparams)
+        training_dpath=dataset.training_dpath,
+        output_dims=output_dims,
+        **hyperparams)
 
     ut.colorprint('[netrun] Initialize archchitecture', 'yellow')
     model.init_arch()
