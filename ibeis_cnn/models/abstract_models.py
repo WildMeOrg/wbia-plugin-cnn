@@ -1108,20 +1108,44 @@ class _ModelFitter(object):
         Forwards propagate -- Run validation set through the forwards pass
         """
         learn_outputs = model.process_batch(theano_forward, X_learn, y_learn, w_learn)
+        ut.embed()
+        # average loss over all learning batches
         learn_info = {}
-        learn_info['learn_loss'] = learn_outputs['loss_determ'].mean()
-        learn_info['learn_loss_std'] = learn_outputs['loss_determ'].std()
-        if 'learn_acc' in model.requested_headers:
-            learn_info['learn_acc'] = learn_outputs['accuracy'].mean()
-            learn_info['learn_acc_std'] = learn_outputs['accuracy'].std()
-        if 'predictions' in learn_outputs:
-            p, r, f, s = sklearn.metrics.precision_recall_fscore_support(
-                y_true=learn_outputs['auglbl_list'], y_pred=learn_outputs['predictions']
-            )
-            learn_info['learn_precision'] = p
-            learn_info['learn_recall'] = r
-            learn_info['learn_fscore'] = f
-            learn_info['learn_support'] = s
+        learn_info['learn_loss'] = learn_outputs['loss'].mean()
+        learn_info['learn_loss_std'] = learn_outputs['loss'].std()
+
+        if 'loss_reg' in learn_outputs:
+            # Regularization information
+            learn_info['learn_loss_reg'] = learn_outputs['loss_reg']
+            reg_amount = (learn_outputs['loss_reg'] - learn_outputs['loss'])
+            reg_ratio = (reg_amount / learn_outputs['loss'])
+            reg_percent = (reg_amount / learn_outputs['loss_reg'])
+
+            if 'accuracy' in learn_outputs:
+                learn_info['learn_acc']  = learn_outputs['accuracy'].mean()
+                learn_info['learn_acc_std']  = learn_outputs['accuracy'].std()
+            if 'predictions' in learn_outputs:
+                p, r, f, s = sklearn.metrics.precision_recall_fscore_support(
+                    y_true=learn_outputs['auglbl_list'], y_pred=learn_outputs['predictions']
+                )
+                #report = sklearn.metrics.classification_report(
+                #    y_true=learn_outputs['auglbl_list'], y_pred=learn_outputs['predictions']
+                #)
+                learn_info['learn_precision'] = p
+                learn_info['learn_recall'] = r
+                learn_info['learn_fscore'] = f
+                learn_info['learn_support'] = s
+
+            learn_info['reg_percent'] = reg_percent
+            learn_info['reg_ratio'] = reg_ratio
+
+        param_update_mags = {}
+        for key, val in learn_outputs.items():
+            if key.startswith('param_update_magnitude_'):
+                key_ = key.replace('param_update_magnitude_', '')
+                param_update_mags[key_] = (val.mean(), val.std())
+        if param_update_mags:
+            learn_info['param_update_mags'] = param_update_mags
         return learn_info
 
     def _epoch_validate(model, theano_forward, X_valid, y_valid, w_valid):
