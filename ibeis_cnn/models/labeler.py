@@ -33,6 +33,7 @@ def augment_parallel(values):
 
 def augment_wrapper(model, Xb, yb=None):
     import random
+    ut.embed()
     for index, y in enumerate(yb):
         X = np.copy(Xb[index])
         # Adjust the exposure
@@ -58,7 +59,7 @@ def augment_wrapper(model, Xb, yb=None):
             X_ = X[:, :, channel]
             X_ = np.pad(X_, padding, 'reflect', reflect_type='even')
             h_, w_ = X_.shape
-            # Calulate Affine transform
+            # Calculate Affine transform
             center = (w_ // 2, h_ // 2)
             A = cv2.getRotationMatrix2D(center, degree, scale)
             X_ = cv2.warpAffine(X_, A, (w_, h_), flags=cv2.INTER_LANCZOS4, borderValue=0)

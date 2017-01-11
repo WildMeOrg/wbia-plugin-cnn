@@ -501,8 +501,31 @@ class _ModelFitter(object):
         model.history._new_era(model, X_train, y_train, X_train, y_train)
         printcol_info = utils.get_printcolinfo(model.requested_headers)
         utils.print_header_columns(printcol_info)
-
         tt = ut.Timer(verbose=False)
+
+        # ---------------------------------------
+        # EPOCH 0: Execute backwards and forward passes
+        tt.tic()
+        learn_info = model._epoch_validate(theano_forward, X_learn,
+                                           y_learn, w_learn)
+        valid_info = model._epoch_validate(theano_forward, X_valid,
+                                           y_valid, w_valid)
+
+        # ---------------------------------------
+        # EPOCH 0: Summarize the epoch
+        epoch_info = {'epoch_num': epoch}
+        epoch_info.update(**learn_info)
+        epoch_info.update(**valid_info)
+        epoch_info['duration'] = tt.toc()
+        epoch_info['learn_state'] = model.learn_state.asdict()
+        epoch_info['learnval_rat'] = (
+            epoch_info['learn_loss'] / epoch_info['valid_loss'])
+
+        # ---------------------------------------
+        # EPOCH 0: Record this epoch in history and print info
+        model.history._record_epoch(epoch_info)
+        utils.print_epoch_info(model, printcol_info, epoch_info)
+
         while True:
             try:
                 # ---------------------------------------
