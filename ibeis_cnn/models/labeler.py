@@ -111,18 +111,18 @@ class LabelerModel(abstract_models.AbstractCategoricalModel):
             [
                 _P(layers.InputLayer, shape=model.input_shape),
 
-                _P(Conv2DLayer, num_filters=64, filter_size=(11, 11), stride=(2, 2), name='C0', W=_CaffeNet.get_pretrained_layer(0), **hidden_initkw),  # NOQA
-                _P(Conv2DLayer, num_filters=32, filter_size=(5, 5), name='C1', W=_CaffeNet.get_pretrained_layer(2), **hidden_initkw),  # NOQA
+                _P(Conv2DLayer, num_filters=32, filter_size=(11, 11), stride=(2, 2), name='C0', W=_CaffeNet.get_pretrained_layer(0), **hidden_initkw),  # NOQA
+                _P(Conv2DLayer, num_filters=16, filter_size=(5, 5), name='C1', W=_CaffeNet.get_pretrained_layer(2), **hidden_initkw),  # NOQA
                 _P(layers.DropoutLayer, p=0.1, name='D0'),
                 _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P0'),
 
-                _P(Conv2DLayer, num_filters=128, filter_size=(3, 3), name='C2', W=_CaffeNet.get_pretrained_layer(4), **hidden_initkw),  # NOQA
-                _P(Conv2DLayer, num_filters=64, filter_size=(3, 3), name='C3', W=_CaffeNet.get_pretrained_layer(6), **hidden_initkw),  # NOQA
+                _P(Conv2DLayer, num_filters=64, filter_size=(3, 3), name='C2', W=_CaffeNet.get_pretrained_layer(4), **hidden_initkw),  # NOQA
+                _P(Conv2DLayer, num_filters=32, filter_size=(3, 3), name='C3', W=_CaffeNet.get_pretrained_layer(6), **hidden_initkw),  # NOQA
                 _P(layers.DropoutLayer, p=0.2, name='D1'),
                 _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P1'),
 
-                _P(Conv2DLayer, num_filters=256, filter_size=(3, 3), name='C4', **hidden_initkw),
-                _P(Conv2DLayer, num_filters=128, filter_size=(3, 3), name='C5', **hidden_initkw),
+                _P(Conv2DLayer, num_filters=128, filter_size=(3, 3), name='C4', **hidden_initkw),
+                _P(Conv2DLayer, num_filters=64, filter_size=(3, 3), name='C5', **hidden_initkw),
                 _P(layers.DropoutLayer, p=0.3, name='D2'),
                 _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P2'),
 
