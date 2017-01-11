@@ -30,7 +30,6 @@ from ibeis_cnn import models
 from ibeis_cnn import ingest_data
 from ibeis_cnn import experiments
 import utool as ut
-import numpy as np
 import sys
 print, rrr, profile = ut.inject2(__name__)
 
@@ -363,80 +362,6 @@ def merge_ds_tags(ds_alias_list):
     merged_dataset = ingest_data.merge_datasets(dataset_list)
     print(merged_dataset.alias_key)
     return merged_dataset
-
-
-def train_background(output_path, data_fpath, labels_fpath):
-    r"""
-    CommandLine:
-        python -m ibeis_cnn.train --test-train_background
-
-    Example:
-        >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.train import *  # NOQA
-        >>> result = train_background()
-        >>> print(result)
-    """
-    hyperparams = ut.argparse_dict(
-        {
-            'era_size'      : 8,
-            'era_clean'     : True,
-            'batch_size'    : 128,
-            'learning_rate' : .01,
-            'momentum'      : .9,
-            'weight_decay'  : 0.0005,
-            'augment_on'    : True,
-            'whiten_on'     : True,
-        }
-    )
-
-    ut.colorprint('[netrun] Ensuring Dataset', 'yellow')
-    dataset = ingest_data.get_numpy_dataset2('background', data_fpath, labels_fpath, output_path)
-    print('dataset.training_dpath = %r' % (dataset.training_dpath,))
-
-    ut.colorprint('[netrun] Architecture Specification', 'yellow')
-    model = models.BackgroundModel(
-        data_shape=dataset.data_shape,
-        training_dpath=dataset.training_dpath, **hyperparams)
-
-    ut.colorprint('[netrun] Initialize archchitecture', 'yellow')
-    model.init_arch()
-
-    ut.colorprint('[netrun] * Initializing new weights', 'lightgray')
-    if model.has_saved_state():
-        model.load_model_state()
-    else:
-        model.reinit_weights()
-
-    # ut.colorprint('[netrun] Need to initialize training state', 'yellow')
-    # X_train, y_train = dataset.subset('train')
-    # model.ensure_data_params(X_train, y_train)
-
-    ut.colorprint('[netrun] Training Requested', 'yellow')
-    # parse training arguments
-    config = ut.argparse_dict(dict(
-        era_size=15,
-        max_epochs=120,
-        show_confusion=False,
-    ))
-    model.monitor_config.update(**config)
-    ut.embed()
-    X_train, y_train = dataset.subset('train')
-    X_valid, y_valid = dataset.subset('valid')
-
-    ut.colorprint('[netrun] Init encoder and convert labels', 'yellow')
-    if hasattr(model, 'init_encoder'):
-        model.init_encoder(y_train)
-
-    if getattr(model, 'encoder', None) is not None:
-        class_list = list(model.encoder.classes_)
-        y_train = np.array([class_list.index(_) for _ in y_train ])
-        y_valid = np.array([class_list.index(_) for _ in y_valid ])
-
-    ut.colorprint('[netrun] Begin training', 'yellow')
-    model.fit(X_train, y_train, X_valid=X_valid, y_valid=y_valid)
-
-    model_path = model.save_model_state()
-    return model_path
 
 
 if __name__ == '__main__':

@@ -116,15 +116,14 @@ def numpy_processed_directory(project_name, numpy_ids_file_name='ids.npy',
     np.save(project_numpy_y_file_name, y)
 
 
-def numpy_processed_directory2(dest_path, numpy_ids_file_name='ids.npy',
+def numpy_processed_directory2(extracted_path, numpy_ids_file_name='ids.npy',
                                numpy_x_file_name='X.npy',
                                numpy_y_file_name='y.npy', labels_file_name='labels.csv',
                                reset=True, verbose=False):
     print('Caching images into Numpy files...')
 
-    name = 'background'
-    raw_path = join(dest_path, 'raw', name)
-    labels_path = join(dest_path, 'labels', name)
+    raw_path = join(extracted_path, 'raw')
+    labels_path = join(extracted_path, 'labels')
 
     # Project files
     project_numpy_ids_file_name = join(raw_path, numpy_ids_file_name)

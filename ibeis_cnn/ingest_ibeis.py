@@ -1225,8 +1225,10 @@ def get_background_training_patches2(ibs, dest_path=None, patch_size=48,
     negative_category = 'negative'
 
     name = 'background'
-    raw_path = join(dest_path, 'raw', name)
-    labels_path = join(dest_path, 'labels', name)
+    dbname = ibs.dbname
+    name_path = join(dest_path, name)
+    raw_path = join(name_path, 'raw')
+    labels_path = join(name_path, 'labels')
 
     print(dest_path)
     # ut.remove_dirs(dest_path)
@@ -1424,7 +1426,7 @@ def get_background_training_patches2(ibs, dest_path=None, patch_size=48,
         label_str = '\n'.join(label_list) + '\n'
         labels.write(label_str)
 
-    return args
+    return name_path
 
 
 def get_cnn_detector_training_images(ibs, dest_path=None, image_size=128):
@@ -1459,10 +1461,11 @@ def get_cnn_detector_training_images(ibs, dest_path=None, image_size=128):
     dbname = ibs.dbname
     positive_category = dbname_mapping.get(dbname, 'positive')
 
-    dbname = ibs.dbname
     name = 'saliency_detector'
-    raw_path = join(dest_path, 'raw', name)
-    labels_path = join(dest_path, 'labels', name)
+    dbname = ibs.dbname
+    name_path = join(dest_path, name)
+    raw_path = join(name_path, 'raw')
+    labels_path = join(name_path, 'labels')
 
     # ut.remove_dirs(dest_path)
     ut.ensuredir(dest_path)
@@ -1668,6 +1671,8 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
         label_str = '\n'.join(label_list) + '\n'
         labels.write(label_str)
 
+    return name_path
+
 
 def get_cnn_qualifier_training_images(ibs, dest_path=None, image_size=128,
                                       purge=True):
@@ -1846,10 +1851,11 @@ def get_orientation_training_images(ibs, dest_path=None, **kwargs):
     dbname = ibs.dbname
     positive_category = dbname_mapping.get(dbname, 'positive')  # NOQA
 
-    dbname = ibs.dbname
     name = 'orientation'
-    raw_path = join(dest_path, 'raw', name)
-    labels_path = join(dest_path, 'labels', name)
+    dbname = ibs.dbname
+    name_path = join(dest_path, name)
+    raw_path = join(name_path, 'raw')
+    labels_path = join(name_path, 'labels')
 
     # ut.remove_dirs(dest_path)
     ut.ensuredir(dest_path)
