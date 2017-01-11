@@ -89,6 +89,10 @@ class LabelerModel(abstract_models.AbstractCategoricalModel):
             # Save
             Xb[index] = X
             yb[index] = y
+        print(Xb.shape)
+        print(Xb.dtype)
+        print(yb.shape)
+        print(yb.dtype)
         return Xb, yb
 
     def get_labeler_def(model, verbose=ut.VERBOSE, **kwargs):
@@ -129,15 +133,16 @@ class LabelerModel(abstract_models.AbstractCategoricalModel):
                 _P(Conv2DLayer, num_filters=256, filter_size=(3, 3), name='C6', **hidden_initkw),
                 _P(Conv2DLayer, num_filters=256, filter_size=(3, 3), name='C7', **hidden_initkw),
                 _P(Conv2DLayer, num_filters=128, filter_size=(3, 3), name='C8', **hidden_initkw),
-                # _P(layers.DropoutLayer, p=0.4, name='D3'),
-                # _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P3'),
+                _P(layers.DropoutLayer, p=0.1, name='D3'),
 
                 _P(layers.DenseLayer, num_units=512, name='F0',  **hidden_initkw),
-                _P(layers.FeaturePoolLayer, pool_size=0.5),
-                _P(layers.DropoutLayer, p=0.5),
+                _P(layers.FeaturePoolLayer, pool_size=0.5, name='FP0'),
+                _P(layers.DropoutLayer, p=0.5, name='D4'),
+
                 _P(layers.DenseLayer, num_units=512, name='F1', **hidden_initkw),
-                _P(layers.FeaturePoolLayer, pool_size=0.5),
-                _P(layers.DropoutLayer, p=0.5),
+                _P(layers.FeaturePoolLayer, pool_size=0.5, name='FP1'),
+                _P(layers.DropoutLayer, p=0.5, name='D5'),
+
                 _P(layers.DenseLayer, num_units=model.output_dims, name='F2', nonlinearity=nonlinearities.softmax),
             ]
         )
@@ -232,8 +237,8 @@ def train_labeler(output_path, data_fpath, labels_fpath):
 
     if getattr(model, 'encoder', None) is not None:
         class_list = list(model.encoder.classes_)
-        y_train = np.array([class_list.index(_) for _ in y_train ])
-        y_valid = np.array([class_list.index(_) for _ in y_valid ])
+        y_train = np.array([class_list.index(_) for _ in y_train ], dtype=np.int32)
+        y_valid = np.array([class_list.index(_) for _ in y_valid ], dtype=np.int32)
 
     ut.colorprint('[netrun] Begin training', 'yellow')
     model.fit(X_train, y_train, X_valid=X_valid, y_valid=y_valid)
