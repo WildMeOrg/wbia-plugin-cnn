@@ -93,8 +93,8 @@ class LabelerModel(abstract_models.AbstractCategoricalModel):
             y = y.astype(yb[index].dtype)
             # Show image
             canvas = np.hstack((Xb[index], X))
-            cv2.imshow('', canvas)
-            cv2.waitKey(0)
+            cv2.imwrite('/home/jason/Desktop/temp.png', canvas)
+            ut.embed()
             # Save
             Xb[index] = X
             yb[index] = y
