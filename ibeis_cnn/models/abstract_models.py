@@ -1061,7 +1061,7 @@ class _ModelFitter(object):
         """
         buffered = model._behavior['buffered']
         augment_on = model.hyperparams['augment_on']
-        if epoch < model.hyperparams['augment_delay']:
+        if epoch <= model.hyperparams['augment_delay']:
             # Dont augment in the first few epochs so the model can start to
             # get somewhere. This will hopefully help training initialize
             # faster.
