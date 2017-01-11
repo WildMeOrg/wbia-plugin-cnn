@@ -521,7 +521,6 @@ class _ModelFitter(object):
         epoch_info['learnval_rat'] = (
             epoch_info['learn_loss'] / epoch_info['valid_loss'])
 
-        ut.embed()
         # ---------------------------------------
         # EPOCH 0: Check how we are learning
         # Cache best results
@@ -544,6 +543,7 @@ class _ModelFitter(object):
         # EPOCH 0: Record this epoch in history and print info
         model.history._record_epoch(epoch_info)
         utils.print_epoch_info(model, printcol_info, epoch_info)
+        epoch += 1
 
         while True:
             try:
