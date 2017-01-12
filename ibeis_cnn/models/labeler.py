@@ -205,7 +205,7 @@ def train_labeler(output_path, data_fpath, labels_fpath):
         {
             'era_size'      : 8,
             'batch_size'    : 128,
-            'learning_rate' : .005,
+            'learning_rate' : .01,
             'momentum'      : .9,
             'weight_decay'  : 0.0000,
             'augment_on'    : True,
