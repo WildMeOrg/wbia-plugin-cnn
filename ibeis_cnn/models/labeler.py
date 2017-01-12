@@ -85,9 +85,9 @@ def augment_wrapper(Xb, yb=None):
         X = X.reshape(Xb[index].shape)
         X = X.astype(Xb[index].dtype)
         # Show image
-        # canvas = np.hstack((Xb[index], X))
-        # cv2.imwrite('/home/jason/Desktop/temp.png', canvas)
-        # ut.embed()
+        canvas = np.hstack((Xb[index], X))
+        cv2.imwrite('/home/jason/Desktop/temp.png', canvas)
+        ut.embed()
         # Save
         Xb[index] = X
         if yb is not None:
@@ -155,10 +155,10 @@ class LabelerModel(abstract_models.AbstractCategoricalModel):
                 _P(Conv2DLayer, num_filters=128, filter_size=(3, 3), name='C3', **hidden_initkw),
                 _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P3'),
 
-                _P(layers.DenseLayer, num_units=256, name='F0',  **hidden_initkw),
+                _P(layers.DenseLayer, num_units=512, name='F0',  **hidden_initkw),
                 _P(layers.FeaturePoolLayer, pool_size=2, name='FP0'),
                 _P(layers.DropoutLayer, p=0.5, name='D4'),
-                _P(layers.DenseLayer, num_units=256, name='F1', **hidden_initkw),
+                _P(layers.DenseLayer, num_units=512, name='F1', **hidden_initkw),
 
                 _P(layers.DenseLayer, num_units=model.output_dims, name='F2', nonlinearity=nonlinearities.softmax),
             ]
@@ -202,9 +202,9 @@ def train_labeler(output_path, data_fpath, labels_fpath):
         {
             'era_size'      : 32,
             'batch_size'    : 64,
-            'learning_rate' : .005,
+            'learning_rate' : .001,
             'momentum'      : .9,
-            'weight_decay'  : 0.0001,
+            'weight_decay'  : 0.0000,
             'augment_on'    : True,
             'whiten_on'     : True,
             'augment_delay' : 2,
