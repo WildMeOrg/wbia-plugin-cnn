@@ -28,13 +28,17 @@ LABEL_MAPPING_DICT = {
 
 def augment_parallel(values):
     X, y = values
-    return augment_wrapper([X], [y])
+    return augment_wrapper(
+        [X],
+        None if y is None else [y]
+    )
 
 
-def augment_wrapper(Xb, yb):
+def augment_wrapper(Xb, yb=None):
     import random
-    for index, y in enumerate(yb):
+    for index in range(len(Xb)):
         X = np.copy(Xb[index])
+        y = None if yb is None else yb[index]
         # Adjust the exposure
         X_Lab = cv2.cvtColor(X, cv2.COLOR_BGR2LAB)
         X_L = X_Lab[:, :, 0].astype(dtype=np.float32)
@@ -66,10 +70,10 @@ def augment_wrapper(Xb, yb):
             X[:, :, channel] = X_
         # Horizontal flip
         if random.uniform(0.0, 1.0) <= 0.5:
-            if ':' in y:
+            X = cv2.flip(X, 1)
+            if y is not None and ':' in y:
                 species, viewpoint = y.split(':')
                 viewpoint = LABEL_MAPPING_DICT[viewpoint]
-                X = cv2.flip(X, 1)
                 y = '%s:%s' % (species, viewpoint)
         # # Blur
         # if random.uniform(0.0, 1.0) <= 0.1:
@@ -86,7 +90,8 @@ def augment_wrapper(Xb, yb):
         # ut.embed()
         # Save
         Xb[index] = X
-        yb[index] = y
+        if yb is not None:
+            yb[index] = y
     return Xb, yb
 
 
@@ -98,19 +103,24 @@ class LabelerModel(abstract_models.AbstractCategoricalModel):
                                             data_shape=data_shape,
                                             name=name, **kwargs)
 
-    def augment(model, Xb, yb=None, parallel=False):
+    def augment(model, Xb, yb=None, parallel=True):
         if not parallel:
             return augment_wrapper(Xb, yb)
         # Run in parallel
+        if yb is None:
+            yb = [None] * len(Xb)
         arg_iter = list(zip(Xb, yb))
         result_list = ut.util_parallel.generate(augment_parallel, arg_iter,
                                                 ordered=True, verbose=False,
                                                 quiet=True)
         result_list = list(result_list)
         X = [ result[0][0] for result in result_list ]
-        y = [ result[1] for result in result_list ]
         X = np.array(X)
-        y = np.hstack(y)
+        if yb is None:
+            y = None
+        else:
+            y = [ result[1] for result in result_list ]
+            y = np.hstack(y)
         return X, y
 
     def get_labeler_def(model, verbose=ut.VERBOSE, **kwargs):
