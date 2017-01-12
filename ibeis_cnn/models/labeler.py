@@ -38,7 +38,7 @@ def augment_wrapper(Xb, yb):
         # Adjust the exposure
         X_Lab = cv2.cvtColor(X, cv2.COLOR_BGR2LAB)
         X_L = X_Lab[:, :, 0].astype(dtype=np.float32)
-        # margin = np.min([np.min(X_L), 255.0 - np.max(X_L), 64.0])
+        margin = np.min([np.min(X_L), 255.0 - np.max(X_L), 64.0])
         margin = 64.0
         exposure = random.uniform(-margin, margin)
         X_L += exposure
