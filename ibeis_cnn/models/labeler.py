@@ -100,6 +100,12 @@ class LabelerModel(abstract_models.AbstractCategoricalModel):
                                             data_shape=data_shape,
                                             name=name, **kwargs)
 
+    def learning_rate_update(model, x):
+        return x * 0.80
+
+    def learning_rate_shock(model, x):
+        return x / 0.80
+
     def augment(model, Xb, yb=None, parallel=True):
         if not parallel:
             return augment_wrapper(Xb, yb)
@@ -199,7 +205,7 @@ def train_labeler(output_path, data_fpath, labels_fpath):
         {
             'era_size'      : 8,
             'batch_size'    : 128,
-            'learning_rate' : .001,
+            'learning_rate' : .005,
             'momentum'      : .9,
             'weight_decay'  : 0.0000,
             'augment_on'    : True,
