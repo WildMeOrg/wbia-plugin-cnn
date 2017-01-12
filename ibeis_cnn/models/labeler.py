@@ -38,8 +38,8 @@ def augment_wrapper(Xb, yb):
         # Adjust the exposure
         X_Lab = cv2.cvtColor(X, cv2.COLOR_BGR2LAB)
         X_L = X_Lab[:, :, 0].astype(dtype=np.float32)
-        margin = np.min([np.min(X_L), 255.0 - np.max(X_L), 64.0])
-        margin = 64.0
+        # margin = np.min([np.min(X_L), 255.0 - np.max(X_L), 64.0])
+        margin = 128.0
         exposure = random.uniform(-margin, margin)
         X_L += exposure
         X_L = np.around(X_L)
@@ -49,8 +49,8 @@ def augment_wrapper(Xb, yb):
         X = cv2.cvtColor(X_Lab, cv2.COLOR_LAB2BGR)
         # Rotate and Scale
         h, w, c = X.shape
-        degree = random.randint(-30, 30)
-        scale = random.uniform(0.80, 1.25)
+        degree = random.randint(-10, 10)
+        scale = random.uniform(0.90, 1.10)
         padding = np.sqrt((w) ** 2 / 4 - 2 * (w) ** 2 / 16)
         padding /= scale
         padding = int(np.ceil(padding))
@@ -81,9 +81,9 @@ def augment_wrapper(Xb, yb):
         X = X.reshape(Xb[index].shape)
         X = X.astype(Xb[index].dtype)
         # Show image
-        canvas = np.hstack((Xb[index], X))
-        cv2.imwrite('/home/jason/Desktop/temp.png', canvas)
-        ut.embed()
+        # canvas = np.hstack((Xb[index], X))
+        # cv2.imwrite('/home/jason/Desktop/temp.png', canvas)
+        # ut.embed()
         # Save
         Xb[index] = X
         yb[index] = y
