@@ -43,7 +43,7 @@ def augment_wrapper(Xb, yb=None):
         X_Lab = cv2.cvtColor(X, cv2.COLOR_BGR2LAB)
         X_L = X_Lab[:, :, 0].astype(dtype=np.float32)
         # margin = np.min([np.min(X_L), 255.0 - np.max(X_L), 64.0])
-        margin = 128.0
+        margin = 64.0
         exposure = random.uniform(-margin, margin)
         X_L += exposure
         X_L = np.around(X_L)
@@ -75,12 +75,9 @@ def augment_wrapper(Xb, yb=None):
                 species, viewpoint = y.split(':')
                 viewpoint = LABEL_MAPPING_DICT[viewpoint]
                 y = '%s:%s' % (species, viewpoint)
-        # # Blur
-        # if random.uniform(0.0, 1.0) <= 0.1:
-        #     if random.uniform(0.0, 1.0) <= 0.5:
-        #         X = cv2.blur(X, (3, 3))
-        #     else:
-        #         X = cv2.blur(X, (5, 5))
+        # Blur
+        if random.uniform(0.0, 1.0) <= 0.01:
+            X = cv2.blur(X, (3, 3))
         # Reshape
         X = X.reshape(Xb[index].shape)
         X = X.astype(Xb[index].dtype)
