@@ -197,14 +197,14 @@ def train_labeler(output_path, data_fpath, labels_fpath):
     """
     hyperparams = ut.argparse_dict(
         {
-            'era_size'      : 32,
-            'batch_size'    : 64,
+            'era_size'      : 8,
+            'batch_size'    : 128,
             'learning_rate' : .001,
             'momentum'      : .9,
             'weight_decay'  : 0.0000,
             'augment_on'    : True,
             'whiten_on'     : True,
-            'augment_delay' : 2,
+            'augment_delay' : 0,
         }
     )
 
