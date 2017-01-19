@@ -85,6 +85,97 @@ def get_verified_aid_pairs(ibs):
 
 
 @register_ibs_method
+def generate_chip_label_list(ibs, chip_list, nInput=None,
+                             labeler_weight_filepath=None, **kwargs):
+
+    # Load chips and resize to the target
+    data_shape = (128, 128, 3)
+    batch_size = None
+    # Define model and load weights
+    print('\n[ibeis_cnn] Loading model...')
+    if nInput is None:
+        try:
+            nInput = len(chip_list)
+        except TypeError:
+            print('Warning passed in generator without specifying nInput hint')
+            print('Explicitly evaluating generator')
+            print('type(chip_list) = %r' % (type(chip_list),))
+            chip_list = list(chip_list)
+            nInput = len(chip_list)
+
+    ut.embed()
+    model = models.LabelerModel(batch_size=batch_size, data_shape=data_shape)
+
+    if labeler_weight_filepath in [None, 'v1']:
+        weights_path = grabmodels.ensure_model('labeler_v1', redownload=False)
+    elif labeler_weight_filepath in ['cheetah']:
+        weights_path = grabmodels.ensure_model('labeler_cheetah', redownload=False)
+    elif ut.exists(weights_path):
+        weights_path = labeler_weight_filepath
+    else:
+        raise ValueError('Labeler does not have a valid trained model')
+
+    model_state_fpath = model.get_model_state_fpath(fpath=weights_path)
+    print('[model] loading model state from: %s' % (model_state_fpath,))
+    model_state = ut.load_cPkl(model_state_fpath)
+
+    model.output_dims  = model_state['output_dims']
+    model.data_params = model_state['data_params']
+    model._fix_center_mean_std()
+
+    model.best_results = model_state['best_results']
+
+    model.init_arch()
+    model.batch_size = 128
+    model.set_all_param_values(model.best_results['weights'])
+
+    # Create the Theano primitives
+    # create theano symbolic expressions that define the network
+    print('\n[ibeis_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---')
+    print('[model] creating Theano primitives...')
+    theano_predict = model.build_predict_func()
+
+    print('[ibeis_cnn] Performing inference...')
+    test_results = model.process_batch(theano_predict, chip_list)
+
+    class_list = list(model.encoder.classes_)
+    prediction_list = test_results['label_list']
+    confidence_list = test_results['confidence_list']
+    probability_list = test_results['probability_list']
+
+    species_list = []
+    viewpoint_list = []
+    for prediction in prediction_list:
+        prediction = prediction.strip()
+        if ':' in prediction:
+            prediction = prediction.split(':')
+            species, viewpoint = prediction
+        else:
+            species = prediction
+            viewpoint = None
+        if species.lower() == 'ignore':
+            species = const.UNKNOWN
+        species_list.append(species)
+        viewpoint_list.append(viewpoint)
+
+    quality_list = [const.QUAL_UNKNOWN] * len(prediction_list)
+    orientation_list = [0.0] * len(prediction_list)
+
+    probability_dict_list = []
+    for probability in probability_list:
+        probability_dict = {
+            class_ : prob
+            for class_, prob in zip(class_list, probability)
+        }
+        probability_dict_list.append(probability_dict)
+
+    result_list = list(zip(confidence_list, species_list, viewpoint_list,
+                       quality_list, orientation_list, probability_dict_list))
+
+    return result_list
+
+
+@register_ibs_method
 def detect_annot_zebra_background_mask(ibs, aid_list, species=None, config2_=None):
     r"""
     Args:
@@ -222,7 +313,8 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         #>>> ut.show_if_requested()
     """
     if species is None:
-        species = 'zebra_plains'
+        # species = 'zebra_plains'
+        raise ValueError('must specify a species for the background detector')
 
     # Load chips and resize to the target
     data_shape = (256, 256, 3)
@@ -690,123 +782,6 @@ def validate_annot_species_viewpoint_cnn(ibs, aid_list, verbose=False):
             print('    AID %4d (%r, %r) should be %r' % bad_viewpoint)
     # Return bad
     return bad_species_list, bad_viewpoint_list
-
-
-@register_ibs_method
-def detect_yolo(ibs, gid_list):
-    r"""
-    Args:
-        ibs (IBEISController):  ibeis controller object
-        gid_list (int):  list of image ids
-
-    Returns:
-        list: aid_list
-
-    CommandLine:
-        python -m ibeis_cnn._plugin --exec-detect_yolo
-
-    Example:
-        >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn._plugin import *  # NOQA
-        >>> import ibeis
-        >>> ibs = ibeis.opendb(defaultdb='PZ_MTEST')
-        >>> gid_list = ibs.get_valid_gids()
-        >>> aid_list = detect_yolo(ibs, gid_list)
-        >>> print(aid_list)
-    """
-    # Load images and resize to the target
-    # Define model and load weights
-    print('Loading model...')
-    # batch_size = int(min(128, 2 ** np.floor(np.log2(len(gid_list)))))
-    batch_size = 1
-    model = models.DetectYoloModel(batch_size=batch_size)
-
-    model.print_layer_info()
-
-    # from ibeis_cnn.__LASAGNE__ import layers
-    # from ibeis_cnn.draw_net import show_convolutional_weights
-    # output_layer = model.get_output_layer()
-    # nn_layers = layers.get_all_layers(output_layer)
-    # weighted_layers = [layer for layer in nn_layers if hasattr(layer, 'W')]
-    # index = ut.get_argval('--index', type_=int, default=0)
-    # all_weights = weighted_layers[index].W.get_value()
-    # print('all_weights.shape = %r' % (all_weights.shape,))
-    # use_color = None
-    # limit = 12
-    # fig = show_convolutional_weights(all_weights, use_color, limit)  # NOQA
-    # ut.show_if_requested()
-
-    # Read the data
-    target = (448, 448)
-    print('Loading images...')
-    # image_list = ibs.get_image_imgdata(gid_list)
-    image_list = [
-        cv2.imread('/Users/bluemellophone/code/darknet-clean/test.jpg'),
-        cv2.imread('/Users/bluemellophone/code/darknet-clean/test.jpg'),
-    ]
-    print('Resizing images...')
-    image_list_resized = [
-        cv2.resize(image, target, interpolation=cv2.INTER_LANCZOS4)
-        for image in ut.ProgressIter(image_list, lbl='resizing images')
-    ]
-
-    # Build data for network
-    X_test = np.array(image_list_resized, dtype=np.uint8)
-    # Predict on the data and convert labels to IBEIS namespace
-    test_outputs = model.predict2(X_test)
-    raw_output_list = test_outputs['network_output_determ']
-
-    side = 7
-    num = 2
-    classes = 5
-    square = True
-    for image, raw_output in zip(image_list, raw_output_list):
-        print(raw_output.shape)
-        box_list = []
-        probs_list = []
-        h, w = image.shape[:2]
-        min_, max_ = 1.0, 0.0
-        for i in range(side * side):
-            row = i / side
-            col = i % side
-            for n in range(num):
-                index = i * num + n
-                p_index = side * side * classes + index
-                scale = raw_output[p_index]
-                box_index = side * side * (classes + num) + (index) * 4
-                box = [
-                    (raw_output[box_index + 0] + col) / side * w,
-                    (raw_output[box_index + 1] + row) / side * h,
-                    raw_output[box_index + 2] ** (2 if square else 1) * w,
-                    raw_output[box_index + 3] ** (2 if square else 1) * h,
-                ]
-                box_list.append(box)
-                prob_list = []
-                for j in range(classes):
-                    class_index = i * classes
-                    prob = scale * raw_output[class_index + j]
-                    min_ = min(min_, prob)
-                    max_ = max(max_, prob)
-                    prob_list.append(prob)
-                probs_list.append(prob_list)
-        box_list = np.array(box_list)
-        probs_list = np.array(probs_list)
-
-        for (xc, yc, w, h), prob_list in zip(box_list, probs_list):
-            prob = max(prob_list)
-            point1 = (int(xc - w), int(yc - h))
-            point2 = (int(xc + w), int(yc + h))
-            width = (prob ** 0.5) * 10 + 1
-            width = 1 if np.isnan(width) or width < 1.0 else int(width)
-            cv2.rectangle(image, point1, point2, (255, 0, 0), width)
-
-        image = cv2.resize(image, target, interpolation=cv2.INTER_LANCZOS4)
-
-        cv2.imshow('', image)
-        cv2.waitKey(0)
-        # raise AssertionError
-
-    return True
 
 
 def _suggest_random_candidate_regions(ibs, image, min_size, num_candidates=2000):

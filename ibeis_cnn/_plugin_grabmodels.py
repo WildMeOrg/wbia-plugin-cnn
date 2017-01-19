@@ -9,21 +9,25 @@ import utool as ut
 
 MODEL_DOMAIN = 'https://lev.cs.rpi.edu/public/models/'
 MODEL_URLS = {
-    'background_giraffe_masai':       'giraffe_masai_background.npy',
-    'background_zebra_plains':        'zebra_plains_background.npy',
-    'background_zebra_plains_grevys': 'zebra_plains_grevys_background.npy',
-    'background_whale_fluke':         'whale_fluke_background.npy',
-    'background_lynx':                'lynx_background.pkl',
-    'background_lynx_v2':             'lynx_background_v2.pkl',
-    'background_cheetah':             'cheetah_background.pkl',
-    'detect_yolo':                    'detect.yolo.pickle',
-    'viewpoint':                      'viewpoint.pickle',
-    'caffenet':                       'caffenet.caffe.slice_0_6_None.pickle',
-    'caffenet_conv':                  'caffenet.caffe.slice_0_10_None.pickle',
-    'caffenet_full':                  'caffenet.caffe.pickle',
-    'vggnet':                         'vgg.caffe.slice_0_6_None.pickle',
-    'vggnet_conv':                    'vgg.caffe.slice_0_32_None.pickle',
-    'vggnet_full':                    'vgg.caffe.pickle',
+    'labeler_v1':                     'labeler.cheetah.pkl',
+    'labeler_cheetah':                'labeler.cheetah.pkl',
+
+    'background_giraffe_masai':       'background.giraffe_masai.npy',
+    'background_zebra_plains':        'background.zebra_plains.npy',
+    'background_zebra_plains_grevys': 'background.zebra_plains_grevys.npy',
+    'background_whale_fluke':         'background.whale_fluke.npy',
+    'background_lynx':                'background.lynx.pkl',
+    'background_lynx_v2':             'background.lynx_v2.pkl',
+    'background_cheetah':             'background.cheetah.pkl',
+
+    'viewpoint':                      'viewpoint.v1.pkl',
+
+    'caffenet':                       'pretrained.caffe.caffenet.slice_0_6_None.pkl',
+    'caffenet_conv':                  'pretrained.caffe.caffenet.slice_0_10_None.pkl',
+    'caffenet_full':                  'pretrained.caffe.caffenet.pkl',
+    'vggnet':                         'pretrained.caffe.vgg.slice_0_6_None.pkl',
+    'vggnet_conv':                    'pretrained.caffe.vgg.slice_0_32_None.pkl',
+    'vggnet_full':                    'pretrained.caffe.vgg.pkl',
 }
 
 
