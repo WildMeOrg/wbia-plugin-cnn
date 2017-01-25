@@ -119,8 +119,9 @@ def generate_chip_label_list(ibs, chip_list, nInput=None,
     print('[model] loading model state from: %s' % (model_state_fpath,))
     model_state = ut.load_cPkl(model_state_fpath)
 
+    model.encoder      = model_state.get('encoder', None)
     model.output_dims  = model_state['output_dims']
-    model.data_params = model_state['data_params']
+    model.data_params  = model_state['data_params']
     model._fix_center_mean_std()
 
     model.best_results = model_state['best_results']

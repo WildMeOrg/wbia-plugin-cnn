@@ -2921,6 +2921,7 @@ class _ModelIO(object):
             'data_params': model.data_params,
             'current_weights': current_weights,
 
+            'encoder': getattr(model, 'encoder', None),
             'input_shape':  model.input_shape,
             'data_shape': model.data_shape,
             'batch_size': model.data_shape,
@@ -2983,6 +2984,7 @@ class _ModelIO(object):
         model.best_results = model_state['best_results']
         model.input_shape  = model_state['input_shape']
         model.output_dims  = model_state['output_dims']
+        model.encoder      = model_state.get('encoder', None)
         if 'era_history' in model_state:
             model.history = History.from_oldstyle(model_state['era_history'])
         else:
