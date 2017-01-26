@@ -11,6 +11,7 @@ MODEL_DOMAIN = 'https://lev.cs.rpi.edu/public/models/'
 MODEL_URLS = {
     'labeler_v1':                     'labeler.cheetah.pkl',
     'labeler_cheetah':                'labeler.cheetah.pkl',
+    'labeler_lynx':                   'labeler.lynx.pkl',
 
     'background_giraffe_masai':       'background.giraffe_masai.npy',
     'background_zebra_plains':        'background.zebra_plains.npy',
