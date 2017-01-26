@@ -139,12 +139,12 @@ def generate_chip_label_list(ibs, chip_list, nInput=None,
     theano_predict = model.build_predict_func()
 
     print('[ibeis_cnn] Performing inference...')
-    test_results = model.process_batch(theano_predict, chip_list)
+    test_results = model.process_batch(theano_predict, np.array(chip_list))
 
     class_list = list(model.encoder.classes_)
-    prediction_list = test_results['label_list']
-    confidence_list = test_results['confidence_list']
-    probability_list = test_results['probability_list']
+    prediction_list = model.encoder.inverse_transform(test_results['predictions'])
+    confidence_list = test_results['confidences']
+    probability_list = test_results['network_output_determ']
 
     species_list = []
     viewpoint_list = []
