@@ -456,8 +456,12 @@ class _ModelFitter(object):
             X_train, y_train, X_valid, y_valid, valid_idx)
 
         model.ensure_data_params(X_learn, y_learn)
-        print('Learn y histogram: ' + ut.repr2(ut.dict_hist(y_learn)))
-        print('Valid y histogram: ' + ut.repr2(ut.dict_hist(y_valid)))
+
+        has_encoder = getattr(model, 'encoder', None) is not None
+        learn_hist = model.encoder.inverse_transform(y_learn) if has_encoder else y_learn
+        valid_hist = model.encoder.inverse_transform(y_valid) if has_encoder else y_valid
+        print('Learn y histogram: ' + ut.repr2(ut.dict_hist(learn_hist)))
+        print('Valid y histogram: ' + ut.repr2(ut.dict_hist(valid_hist)))
 
         # FIXME: make class weights more ellegant and customizable
         w_learn = model._default_input_weights(X_learn, y_learn)
