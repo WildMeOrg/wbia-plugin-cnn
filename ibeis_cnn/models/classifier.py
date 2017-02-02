@@ -238,6 +238,8 @@ def train_classifier(output_path, data_fpath, labels_fpath):
     ut.colorprint('[netrun] Training Requested', 'yellow')
     # parse training arguments
     config = ut.argparse_dict(dict(
+        monitor=True,
+        monitor_updates=True,
         era_size=era_size,
         max_epochs=max_epochs,
         show_confusion=True,
