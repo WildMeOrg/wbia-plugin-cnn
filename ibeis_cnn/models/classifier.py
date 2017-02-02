@@ -75,8 +75,8 @@ def augment_wrapper(Xb, yb=None):
         X = X.reshape(Xb[index].shape)
         X = X.astype(Xb[index].dtype)
         # Show image
-        canvas = np.hstack((Xb[index], X))
-        cv2.imwrite('/home/jason/Desktop/temp-%d.png' % (random.randint(0, 100), ), canvas)
+        # canvas = np.hstack((Xb[index], X))
+        # cv2.imwrite('/home/jason/Desktop/temp-%s-%d.png' % (y, random.randint(0, 100), ), canvas)
         # Save
         Xb[index] = X
         if yb is not None:
