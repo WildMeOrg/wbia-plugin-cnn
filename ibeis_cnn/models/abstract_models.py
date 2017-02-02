@@ -520,10 +520,15 @@ class _ModelFitter(object):
         epoch_info = {'epoch_num': epoch}
         epoch_info.update(**learn_info)
         epoch_info.update(**valid_info)
+        # There is no learn accuracy (no forward propagation)
+        # We need to establish a baseline for the history graphing to work
+        learn_info['learn_acc'] = 0.0
+        learn_info['learn_acc_std'] = 0.0
         epoch_info['duration'] = tt.toc()
         epoch_info['learn_state'] = model.learn_state.asdict()
         epoch_info['learnval_rat'] = (
-            epoch_info['learn_loss'] / epoch_info['valid_loss'])
+            epoch_info['learn_loss'] / epoch_info['valid_loss']
+        )
 
         # ---------------------------------------
         # EPOCH 0: Check how we are learning
@@ -2236,8 +2241,8 @@ class _ModelVisualization(object):
         yspreads = [{
             'valid': ut.take_column(epochs, 'valid_acc_std'),
             'learn': ut.take_column(epochs, 'learn_acc_std'),
-        }
-            for epochs in model.history.grouped_epochs()]
+        } for epochs in model.history.grouped_epochs()]
+
         fig = model._show_era_measure(ydatas, labels,  styles, ylabel='accuracy',
                                       yspreads=yspreads, **kwargs)
         #import plottool as pt
