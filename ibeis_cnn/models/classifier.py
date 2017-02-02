@@ -138,7 +138,6 @@ class ClassifierModel(abstract_models.AbstractCategoricalModel):
                 _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P3'),
 
                 _P(Conv2DLayer, num_filters=256, filter_size=(3, 3), name='C4', W=init.Orthogonal('relu'), **hidden_initkw),
-                _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P4'),
 
                 _P(layers.DenseLayer, num_units=512, name='F0',  **hidden_initkw),
                 _P(layers.FeaturePoolLayer, pool_size=2, name='FP0'),

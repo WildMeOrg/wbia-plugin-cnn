@@ -85,6 +85,66 @@ def get_verified_aid_pairs(ibs):
 
 
 @register_ibs_method
+def generate_thumbnail_class_list(ibs, thumbnail_list, nInput=None,
+                                  classifier_weight_filepath=None, **kwargs):
+
+    # Load chips and resize to the target
+    data_shape = (192, 192, 3)
+    batch_size = None
+    # Define model and load weights
+    print('\n[ibeis_cnn] Loading model...')
+    if nInput is None:
+        try:
+            nInput = len(thumbnail_list)
+        except TypeError:
+            print('Warning passed in generator without specifying nInput hint')
+            print('Explicitly evaluating generator')
+            print('type(chip_list) = %r' % (type(thumbnail_list),))
+            thumbnail_list = list(thumbnail_list)
+            nInput = len(thumbnail_list)
+
+    ut.embed()
+    model = models.ClassifierModel(batch_size=batch_size, data_shape=data_shape)
+
+    if classifier_weight_filepath in [None, 'v1']:
+        weights_path = grabmodels.ensure_model('classifier_zebra_coco', redownload=False)
+    elif ut.exists(weights_path):
+        weights_path = classifier_weight_filepath
+    else:
+        raise ValueError('Classifier does not have a valid trained model')
+
+    model_state_fpath = model.get_model_state_fpath(fpath=weights_path)
+    print('[model] loading model state from: %s' % (model_state_fpath,))
+    model_state = ut.load_cPkl(model_state_fpath)
+
+    model.encoder      = model_state.get('encoder', None)
+    model.output_dims  = model_state['output_dims']
+    model.data_params  = model_state['data_params']
+    model._fix_center_mean_std()
+
+    model.best_results = model_state['best_results']
+
+    model.init_arch()
+    model.batch_size = 128
+    model.set_all_param_values(model.best_results['weights'])
+
+    # Create the Theano primitives
+    # create theano symbolic expressions that define the network
+    print('\n[ibeis_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---')
+    print('[model] creating Theano primitives...')
+    theano_predict = model.build_predict_func()
+
+    print('[ibeis_cnn] Performing inference...')
+    test_results = model.process_batch(theano_predict, np.array(thumbnail_list))
+
+    prediction_list = model.encoder.inverse_transform(test_results['predictions'])
+    confidence_list = test_results['confidences']
+
+    result_list = list(zip(confidence_list, prediction_list))
+    return result_list
+
+
+@register_ibs_method
 def generate_chip_label_list(ibs, chip_list, nInput=None,
                              labeler_weight_filepath=None, **kwargs):
 
