@@ -2226,6 +2226,8 @@ class _ModelVisualization(object):
                 'learn': 'learn acc ' + str(last_era['num_learn']) + ' ' + ut.repr4(last_epoch['valid_acc'] * 100) + '%',
             }
 
+        ut.embed()
+
         ydatas = [{
             'valid': ut.take_column(epochs, 'valid_acc'),
             'learn': ut.take_column(epochs, 'learn_acc'),

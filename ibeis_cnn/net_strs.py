@@ -277,7 +277,7 @@ def get_layer_info(layer):
         #'ElemwiseSum': ['coeffs', 'merge_function', 'cropping'],
         'Noise'     : ['sigma'],
         'Input'     : ['shape'],
-        'Dropout'   : ['p'],
+        'Dropout'   : ['p', 'shared_axes'],
         'Conv2D'    : ['num_filters', 'filter_size', 'stride', 'output_shape'],
         'MaxPool2D' : ['stride', 'pool_size', 'output_shape'],  # 'mode'],
         'Dense'     : ['num_units', 'num_leading_axes'],

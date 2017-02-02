@@ -243,9 +243,11 @@ def train_labeler(output_path, data_fpath, labels_fpath):
     ut.colorprint('[netrun] Training Requested', 'yellow')
     # parse training arguments
     config = ut.argparse_dict(dict(
+        monitor=True,
+        monitor_updates=True,
+        show_confusion=True,
         era_size=era_size,
         max_epochs=max_epochs,
-        show_confusion=True,
     ))
     model.monitor_config.update(**config)
 
