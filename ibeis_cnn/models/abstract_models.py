@@ -522,8 +522,8 @@ class _ModelFitter(object):
         epoch_info.update(**valid_info)
         # There is no learn accuracy (no forward propagation)
         # We need to establish a baseline for the history graphing to work
-        learn_info['learn_acc'] = 0.0
-        learn_info['learn_acc_std'] = 0.0
+        epoch_info['learn_acc'] = 0.0
+        epoch_info['learn_acc_std'] = 0.0
         epoch_info['duration'] = tt.toc()
         epoch_info['learn_state'] = model.learn_state.asdict()
         epoch_info['learnval_rat'] = (
