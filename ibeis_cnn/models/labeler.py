@@ -196,15 +196,18 @@ def train_labeler(output_path, data_fpath, labels_fpath):
         >>> result = train_labeler()
         >>> print(result)
     """
+    era_size = 16
+    max_epochs = 64
     hyperparams = ut.argparse_dict(
         {
-            'era_size'      : 16,
-            'batch_size'    : 64,
-            'learning_rate' : .005,
+            'era_size'      : era_size,
+            'batch_size'    : 128,
+            'learning_rate' : .01,
             'momentum'      : .9,
             'weight_decay'  : 0.0001,
             'augment_on'    : True,
             'whiten_on'     : True,
+            'max_epochs'    : max_epochs,
         }
     )
 
@@ -240,9 +243,9 @@ def train_labeler(output_path, data_fpath, labels_fpath):
     ut.colorprint('[netrun] Training Requested', 'yellow')
     # parse training arguments
     config = ut.argparse_dict(dict(
-        era_size=15,
-        max_epochs=120,
-        show_confusion=False,
+        era_size=era_size,
+        max_epochs=max_epochs,
+        show_confusion=True,
     ))
     model.monitor_config.update(**config)
 

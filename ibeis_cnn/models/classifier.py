@@ -42,11 +42,13 @@ def augment_wrapper(Xb, yb=None):
         X = cv2.cvtColor(X_Lab, cv2.COLOR_LAB2BGR)
         # Rotate and Scale
         h, w, c = X.shape
-        degree = random.randint(-10, 10)
+        degree = random.randint(-15, 15)
         scale = random.uniform(0.90, 1.10)
         padding = np.sqrt((w) ** 2 / 4 - 2 * (w) ** 2 / 16)
         padding /= scale
         padding = int(np.ceil(padding))
+        skew_x = random.uniform(0.90, 1.10)
+        skew_y = random.uniform(0.90, 1.10)
         for channel in range(c):
             X_ = X[:, :, channel]
             X_ = np.pad(X_, padding, 'reflect', reflect_type='even')
@@ -54,6 +56,12 @@ def augment_wrapper(Xb, yb=None):
             # Calculate Affine transform
             center = (w_ // 2, h_ // 2)
             A = cv2.getRotationMatrix2D(center, degree, scale)
+            # Add skew
+            A[0][0] *= skew_x
+            A[1][0] *= skew_x
+            A[0][1] *= skew_y
+            A[1][1] *= skew_y
+            # Apply Affine
             X_ = cv2.warpAffine(X_, A, (w_, h_), flags=cv2.INTER_LANCZOS4, borderValue=0)
             X_ = X_[padding: -1 * padding, padding: -1 * padding]
             X[:, :, channel] = X_
@@ -67,9 +75,9 @@ def augment_wrapper(Xb, yb=None):
         X = X.reshape(Xb[index].shape)
         X = X.astype(Xb[index].dtype)
         # Show image
-        # canvas = np.hstack((Xb[index], X))
-        # cv2.imwrite('/home/jason/Desktop/temp.png', canvas)
-        # ut.embed()
+        canvas = np.hstack((Xb[index], X))
+        cv2.imwrite('/home/jason/Desktop/temp.png', canvas)
+        raw_input()
         # Save
         Xb[index] = X
         if yb is not None:
@@ -184,15 +192,18 @@ def train_classifier(output_path, data_fpath, labels_fpath):
         >>> result = train_classifier()
         >>> print(result)
     """
+    era_size = 8
+    max_epochs = 64
     hyperparams = ut.argparse_dict(
         {
-            'era_size'      : 16,
+            'era_size'      : era_size,
             'batch_size'    : 128,
             'learning_rate' : .01,
             'momentum'      : .9,
             'weight_decay'  : 0.0001,
             'augment_on'    : True,
             'whiten_on'     : True,
+            'max_epochs'    : max_epochs,
         }
     )
 
@@ -228,9 +239,9 @@ def train_classifier(output_path, data_fpath, labels_fpath):
     ut.colorprint('[netrun] Training Requested', 'yellow')
     # parse training arguments
     config = ut.argparse_dict(dict(
-        era_size=15,
-        max_epochs=120,
-        show_confusion=False,
+        era_size=era_size,
+        max_epochs=max_epochs,
+        show_confusion=True,
     ))
     model.monitor_config.update(**config)
 
