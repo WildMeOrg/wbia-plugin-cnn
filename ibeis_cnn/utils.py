@@ -711,9 +711,9 @@ def extract_patches_stride(image, patch_size, stride):
     coord_list = []
     extrax = [w - 1 - pw] if w % pw != 0 else []
     extray = [h - 1 - ph] if h % ph != 0 else []
-    for y in range(0, h - ph, sy) + extray:
+    for y in list(range(0, h - ph, sy)) + extray:
         y_ = y + ph
-        for x in range(0, w - pw, sx) + extrax:
+        for x in list(range(0, w - pw, sx)) + extrax:
             x_ = x + pw
             patch = image[y: y_, x: x_]
             patch_list.append(patch)

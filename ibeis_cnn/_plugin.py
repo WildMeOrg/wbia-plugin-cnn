@@ -10,9 +10,11 @@ from ibeis_cnn import models
 from ibeis_cnn import _plugin_grabmodels as grabmodels
 import utool as ut
 import cv2
+import six
 import numpy as np
 import random
 import ibeis.constants as const
+from six.moves import zip, range
 print, rrr, profile = ut.inject2(__name__)
 
 
@@ -616,7 +618,14 @@ def test_convolutional(model, image, patch_size='auto', stride='auto',
 
     # Get all of the labels for the data, inheritted from the model
     if model.encoder is not None:
-        label_list_ = list(model.encoder.classes_)
+        # python2 backwards compatibility
+        if isinstance(model.encoder.classes_, np.ndarray):
+            label_list_ = model.encoder.classes_.tolist()
+        else:
+            label_list_ = list(model.encoder.classes_)
+        label_list_ = list(map(
+            lambda x: x if isinstance(x, six.text_type) else x.decode('utf-8'),
+            label_list_))
     else:
         label_list_ = list(range(model.output_dims))
     # Create a dictionary of canvases
@@ -637,7 +646,7 @@ def test_convolutional(model, image, patch_size='auto', stride='auto',
             # confidence_[label_ != label] = 0
 
             # NEW
-            flip_index = label_ != label
+            flip_index = int(label_ != label)
             confidence_[flip_index] = 1.0 - confidence_[flip_index]
             confidence_[confidence_ <= confidence_thresh] = 0
 
