@@ -15,18 +15,6 @@ import cv2
 print, rrr, profile = ut.inject2(__name__)
 
 
-LABEL_MAPPING_DICT = {
-    'left'       : 'right',
-    'frontleft'  : 'frontright',
-    'front'      : 'front',
-    'frontright' : 'frontleft',
-    'right'      : 'left',
-    'backright'  : 'backleft',
-    'back'       : 'back',
-    'backleft'   : 'backright',
-}
-
-
 def augment_parallel(values):
     X, y = values
     return augment_wrapper(
@@ -54,11 +42,13 @@ def augment_wrapper(Xb, yb=None):
         X = cv2.cvtColor(X_Lab, cv2.COLOR_LAB2BGR)
         # Rotate and Scale
         h, w, c = X.shape
-        degree = random.randint(-10, 10)
+        degree = random.randint(-15, 15)
         scale = random.uniform(0.90, 1.10)
         padding = np.sqrt((w) ** 2 / 4 - 2 * (w) ** 2 / 16)
         padding /= scale
         padding = int(np.ceil(padding))
+        skew_x = random.uniform(0.90, 1.10)
+        skew_y = random.uniform(0.90, 1.10)
         for channel in range(c):
             X_ = X[:, :, channel]
             X_ = np.pad(X_, padding, 'reflect', reflect_type='even')
@@ -66,16 +56,18 @@ def augment_wrapper(Xb, yb=None):
             # Calculate Affine transform
             center = (w_ // 2, h_ // 2)
             A = cv2.getRotationMatrix2D(center, degree, scale)
+            # Add skew
+            A[0][0] *= skew_x
+            A[1][0] *= skew_x
+            A[0][1] *= skew_y
+            A[1][1] *= skew_y
+            # Apply Affine
             X_ = cv2.warpAffine(X_, A, (w_, h_), flags=cv2.INTER_LANCZOS4, borderValue=0)
             X_ = X_[padding: -1 * padding, padding: -1 * padding]
             X[:, :, channel] = X_
         # Horizontal flip
         if random.uniform(0.0, 1.0) <= 0.5:
             X = cv2.flip(X, 1)
-            if y is not None and ':' in y:
-                species, viewpoint = y.split(':')
-                viewpoint = LABEL_MAPPING_DICT[viewpoint]
-                y = '%s:%s' % (species, viewpoint)
         # Blur
         if random.uniform(0.0, 1.0) <= 0.01:
             X = cv2.blur(X, (3, 3))
@@ -84,8 +76,7 @@ def augment_wrapper(Xb, yb=None):
         X = X.astype(Xb[index].dtype)
         # Show image
         # canvas = np.hstack((Xb[index], X))
-        # cv2.imwrite('/home/jason/Desktop/temp.png', canvas)
-        # ut.embed()
+        # cv2.imwrite('/home/jason/Desktop/temp-%s-%d.png' % (y, random.randint(0, 100), ), canvas)
         # Save
         Xb[index] = X
         if yb is not None:
@@ -94,12 +85,12 @@ def augment_wrapper(Xb, yb=None):
 
 
 @six.add_metaclass(ut.ReloadingMetaclass)
-class LabelerModel(abstract_models.AbstractCategoricalModel):
+class ClassifierModel(abstract_models.AbstractCategoricalModel):
     def __init__(model, autoinit=False, batch_size=128, data_shape=(64, 64, 3),
-                 name='labeler', **kwargs):
-        super(LabelerModel, model).__init__(batch_size=batch_size,
-                                            data_shape=data_shape,
-                                            name=name, **kwargs)
+                 name='classifier', **kwargs):
+        super(ClassifierModel, model).__init__(batch_size=batch_size,
+                                               data_shape=data_shape,
+                                               name=name, **kwargs)
 
     def augment(model, Xb, yb=None, parallel=True):
         if not parallel:
@@ -121,7 +112,7 @@ class LabelerModel(abstract_models.AbstractCategoricalModel):
             y = np.hstack(y)
         return X, y
 
-    def get_labeler_def(model, verbose=ut.VERBOSE, **kwargs):
+    def get_classifier_def(model, verbose=ut.VERBOSE, **kwargs):
         # _CaffeNet = abstract_models.PretrainedNetwork('caffenet')
         _P = functools.partial
 
@@ -153,6 +144,10 @@ class LabelerModel(abstract_models.AbstractCategoricalModel):
                 _P(Conv2DLayer, num_filters=256, filter_size=(3, 3), name='C3', W=init.Orthogonal('relu'), **hidden_initkw),
                 _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P3'),
 
+                _P(Conv2DLayer, num_filters=256, filter_size=(3, 3), name='C4', W=init.Orthogonal('relu'), **hidden_initkw),
+
+                _P(Conv2DLayer, num_filters=256, filter_size=(3, 3), name='C5', W=init.Orthogonal('relu'), **hidden_initkw),
+
                 _P(layers.DenseLayer, num_units=512, name='F0',  **hidden_initkw),
                 _P(layers.FeaturePoolLayer, pool_size=2, name='FP0'),
                 _P(layers.DropoutLayer, p=0.5, name='D4'),
@@ -168,14 +163,14 @@ class LabelerModel(abstract_models.AbstractCategoricalModel):
         """
         (_, input_channels, input_width, input_height) = model.input_shape
         if verbose:
-            print('[model] Initialize labeler model architecture')
+            print('[model] Initialize classifier model architecture')
             print('[model]   * batch_size     = %r' % (model.batch_size,))
             print('[model]   * input_width    = %r' % (input_width,))
             print('[model]   * input_height   = %r' % (input_height,))
             print('[model]   * input_channels = %r' % (input_channels,))
             print('[model]   * output_dims    = %r' % (model.output_dims,))
 
-        network_layers_def = model.get_labeler_def(verbose=verbose, **kwargs)
+        network_layers_def = model.get_classifier_def(verbose=verbose, **kwargs)
         # connect and record layers
         from ibeis_cnn import custom_layers
         network_layers = custom_layers.evaluate_layer_list(network_layers_def, verbose=verbose)
@@ -185,15 +180,15 @@ class LabelerModel(abstract_models.AbstractCategoricalModel):
         return output_layer
 
 
-def train_labeler(output_path, data_fpath, labels_fpath):
+def train_classifier(output_path, data_fpath, labels_fpath):
     r"""
     CommandLine:
-        python -m ibeis_cnn.train --test-train_labeler
+        python -m ibeis_cnn.train --test-train_classifier
 
     Example:
         >>> # DISABLE_DOCTEST
         >>> from ibeis_cnn.train import *  # NOQA
-        >>> result = train_labeler()
+        >>> result = train_classifier()
         >>> print(result)
     """
     era_size = 16
@@ -213,13 +208,13 @@ def train_labeler(output_path, data_fpath, labels_fpath):
     )
 
     ut.colorprint('[netrun] Ensuring Dataset', 'yellow')
-    dataset = ingest_data.get_numpy_dataset2('labeler', data_fpath, labels_fpath, output_path)
+    dataset = ingest_data.get_numpy_dataset2('classifier', data_fpath, labels_fpath, output_path)
     X_train, y_train = dataset.subset('train')
     X_valid, y_valid = dataset.subset('valid')
     print('dataset.training_dpath = %r' % (dataset.training_dpath,))
 
     ut.colorprint('[netrun] Architecture Specification', 'yellow')
-    model = LabelerModel(
+    model = ClassifierModel(
         data_shape=dataset.data_shape,
         training_dpath=dataset.training_dpath,
         **hyperparams)
@@ -270,9 +265,9 @@ def train_labeler(output_path, data_fpath, labels_fpath):
 if __name__ == '__main__':
     """
     CommandLine:
-        python -m ibeis_cnn.models.labeler
-        python -m ibeis_cnn.models.labeler --allexamples
-        python -m ibeis_cnn.models.labeler --allexamples --noface --nosrc
+        python -m ibeis_cnn.models.classifier
+        python -m ibeis_cnn.models.classifier --allexamples
+        python -m ibeis_cnn.models.classifier --allexamples --noface --nosrc
     """
     import multiprocessing
     multiprocessing.freeze_support()  # for win32

@@ -523,7 +523,8 @@ class _ModelFitter(object):
         epoch_info['duration'] = tt.toc()
         epoch_info['learn_state'] = model.learn_state.asdict()
         epoch_info['learnval_rat'] = (
-            epoch_info['learn_loss'] / epoch_info['valid_loss'])
+            epoch_info['learn_loss'] / epoch_info['valid_loss']
+        )
 
         # ---------------------------------------
         # EPOCH 0: Check how we are learning
@@ -535,17 +536,12 @@ class _ModelFitter(object):
             model.best_results['valid_recall'] = epoch_info['valid_recall']
             model.best_results['valid_fscore'] = epoch_info['valid_fscore']
             model.best_results['valid_support'] = epoch_info['valid_support']
-        if 'learn_precision' in epoch_info:
-            model.best_results['learn_precision'] = epoch_info['learn_precision']
-            model.best_results['learn_recall'] = epoch_info['learn_recall']
-            model.best_results['learn_fscore'] = epoch_info['learn_fscore']
-            model.best_results['learn_support'] = epoch_info['learn_support']
         for key in model.requested_headers:
             model.best_results[key] = epoch_info[key]
 
         # ---------------------------------------
         # EPOCH 0: Record this epoch in history and print info
-        model.history._record_epoch(epoch_info)
+        # model.history._record_epoch(epoch_info)
         utils.print_epoch_info(model, printcol_info, epoch_info)
         epoch += 1
 
@@ -2234,8 +2230,8 @@ class _ModelVisualization(object):
         yspreads = [{
             'valid': ut.take_column(epochs, 'valid_acc_std'),
             'learn': ut.take_column(epochs, 'learn_acc_std'),
-        }
-            for epochs in model.history.grouped_epochs()]
+        } for epochs in model.history.grouped_epochs()]
+
         fig = model._show_era_measure(ydatas, labels,  styles, ylabel='accuracy',
                                       yspreads=yspreads, **kwargs)
         #import plottool as pt
