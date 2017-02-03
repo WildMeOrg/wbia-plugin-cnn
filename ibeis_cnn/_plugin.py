@@ -103,10 +103,9 @@ def generate_thumbnail_class_list(ibs, thumbnail_list, nInput=None,
             thumbnail_list = list(thumbnail_list)
             nInput = len(thumbnail_list)
 
-    ut.embed()
     model = models.ClassifierModel(batch_size=batch_size, data_shape=data_shape)
 
-    if classifier_weight_filepath in [None, 'v1']:
+    if classifier_weight_filepath in [None, 'coco_zebra']:
         weights_path = grabmodels.ensure_model('classifier_coco_zebra', redownload=False)
     elif ut.exists(weights_path):
         weights_path = classifier_weight_filepath
@@ -163,7 +162,6 @@ def generate_chip_label_list(ibs, chip_list, nInput=None,
             chip_list = list(chip_list)
             nInput = len(chip_list)
 
-    ut.embed()
     model = models.LabelerModel(batch_size=batch_size, data_shape=data_shape)
 
     if labeler_weight_filepath in [None, 'v1']:

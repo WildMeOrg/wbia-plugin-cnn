@@ -5,6 +5,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 from ibeis_cnn.models import _model_legacy
 from ibeis_cnn.models import abstract_models
 from ibeis_cnn.models import background
+from ibeis_cnn.models import classifier
 from ibeis_cnn.models import labeler
 from ibeis_cnn.models import dummy
 from ibeis_cnn.models import mnist
