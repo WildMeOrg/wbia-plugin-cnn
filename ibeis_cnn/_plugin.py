@@ -646,10 +646,11 @@ def test_convolutional(model, image, patch_size='auto', stride='auto',
             # confidence_[label_ != label] = 0
 
             # NEW
-            if isinstance(label_, np.ndarray):
-                flip_index = (label_ != label).astype(np.int)
-            else:
-                flip_index = int(label_ != label)
+            # if isinstance(label_, np.ndarray):
+            #     flip_index = (label_ != label).astype(np.int)
+            # else:
+            #     flip_index = int(label_ != label)
+            flip_index = label_ != label
             confidence_[flip_index] = 1.0 - confidence_[flip_index]
             confidence_[confidence_ <= confidence_thresh] = 0
 
