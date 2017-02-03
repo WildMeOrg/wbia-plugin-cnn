@@ -234,8 +234,8 @@ def train_labeler(output_path, data_fpath, labels_fpath):
     ut.colorprint('[netrun] * Initializing new weights', 'lightgray')
     if model.has_saved_state():
         model.load_model_state()
-    else:
-        model.reinit_weights()
+    # else:
+    #     model.reinit_weights()
 
     # ut.colorprint('[netrun] Need to initialize training state', 'yellow')
     # X_train, y_train = dataset.subset('train')
