@@ -48,7 +48,7 @@ class ViewpointModel(abstract_models.AbstractCategoricalModel):
         viewpoints = len(viewpoint_mapping.keys())
         category_mapping = {}
         for index, species in enumerate(species_list):
-            for viewpoint, value in viewpoint_mapping.iteritems():
+            for viewpoint, value in viewpoint_mapping.items():
                 key = '%s:%s' % (species, viewpoint, )
                 base = viewpoints * index
                 category_mapping[key] = base + value
