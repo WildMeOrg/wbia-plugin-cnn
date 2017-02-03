@@ -462,7 +462,6 @@ class SiameseConcatLayer(lasagne.layers.Layer):
         Example1:
             >>> # DISABLE_DOCTEST
             >>> from ibeis_cnn.custom_layers import *  # NOQA
-item_shape            >>> from ibeis_cnn.custom_layers import *  # NOQA
             >>> from ibeis_cnn import utils
             >>> from ibeis_cnn import draw_net
             >>> import theano
