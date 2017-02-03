@@ -1236,11 +1236,12 @@ def get_background_training_patches2(ibs, dest_path=None, patch_size=48,
     ut.ensuredir(raw_path)
     ut.ensuredir(labels_path)
 
-    gid_list = ibs.get_valid_gids()
-    aids_list = ibs.get_image_aids(gid_list)
+    # gid_list = ibs.get_valid_gids()
+    train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
+    aids_list = ibs.get_image_aids(train_gid_set)
     bboxes_list = [ ibs.get_annot_bboxes(aid_list) for aid_list in aids_list ]
 
-    zipped = zip(gid_list, aids_list, bboxes_list)
+    zipped = zip(train_gid_set, aids_list, bboxes_list)
     label_list = []
     global_positives = 0
     global_negatives = 0
@@ -1472,12 +1473,13 @@ def get_cnn_detector_training_images(ibs, dest_path=None, image_size=128):
     ut.ensuredir(raw_path)
     ut.ensuredir(labels_path)
 
-    gid_list = ibs.get_valid_gids()
-    aids_list = ibs.get_image_aids(gid_list)
+    # gid_list = ibs.get_valid_gids()
+    train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
+    aids_list = ibs.get_image_aids(train_gid_set)
     bboxes_list = [ ibs.get_annot_bboxes(aid_list) for aid_list in aids_list ]
 
     label_list = []
-    zipped_list = zip(gid_list, aids_list, bboxes_list)
+    zipped_list = zip(train_gid_set, aids_list, bboxes_list)
     global_bbox_list = []
     for gid, aid_list, bbox_list in zipped_list:
 
@@ -1562,8 +1564,9 @@ def get_cnn_classifier_binary_training_images(ibs, category_list, dest_path=None
     ut.ensuredir(raw_path)
     ut.ensuredir(labels_path)
 
-    gid_list = ibs.get_valid_gids()
-    aids_list = ibs.get_image_aids(gid_list)
+    # gid_list = ibs.get_valid_gids()
+    train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
+    aids_list = ibs.get_image_aids(train_gid_set)
 
     category_set = set(category_list)
 
@@ -1573,7 +1576,7 @@ def get_cnn_classifier_binary_training_images(ibs, category_list, dest_path=None
     ]
 
     label_list = []
-    for gid, species_set in zip(gid_list, species_set_list):
+    for gid, species_set in zip(train_gid_set, species_set_list):
         args = (gid, )
         print('Processing GID: %r' % args)
 
@@ -1585,8 +1588,7 @@ def get_cnn_classifier_binary_training_images(ibs, category_list, dest_path=None
         patch_filepath = join(raw_path, patch_filename)
         cv2.imwrite(patch_filepath, image_)
 
-        overlap_set = species_set & category_set
-        category = 'positive' if len(overlap_set) else 'negative'
+        category = 'positive' if len(species_set & category_set) else 'negative'
         label = '%s,%s' % (patch_filename, category, )
         label_list.append(label)
 
@@ -1595,67 +1597,6 @@ def get_cnn_classifier_binary_training_images(ibs, category_list, dest_path=None
         labels.write(label_str)
 
     return name_path
-
-
-# def get_cnn_classifier_multiple_training_images(ibs, dest_path=None, image_size=192,
-#                                                 category_list=None,
-#                                                 purge=True):
-#     from os.path import join, expanduser
-#     if dest_path is None:
-#         dest_path = expanduser(join('~', 'Desktop', 'extracted'))
-
-#     name = 'classifier'
-#     dbname = ibs.dbname
-#     name_path = join(dest_path, name)
-#     raw_path = join(name_path, 'raw')
-#     labels_path = join(name_path, 'labels')
-
-#     if purge:
-#         ut.delete(name_path)
-
-#     ut.ensuredir(name_path)
-#     ut.ensuredir(raw_path)
-#     ut.ensuredir(labels_path)
-
-#     gid_list = ibs.get_valid_gids()
-#     aids_list = ibs.get_image_aids(gid_list)
-
-#     assert category_list is not None
-#     if category_list is None:
-#         aid_list = ut.flatten(aids_list)
-#         species_list = ibs.get_annot_species_texts(aid_list)
-#         category_list = sorted(list(set(species_list)))
-#     category_set = set(category_list)
-
-#     species_set_list = [
-#         set(ibs.get_annot_species_texts(aid_list_))
-#         for aid_list_ in aids_list
-#     ]
-
-#     label_list = []
-#     for gid, species_set in zip(gid_list, species_set_list):
-#         args = (gid, )
-#         print('Processing GID: %r' % args)
-
-#         image = ibs.get_image_imgdata(gid)
-#         image_ = cv2.resize(image, (image_size, image_size), interpolation=cv2.INTER_LANCZOS4)
-
-#         values = (dbname, gid, )
-#         patch_filename = '%s_image_gid_%s.png' % values
-#         patch_filepath = join(raw_path, patch_filename)
-#         cv2.imwrite(patch_filepath, image_)
-
-#         # TODO - What to do when there are mutliple categories?
-#         # overlap_set = species_set & category_set
-#         # category = 'positive' if len(overlap_set) else 'negative'
-#         # label = '%s,%s' % (patch_filename, category, )
-#         # label_list.append(label)
-
-#     with open(join(labels_path, 'labels.csv'), 'a') as labels:
-#         label_str = '\n'.join(label_list) + '\n'
-#         labels.write(label_str)
-
-#     return name_path
 
 
 def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
@@ -1751,8 +1692,9 @@ def get_cnn_qualifier_training_images(ibs, dest_path=None, image_size=128,
     ut.ensuredir(raw_path)
     ut.ensuredir(labels_path)
 
-    gid_list = ibs.get_valid_gids()
-    aids_list = ibs.get_image_aids(gid_list)
+    # gid_list = ibs.get_valid_gids()
+    train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
+    aids_list = ibs.get_image_aids(train_gid_set)
     # bboxes_list = [ ibs.get_annot_bboxes(aid_list) for aid_list in aids_list ]
     # aid_list = ibs.get_valid_aids()
     aid_list = ut.flatten(aids_list)
@@ -1920,8 +1862,9 @@ def get_orientation_training_images(ibs, dest_path=None, **kwargs):
     ut.ensuredir(raw_path)
     ut.ensuredir(labels_path)
 
-    gid_list = ibs.get_valid_gids()
-    vals = extract_orientation_chips(ibs, gid_list, **kwargs)
+    # gid_list = ibs.get_valid_gids()
+    train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
+    vals = extract_orientation_chips(ibs, train_gid_set, **kwargs)
 
     label_list = []
     zipped_list = zip(*vals)
