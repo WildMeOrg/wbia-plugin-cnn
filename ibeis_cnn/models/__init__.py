@@ -69,6 +69,7 @@ def reload_subs(verbose=True):
     get_rrr(_model_legacy)(verbose=verbose)
     get_rrr(abstract_models)(verbose=verbose)
     get_rrr(background)(verbose=verbose)
+    get_rrr(classifier)(verbose=verbose)
     get_rrr(labeler)(verbose=verbose)
     get_rrr(dummy)(verbose=verbose)
     get_rrr(mnist)(verbose=verbose)
@@ -88,6 +89,7 @@ IMPORT_TUPLES = [
     ('_model_legacy', None),
     ('abstract_models', None),
     ('background', None),
+    ('classifier', None),
     ('labeler', None),
     ('dummy', None),
     ('mnist', None),
