@@ -102,6 +102,8 @@ class PretrainedNetwork(object):
                 self.pretrained_layer = pretrained_layer
 
             def sample(self, shape):
+                args = (layer_index, self.modelkey, )
+                print('[pretrained] Sampling layer %d from pretrained model %r' % args)
                 if len(shape) == 1:
                     assert shape[0] <= self.pretrained_layer.shape[0]
                     pretrained_weights = self.pretrained_layer[:shape[0]]
