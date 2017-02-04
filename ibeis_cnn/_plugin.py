@@ -292,10 +292,11 @@ def generate_species_background_mask(ibs, chip_fpath_list, species=None):
         >>> import ibeis
         >>> from ibeis_cnn._plugin import *  # NOQA
         >>> ibs = ibeis.opendb(defaultdb='testdb1')
-        >>> aid_list = ut.get_argval(('--aids', '--aid'), type_=list, default=ibs.get_valid_aids()[0:10])
+        >>> aid_list = ut.get_argval(('--aids', '--aid'), type_=list, default=ibs.get_valid_aids()[0:2])
         >>> chip_fpath_list = ibs.get_annot_chip_fpath(aid_list)
         >>> species = ibs.const.TEST_SPECIES.ZEB_PLAIN
         >>> mask_list = generate_species_background_mask(ibs, chip_fpath_list, species)
+        >>> mask_list = list(mask_list)
         >>> ut.quit_if_noshow()
         >>> import plottool as pt
         >>> iteract_obj = pt.interact_multi_image.MultiImageInteraction(mask_list, nPerPage=4)
@@ -335,7 +336,7 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
     TODO: Use this as the primary function
 
     CommandLine:
-        python -m ibeis_cnn._plugin --exec-generate_species_background --show
+        python -m ibeis_cnn._plugin --exec-generate_species_background --db PZ_MTEST --species=zebra_plains --show
         python -m ibeis_cnn._plugin --exec-generate_species_background --db GZ_Master1 --species=zebra_grevys --save cnn_detect_results_gz.png --diskshow --clipwhite
         python -m ibeis_cnn._plugin --exec-generate_species_background --db PZ_Master1 --species=zebra_plains --save cnn_detect_results_pz.png --diskshow --clipwhite
         python -m ibeis_cnn._plugin --exec-generate_species_background --db PZ_Master1 --show
@@ -349,7 +350,7 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         >>> from ibeis_cnn._plugin import *  # NOQA
         >>> ibs = ibeis.opendb(defaultdb='testdb1')
         >>> aid_list = ibs.get_valid_aids()[0:8]
-        >>> species = ut.get_argval('--species', type_=str, default=None)
+        >>> species = ut.get_argval('--species', type_=str, default='zebra_plains')
         >>> config2_ = None
         >>> nInput = len(aid_list)
         >>> chip_iter = ibs.get_annot_chips(aid_list, verbose=True, config2_=config2_, eager=False)
@@ -609,10 +610,10 @@ def test_convolutional(model, image, patch_size='auto', stride='auto',
         #                                   theano_predict, **batchiter_kw)
         #label_list.extend(test_results['labeled_predictions'])
         if model.encoder is not None:
-            labeld_predictions = model.encoder.inverse_transform(test_results['predictions'])
+            labeled_predictions = model.encoder.inverse_transform(test_results['predictions'])
         else:
-            labeld_predictions = test_results['predictions']
-        label_list.extend(labeld_predictions)
+            labeled_predictions = test_results['predictions']
+        label_list.extend(labeled_predictions)
         confidence_list.extend(test_results['confidences'])
         start += batch_size
 
@@ -650,7 +651,13 @@ def test_convolutional(model, image, patch_size='auto', stride='auto',
             #     flip_index = (label_ != label).astype(np.int)
             # else:
             #     flip_index = int(label_ != label)
-            flip_index = label_ != label
+            if isinstance(label, six.text_type):
+                # fix for python3, can't compare numpy byte arrays with
+                # unicode.
+                label2_ = label.encode('utf-8')
+            else:
+                label2_ = label
+            flip_index = label_ != label2_
             confidence_[flip_index] = 1.0 - confidence_[flip_index]
             confidence_[confidence_ <= confidence_thresh] = 0
 
