@@ -110,6 +110,7 @@ def testdata_model_with_history():
     # make a dummy history
     X_train, y_train = [1, 2, 3], [0, 0, 1]
     rng = np.random.RandomState(0)
+
     def dummy_epoch_dict(num):
         epoch_info = {
             'epoch': num,

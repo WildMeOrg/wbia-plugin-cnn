@@ -4,6 +4,7 @@ try:
     from lasagne import *  # NOQA
 except ImportError as ex:
     print('Lasagne failed to import')
+    print(ex)
     print('theano.__version__ = %r' % (theano.__version__,))
     print('theano.__file__ = %r' % (theano.__file__,))
     raise

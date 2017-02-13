@@ -92,7 +92,7 @@ def testdata_imglist(shape=(32, 32, 3)):
 
 
 def convert_cv2_images_to_theano_images(img_list):
-    """
+    r"""
     Converts b01c to bc01
 
     Converts a list of cv2-style images into a single numpy array of nonflat
