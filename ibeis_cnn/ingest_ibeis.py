@@ -1645,7 +1645,7 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
 
     aid_list_ = [tup[0] for tup in tup_list]
     # Precompute chips
-    ibs.get_annot_chips(aid_list_)
+    ibs.compute_all_chips(aid_list_)
 
     skipped = 0
     label_list = []
