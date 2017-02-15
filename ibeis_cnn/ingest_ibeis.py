@@ -1636,16 +1636,22 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
         species_list = ibs.get_annot_species_texts(aid_list)
         category_list = sorted(list(set(species_list)))
 
+    tup_list = []
+    for tup in zip(aid_list, species_list, yaw_list):
+        aid, species, yaw = tup
+        if species in category_list and yaw is None:
+            continue
+        tup_list.append(tup)
+
+    aid_list_ = [tup[0] for tup in tup_list]
+    # Precompute chips
+    ibs.get_annot_chips(aid_list_)
+
     skipped = 0
     label_list = []
-    for aid, species, yaw in zip(aid_list, species_list, yaw_list):
+    for aid, species, yaw in tup_list:
         args = (aid, )
         print('Processing AID: %r' % args)
-
-        if species in category_list and yaw is None:
-            print('\tSkipped')
-            skipped += 1
-            continue
 
         image = ibs.get_annot_chips(aid)
         image_ = cv2.resize(image, (image_size, image_size), interpolation=cv2.INTER_LANCZOS4)
