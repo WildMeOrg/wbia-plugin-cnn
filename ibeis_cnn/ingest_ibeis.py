@@ -1636,10 +1636,12 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
         species_list = ibs.get_annot_species_texts(aid_list)
         category_list = sorted(list(set(species_list)))
 
+    skipped = 0
     tup_list = []
     for tup in zip(aid_list, species_list, yaw_list):
         aid, species, yaw = tup
         if species in category_list and yaw is None:
+            skipped += 1
             continue
         tup_list.append(tup)
 
@@ -1647,7 +1649,6 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
     # Precompute chips
     ibs.compute_all_chips(aid_list_)
 
-    skipped = 0
     label_list = []
     for aid, species, yaw in tup_list:
         args = (aid, )
