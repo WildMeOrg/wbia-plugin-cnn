@@ -1633,8 +1633,6 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
     species_set = set(species_list)
     yaw_list = ibs.get_annot_yaw_texts(aid_list)
 
-    ut.embed()
-
     if category_list is None:
         category_list = sorted(list(species_set))
         undesired_list = [
