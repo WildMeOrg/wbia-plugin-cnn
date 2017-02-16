@@ -1637,18 +1637,25 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
 
     if category_list is None:
         category_list = sorted(list(species_set))
+        undesired_list = [
+            'unspecified_animal',
+            ibs.get_species_nice(ibs.const.UNKNOWN_SPECIES_ROWID)
+        ]
+        for undesired_species in undesired_list:
+            if undesired_species in category_list:
+                category_list.remove(undesired_species)
     category_set = set(category_list)
 
     # Filter the tup_list based on the requested categories
     tup_list = list(zip(aid_list, species_list, yaw_list))
-    current_len = len(tup_list)
+    old_len = len(tup_list)
     tup_list = [
         tup
         for tup in tup_list
         if tup[1] in category_set
     ]
     new_len = len(tup_list)
-    print('Filtered annotations: %d / %d' % (current_len, new_len))
+    print('Filtered annotations: %d / %d' % (new_len, old_len, ))
 
     # Skip any annotations that are of the wanted category and don't have a specified viewpoint
     seen_dict = {}
@@ -1684,35 +1691,56 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
             # Check that all viewpoints have a minimum number of instances
             for yaw in yaw_dict[species]:
                 assert yaw in ibs.const.VIEWTEXT_TO_YAW_RADIANS
-                if len(yaw_dict[species][yaw]) < min_examples:
+                if yaw_dict[species][yaw] < min_examples:
                     invalid_yaw_set.add(species)
                     continue
         else:
             invalid_yaw_set.add(species)
             continue
 
-    print('Requested categories: %r' % (category_set, ))
-    print('Invalid seen categories: %r' % (invalid_seen_set, ))
-    print('Invalid yaw categories: %r' % (invalid_yaw_set, ))
+    valid_seen_set = category_set - invalid_seen_set
+    valid_yaw_set = valid_seen_set - invalid_yaw_set
+    print('Requested categories:')
+    ut.print_list(sorted(category_set))
+    # print('Invalid yaw categories:')
+    # ut.print_list(sorted(invalid_yaw_set))
+    # print('Valid seen categories:')
+    # ut.print_list(sorted(valid_seen_set))
+    print('Valid yaw categories:')
+    ut.print_list(sorted(valid_yaw_set))
+    print('Invalid seen categories (could not fulfill request):')
+    ut.print_list(sorted(invalid_seen_set))
+
+    skipped_yaw = 0
+    skipped_seen = 0
+    tup_list_ = []
+    for tup in tup_list:
+        aid, species, yaw = tup
+        if species in valid_yaw_set:
+            # If the species is valid, but this specific annotation has no yaw, skip it
+            if yaw is None:
+                skipped_yaw += 1
+                continue
+            category = '%s:%s' % (species, yaw, )
+        elif species in valid_seen_set:
+            category = '%s' % (species, )
+        else:
+            skipped_seen += 1
+            continue
+        tup_list_.append((tup, category))
+    print('Skipped Yaw:  %d / %d' % (skipped_yaw, len(tup_list), ))
+    print('Skipped Seen: %d / %d' % (skipped_seen, len(tup_list), ))
 
     # Precompute chips
-    aid_list_ = [tup[0] for tup in tup_list]
+    aid_list_ = [tup[0] for tup in tup_list_]
     ibs.compute_all_chips(aid_list_)
 
     # Get training data
     label_list = []
-    skipped = 0
-    for aid, species, yaw in tup_list:
+    for tup, category in tup_list_:
+        aid, species, yaw = tup
         args = (aid, )
         print('Processing AID: %r' % args)
-
-        if species not in invalid_yaw_set:
-            category = '%s:%s' % (species, yaw, )
-        elif species not in invalid_seen_set:
-            category = '%s' % (species, )
-        else:
-            skipped += 1
-            continue
 
         # Compute data
         image = ibs.get_annot_chips(aid)
@@ -1723,10 +1751,9 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
         patch_filepath = join(raw_path, patch_filename)
         cv2.imwrite(patch_filepath, image_)
 
-        # COmpute label
+        # Compute label
         label = '%s,%s' % (patch_filename, category, )
         label_list.append(label)
-    print('Skipped: %d / %d' % (skipped, len(tup_list), ))
 
     with open(join(labels_path, 'labels.csv'), 'a') as labels:
         label_str = '\n'.join(label_list) + '\n'
