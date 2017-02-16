@@ -1745,6 +1745,7 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
 
         if skip_rate > 0.0 and random.uniform(0.0, 1.0) <= skip_rate:
             print('\t Skipping')
+            continue
 
         # Compute data
         image = ibs.get_annot_chips(aid)
