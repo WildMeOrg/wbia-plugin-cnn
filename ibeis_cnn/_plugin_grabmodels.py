@@ -11,7 +11,7 @@ MODEL_DOMAIN = 'https://lev.cs.rpi.edu/public/models/'
 MODEL_URLS = {
     'classifier_coco_zebra'          : 'classifier.coco.zebra.pkl',
 
-    'labeler_v1'                     : 'labeler.cheetah.pkl',
+    'labeler_v1'                     : 'labeler.v1.pkl',
     'labeler_cheetah'                : 'labeler.cheetah.pkl',
     'labeler_lynx'                   : 'labeler.lynx.pkl',
 

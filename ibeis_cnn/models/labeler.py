@@ -52,12 +52,19 @@ def augment_wrapper(Xb, yb=None):
         X_L[X_L > 255.0] = 255.0
         X_Lab[:, :, 0] = X_L.astype(dtype=X_Lab.dtype)
         X = cv2.cvtColor(X_Lab, cv2.COLOR_LAB2BGR)
-        # Rotate and Scale
+        # Rotate, Scale, Skew
         h, w, c = X.shape
-        degree = random.randint(-10, 10)
+        degree = random.randint(-15, 15)
         scale = random.uniform(0.90, 1.10)
+        skew_x = random.uniform(0.90, 1.10)
+        skew_y = random.uniform(0.90, 1.10)
+        skew_x_offset = abs(1.0 - skew_x)
+        skew_y_offset = abs(1.0 - skew_y)
+        skew_offset = np.sqrt(skew_x_offset ** skew_x_offset + skew_y_offset ** skew_y_offset)
+        skew_scale = 1.0 + skew_offset
         padding = np.sqrt((w) ** 2 / 4 - 2 * (w) ** 2 / 16)
         padding /= scale
+        padding *= skew_scale
         padding = int(np.ceil(padding))
         for channel in range(c):
             X_ = X[:, :, channel]
@@ -66,6 +73,12 @@ def augment_wrapper(Xb, yb=None):
             # Calculate Affine transform
             center = (w_ // 2, h_ // 2)
             A = cv2.getRotationMatrix2D(center, degree, scale)
+            # Add skew
+            A[0][0] *= skew_x
+            A[1][0] *= skew_x
+            A[0][1] *= skew_y
+            A[1][1] *= skew_y
+            # Apply Affine
             X_ = cv2.warpAffine(X_, A, (w_, h_), flags=cv2.INTER_LANCZOS4, borderValue=0)
             X_ = X_[padding: -1 * padding, padding: -1 * padding]
             X[:, :, channel] = X_
@@ -142,21 +155,28 @@ class LabelerModel(abstract_models.AbstractCategoricalModel):
                 _P(layers.InputLayer, shape=model.input_shape),
 
                 _P(Conv2DLayer, num_filters=32, filter_size=(11, 11), name='C0', W=_CaffeNet.get_pretrained_layer(0), **hidden_initkw),  # NOQA
+                _P(layers.batch_norm),
+
                 _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P0'),
 
                 _P(Conv2DLayer, num_filters=64, filter_size=(5, 5), name='C1', W=_CaffeNet.get_pretrained_layer(2), **hidden_initkw),  # NOQA
+                _P(layers.batch_norm),
                 _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P1'),
 
                 _P(Conv2DLayer, num_filters=128, filter_size=(3, 3), name='C2', W=_CaffeNet.get_pretrained_layer(4), **hidden_initkw),  # NOQA
+                _P(layers.batch_norm),
                 _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P2'),
 
                 _P(Conv2DLayer, num_filters=256, filter_size=(3, 3), name='C3', W=init.Orthogonal('relu'), **hidden_initkw),
+                _P(layers.batch_norm),
                 _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P3'),
 
                 _P(layers.DenseLayer, num_units=512, name='F0',  **hidden_initkw),
+                _P(layers.batch_norm),
                 _P(layers.FeaturePoolLayer, pool_size=2, name='FP0'),
                 _P(layers.DropoutLayer, p=0.5, name='D4'),
                 _P(layers.DenseLayer, num_units=512, name='F1', **hidden_initkw),
+                _P(layers.batch_norm),
 
                 _P(layers.DenseLayer, num_units=model.output_dims, name='F2', nonlinearity=nonlinearities.softmax),
             ]

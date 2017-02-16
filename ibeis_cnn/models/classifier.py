@@ -40,15 +40,20 @@ def augment_wrapper(Xb, yb=None):
         X_L[X_L > 255.0] = 255.0
         X_Lab[:, :, 0] = X_L.astype(dtype=X_Lab.dtype)
         X = cv2.cvtColor(X_Lab, cv2.COLOR_LAB2BGR)
-        # Rotate and Scale
+        # Rotate, Scale, Skew
         h, w, c = X.shape
         degree = random.randint(-15, 15)
         scale = random.uniform(0.90, 1.10)
-        padding = np.sqrt((w) ** 2 / 4 - 2 * (w) ** 2 / 16)
-        padding /= scale
-        padding = int(np.ceil(padding))
         skew_x = random.uniform(0.90, 1.10)
         skew_y = random.uniform(0.90, 1.10)
+        skew_x_offset = abs(1.0 - skew_x)
+        skew_y_offset = abs(1.0 - skew_y)
+        skew_offset = np.sqrt(skew_x_offset ** skew_x_offset + skew_y_offset ** skew_y_offset)
+        skew_scale = 1.0 + skew_offset
+        padding = np.sqrt((w) ** 2 / 4 - 2 * (w) ** 2 / 16)
+        padding /= scale
+        padding *= skew_scale
+        padding = int(np.ceil(padding))
         for channel in range(c):
             X_ = X[:, :, channel]
             X_ = np.pad(X_, padding, 'reflect', reflect_type='even')
