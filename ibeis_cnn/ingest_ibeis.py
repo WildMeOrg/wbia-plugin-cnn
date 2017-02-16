@@ -1712,6 +1712,7 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
     skipped_yaw = 0
     skipped_seen = 0
     tup_list_ = []
+    aid_list_ = []
     for tup in tup_list:
         aid, species, yaw = tup
         if species in valid_yaw_set:
@@ -1726,11 +1727,11 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
             skipped_seen += 1
             continue
         tup_list_.append((tup, category))
+        aid_list_.append(aid)
     print('Skipped Yaw:  %d / %d' % (skipped_yaw, len(tup_list), ))
     print('Skipped Seen: %d / %d' % (skipped_seen, len(tup_list), ))
 
     # Precompute chips
-    aid_list_ = [tup[0] for tup in tup_list_]
     ibs.compute_all_chips(aid_list_)
 
     # Get training data
