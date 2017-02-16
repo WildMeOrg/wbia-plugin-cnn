@@ -1601,8 +1601,10 @@ def get_cnn_classifier_binary_training_images(ibs, category_list, dest_path=None
 
 def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
                                     category_list=None, min_examples=10,
-                                    purge=True):
+                                    purge=True, skip_rate=0.0):
     from os.path import join, expanduser
+    import random
+
     if dest_path is None:
         dest_path = expanduser(join('~', 'Desktop', 'extracted'))
 
@@ -1740,6 +1742,9 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
         aid, species, yaw = tup
         args = (aid, )
         print('Processing AID: %r' % args)
+
+        if skip_rate > 0.0 and random.uniform(0.0, 1.0) <= skip_rate:
+            print('\t Skipping')
 
         # Compute data
         image = ibs.get_annot_chips(aid)
