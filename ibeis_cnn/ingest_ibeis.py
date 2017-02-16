@@ -1600,7 +1600,7 @@ def get_cnn_classifier_binary_training_images(ibs, category_list, dest_path=None
 
 
 def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
-                                    category_list=None,
+                                    category_list=None, min_examples=10,
                                     purge=True):
     from os.path import join, expanduser
     if dest_path is None:
@@ -1630,30 +1630,91 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
     # random.shuffle(aid_list)
     # aid_list = sorted(aid_list[:100])
     species_list = ibs.get_annot_species_texts(aid_list)
+    species_set = set(species_list)
     yaw_list = ibs.get_annot_yaw_texts(aid_list)
 
+    ut.embed()
+
     if category_list is None:
-        species_list = ibs.get_annot_species_texts(aid_list)
-        category_list = sorted(list(set(species_list)))
+        category_list = sorted(list(species_set))
+    category_set = set(category_list)
 
-    skipped = 0
-    tup_list = []
-    for tup in zip(aid_list, species_list, yaw_list):
+    # Filter the tup_list based on the requested categories
+    tup_list = list(zip(aid_list, species_list, yaw_list))
+    current_len = len(tup_list)
+    tup_list = [
+        tup
+        for tup in tup_list
+        if tup[1] in category_set
+    ]
+    new_len = len(tup_list)
+    print('Filtered annotations: %d / %d' % (current_len, new_len))
+
+    # Skip any annotations that are of the wanted category and don't have a specified viewpoint
+    seen_dict = {}
+    yaw_dict = {}
+    for tup in tup_list:
         aid, species, yaw = tup
-        if species in category_list and yaw is None:
-            skipped += 1
-            continue
-        tup_list.append(tup)
+        # Keep track of the number of overall instances
+        if species not in seen_dict:
+            seen_dict[species] = 0
+        seen_dict[species] += 1
+        # Keep track of yaws that aren't None
+        if yaw is not None:
+            if species not in yaw_dict:
+                yaw_dict[species] = {}
+            if yaw not in yaw_dict[species]:
+                yaw_dict[species][yaw] = 0
+            yaw_dict[species][yaw] += 1
 
-    aid_list_ = [tup[0] for tup in tup_list]
+    # Get the list of species that do not have enough viewpoint examples for training
+    invalid_seen_set = set([])
+    invalid_yaw_set = set([])
+    for species in seen_dict:
+        # Check that the number of instances is above the min_examples
+        if seen_dict[species] < min_examples:
+            invalid_seen_set.add(species)
+            continue
+        # If the species has viewpoints, check them as well
+        if species in yaw_dict:
+            # Check that all viewpoints exist
+            if len(yaw_dict[species]) < 8:
+                invalid_yaw_set.add(species)
+                continue
+            # Check that all viewpoints have a minimum number of instances
+            for yaw in yaw_dict[species]:
+                assert yaw in ibs.const.VIEWTEXT_TO_YAW_RADIANS
+                if len(yaw_dict[species][yaw]) < min_examples:
+                    invalid_yaw_set.add(species)
+                    continue
+        else:
+            invalid_yaw_set.add(species)
+            continue
+
+    print('Requested categories: %r' % (category_set, ))
+    print('Invalid seen categories: %r' % (invalid_seen_set, ))
+    print('Invalid yaw categories: %r' % (invalid_yaw_set, ))
+
     # Precompute chips
+    aid_list_ = [tup[0] for tup in tup_list]
     ibs.compute_all_chips(aid_list_)
 
+    # Get training data
     label_list = []
+    skipped = 0
     for aid, species, yaw in tup_list:
         args = (aid, )
         print('Processing AID: %r' % args)
 
+        if species not in invalid_yaw_set:
+            category = '%s:%s' % (species, yaw, )
+        elif species not in invalid_seen_set:
+            category = '%s' % (species, )
+        else:
+            skipped += 1
+            continue
+
+        # Compute data
         image = ibs.get_annot_chips(aid)
         image_ = cv2.resize(image, (image_size, image_size), interpolation=cv2.INTER_LANCZOS4)
 
@@ -1662,16 +1723,10 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
         patch_filepath = join(raw_path, patch_filename)
         cv2.imwrite(patch_filepath, image_)
 
-        if species in category_list:
-            category = '%s:%s' % (species, yaw, )
-        else:
-            category = 'ignore'
-
-        # MAYBE ADD NEGATIVE CLASS?
-
+        # COmpute label
         label = '%s,%s' % (patch_filename, category, )
         label_list.append(label)
-    print('Skipped: %d' % (skipped, ))
+    print('Skipped: %d / %d' % (skipped, len(tup_list), ))
 
     with open(join(labels_path, 'labels.csv'), 'a') as labels:
         label_str = '\n'.join(label_list) + '\n'
