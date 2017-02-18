@@ -119,8 +119,8 @@ def get_aidpairs_partmatch(ibs, acfg_name):
     print('Building labels')
     const = ibs.const
     unflat_pairs = (pos_aid_pairs, hardneg_aid_pairs, randneg_aid_pairs)
-    type_labels = (const.TRUTH_MATCH, const.TRUTH_NOT_MATCH,
-                   const.TRUTH_NOT_MATCH)
+    type_labels = (const.REVIEW.MATCH, const.REVIEW.NON_MATCH,
+                   const.REVIEW.NON_MATCH)
     type_meta_labels = ('pos', 'hardneg', 'randneg')
 
     def _expand(type_list):
@@ -512,7 +512,7 @@ def get_patchmetric_training_data_and_labels(ibs, aid1_list, aid2_list,
     #data_per_label = 2
     assert labels.shape[0] == data.shape[0] // 2
     from ibeis import const
-    assert np.all(labels != const.TRUTH_UNKNOWN)
+    assert np.all(labels != const.REVIEW.UNKNOWN)
     return data, labels, flat_metadata
 
 
@@ -550,7 +550,7 @@ def get_aidpair_training_labels(ibs, aid1_list_, aid2_list_):
     labels = truth_list
     # Mark different viewpoints as unknown for training
     isinconsistent_list = mark_inconsistent_viewpoints(ibs, aid1_list_, aid2_list_)
-    labels[isinconsistent_list] = ibs.const.TRUTH_UNKNOWN
+    labels[isinconsistent_list] = ibs.const.REVIEW.UNKNOWN
     return labels
 
 
@@ -980,7 +980,7 @@ def get_aidpairs_and_matches(ibs, max_examples=None, num_top=3,
         # Filter out bad training examples
         # (we are currently in annot-vs-annot format, not yet in patch-vs-patch)
         labels_all = get_aidpair_training_labels(ibs, aid1_list_all, aid2_list_all)
-        has_gt = (labels_all != ibs.const.TRUTH_UNKNOWN)
+        has_gt = (labels_all != ibs.const.REVIEW.UNKNOWN)
         nonempty = [len(fm) > 0 for fm in fm_list_all]
         # Filter pairs bad pairs of aids
         # using case tags
@@ -992,7 +992,7 @@ def get_aidpairs_and_matches(ibs, max_examples=None, num_top=3,
         MIN_TD = 5 * 60  # 5 minutes at least
         timedelta_list = np.abs(ibs.get_annot_pair_timdelta(aid1_list_all, aid2_list_all))
         #isnan = np.isnan(timedelta_list)
-        gf_tdflags = np.logical_or(labels_all == ibs.const.TRUTH_MATCH, timedelta_list > MIN_TD)
+        gf_tdflags = np.logical_or(labels_all == ibs.const.REVIEW.MATCH, timedelta_list > MIN_TD)
         print(ut.filtered_infostr(gf_tdflags, 'gf annots', 'timestamp'))
         flags = ut.and_lists(flags, gf_tdflags)
         # Remove small time deltas
