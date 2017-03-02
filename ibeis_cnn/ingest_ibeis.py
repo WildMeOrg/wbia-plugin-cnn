@@ -1546,8 +1546,12 @@ def get_cnn_detector_training_images(ibs, dest_path=None, image_size=128):
 
 
 def get_cnn_classifier_binary_training_images(ibs, category_list, dest_path=None,
-                                              image_size=192, purge=True):
+                                              image_size=192, purge=True,
+                                              skip_rate=0.0,
+                                              skip_rate_pos=0.0,
+                                              skip_rate_neg=0.0):
     from os.path import join, expanduser
+    import random
     if dest_path is None:
         dest_path = expanduser(join('~', 'Desktop', 'extracted'))
 
@@ -1580,6 +1584,20 @@ def get_cnn_classifier_binary_training_images(ibs, category_list, dest_path=None
         args = (gid, )
         print('Processing GID: %r' % args)
 
+        if skip_rate > 0.0 and random.uniform(0.0, 1.0) <= skip_rate:
+            print('\t Skipping')
+            continue
+
+        category = 'positive' if len(species_set & category_set) else 'negative'
+
+        if skip_rate_pos > 0.0 and category == 'positive' and random.uniform(0.0, 1.0) <= skip_rate_pos:
+            print('\t Skipping Positive')
+            continue
+
+        if skip_rate_neg > 0.0 and category == 'negative' and random.uniform(0.0, 1.0) <= skip_rate_neg:
+            print('\t Skipping Negative')
+            continue
+
         image = ibs.get_image_imgdata(gid)
         image_ = cv2.resize(image, (image_size, image_size), interpolation=cv2.INTER_LANCZOS4)
 
@@ -1588,7 +1606,6 @@ def get_cnn_classifier_binary_training_images(ibs, category_list, dest_path=None
         patch_filepath = join(raw_path, patch_filename)
         cv2.imwrite(patch_filepath, image_)
 
-        category = 'positive' if len(species_set & category_set) else 'negative'
         label = '%s,%s' % (patch_filename, category, )
         label_list.append(label)
 
