@@ -10,10 +10,12 @@ import utool as ut
 MODEL_DOMAIN = 'https://lev.cs.rpi.edu/public/models/'
 MODEL_URLS = {
     'classifier_coco_zebra'          : 'classifier.coco.zebra.pkl',
+    'classifier_v3_zebra'            : 'classifier.29.zebra.pkl',
 
     'labeler_v1'                     : 'labeler.v1.pkl',
     'labeler_cheetah'                : 'labeler.cheetah.pkl',
     'labeler_lynx'                   : 'labeler.lynx.pkl',
+    'labeler_v3'                     : 'labeler.29.pkl',
 
     'background_giraffe_masai'       : 'background.giraffe_masai.npy',
     'background_zebra_plains'        : 'background.zebra_plains.npy',
