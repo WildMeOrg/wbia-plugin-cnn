@@ -109,7 +109,7 @@ def generate_thumbnail_class_list(ibs, thumbnail_list, nInput=None,
 
     if classifier_weight_filepath in [None, 'v3_zebra']:
         weights_path = grabmodels.ensure_model('classifier_v3_zebra', redownload=False)
-    if classifier_weight_filepath in ['coco_zebra']:
+    elif classifier_weight_filepath in ['coco_zebra']:
         weights_path = grabmodels.ensure_model('classifier_coco_zebra', redownload=False)
     elif ut.exists(weights_path):
         weights_path = classifier_weight_filepath
