@@ -171,7 +171,7 @@ def generate_chip_label_list(ibs, chip_list, nInput=None,
 
     if labeler_weight_filepath in [None, 'v3']:
         weights_path = grabmodels.ensure_model('labeler_v3', redownload=False)
-    if labeler_weight_filepath in ['v1']:
+    elif labeler_weight_filepath in ['v1']:
         weights_path = grabmodels.ensure_model('labeler_v1', redownload=False)
     elif labeler_weight_filepath in ['cheetah']:
         weights_path = grabmodels.ensure_model('labeler_cheetah', redownload=False)
@@ -182,6 +182,7 @@ def generate_chip_label_list(ibs, chip_list, nInput=None,
     else:
         raise ValueError('Labeler does not have a valid trained model')
 
+    ut.embed()
     model_state_fpath = model.get_model_state_fpath(fpath=weights_path)
     print('[model] loading model state from: %s' % (model_state_fpath,))
     model_state = ut.load_cPkl(model_state_fpath)
