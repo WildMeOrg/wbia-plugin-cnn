@@ -13,6 +13,7 @@ import cv2
 import six
 import numpy as np
 import random
+import os
 import ibeis.constants as const
 from six.moves import zip, range
 print, rrr, profile = ut.inject2(__name__)
@@ -111,7 +112,7 @@ def generate_thumbnail_class_list(ibs, thumbnail_list, nInput=None,
         weights_path = grabmodels.ensure_model('classifier_v3_zebra', redownload=False)
     elif classifier_weight_filepath in ['coco_zebra']:
         weights_path = grabmodels.ensure_model('classifier_coco_zebra', redownload=False)
-    elif ut.exists(weights_path):
+    elif os.path.exists(weights_path):
         weights_path = classifier_weight_filepath
     else:
         raise ValueError('Classifier does not have a valid trained model')
@@ -176,7 +177,7 @@ def generate_chip_label_list(ibs, chip_list, nInput=None,
         weights_path = grabmodels.ensure_model('labeler_cheetah', redownload=False)
     elif labeler_weight_filepath in ['lynx']:
         weights_path = grabmodels.ensure_model('labeler_lynx', redownload=False)
-    elif ut.exists(weights_path):
+    elif os.path.exists(weights_path):
         weights_path = labeler_weight_filepath
     else:
         raise ValueError('Labeler does not have a valid trained model')
