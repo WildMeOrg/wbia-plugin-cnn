@@ -182,7 +182,6 @@ def generate_chip_label_list(ibs, chip_list, nInput=None,
     else:
         raise ValueError('Labeler does not have a valid trained model')
 
-    ut.embed()
     model_state_fpath = model.get_model_state_fpath(fpath=weights_path)
     print('[model] loading model state from: %s' % (model_state_fpath,))
     model_state = ut.load_cPkl(model_state_fpath)
