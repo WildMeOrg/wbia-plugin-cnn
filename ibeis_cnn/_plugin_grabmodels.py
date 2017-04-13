@@ -9,6 +9,8 @@ import utool as ut
 
 MODEL_DOMAIN = 'https://lev.cs.rpi.edu/public/models/'
 MODEL_URLS = {
+    'classifier_cameratrap_megan'    : 'classifier.cameratrap.megan.pkl',
+
     'classifier_coco_zebra'          : 'classifier.coco.zebra.pkl',
     'classifier_v3_zebra'            : 'classifier.29.zebra.pkl',
 
