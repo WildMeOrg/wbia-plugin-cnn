@@ -1545,6 +1545,79 @@ def get_cnn_detector_training_images(ibs, dest_path=None, image_size=128):
     return global_bbox_list
 
 
+def get_cnn_classifier_cameratrap_binary_training_images(ibs, positive_imageset_id,
+                                                         negative_imageset_id,
+                                                         dest_path=None,
+                                                         image_size=192, purge=True,
+                                                         skip_rate=0.0,
+                                                         skip_rate_pos=0.0,
+                                                         skip_rate_neg=0.0):
+    from os.path import join, expanduser
+    import random
+    if dest_path is None:
+        dest_path = expanduser(join('~', 'Desktop', 'extracted'))
+
+    name = 'classifier-cameratrap'
+    dbname = ibs.dbname
+    name_path = join(dest_path, name)
+    raw_path = join(name_path, 'raw')
+    labels_path = join(name_path, 'labels')
+
+    if purge:
+        ut.delete(name_path)
+
+    ut.ensuredir(name_path)
+    ut.ensuredir(raw_path)
+    ut.ensuredir(labels_path)
+
+    train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
+
+    positive_gid_set = set(ibs.get_imageset_gids(positive_imageset_id))
+    negative_gid_set = set(ibs.get_imageset_gids(negative_imageset_id))
+
+    label_list = []
+    for gid in zip(train_gid_set):
+        args = (gid, )
+        print('Processing GID: %r' % args)
+
+        if skip_rate > 0.0 and random.uniform(0.0, 1.0) <= skip_rate:
+            print('\t Skipping - Sampling')
+            continue
+
+        if gid in positive_gid_set:
+            category = 'positive'
+        elif gid in negative_gid_set:
+            category = 'negative'
+        else:
+            print('\t Skipping - No Label')
+            continue
+
+        if skip_rate_pos > 0.0 and category == 'positive' and random.uniform(0.0, 1.0) <= skip_rate_pos:
+            print('\t Skipping Positive')
+            continue
+
+        if skip_rate_neg > 0.0 and category == 'negative' and random.uniform(0.0, 1.0) <= skip_rate_neg:
+            print('\t Skipping Negative')
+            continue
+
+        image = ibs.get_image_imgdata(gid)
+        image_ = cv2.resize(image, (image_size, image_size), interpolation=cv2.INTER_LANCZOS4)
+
+        values = (dbname, gid, )
+        patch_filename = '%s_image_gid_%s.png' % values
+        patch_filepath = join(raw_path, patch_filename)
+        cv2.imwrite(patch_filepath, image_)
+
+        label = '%s,%s' % (patch_filename, category, )
+        label_list.append(label)
+
+    with open(join(labels_path, 'labels.csv'), 'a') as labels:
+        label_str = '\n'.join(label_list) + '\n'
+        labels.write(label_str)
+
+    return name_path
+
+
 def get_cnn_classifier_binary_training_images(ibs, category_list, dest_path=None,
                                               image_size=192, purge=True,
                                               skip_rate=0.0,
