@@ -1707,8 +1707,6 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
     if purge:
         ut.delete(name_path)
 
-    ut.embed()
-
     ut.ensuredir(name_path)
     ut.ensuredir(raw_path)
     ut.ensuredir(labels_path)
@@ -1857,7 +1855,8 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
         label_list.append(label)
 
     print('Using labels for labeler training:')
-    label_list_ = sorted(label_list)
+    label_list_ = set([ _[1] for _ in tup_list_ ])
+    label_list_ = sorted(label_list_)
     ut.print_list(label_list_)
 
     with open(join(labels_path, 'labels.csv'), 'a') as labels:
