@@ -1792,15 +1792,18 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
     valid_seen_set = category_set - invalid_seen_set
     valid_yaw_set = valid_seen_set - invalid_yaw_set
     print('Requested categories:')
-    ut.print_list(sorted(category_set))
+    category_set = sorted(category_set)
+    ut.print_list(category_set)
     # print('Invalid yaw categories:')
     # ut.print_list(sorted(invalid_yaw_set))
     # print('Valid seen categories:')
     # ut.print_list(sorted(valid_seen_set))
     print('Valid yaw categories:')
-    ut.print_list(sorted(valid_yaw_set))
+    valid_yaw_set = sorted(valid_yaw_set)
+    ut.print_list(valid_yaw_set)
     print('Invalid seen categories (could not fulfill request):')
-    ut.print_list(sorted(invalid_seen_set))
+    invalid_seen_set = sorted(invalid_seen_set)
+    ut.print_list(invalid_seen_set)
 
     skipped_yaw = 0
     skipped_seen = 0
@@ -1823,7 +1826,6 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
         aid_list_.append(aid)
     print('Skipped Yaw:  %d / %d' % (skipped_yaw, len(tup_list), ))
     print('Skipped Seen: %d / %d' % (skipped_seen, len(tup_list), ))
-    input('Continue training? [Enter to continue]')
 
     # Precompute chips
     ibs.compute_all_chips(aid_list_)
