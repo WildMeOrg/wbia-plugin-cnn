@@ -1691,7 +1691,7 @@ def get_cnn_classifier_binary_training_images(ibs, category_list, dest_path=None
 
 def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
                                     category_list=None, min_examples=10,
-                                    purge=True, strict=False, skip_rate=0.0):
+                                    purge=True, strict=True, skip_rate=0.0):
     from os.path import join, expanduser
     import random
 
@@ -1725,7 +1725,7 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
     # aid_list = sorted(aid_list[:100])
     species_list = ibs.get_annot_species_texts(aid_list)
     species_set = set(species_list)
-    yaw_list = ibs.get_annot_yaw_texts(aid_list)
+    yaw_list = ibs.get_annot_viewpoints(aid_list)
 
     if category_list is None:
         category_list = sorted(list(species_set))
@@ -1855,6 +1855,10 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
         # Compute label
         label = '%s,%s' % (patch_filename, category, )
         label_list.append(label)
+
+    print('Using labels for labeler training:')
+    label_list_ = sorted(label_list)
+    ut.print_list(label_list_)
 
     with open(join(labels_path, 'labels.csv'), 'a') as labels:
         label_str = '\n'.join(label_list) + '\n'
