@@ -1691,7 +1691,7 @@ def get_cnn_classifier_binary_training_images(ibs, category_list, dest_path=None
 
 def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
                                     category_list=None, min_examples=10,
-                                    purge=True, skip_rate=0.0):
+                                    purge=True, strict=False, skip_rate=0.0):
     from os.path import join, expanduser
     import random
 
@@ -1773,20 +1773,21 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
             invalid_seen_set.add(species)
             continue
         # If the species has viewpoints, check them as well
-        if species in yaw_dict:
-            # Check that all viewpoints exist
-            if len(yaw_dict[species]) < 8:
-                invalid_yaw_set.add(species)
-                continue
-            # Check that all viewpoints have a minimum number of instances
-            for yaw in yaw_dict[species]:
-                assert yaw in ibs.const.VIEWTEXT_TO_YAW_RADIANS
-                if yaw_dict[species][yaw] < min_examples:
+        if strict:
+            if species in yaw_dict:
+                # Check that all viewpoints exist
+                if len(yaw_dict[species]) < 8:
                     invalid_yaw_set.add(species)
                     continue
-        else:
-            invalid_yaw_set.add(species)
-            continue
+                # Check that all viewpoints have a minimum number of instances
+                for yaw in yaw_dict[species]:
+                    assert yaw in ibs.const.VIEWTEXT_TO_YAW_RADIANS
+                    if yaw_dict[species][yaw] < min_examples:
+                        invalid_yaw_set.add(species)
+                        continue
+            else:
+                invalid_yaw_set.add(species)
+                continue
 
     valid_seen_set = category_set - invalid_seen_set
     valid_yaw_set = valid_seen_set - invalid_yaw_set
@@ -1822,6 +1823,7 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
         aid_list_.append(aid)
     print('Skipped Yaw:  %d / %d' % (skipped_yaw, len(tup_list), ))
     print('Skipped Seen: %d / %d' % (skipped_seen, len(tup_list), ))
+    input('Continue training? [Enter to continue]')
 
     # Precompute chips
     ibs.compute_all_chips(aid_list_)
