@@ -6,6 +6,7 @@ from ibeis_cnn.models import _model_legacy
 from ibeis_cnn.models import abstract_models
 from ibeis_cnn.models import background
 from ibeis_cnn.models import classifier
+from ibeis_cnn.models import classifier2
 from ibeis_cnn.models import labeler
 from ibeis_cnn.models import dummy
 from ibeis_cnn.models import mnist
@@ -70,6 +71,7 @@ def reload_subs(verbose=True):
     get_rrr(abstract_models)(verbose=verbose)
     get_rrr(background)(verbose=verbose)
     get_rrr(classifier)(verbose=verbose)
+    get_rrr(classifier2)(verbose=verbose)
     get_rrr(labeler)(verbose=verbose)
     get_rrr(dummy)(verbose=verbose)
     get_rrr(mnist)(verbose=verbose)
@@ -90,6 +92,7 @@ IMPORT_TUPLES = [
     ('abstract_models', None),
     ('background', None),
     ('classifier', None),
+    ('classifier2', None),
     ('labeler', None),
     ('dummy', None),
     ('mnist', None),

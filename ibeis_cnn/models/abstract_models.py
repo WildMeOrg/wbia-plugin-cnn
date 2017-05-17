@@ -460,8 +460,10 @@ class _ModelFitter(object):
         has_encoder = getattr(model, 'encoder', None) is not None
         learn_hist = model.encoder.inverse_transform(y_learn) if has_encoder else y_learn
         valid_hist = model.encoder.inverse_transform(y_valid) if has_encoder else y_valid
-        print('Learn y histogram: ' + ut.repr2(ut.dict_hist(learn_hist)))
-        print('Valid y histogram: ' + ut.repr2(ut.dict_hist(valid_hist)))
+        if learn_hist.shape[-1] == 1:
+            print('Learn y histogram: ' + ut.repr2(ut.dict_hist(learn_hist)))
+        if valid_hist.shape[-1] == 1:
+            print('Valid y histogram: ' + ut.repr2(ut.dict_hist(valid_hist)))
 
         # FIXME: make class weights more ellegant and customizable
         w_learn = model._default_input_weights(X_learn, y_learn)
@@ -1178,6 +1180,7 @@ class _ModelFitter(object):
             valid_info['valid_acc'] = valid_outputs['accuracy'].mean()
             valid_info['valid_acc_std'] = valid_outputs['accuracy'].std()
         if 'predictions' in valid_outputs:
+            ut.embed()
             p, r, f, s = sklearn.metrics.precision_recall_fscore_support(
                 y_true=valid_outputs['auglbl_list'], y_pred=valid_outputs['predictions']
             )
@@ -1436,7 +1439,10 @@ class _ModelBatch(_BatchUtility):
         outputs = model._stack_outputs(theano_fn, output_list)
         if y is not None:
             # Hack in special outputs
-            auglbl_list = np.hstack(aug_yb_list)
+            if isinstance(model, AbstractVectorModel):
+                auglbl_list = np.vstack(aug_yb_list)
+            else:
+                auglbl_list = np.hstack(aug_yb_list)
             outputs['auglbl_list'] = auglbl_list
         if unwrap:
             # slice of batch induced padding
@@ -1734,14 +1740,20 @@ class _ModelBackend(object):
     @property
     def _theano_fn_inputs(model):
         if model._theano_exprs['fn_inputs'] is None:
+            if isinstance(model, AbstractVectorModel):
+                y_type = T.imatrix
+            else:
+                y_type = T.ivector
+            print('[model] Using y_type = %r' % (y_type, ))
+
             fn_inputs = {
                 # Data
                 'X_given': T.tensor4('X_given'),
                 'X_batch': T.tensor4('X_batch'),
 
                 # Labels
-                'y_given': T.ivector('y_given'),
-                'y_batch': T.ivector('y_batch'),
+                'y_given': y_type('y_given'),
+                'y_batch': y_type('y_batch'),
 
                 # Importance
                 'w_given': T.vector('w_given'),
@@ -3313,6 +3325,58 @@ class AbstractCategoricalModel(BaseModel):
         from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
         probs = network_output
         preds = T.argmax(probs, axis=1)
+        preds.name = 'predictions'
+        is_success = T.eq(preds, y_batch)
+        accuracy = T.mean(is_success)
+        accuracy.name = 'accuracy'
+        labeled_outputs = [accuracy, preds]
+        return labeled_outputs
+
+
+@ut.reloadable_class
+class AbstractVectorModel(BaseModel):
+    """ base model for catagory classifiers """
+
+    def __init__(model, **kwargs):
+        # BaseModel.__init__(model, **kwargs)
+        # HACKING
+        # <Prototype code to fix reload errors>
+        #this_class_now = ut.fix_super_reload_error(AbstractVectorModel, model)
+        this_class_now = AbstractVectorModel
+        #super(AbstractVectorModel, model).__init__(**kwargs)
+        super(this_class_now, model).__init__(**kwargs)
+
+        # </Prototype code to fix reload errors>
+
+        model.encoder = None
+        # categorical models have a concept of accuracy
+        #model.requested_headers += ['valid_acc', 'test_acc']
+        model.requested_headers += ['valid_acc']
+
+    def init_output_dims(model, labels):
+        model.output_dims = labels.shape[-1]
+        print('[model] model.output_dims = %r' % (model.output_dims,))
+
+    def loss_function(model, network_output, truth):
+        # https://en.wikipedia.org/wiki/Loss_functions_for_classification
+        from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
+        # categorical cross-entropy between predictions and targets
+        # L_i = -\sum_{j} t_{i,j} \log{p_{i, j}}
+        return T.nnet.categorical_crossentropy(network_output, truth)
+
+    def custom_unlabeled_outputs(model, network_output):
+        from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
+        # Network outputs define category probabilities
+        preds = network_output
+        preds.name = 'predictions'
+        confs = preds
+        confs.name = 'confidences'
+        unlabeled_outputs = [preds, confs]
+        return unlabeled_outputs
+
+    def custom_labeled_outputs(model, network_output, y_batch):
+        from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
+        preds = network_output
         preds.name = 'predictions'
         is_success = T.eq(preds, y_batch)
         accuracy = T.mean(is_success)
