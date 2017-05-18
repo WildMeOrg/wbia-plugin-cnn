@@ -224,12 +224,7 @@ def numpy_processed_directory3(extracted_path, numpy_ids_file_name='ids.npy',
         label = line[1].strip()
         label_list = label.split(';')
         label_set = set(label_list)
-        label = []
-        for category_ in category_list:
-            if category_ in label_set:
-                label += [1, 0]
-            else:
-                label += [0, 1]
+        label = [ 1 if category_ in label_set else 0 for category_ in category_list]
         label_dict[file_name] = label
 
     # Get shape for all images

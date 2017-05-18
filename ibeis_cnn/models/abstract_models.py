@@ -413,7 +413,7 @@ class _ModelFitter(object):
                 w = class_to_weight.take(y).astype(np.float32)
             else:
                 #print('no class weights')
-                w = np.ones(len(X)).astype(np.float32)
+                w = np.ones(y.shape).astype(np.float32)
         return w
 
     def fit(model,
@@ -1180,7 +1180,6 @@ class _ModelFitter(object):
             valid_info['valid_acc'] = valid_outputs['accuracy'].mean()
             valid_info['valid_acc_std'] = valid_outputs['accuracy'].std()
         if 'predictions' in valid_outputs:
-            ut.embed()
             p, r, f, s = sklearn.metrics.precision_recall_fscore_support(
                 y_true=valid_outputs['auglbl_list'], y_pred=valid_outputs['predictions']
             )
@@ -1744,6 +1743,12 @@ class _ModelBackend(object):
                 y_type = T.imatrix
             else:
                 y_type = T.ivector
+
+            if isinstance(model, AbstractVectorModel):
+                w_type = T.matrix
+            else:
+                w_type = T.vector
+
             print('[model] Using y_type = %r' % (y_type, ))
 
             fn_inputs = {
@@ -1756,8 +1761,8 @@ class _ModelBackend(object):
                 'y_batch': y_type('y_batch'),
 
                 # Importance
-                'w_given': T.vector('w_given'),
-                'w_batch': T.vector('w_batch'),
+                'w_given': w_type('w_given'),
+                'w_batch': w_type('w_batch'),
             }
             model._theano_exprs['fn_inputs'] = fn_inputs
         return model._theano_exprs['fn_inputs']
@@ -3358,25 +3363,24 @@ class AbstractVectorModel(BaseModel):
         print('[model] model.output_dims = %r' % (model.output_dims,))
 
     def loss_function(model, network_output, truth):
-        # https://en.wikipedia.org/wiki/Loss_functions_for_classification
         from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
-        # categorical cross-entropy between predictions and targets
-        # L_i = -\sum_{j} t_{i,j} \log{p_{i, j}}
-        return T.nnet.categorical_crossentropy(network_output, truth)
+        return T.nnet.binary_crossentropy(network_output, truth)
 
     def custom_unlabeled_outputs(model, network_output):
         from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
         # Network outputs define category probabilities
-        preds = network_output
+        probs = network_output
+        preds = probs.round()
         preds.name = 'predictions'
-        confs = preds
+        confs = probs
         confs.name = 'confidences'
         unlabeled_outputs = [preds, confs]
         return unlabeled_outputs
 
     def custom_labeled_outputs(model, network_output, y_batch):
         from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
-        preds = network_output
+        probs = network_output
+        preds = probs.round()
         preds.name = 'predictions'
         is_success = T.eq(preds, y_batch)
         accuracy = T.mean(is_success)

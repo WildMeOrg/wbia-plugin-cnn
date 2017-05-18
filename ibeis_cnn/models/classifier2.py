@@ -89,15 +89,6 @@ def augment_wrapper(Xb, yb=None):
     return Xb, yb
 
 
-def pairwise_softmax(tensor):
-    import theano
-    input_shape = tensor.shape
-    tensor = tensor.reshape((-1, 2))
-    tensor = theano.tensor.nnet.softmax(tensor)
-    tensor = tensor.reshape(input_shape)
-    return tensor
-
-
 @six.add_metaclass(ut.ReloadingMetaclass)
 class Classifier2Model(abstract_models.AbstractVectorModel):
     def __init__(model, autoinit=False, batch_size=128, data_shape=(64, 64, 3),
@@ -167,7 +158,7 @@ class Classifier2Model(abstract_models.AbstractVectorModel):
                 _P(layers.DropoutLayer, p=0.5, name='D4'),
                 _P(layers.DenseLayer, num_units=512, name='F1', **hidden_initkw),
 
-                _P(layers.DenseLayer, num_units=model.output_dims, name='F2', nonlinearity=pairwise_softmax),
+                _P(layers.DenseLayer, num_units=model.output_dims, name='F2', nonlinearity=nonlinearities.sigmoid),
             ]
         )
         return network_layers_def
