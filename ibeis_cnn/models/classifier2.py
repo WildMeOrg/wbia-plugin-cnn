@@ -113,7 +113,6 @@ class Classifier2Model(abstract_models.AbstractVectorModel):
         if yb is None:
             y = None
         else:
-            ut.embed()
             y = [ result[1] for result in result_list ]
             y = np.vstack(y)
         return X, y
