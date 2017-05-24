@@ -951,8 +951,16 @@ class _ModelFitter(object):
     def _dump_case_monitor(model, X_learn, y_learn, X_valid, y_valid):
         prog_dirs = model._fit_session['prog_dirs']
 
-        model.dump_cases(X_learn, y_learn, 'learn')
-        model.dump_cases(X_valid, y_valid, 'valid')
+        try:
+            model.dump_cases(X_learn, y_learn, 'learn')
+        except:
+            print('WARNING: DUMP CASES HAS FAILED')
+            pass
+        try:
+            model.dump_cases(X_valid, y_valid, 'valid')
+        except:
+            print('WARNING: DUMP CASES HAS FAILED')
+            pass
         if False:
             try:
                 # Save class dreams
