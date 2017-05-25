@@ -184,6 +184,7 @@ def generate_thumbnail_class2_list(ibs, thumbnail_list, nInput=None,
     print('[model] loading model state from: %s' % (model_state_fpath,))
     model_state = ut.load_cPkl(model_state_fpath)
 
+    category_list      = model_state['category_list']
     model.encoder      = model_state.get('encoder', None)
     model.output_dims  = model_state['output_dims']
     model.data_params  = model_state['data_params']
@@ -204,10 +205,26 @@ def generate_thumbnail_class2_list(ibs, thumbnail_list, nInput=None,
     print('[ibeis_cnn] Performing inference...')
     test_results = model.process_batch(theano_predict, np.array(thumbnail_list))
 
-    prediction_list = model.encoder.inverse_transform(test_results['predictions'])
-    confidence_list = test_results['confidences']
+    confidences_list = test_results['confidences']
+    predictions_list = test_results['predictions']
 
-    result_list = list(zip(confidence_list, prediction_list))
+    if model.encoder is not None:
+        predictions_list = model.encoder.inverse_transform(predictions_list)
+
+    confidence_dict_list = [
+        dict(zip(category_list, confidence_list))
+        for confidence_list in confidences_list
+    ]
+    predictions_list = [
+        [
+            category
+            for category, prediction in zip(category_list, prediction_list)
+            if prediction == 1.0
+        ]
+        for prediction_list in predictions_list
+    ]
+
+    result_list = list(zip(confidence_dict_list, predictions_list))
     return result_list
 
 
