@@ -14,6 +14,8 @@ MODEL_URLS = {
     'classifier_coco_zebra'          : 'classifier.coco.zebra.pkl',
     'classifier_v3_zebra'            : 'classifier.29.zebra.pkl',
 
+    'classifier2_v3'                 : 'classifier2.29.pkl',
+
     'labeler_v1'                     : 'labeler.v1.pkl',
     'labeler_cheetah'                : 'labeler.cheetah.pkl',
     'labeler_lynx'                   : 'labeler.lynx.pkl',
