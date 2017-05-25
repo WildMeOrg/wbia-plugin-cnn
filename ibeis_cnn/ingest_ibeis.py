@@ -1689,16 +1689,16 @@ def get_cnn_classifier_binary_training_images(ibs, category_list, dest_path=None
     return name_path
 
 
-def get_cnn_classifier_multiclass_training_images(ibs, category_set=None,
-                                                  dest_path=None,
-                                                  image_size=192, purge=True,
-                                                  skip_rate=0.0):
+def get_cnn_classifier2_training_images(ibs, category_set=None,
+                                        dest_path=None,
+                                        image_size=192, purge=True,
+                                        skip_rate=0.0):
     from os.path import join, expanduser
     import random
     if dest_path is None:
         dest_path = expanduser(join('~', 'Desktop', 'extracted'))
 
-    name = 'classifier-multiclass'
+    name = 'classifier2'
     dbname = ibs.dbname
     name_path = join(dest_path, name)
     raw_path = join(name_path, 'raw')
