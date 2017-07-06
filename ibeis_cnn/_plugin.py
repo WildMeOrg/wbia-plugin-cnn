@@ -113,7 +113,9 @@ def generate_thumbnail_class_list(ibs, thumbnail_list, nInput=None,
     elif classifier_weight_filepath in ['coco_zebra']:
         weights_path = grabmodels.ensure_model('classifier_coco_zebra', redownload=False)
     elif classifier_weight_filepath in ['megan']:
-        weights_path = grabmodels.ensure_model('classifier_cameratrap_megan', redownload=False)
+        weights_path = grabmodels.ensure_model('classifier_cameratrap_megan_v1', redownload=False)
+    elif classifier_weight_filepath in ['megan2']:
+        weights_path = grabmodels.ensure_model('classifier_cameratrap_megan_v2', redownload=False)
     elif os.path.exists(classifier_weight_filepath):
         weights_path = classifier_weight_filepath
     else:
