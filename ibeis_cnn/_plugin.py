@@ -519,7 +519,7 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         weights_path = grabmodels.ensure_model('background_cheetah', redownload=False)
         canvas_key = 1
     else:
-        raise ValueError('species key does not have a trained model')
+        raise ValueError('species %r key does not have a trained model' % (species, ))
 
     if LEGACY:
         old_weights_fpath = weights_path
