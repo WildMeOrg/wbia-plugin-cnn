@@ -104,9 +104,9 @@ class Classifier2Model(abstract_models.AbstractVectorModel):
         if yb is None:
             yb = [None] * len(Xb)
         arg_iter = list(zip(Xb, yb))
-        result_list = ut.util_parallel.generate(augment_parallel, arg_iter,
-                                                ordered=True, verbose=False,
-                                                quiet=True)
+        result_list = ut.util_parallel.generate2(augment_parallel, arg_iter,
+                                                 ordered=True, verbose=False,
+                                                 quiet=True)
         result_list = list(result_list)
         X = [ result[0][0] for result in result_list ]
         X = np.array(X)
