@@ -15,8 +15,7 @@ import cv2
 print, rrr, profile = ut.inject2(__name__)
 
 
-def augment_parallel(values):
-    X, y = values
+def augment_parallel(X, y):
     return augment_wrapper(
         [X],
         None if y is None else [y]

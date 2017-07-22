@@ -27,8 +27,7 @@ LABEL_MAPPING_DICT = {
 }
 
 
-def augment_parallel(values):
-    X, y = values
+def augment_parallel(X, y):
     return augment_wrapper(
         [X],
         None if y is None else [y]
