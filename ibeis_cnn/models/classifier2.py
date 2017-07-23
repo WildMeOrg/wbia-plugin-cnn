@@ -217,7 +217,6 @@ def train_classifier2(output_path, data_fpath, labels_fpath):
     X_valid, y_valid = dataset.subset('valid')
     print('dataset.training_dpath = %r' % (dataset.training_dpath,))
 
-    ut.embed()
     ut.colorprint('[netrun] Architecture Specification', 'yellow')
     model = Classifier2Model(
         data_shape=dataset.data_shape,

@@ -171,7 +171,6 @@ def generate_thumbnail_class2_list(ibs, thumbnail_list, nInput=None,
             thumbnail_list = list(thumbnail_list)
             nInput = len(thumbnail_list)
 
-    ut.embed()
     model = models.Classifier2Model(batch_size=batch_size, data_shape=data_shape)
 
     if classifier_two_weight_filepath in [None, 'v3']:
