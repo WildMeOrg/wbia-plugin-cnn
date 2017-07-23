@@ -154,7 +154,7 @@ def generate_thumbnail_class_list(ibs, thumbnail_list, nInput=None,
 
 @register_ibs_method
 def generate_thumbnail_class2_list(ibs, thumbnail_list, nInput=None,
-                                   classifier_weight_filepath=None, **kwargs):
+                                   classifier_two_weight_filepath=None, **kwargs):
 
     # Load chips and resize to the target
     data_shape = (192, 192, 3)
@@ -173,12 +173,12 @@ def generate_thumbnail_class2_list(ibs, thumbnail_list, nInput=None,
 
     model = models.Classifier2Model(batch_size=batch_size, data_shape=data_shape)
 
-    if classifier_weight_filepath in [None, 'v3']:
+    if classifier_two_weight_filepath in [None, 'v3']:
         weights_path = grabmodels.ensure_model('classifier2_v3', redownload=False)
-    elif classifier_weight_filepath in ['candidacy']:
-        weights_path = grabmodels.ensure_model('classifier2_candidacy', redownload=False)
-    elif os.path.exists(classifier_weight_filepath):
-        weights_path = classifier_weight_filepath
+    elif classifier_two_weight_filepath in ['candidacy']:
+        weights_path = grabmodels.ensure_model('classifier2_v3', redownload=False)
+    elif os.path.exists(classifier_two_weight_filepath):
+        weights_path = classifier_two_weight_filepath
     else:
         raise ValueError('Classifier does not have a valid trained model')
 
