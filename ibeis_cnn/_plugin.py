@@ -175,6 +175,8 @@ def generate_thumbnail_class2_list(ibs, thumbnail_list, nInput=None,
 
     if classifier_weight_filepath in [None, 'v3']:
         weights_path = grabmodels.ensure_model('classifier2_v3', redownload=False)
+    elif classifier_weight_filepath in ['candidacy']:
+        weights_path = grabmodels.ensure_model('classifier2_candidacy', redownload=False)
     elif os.path.exists(classifier_weight_filepath):
         weights_path = classifier_weight_filepath
     else:
