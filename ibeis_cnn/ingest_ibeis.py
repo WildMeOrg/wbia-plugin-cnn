@@ -1726,6 +1726,8 @@ def get_cnn_classifier2_training_images(ibs, category_set=None,
     category_set = set(category_set)
     category_list = list(sorted(category_set))
 
+    ut.embed()
+
     label_list = []
     for gid, species_set in zip(train_gid_set, species_set_list):
         args = (gid, )
@@ -1733,6 +1735,16 @@ def get_cnn_classifier2_training_images(ibs, category_set=None,
 
         if skip_rate > 0.0 and random.uniform(0.0, 1.0) <= skip_rate:
             print('\t Skipping')
+            continue
+
+        category_list_ = [
+            category
+            for category in category_list
+            if category in species_set
+        ]
+
+        if len(category_list_) == 0:
+            print('\t Skipping (Categories)')
             continue
 
         image = ibs.get_image_imgdata(gid)
@@ -1743,11 +1755,6 @@ def get_cnn_classifier2_training_images(ibs, category_set=None,
         patch_filepath = join(raw_path, patch_filename)
         cv2.imwrite(patch_filepath, image_)
 
-        category_list_ = [
-            category
-            for category in category_list
-            if category in species_set
-        ]
         category = ';'.join(category_list_)
         label = '%s,%s' % (patch_filename, category, )
         label_list.append(label)
