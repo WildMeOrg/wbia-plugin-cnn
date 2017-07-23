@@ -1726,8 +1726,6 @@ def get_cnn_classifier2_training_images(ibs, category_set=None,
     category_set = set(category_set)
     category_list = list(sorted(category_set))
 
-    ut.embed()
-
     label_list = []
     for gid, species_set in zip(train_gid_set, species_set_list):
         args = (gid, )
