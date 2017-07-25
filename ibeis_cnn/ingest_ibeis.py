@@ -1698,8 +1698,6 @@ def get_cnn_classifier2_training_images(ibs, category_set=None,
     if dest_path is None:
         dest_path = expanduser(join('~', 'Desktop', 'extracted'))
 
-    ut.embed()
-
     name = 'classifier2'
     dbname = ibs.dbname
     name_path = join(dest_path, name)

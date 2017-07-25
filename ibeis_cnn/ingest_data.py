@@ -642,7 +642,7 @@ def get_numpy_dataset(data_fpath, labels_fpath, training_dpath):
     return dataset
 
 
-def get_numpy_dataset2(name, data_fpath, labels_fpath, training_dpath):
+def get_numpy_dataset2(name, data_fpath, labels_fpath, training_dpath, cache=True):
     """
     """
     import numpy as np
@@ -659,6 +659,8 @@ def get_numpy_dataset2(name, data_fpath, labels_fpath, training_dpath):
         data_shape=data_shape,
     )
     try:
+        if not cache:
+            raise IOError('Do not use the dataaset cache')
         dataset.load()
     except IOError:
         import random

@@ -218,6 +218,7 @@ def numpy_processed_directory3(extracted_path, numpy_ids_file_name='ids.npy',
     # Load raw data
     direct = Directory(raw_path, include_extensions='images')
     label_dict = {}
+    count_dict = {}
     for line in open(project_numpy_labels_file_name):
         line = line.strip().split(',')
         file_name = line[0].strip()
@@ -225,7 +226,14 @@ def numpy_processed_directory3(extracted_path, numpy_ids_file_name='ids.npy',
         label_list = label.split(';')
         label_set = set(label_list)
         label = [ 1 if category_ in label_set else 0 for category_ in category_list]
+        assert 1 in label
+        count = label.count(1)
+        if count not in count_dict:
+            count_dict[count] = 0
+        count_dict[count] += 1
         label_dict[file_name] = label
+
+    print('count_dict = %s' % (ut.repr3(count_dict), ))
 
     # Get shape for all images
     shape_x = list(cv2.imread(direct.files()[0]).shape)

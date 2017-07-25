@@ -79,8 +79,8 @@ def augment_wrapper(Xb, yb=None):
         X = X.reshape(Xb[index].shape)
         X = X.astype(Xb[index].dtype)
         # Show image
-        # canvas = np.hstack((Xb[index], X))
-        # cv2.imwrite('/home/jason/Desktop/temp-%s-%d.png' % (y, random.randint(0, 100), ), canvas)
+        canvas = np.hstack((Xb[index], X))
+        cv2.imwrite('/home/jason/Desktop/temp-%s-%d.png' % (y, random.randint(0, 100), ), canvas)
         # Save
         Xb[index] = X
         if yb is not None:
@@ -183,7 +183,7 @@ class Classifier2Model(abstract_models.AbstractVectorModel):
         return output_layer
 
 
-def train_classifier2(output_path, data_fpath, labels_fpath):
+def train_classifier2(output_path, data_fpath, labels_fpath, purge=True):
     r"""
     CommandLine:
         python -m ibeis_cnn.train --test-train_classifier2
@@ -195,7 +195,7 @@ def train_classifier2(output_path, data_fpath, labels_fpath):
         >>> print(result)
     """
     era_size = 16
-    max_epochs = 256
+    max_epochs = 128
     hyperparams = ut.argparse_dict(
         {
             'era_size'      : era_size,
@@ -211,13 +211,24 @@ def train_classifier2(output_path, data_fpath, labels_fpath):
         }
     )
 
-    ut.embed()
-
     ut.colorprint('[netrun] Ensuring Dataset', 'yellow')
-    dataset = ingest_data.get_numpy_dataset2('classifier2', data_fpath, labels_fpath, output_path)
+    if purge:
+        ut.delete(output_path)
+    dataset = ingest_data.get_numpy_dataset2('classifier2', data_fpath,
+                                             labels_fpath, output_path,
+                                             cache=False)
     X_train, y_train = dataset.subset('train')
     X_valid, y_valid = dataset.subset('valid')
     print('dataset.training_dpath = %r' % (dataset.training_dpath,))
+
+    if purge:
+        model = Classifier2Model(
+            data_shape=dataset.data_shape,
+            training_dpath=dataset.training_dpath,
+            **hyperparams)
+        model.init_output_dims(y_train)
+        model.init_arch()
+        ut.delete(model.arch_dpath)
 
     ut.colorprint('[netrun] Architecture Specification', 'yellow')
     model = Classifier2Model(
