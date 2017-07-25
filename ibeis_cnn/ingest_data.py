@@ -658,12 +658,13 @@ def get_numpy_dataset2(name, data_fpath, labels_fpath, training_dpath, cache=Tru
         training_dpath=training_dpath,
         data_shape=data_shape,
     )
+    error = False
     try:
-        if not cache:
-            raise IOError('Do not use the dataaset cache')
         dataset.load()
-        print('LOADED FROM DATASET CACHE')
     except IOError:
+        error = True
+
+    if error or not cache:
         import random
         # Get indicies of valid / train split
         idx_list = list(range(num_labels))
@@ -679,6 +680,7 @@ def get_numpy_dataset2(name, data_fpath, labels_fpath, training_dpath, cache=Tru
         dataset.add_split('valid', valid_idxs)
         dataset.clear_cache()
         print('LOADING FROM DATASET RAW')
+
     dataset.ensure_symlinked()
     return dataset
 
