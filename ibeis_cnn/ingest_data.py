@@ -662,6 +662,7 @@ def get_numpy_dataset2(name, data_fpath, labels_fpath, training_dpath, cache=Tru
         if not cache:
             raise IOError('Do not use the dataaset cache')
         dataset.load()
+        print('LOADED FROM DATASET CACHE')
     except IOError:
         import random
         # Get indicies of valid / train split
@@ -677,6 +678,7 @@ def get_numpy_dataset2(name, data_fpath, labels_fpath, training_dpath, cache=Tru
         dataset.add_split('train', train_idxs)
         dataset.add_split('valid', valid_idxs)
         dataset.clear_cache()
+        print('LOADING FROM DATASET RAW')
     dataset.ensure_symlinked()
     return dataset
 

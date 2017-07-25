@@ -1692,8 +1692,9 @@ def get_cnn_classifier_binary_training_images(ibs, category_list, dest_path=None
 def get_cnn_classifier2_training_images(ibs, category_set=None,
                                         dest_path=None,
                                         image_size=192, purge=True,
+                                        cache=True,
                                         skip_rate=0.0):
-    from os.path import join, expanduser
+    from os.path import join, expanduser, exists
     import random
     if dest_path is None:
         dest_path = expanduser(join('~', 'Desktop', 'extracted'))
@@ -1703,13 +1704,6 @@ def get_cnn_classifier2_training_images(ibs, category_set=None,
     name_path = join(dest_path, name)
     raw_path = join(name_path, 'raw')
     labels_path = join(name_path, 'labels')
-
-    if purge:
-        ut.delete(name_path)
-
-    ut.ensuredir(name_path)
-    ut.ensuredir(raw_path)
-    ut.ensuredir(labels_path)
 
     # gid_list = ibs.get_valid_gids()
     train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
@@ -1726,44 +1720,54 @@ def get_cnn_classifier2_training_images(ibs, category_set=None,
     category_set = set(category_set)
     category_list = list(sorted(category_set))
 
-    label_list = []
-    for gid, species_set in zip(train_gid_set, species_set_list):
-        args = (gid, )
-        print('Processing GID: %r' % args)
+    if cache and exists(name_path):
+        print('Using cached exported data')
+    else:
+        if purge:
+            ut.delete(name_path)
 
-        if skip_rate > 0.0 and random.uniform(0.0, 1.0) <= skip_rate:
-            print('\t Skipping')
-            continue
+        ut.ensuredir(name_path)
+        ut.ensuredir(raw_path)
+        ut.ensuredir(labels_path)
 
-        category_list_ = [
-            category
-            for category in category_list
-            if category in species_set
-        ]
+        label_list = []
+        for gid, species_set in zip(train_gid_set, species_set_list):
+            args = (gid, )
+            print('Processing GID: %r' % args)
 
-        if len(category_list_) == 0:
-            print('\t Skipping (Categories)')
-            continue
+            if skip_rate > 0.0 and random.uniform(0.0, 1.0) <= skip_rate:
+                print('\t Skipping')
+                continue
 
-        image = ibs.get_image_imgdata(gid)
-        image_ = cv2.resize(image, (image_size, image_size), interpolation=cv2.INTER_LANCZOS4)
+            category_list_ = [
+                category
+                for category in category_list
+                if category in species_set
+            ]
 
-        values = (dbname, gid, )
-        patch_filename = '%s_image_gid_%s.png' % values
-        patch_filepath = join(raw_path, patch_filename)
-        cv2.imwrite(patch_filepath, image_)
+            if len(category_list_) == 0:
+                print('\t Skipping (Categories)')
+                continue
 
-        category = ';'.join(category_list_)
-        label = '%s,%s' % (patch_filename, category, )
-        label_list.append(label)
+            image = ibs.get_image_imgdata(gid)
+            image_ = cv2.resize(image, (image_size, image_size), interpolation=cv2.INTER_LANCZOS4)
 
-    with open(join(labels_path, 'labels.csv'), 'a') as labels:
-        label_str = '\n'.join(label_list) + '\n'
-        labels.write(label_str)
+            values = (dbname, gid, )
+            patch_filename = '%s_image_gid_%s.png' % values
+            patch_filepath = join(raw_path, patch_filename)
+            cv2.imwrite(patch_filepath, image_)
 
-    with open(join(labels_path, 'categories.csv'), 'a') as categories:
-        category_str = '\n'.join(category_list) + '\n'
-        categories.write(category_str)
+            category = ';'.join(category_list_)
+            label = '%s,%s' % (patch_filename, category, )
+            label_list.append(label)
+
+        with open(join(labels_path, 'labels.csv'), 'a') as labels:
+            label_str = '\n'.join(label_list) + '\n'
+            labels.write(label_str)
+
+        with open(join(labels_path, 'categories.csv'), 'a') as categories:
+            category_str = '\n'.join(category_list) + '\n'
+            categories.write(category_str)
 
     return name_path, category_list
 

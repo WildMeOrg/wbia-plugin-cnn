@@ -183,7 +183,7 @@ class Classifier2Model(abstract_models.AbstractVectorModel):
         return output_layer
 
 
-def train_classifier2(output_path, data_fpath, labels_fpath, purge=True):
+def train_classifier2(output_path, data_fpath, labels_fpath, purge=False):
     r"""
     CommandLine:
         python -m ibeis_cnn.train --test-train_classifier2
@@ -212,9 +212,6 @@ def train_classifier2(output_path, data_fpath, labels_fpath, purge=True):
     )
 
     ut.colorprint('[netrun] Ensuring Dataset', 'yellow')
-    if purge:
-        ut.delete(output_path)
-        ut.ensuredir(output_path)
     dataset = ingest_data.get_numpy_dataset2('classifier2', data_fpath,
                                              labels_fpath, output_path,
                                              cache=False)
