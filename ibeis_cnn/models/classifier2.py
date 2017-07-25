@@ -214,6 +214,7 @@ def train_classifier2(output_path, data_fpath, labels_fpath, purge=True):
     ut.colorprint('[netrun] Ensuring Dataset', 'yellow')
     if purge:
         ut.delete(output_path)
+        ut.ensuredir(output_path)
     dataset = ingest_data.get_numpy_dataset2('classifier2', data_fpath,
                                              labels_fpath, output_path,
                                              cache=False)
