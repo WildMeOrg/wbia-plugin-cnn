@@ -79,8 +79,8 @@ def augment_wrapper(Xb, yb=None):
         X = X.reshape(Xb[index].shape)
         X = X.astype(Xb[index].dtype)
         # Show image
-        canvas = np.hstack((Xb[index], X))
-        cv2.imwrite('/home/jason/Desktop/temp-%s-%d.png' % (y, random.randint(0, 100), ), canvas)
+        # canvas = np.hstack((Xb[index], X))
+        # cv2.imwrite('/home/jason/Desktop/temp-%s-%d.png' % (y, random.randint(0, 100), ), canvas)
         # Save
         Xb[index] = X
         if yb is not None:
@@ -256,6 +256,7 @@ def train_classifier2(output_path, data_fpath, labels_fpath, purge=False):
     config = ut.argparse_dict(dict(
         monitor=True,
         monitor_updates=True,
+        checkpoint_freq=1,
         show_confusion=True,
         era_size=era_size,
         max_epochs=max_epochs,
