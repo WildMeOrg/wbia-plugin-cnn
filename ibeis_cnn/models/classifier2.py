@@ -211,7 +211,6 @@ def train_classifier2(output_path, data_fpath, labels_fpath, purge=False):
         }
     )
 
-    ut.embed()
     ut.colorprint('[netrun] Ensuring Dataset', 'yellow')
     dataset = ingest_data.get_numpy_dataset2('classifier2', data_fpath,
                                              labels_fpath, output_path,
@@ -256,7 +255,6 @@ def train_classifier2(output_path, data_fpath, labels_fpath, purge=False):
     config = ut.argparse_dict(dict(
         monitor=True,
         monitor_updates=True,
-        checkpoint_freq=1,
         show_confusion=True,
         era_size=era_size,
         max_epochs=max_epochs,
