@@ -11,6 +11,7 @@ MODEL_DOMAIN = 'https://lev.cs.rpi.edu/public/models/'
 MODEL_URLS = {
     'classifier_cameratrap_megan_v1' : 'classifier.cameratrap.megan.v1.pkl',
     'classifier_cameratrap_megan_v2' : 'classifier.cameratrap.megan.v2.pkl',
+    'classifier_cameratrap_megan_v3' : 'classifier.cameratrap.megan.v3.pkl',
 
     'classifier_coco_zebra'          : 'classifier.coco.zebra.pkl',
     'classifier_v3_zebra'            : 'classifier.29.zebra.pkl',
