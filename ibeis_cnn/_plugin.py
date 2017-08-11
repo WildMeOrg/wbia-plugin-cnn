@@ -112,12 +112,14 @@ def generate_thumbnail_class_list(ibs, thumbnail_list, nInput=None,
         weights_path = grabmodels.ensure_model('classifier_v3_zebra', redownload=False)
     elif classifier_weight_filepath in ['coco_zebra']:
         weights_path = grabmodels.ensure_model('classifier_coco_zebra', redownload=False)
-    elif classifier_weight_filepath in ['megan']:
+    elif classifier_weight_filepath in ['megan1.1']:
         weights_path = grabmodels.ensure_model('classifier_cameratrap_megan_v1', redownload=False)
-    elif classifier_weight_filepath in ['megan2']:
+    elif classifier_weight_filepath in ['megan1.2']:
         weights_path = grabmodels.ensure_model('classifier_cameratrap_megan_v2', redownload=False)
-    elif classifier_weight_filepath in ['megan3']:
+    elif classifier_weight_filepath in ['megan1.3']:
         weights_path = grabmodels.ensure_model('classifier_cameratrap_megan_v3', redownload=False)
+    elif classifier_weight_filepath in ['megan2.1']:
+        weights_path = grabmodels.ensure_model('classifier_cameratrap_megan2_v1', redownload=False)
     elif os.path.exists(classifier_weight_filepath):
         weights_path = classifier_weight_filepath
     else:
