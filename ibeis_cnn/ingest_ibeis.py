@@ -1575,8 +1575,11 @@ def get_cnn_classifier_cameratrap_binary_training_images(ibs, positive_imageset_
     positive_gid_set = set(ibs.get_imageset_gids(positive_imageset_id))
     negative_gid_set = set(ibs.get_imageset_gids(negative_imageset_id))
 
+    candidate_gid_set = positive_gid_set | negative_gid_set
+    candidate_gid_set = train_gid_set & candidate_gid_set
+
     label_list = []
-    for gid in train_gid_set:
+    for gid in candidate_gid_set:
         args = (gid, )
         print('Processing GID: %r' % args)
 

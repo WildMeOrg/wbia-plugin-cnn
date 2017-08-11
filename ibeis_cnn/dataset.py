@@ -363,6 +363,8 @@ class DataSet(ut.NiceRepr):
         junction_dpath = get_juction_dpath()
         dataset_dname = basename(dataset.dataset_dpath)
         dataset_dlink = join(junction_dpath, dataset_dname)
+        if exists(dataset_dlink):
+            ut.delete(dataset_dlink)
         ut.symlink(dataset.dataset_dpath, dataset_dlink)
 
     def ensure_dirs(dataset):
