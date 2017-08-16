@@ -1208,21 +1208,10 @@ def get_background_training_patches2(ibs, dest_path=None, patch_size=48,
         y1 = y0 + h
         return x0 <= x and x <= x1 and y0 <= y and y <= y1
 
-    dbname_mapping = {
-        'ELPH_Master'    : 'elephant_savanna',
-        'GIR_Master'     : 'giraffe_reticulated',
-        'GZ_Master'      : 'zebra_grevys',
-        'NNP_MasterGIRM' : 'giraffe_masai',
-        'PZ_Master1'     : 'zebra_plains',
-        'WWF_Lynx'       : 'lynx',
-    }
-
     if dest_path is None:
         dest_path = expanduser(join('~', 'Desktop', 'extracted'))
 
     dbname = ibs.dbname
-    positive_category = dbname_mapping.get(dbname, 'positive')
-    negative_category = 'negative'
 
     name = 'background'
     dbname = ibs.dbname
@@ -1406,11 +1395,11 @@ def get_background_training_patches2(ibs, dest_path=None, patch_size=48,
                     chip = cv2.resize(chip, (patch_size, patch_size),
                                       interpolation=cv2.INTER_LANCZOS4)
 
-                    values = (dbname, gid, negative_category, x0, y0, x1, y1, )
+                    values = (dbname, gid, 'negative', x0, y0, x1, y1, )
                     patch_filename = '%s_patch_gid_%s_%s_bbox_%d_%d_%d_%d.png' % values
                     patch_filepath = join(raw_path, patch_filename)
                     cv2.imwrite(patch_filepath, chip)
-                    label = '%s,%s' % (patch_filename, negative_category)
+                    label = '%s,%s' % (patch_filename, 'negative')
                     label_list.append(label)
 
             global_positives += positives

@@ -9,11 +9,12 @@ import utool as ut
 
 MODEL_DOMAIN = 'https://lev.cs.rpi.edu/public/models/'
 MODEL_URLS = {
-    'classifier_cameratrap_megan2_v1' : 'classifier.cameratrap.megan2.v1.pkl',
-
     'classifier_cameratrap_megan_v1'  : 'classifier.cameratrap.megan.v1.pkl',
     'classifier_cameratrap_megan_v2'  : 'classifier.cameratrap.megan.v2.pkl',
     'classifier_cameratrap_megan_v3'  : 'classifier.cameratrap.megan.v3.pkl',
+    'classifier_cameratrap_megan_v4'  : 'classifier.cameratrap.megan.v4.pkl',
+
+    'classifier_cameratrap_megan2_v1' : 'classifier.cameratrap.megan2.v1.pkl',
 
     'classifier_coco_zebra'           : 'classifier.coco.zebra.pkl',
     'classifier_v3_zebra'             : 'classifier.29.zebra.pkl',
