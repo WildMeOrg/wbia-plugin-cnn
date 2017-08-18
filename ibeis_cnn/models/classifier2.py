@@ -195,7 +195,7 @@ def train_classifier2(output_path, data_fpath, labels_fpath, purge=True):
         >>> print(result)
     """
     era_size = 16
-    max_epochs = 8
+    max_epochs = 128
     hyperparams = ut.argparse_dict(
         {
             'era_size'      : era_size,
