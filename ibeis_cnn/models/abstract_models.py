@@ -737,11 +737,11 @@ class _ModelFitter(object):
         # Set model to best weights
         model.set_all_param_values(model.best_results['weights'])
 
-        # Remove history after overfitting starts
-        if 'epoch_num' not in model.best_results:
-            model.best_results['epoch_num'] = model.best_results['epoch']
-        epoch_num = model.best_results['epoch_num']
-        model.history.rewind_to(epoch_num)
+        # # Remove history after overfitting starts
+        # if 'epoch_num' not in model.best_results:
+        #     model.best_results['epoch_num'] = model.best_results['epoch']
+        # epoch_num = model.best_results['epoch_num']
+        # model.history.rewind_to(epoch_num)
 
         if X_test is not None and y_test is not None:
             # TODO: dump test output in a standard way

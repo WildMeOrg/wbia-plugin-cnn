@@ -161,7 +161,7 @@ def generate_thumbnail_class_list(ibs, thumbnail_list, nInput=None,
 @register_ibs_method
 def generate_thumbnail_class2_list(ibs, thumbnail_list, nInput=None,
                                    classifier_two_weight_filepath=None,
-                                   best=False, **kwargs):
+                                   **kwargs):
 
     # Load chips and resize to the target
     data_shape = (192, 192, 3)
@@ -184,6 +184,8 @@ def generate_thumbnail_class2_list(ibs, thumbnail_list, nInput=None,
         weights_path = grabmodels.ensure_model('classifier2_v3', redownload=False)
     elif classifier_two_weight_filepath in ['candidacy']:
         weights_path = grabmodels.ensure_model('classifier2_candidacy', redownload=False)
+    elif classifier_two_weight_filepath in ['candidacy2']:
+        weights_path = grabmodels.ensure_model('classifier2_candidacy2', redownload=False)
     elif os.path.exists(classifier_two_weight_filepath):
         weights_path = classifier_two_weight_filepath
     else:
@@ -201,11 +203,8 @@ def generate_thumbnail_class2_list(ibs, thumbnail_list, nInput=None,
 
     model.init_arch()
     model.batch_size = 128
-    if best:
-        model.best_results = model_state['best_results']
-        model.set_all_param_values(model.best_results['weights'])
-    else:
-        model.set_all_param_values(model_state['current_weights'])
+    model.best_results = model_state['best_results']
+    model.set_all_param_values(model.best_results['weights'])
 
     # Create the Theano primitives
     # create theano symbolic expressions that define the network
