@@ -2993,7 +2993,6 @@ class _ModelIO(object):
         model_state_fpath = model.get_model_state_fpath(**kwargs)
         print('[model] loading model state from: %s' % (model_state_fpath,))
         model_state = ut.load_cPkl(model_state_fpath)
-        ut.embed()
         if model.__class__.__name__ != 'BaseModel':
             assert model_state['input_shape'][1:] == model.input_shape[1:], (
                 'architecture disagreement')
