@@ -195,7 +195,7 @@ def train_classifier2(output_path, data_fpath, labels_fpath, purge=False):
         >>> print(result)
     """
     era_size = 16
-    max_epochs = 128
+    max_epochs = 8
     hyperparams = ut.argparse_dict(
         {
             'era_size'      : era_size,
@@ -211,6 +211,7 @@ def train_classifier2(output_path, data_fpath, labels_fpath, purge=False):
         }
     )
 
+    ut.embed()
     ut.colorprint('[netrun] Ensuring Dataset', 'yellow')
     dataset = ingest_data.get_numpy_dataset2('classifier2', data_fpath,
                                              labels_fpath, output_path,
@@ -271,6 +272,8 @@ def train_classifier2(output_path, data_fpath, labels_fpath, purge=False):
 
     ut.colorprint('[netrun] Begin training', 'yellow')
     model.fit(X_train, y_train, X_valid=X_valid, y_valid=y_valid)
+
+    ut.embed()
 
     model_path = model.save_model_state()
     return model_path
