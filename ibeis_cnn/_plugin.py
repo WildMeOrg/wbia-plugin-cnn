@@ -160,7 +160,8 @@ def generate_thumbnail_class_list(ibs, thumbnail_list, nInput=None,
 
 @register_ibs_method
 def generate_thumbnail_class2_list(ibs, thumbnail_list, nInput=None,
-                                   classifier_two_weight_filepath=None, **kwargs):
+                                   classifier_two_weight_filepath=None,
+                                   best=False, **kwargs):
 
     # Load chips and resize to the target
     data_shape = (192, 192, 3)
@@ -199,11 +200,13 @@ def generate_thumbnail_class2_list(ibs, thumbnail_list, nInput=None,
     model.data_params  = model_state['data_params']
     model._fix_center_mean_std()
 
-    model.best_results = model_state['best_results']
-
     model.init_arch()
     model.batch_size = 128
-    model.set_all_param_values(model.best_results['weights'])
+    if best:
+        model.best_results = model_state['best_results']
+        model.set_all_param_values(model.best_results['weights'])
+    else:
+        model.set_all_param_values(model_state['current_weights'])
 
     # Create the Theano primitives
     # create theano symbolic expressions that define the network
