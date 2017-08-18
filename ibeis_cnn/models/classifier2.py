@@ -255,6 +255,7 @@ def train_classifier2(output_path, data_fpath, labels_fpath, purge=True):
     config = ut.argparse_dict(dict(
         monitor=True,
         monitor_updates=True,
+        checkpoint_freq=10,
         show_confusion=True,
         era_size=era_size,
         max_epochs=max_epochs,

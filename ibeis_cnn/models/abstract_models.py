@@ -2958,7 +2958,7 @@ class _ModelIO(object):
         model_state_fpath = model.get_model_state_fpath(**kwargs)
         #print('saving model state to: %s' % (model_state_fpath,))
         ut.save_cPkl(model_state_fpath, model_state, verbose=False)
-        print('saved model state')
+        print('saved model state to %r' % (model_state_fpath, ))
         #print('finished saving')
         return model_state_fpath
 
