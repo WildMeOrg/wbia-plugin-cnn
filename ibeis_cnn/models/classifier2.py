@@ -81,7 +81,7 @@ def augment_wrapper(Xb, yb=None):
         X = X.astype(Xb[index].dtype)
         # Show image
         canvas_filepath = '/home/jason/Desktop/temp-%s-%d.png' % (y, random.randint(0, 100), )
-        if not exists(canvas_filepath):
+        if False and not exists(canvas_filepath):
             canvas = np.hstack((Xb[index], X))
             cv2.imwrite(canvas_filepath, canvas)
         # Save
