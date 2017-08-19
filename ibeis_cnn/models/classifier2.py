@@ -100,7 +100,8 @@ class Classifier2Model(abstract_models.AbstractVectorModel):
                                                 name=name, **kwargs)
 
     def loss_function(model, network_output, truth):
-        return (network_output - truth) ** 2
+        from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
+        return T.nnet.binary_crossentropy(network_output, truth)
 
     def augment(model, Xb, yb=None, parallel=True):
         if not parallel:
