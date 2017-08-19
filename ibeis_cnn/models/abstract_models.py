@@ -380,7 +380,8 @@ class _ModelFitter(object):
         model.hyperparams = {
             'whiten_on': False,
             'augment_on': False,
-            'augment_delay': 2,
+            'augment_delay': 0,
+            # 'augment_delay': 2,
             'era_size': 10,  # epochs per era
             'era_clean': False,
             'max_epochs': None,
