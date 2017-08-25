@@ -192,6 +192,8 @@ def generate_thumbnail_class2_list(ibs, thumbnail_list, nInput=None,
         weights_path = grabmodels.ensure_model('classifier2_candidacy4', redownload=False)
     elif classifier_two_weight_filepath in ['candidacy5']:
         weights_path = grabmodels.ensure_model('classifier2_candidacy5', redownload=False)
+    elif classifier_two_weight_filepath in ['candidacy6']:
+        weights_path = grabmodels.ensure_model('classifier2_candidacy6', redownload=False)
     elif os.path.exists(classifier_two_weight_filepath):
         weights_path = classifier_two_weight_filepath
     else:
@@ -220,6 +222,8 @@ def generate_thumbnail_class2_list(ibs, thumbnail_list, nInput=None,
 
     print('[ibeis_cnn] Performing inference...')
     test_results = model.process_batch(theano_predict, np.array(thumbnail_list))
+
+    ut.embed()
 
     confidences_list = test_results['confidences']
     predictions_list = test_results['predictions']

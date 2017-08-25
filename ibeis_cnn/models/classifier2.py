@@ -99,9 +99,6 @@ class Classifier2Model(abstract_models.AbstractVectorModel):
                                                 data_shape=data_shape,
                                                 name=name, **kwargs)
 
-    def loss_function(model, network_output, truth):
-        return (truth - network_output) ** 2
-
     def augment(model, Xb, yb=None, parallel=True):
         if not parallel:
             return augment_wrapper(Xb, yb)

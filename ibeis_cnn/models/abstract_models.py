@@ -3371,9 +3371,12 @@ class AbstractVectorModel(BaseModel):
         model.output_dims = labels.shape[-1]
         print('[model] model.output_dims = %r' % (model.output_dims,))
 
+    # def loss_function(model, network_output, truth):
+    #     from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
+    #     return T.nnet.binary_crossentropy(network_output, truth)
+
     def loss_function(model, network_output, truth):
-        from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
-        return T.nnet.binary_crossentropy(network_output, truth)
+        return (truth - network_output) ** 2
 
     def custom_unlabeled_outputs(model, network_output):
         from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
@@ -3389,7 +3392,7 @@ class AbstractVectorModel(BaseModel):
     def custom_labeled_outputs(model, network_output, y_batch):
         from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
         probs = network_output
-        preds = probs.round()
+        preds = probs.clip(0.0, 1.0).round()
         preds.name = 'predictions'
         is_success = T.eq(preds, y_batch)
         accuracy = T.mean(is_success)

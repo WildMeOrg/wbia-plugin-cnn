@@ -25,6 +25,7 @@ MODEL_URLS = {
     'classifier2_candidacy3'          : 'classifier2.candidacy3.pkl',
     'classifier2_candidacy4'          : 'classifier2.candidacy4.pkl',
     'classifier2_candidacy5'          : 'classifier2.candidacy5.pkl',
+    'classifier2_candidacy6'          : 'classifier2.candidacy6.pkl',
 
     'labeler_v1'                      : 'labeler.v1.pkl',
     'labeler_cheetah'                 : 'labeler.cheetah.pkl',
