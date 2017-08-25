@@ -1439,6 +1439,7 @@ class _ModelBatch(_BatchUtility):
         else:
             aug_yb_list = []
             for Xb, yb, wb in batch_iter:
+                ut.embed()
                 batch_label = theano_fn(Xb, yb, wb)
                 output_list.append(batch_label)
                 aug_yb_list.append(yb)
