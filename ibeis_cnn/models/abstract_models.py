@@ -555,7 +555,6 @@ class _ModelFitter(object):
                 tt.tic()
                 learn_info = model._epoch_learn(theano_backprop, X_learn,
                                                 y_learn, w_learn, epoch)
-                ut.embed()
                 if learn_info.get('diverged'):
                     break
                 valid_info = model._epoch_validate(theano_forward, X_valid,
@@ -1082,6 +1081,7 @@ class _ModelFitter(object):
         learn_outputs = model.process_batch(
             theano_backprop, X_learn, y_learn, w_learn, shuffle=True,
             augment_on=augment_on, buffered=buffered)
+        ut.embed()
 
         # average loss over all learning batches
         learn_info = {}
