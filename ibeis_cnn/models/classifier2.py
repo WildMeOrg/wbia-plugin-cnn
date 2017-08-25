@@ -212,7 +212,7 @@ def train_classifier2(output_path, data_fpath, labels_fpath, purge=True):
         {
             'era_size'      : era_size,
             'batch_size'    : 128,
-            'learning_rate' : .5,
+            'learning_rate' : .1,
             'rate_schedule' : 0.75,
             'momentum'      : .9,
             'weight_decay'  : 0.0001,
