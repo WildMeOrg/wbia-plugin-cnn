@@ -3397,6 +3397,8 @@ class AbstractVectorModel(BaseModel):
         preds = probs.clip(0.0, 1.0).round()
         preds.name = 'predictions'
         is_success = T.eq(preds, y_batch)
+        is_success = T.sum(is_success, axis=1)
+        is_success = is_success >= is_success.shape[0]
         is_success.name = 'is_success'
         accuracy = T.mean(is_success)
         accuracy.name = 'accuracy'
