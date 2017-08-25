@@ -1099,9 +1099,12 @@ class _ModelFitter(object):
                 learn_info['learn_acc']  = learn_outputs['accuracy'].mean()
                 learn_info['learn_acc_std']  = learn_outputs['accuracy'].std()
             if 'predictions' in learn_outputs:
-                p, r, f, s = sklearn.metrics.precision_recall_fscore_support(
-                    y_true=learn_outputs['auglbl_list'], y_pred=learn_outputs['predictions']
-                )
+                try:
+                    p, r, f, s = sklearn.metrics.precision_recall_fscore_support(
+                        y_true=learn_outputs['auglbl_list'], y_pred=learn_outputs['predictions']
+                    )
+                except ValueError:
+                    p, r, f, s = 0.0, 0.0, 0.0, 0.0
                 #report = sklearn.metrics.classification_report(
                 #    y_true=learn_outputs['auglbl_list'], y_pred=learn_outputs['predictions']
                 #)
@@ -1155,9 +1158,12 @@ class _ModelFitter(object):
                 learn_info['learn_acc']  = learn_outputs['accuracy'].mean()
                 learn_info['learn_acc_std']  = learn_outputs['accuracy'].std()
             if 'predictions' in learn_outputs:
-                p, r, f, s = sklearn.metrics.precision_recall_fscore_support(
-                    y_true=learn_outputs['auglbl_list'], y_pred=learn_outputs['predictions']
-                )
+                try:
+                    p, r, f, s = sklearn.metrics.precision_recall_fscore_support(
+                        y_true=learn_outputs['auglbl_list'], y_pred=learn_outputs['predictions']
+                    )
+                except ValueError:
+                    p, r, f, s = 0.0, 0.0, 0.0, 0.0
                 #report = sklearn.metrics.classification_report(
                 #    y_true=learn_outputs['auglbl_list'], y_pred=learn_outputs['predictions']
                 #)
@@ -1190,9 +1196,12 @@ class _ModelFitter(object):
             valid_info['valid_acc'] = valid_outputs['accuracy'].mean()
             valid_info['valid_acc_std'] = valid_outputs['accuracy'].std()
         if 'predictions' in valid_outputs:
-            p, r, f, s = sklearn.metrics.precision_recall_fscore_support(
-                y_true=valid_outputs['auglbl_list'], y_pred=valid_outputs['predictions']
-            )
+            try:
+                p, r, f, s = sklearn.metrics.precision_recall_fscore_support(
+                    y_true=valid_outputs['auglbl_list'], y_pred=valid_outputs['predictions']
+                )
+            except ValueError:
+                p, r, f, s = 0.0, 0.0, 0.0, 0.0
             valid_info['valid_precision'] = p
             valid_info['valid_recall'] = r
             valid_info['valid_fscore'] = f
