@@ -1081,7 +1081,6 @@ class _ModelFitter(object):
         learn_outputs = model.process_batch(
             theano_backprop, X_learn, y_learn, w_learn, shuffle=True,
             augment_on=augment_on, buffered=buffered)
-        ut.embed()
 
         # average loss over all learning batches
         learn_info = {}
