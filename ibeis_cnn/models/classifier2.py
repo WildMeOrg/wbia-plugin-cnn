@@ -100,8 +100,7 @@ class Classifier2Model(abstract_models.AbstractVectorModel):
                                                 name=name, **kwargs)
 
     def loss_function(model, network_output, truth):
-        from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
-        return T.nnet.binary_crossentropy(network_output, truth)
+        return (truth - network_output) ** 2
 
     def augment(model, Xb, yb=None, parallel=True):
         if not parallel:
@@ -172,7 +171,7 @@ class Classifier2Model(abstract_models.AbstractVectorModel):
                 _P(layers.FeaturePoolLayer, pool_size=2, name='FP0'),
                 _P(layers.DropoutLayer, p=0.5, name='D1'),
 
-                _P(layers.DenseLayer, num_units=model.output_dims, name='F2', nonlinearity=nonlinearities.sigmoid),
+                _P(layers.DenseLayer, num_units=model.output_dims, name='F2', nonlinearity=nonlinearities.linear),
             ]
         )
         return network_layers_def
