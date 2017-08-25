@@ -1448,6 +1448,7 @@ class _ModelBatch(_BatchUtility):
         else:
             aug_yb_list = []
             for Xb, yb, wb in batch_iter:
+                ut.embed()
                 batch_label = theano_fn(Xb, yb, wb)
                 output_list.append(batch_label)
                 aug_yb_list.append(yb)
@@ -3405,8 +3406,9 @@ class AbstractVectorModel(BaseModel):
         preds = probs.clip(0.0, 1.0).round()
         preds.name = 'predictions'
         is_success = T.eq(preds, y_batch)
+        shape = is_success.shape[1]
         is_success = T.sum(is_success, axis=1)
-        is_success = is_success >= is_success.shape[0]
+        is_success = is_success >= shape
         is_success.name = 'is_success'
         accuracy = T.mean(is_success)
         accuracy.name = 'accuracy'
