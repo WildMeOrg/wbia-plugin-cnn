@@ -285,8 +285,6 @@ def train_classifier2(output_path, data_fpath, labels_fpath, purge=True):
     ut.colorprint('[netrun] Begin training', 'yellow')
     model.fit(X_train, y_train, X_valid=X_valid, y_valid=y_valid)
 
-    ut.embed()
-
     model_path = model.save_model_state()
     return model_path
 

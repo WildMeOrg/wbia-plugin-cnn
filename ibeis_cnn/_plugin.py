@@ -223,13 +223,14 @@ def generate_thumbnail_class2_list(ibs, thumbnail_list, nInput=None,
     print('[ibeis_cnn] Performing inference...')
     test_results = model.process_batch(theano_predict, np.array(thumbnail_list))
 
-    ut.embed()
-
     confidences_list = test_results['confidences']
     predictions_list = test_results['predictions']
 
     if model.encoder is not None:
         predictions_list = model.encoder.inverse_transform(predictions_list)
+
+    confidences_list[confidences_list > 1.0] = 1.0
+    confidences_list[confidences_list < 0.0] = 0.0
 
     confidence_dict_list = [
         dict(zip(category_list, confidence_list))
