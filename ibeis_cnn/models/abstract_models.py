@@ -1443,6 +1443,7 @@ class _ModelBatch(_BatchUtility):
         if y is None:
             aug_yb_list = None
             for Xb, yb, wb in batch_iter:
+                ut.embed()
                 batch_label = theano_fn(Xb)
                 output_list.append(batch_label)
         else:
@@ -3407,7 +3408,7 @@ class AbstractVectorModel(BaseModel):
         is_success = T.eq(preds, y_batch)
         shape = is_success.shape[1]
         is_success = T.sum(is_success, axis=1)
-        is_success = is_success >= shape
+        is_success = is_success == shape
         is_success.name = 'is_success'
         accuracy = T.mean(is_success)
         accuracy.name = 'accuracy'
