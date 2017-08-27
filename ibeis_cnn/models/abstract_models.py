@@ -1443,7 +1443,6 @@ class _ModelBatch(_BatchUtility):
         if y is None:
             aug_yb_list = None
             for Xb, yb, wb in batch_iter:
-                ut.embed()
                 batch_label = theano_fn(Xb)
                 output_list.append(batch_label)
         else:
