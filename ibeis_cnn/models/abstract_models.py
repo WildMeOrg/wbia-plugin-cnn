@@ -3407,7 +3407,7 @@ class AbstractVectorModel(BaseModel):
         is_success = T.eq(preds, y_batch)
         shape = is_success.shape[1]
         is_success = T.sum(is_success, axis=1)
-        is_success = is_success == shape
+        is_success = T.eq(is_success, shape)
         accuracy = T.mean(is_success)
         accuracy.name = 'accuracy'
         labeled_outputs = [accuracy, preds]
