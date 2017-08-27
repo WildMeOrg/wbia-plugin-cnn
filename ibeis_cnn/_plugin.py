@@ -225,13 +225,6 @@ def generate_thumbnail_class2_list(ibs, thumbnail_list, nInput=None,
     test_results = model.process_batch(theano_predict, np.array(thumbnail_list))
 
     confidences_list = test_results['confidences']
-    predictions_list = test_results['predictions']
-
-    ut.embed()
-
-    if model.encoder is not None:
-        predictions_list = model.encoder.inverse_transform(predictions_list)
-
     confidences_list[confidences_list > 1.0] = 1.0
     confidences_list[confidences_list < 0.0] = 0.0
 
@@ -239,13 +232,24 @@ def generate_thumbnail_class2_list(ibs, thumbnail_list, nInput=None,
         dict(zip(category_list, confidence_list))
         for confidence_list in confidences_list
     ]
+
+    # zipped = zip(thumbnail_list, confidence_dict_list)
+    # for index, (thumbnail, confidence_dict) in enumerate(zipped):
+    #     print(index)
+    #     y = []
+    #     for key in confidence_dict:
+    #         y.append('%s-%0.04f' % (key, confidence_dict[key], ))
+    #     y = ';'.join(y)
+    #     image_path = '/home/jason/Desktop/batch2/image-%s-%s.png'
+    #     cv2.imwrite(image_path % (index, y), thumbnail)
+
     predictions_list = [
         [
-            category
-            for category, prediction in zip(category_list, prediction_list)
-            if prediction == 1.0
+            key
+            for key in confidence_dict
+            if confidence_dict[key] >= 0.5
         ]
-        for prediction_list in predictions_list
+        for confidence_dict in confidence_dict_list
     ]
 
     result_list = list(zip(confidence_dict_list, predictions_list))
