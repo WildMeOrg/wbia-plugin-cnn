@@ -227,6 +227,8 @@ def generate_thumbnail_class2_list(ibs, thumbnail_list, nInput=None,
     confidences_list = test_results['confidences']
     predictions_list = test_results['predictions']
 
+    ut.embed()
+
     if model.encoder is not None:
         predictions_list = model.encoder.inverse_transform(predictions_list)
 
