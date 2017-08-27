@@ -139,33 +139,27 @@ class Classifier2Model(abstract_models.AbstractVectorModel):
                 _P(layers.InputLayer, shape=model.input_shape),
 
                 _P(Conv2DLayer, num_filters=16, filter_size=(11, 11), name='C0', W=_CaffeNet.get_pretrained_layer(0), **hidden_initkw),  # NOQA
-                _P(layers.BatchNormLayer),
                 _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P0'),
 
-                _P(Conv2DLayer, num_filters=16, filter_size=(5, 5), name='C1', W=_CaffeNet.get_pretrained_layer(2), **hidden_initkw),  # NOQA
-                _P(layers.BatchNormLayer),
+                _P(Conv2DLayer, num_filters=32, filter_size=(5, 5), name='C1', W=_CaffeNet.get_pretrained_layer(2), **hidden_initkw),  # NOQA
                 _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P1'),
 
-                _P(Conv2DLayer, num_filters=16, filter_size=(3, 3), name='C2', W=_CaffeNet.get_pretrained_layer(4), **hidden_initkw),  # NOQA
-                _P(layers.BatchNormLayer),
+                _P(Conv2DLayer, num_filters=64, filter_size=(3, 3), name='C2', W=_CaffeNet.get_pretrained_layer(4), **hidden_initkw),  # NOQA
                 _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P2'),
 
-                _P(Conv2DLayer, num_filters=16, filter_size=(3, 3), name='C3', W=_CaffeNet.get_pretrained_layer(6), **hidden_initkw),
-                _P(layers.BatchNormLayer),
+                _P(Conv2DLayer, num_filters=128, filter_size=(3, 3), name='C3', W=init.Orthogonal('relu'), **hidden_initkw),
                 _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P3'),
 
-                _P(Conv2DLayer, num_filters=16, filter_size=(3, 3), name='C4', W=_CaffeNet.get_pretrained_layer(8), **hidden_initkw),
-                _P(layers.BatchNormLayer),
+                _P(Conv2DLayer, num_filters=128, filter_size=(3, 3), name='C4', W=init.Orthogonal('relu'), **hidden_initkw),
 
-                _P(Conv2DLayer, num_filters=16, filter_size=(3, 3), name='C5', W=init.Orthogonal('relu'), **hidden_initkw),
-                _P(layers.BatchNormLayer),
+                _P(Conv2DLayer, num_filters=128, filter_size=(3, 3), name='C5', W=init.Orthogonal('relu'), **hidden_initkw),
 
-                _P(layers.DenseLayer, num_units=64, name='F0',  **hidden_initkw),
-                _P(layers.BatchNormLayer),
+                _P(layers.DenseLayer, num_units=256, name='F0',  **hidden_initkw),
+                _P(layers.FeaturePoolLayer, pool_size=2, name='FP0'),
                 _P(layers.DropoutLayer, p=0.5, name='D1'),
-                _P(layers.DenseLayer, num_units=64, name='F1', **hidden_initkw),
-                _P(layers.BatchNormLayer),
-                _P(layers.DenseLayer, num_units=model.output_dims, name='F2', nonlinearity=nonlinearities.linear),
+                _P(layers.DenseLayer, num_units=256, name='F1', **hidden_initkw),
+
+                _P(layers.DenseLayer, num_units=model.output_dims, name='F2', nonlinearity=nonlinearities.sigmoid),
             ]
         )
         return network_layers_def
@@ -203,14 +197,14 @@ def train_classifier2(output_path, data_fpath, labels_fpath, purge=True):
         >>> result = train_classifier2()
         >>> print(result)
     """
-    era_size = 32
-    max_epochs = 256
+    era_size = 16
+    max_epochs = 128
     hyperparams = ut.argparse_dict(
         {
             'era_size'      : era_size,
             'batch_size'    : 128,
-            'learning_rate' : 0.1,
-            'rate_schedule' : 0.56,
+            'learning_rate' : 0.01,
+            'rate_schedule' : 0.75,
             'momentum'      : .9,
             'weight_decay'  : 0.0001,
             'augment_on'    : True,
@@ -264,7 +258,6 @@ def train_classifier2(output_path, data_fpath, labels_fpath, purge=True):
     config = ut.argparse_dict(dict(
         monitor=False,
         monitor_updates=False,
-        checkpoint_freq=10,
         show_confusion=False,
         era_size=era_size,
         max_epochs=max_epochs,
