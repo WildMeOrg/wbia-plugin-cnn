@@ -184,16 +184,6 @@ def generate_thumbnail_class2_list(ibs, thumbnail_list, nInput=None,
         weights_path = grabmodels.ensure_model('classifier2_v3', redownload=False)
     elif classifier_two_weight_filepath in ['candidacy']:
         weights_path = grabmodels.ensure_model('classifier2_candidacy', redownload=False)
-    elif classifier_two_weight_filepath in ['candidacy2']:
-        weights_path = grabmodels.ensure_model('classifier2_candidacy2', redownload=False)
-    elif classifier_two_weight_filepath in ['candidacy3']:
-        weights_path = grabmodels.ensure_model('classifier2_candidacy3', redownload=False)
-    elif classifier_two_weight_filepath in ['candidacy4']:
-        weights_path = grabmodels.ensure_model('classifier2_candidacy4', redownload=False)
-    elif classifier_two_weight_filepath in ['candidacy5']:
-        weights_path = grabmodels.ensure_model('classifier2_candidacy5', redownload=False)
-    elif classifier_two_weight_filepath in ['candidacy6']:
-        weights_path = grabmodels.ensure_model('classifier2_candidacy6', redownload=False)
     elif os.path.exists(classifier_two_weight_filepath):
         weights_path = classifier_two_weight_filepath
     else:
@@ -305,6 +295,7 @@ def generate_chip_label_list(ibs, chip_list, nInput=None,
 
     model.init_arch()
     model.batch_size = 128
+    model.hyperparams['whiten_on'] = True
     model.set_all_param_values(model.best_results['weights'])
 
     # Create the Theano primitives
