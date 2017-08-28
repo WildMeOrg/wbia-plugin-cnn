@@ -507,7 +507,26 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
     NEW = True
     confidence_thresh = 0.5
     print(species)
-    if species in ['zebra_plains', 'zebra_grevys']:
+
+    CANDIDACY = True
+
+    if CANDIDACY:
+        species_list = [
+            'giraffe_masai',
+            'giraffe_reticulated',
+            'turtle_sea',
+            'whale_fluke',
+            'zebra_grevys',
+            'zebra_plains',
+        ]
+        assert species in species_list
+
+        LEGACY = False
+        confidence_thresh = 0.2
+        model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
+        weights_path = grabmodels.ensure_model('background_candidacy_' + species, redownload=False)
+        canvas_key = 1
+    elif species in ['zebra_plains', 'zebra_grevys']:
         if NEW:
             assert species in ['zebra_plains', 'zebra_grevys']
             model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape, num_output=3)
