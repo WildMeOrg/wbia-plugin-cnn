@@ -21,16 +21,12 @@ MODEL_URLS = {
 
     'classifier2_v3'                  : 'classifier2.29.pkl',
     'classifier2_candidacy'           : 'classifier2.candidacy.pkl',
-    'classifier2_candidacy2'          : 'classifier2.candidacy2.pkl',
-    'classifier2_candidacy3'          : 'classifier2.candidacy3.pkl',
-    'classifier2_candidacy4'          : 'classifier2.candidacy4.pkl',
-    'classifier2_candidacy5'          : 'classifier2.candidacy5.pkl',
-    'classifier2_candidacy6'          : 'classifier2.candidacy6.pkl',
 
     'labeler_v1'                      : 'labeler.v1.pkl',
     'labeler_cheetah'                 : 'labeler.cheetah.pkl',
     'labeler_lynx'                    : 'labeler.lynx.pkl',
     'labeler_v3'                      : 'labeler.29.pkl',
+    'labeler_candidacy'               : 'labeler.candidacy.pkl',
 
     'background_giraffe_masai'        : 'background.giraffe_masai.npy',
     'background_zebra_plains'         : 'background.zebra_plains.npy',
