@@ -1768,6 +1768,7 @@ def get_cnn_classifier2_training_images(ibs, category_set=None,
 
 def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
                                     category_list=None, min_examples=10,
+                                    viewpoint_mapping=None,
                                     purge=True, strict=True, skip_rate=0.0):
     from os.path import join, expanduser
     import random
@@ -1787,6 +1788,8 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
     ut.ensuredir(name_path)
     ut.ensuredir(raw_path)
     ut.ensuredir(labels_path)
+
+    print(viewpoint_mapping)
 
     ut.embed()
 
