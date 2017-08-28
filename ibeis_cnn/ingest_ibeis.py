@@ -1175,7 +1175,7 @@ def get_aidpairs_and_matches(ibs, max_examples=None, num_top=3,
     return patchmatch_tup
 
 
-def get_background_training_patches2(ibs, dest_path=None, patch_size=48,
+def get_background_training_patches2(ibs, target_species, dest_path=None, patch_size=48,
                                      patch_size_min=0.80, patch_size_max=1.25,
                                      annot_size=300, patience=20,
                                      patches_per_annotation=30,
@@ -1256,6 +1256,9 @@ def get_background_training_patches2(ibs, dest_path=None, patch_size=48,
         for aid, bbox, species in zip(aid_list, bbox_list, species_list):
             positives = 0
             negatives = 0
+
+            if species != target_species:
+                continue
 
             if aid is not None:
                 xtl, ytl, w_, h_ = bbox
