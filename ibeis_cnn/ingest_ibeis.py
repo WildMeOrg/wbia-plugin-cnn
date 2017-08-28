@@ -1830,6 +1830,7 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
     print('Filtered annotations: %d / %d' % (new_len, old_len, ))
 
     # Skip any annotations that are of the wanted category and don't have a specified viewpoint
+    counter = 0
     seen_dict = {}
     yaw_dict = {}
     for tup in tup_list:
@@ -1840,11 +1841,16 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
         seen_dict[species] += 1
         # Keep track of yaws that aren't None
         if yaw is not None:
+            yaw_ = viewpoint_mapping.get(species, {}).get(yaw, None)
+            if yaw_ is not None:
+                yaw = yaw_
             if species not in yaw_dict:
                 yaw_dict[species] = {}
             if yaw not in yaw_dict[species]:
                 yaw_dict[species][yaw] = 0
             yaw_dict[species][yaw] += 1
+        else:
+            counter += 1
 
     # Get the list of species that do not have enough viewpoint examples for training
     invalid_seen_set = set([])
@@ -1858,12 +1864,12 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
         if strict:
             if species in yaw_dict:
                 # Check that all viewpoints exist
-                if len(yaw_dict[species]) < 8:
-                    invalid_yaw_set.add(species)
-                    continue
+                # if len(yaw_dict[species]) < 8:
+                #     invalid_yaw_set.add(species)
+                #     continue
                 # Check that all viewpoints have a minimum number of instances
                 for yaw in yaw_dict[species]:
-                    assert yaw in ibs.const.VIEWTEXT_TO_YAW_RADIANS
+                    # assert yaw in ibs.const.VIEWTEXT_TO_YAW_RADIANS
                     if yaw_dict[species][yaw] < min_examples:
                         invalid_yaw_set.add(species)
                         continue
@@ -1871,6 +1877,7 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
                 invalid_yaw_set.add(species)
                 continue
 
+    print('Null yaws: %d' % (counter, ))
     valid_seen_set = category_set - invalid_seen_set
     valid_yaw_set = valid_seen_set - invalid_yaw_set
     print('Requested categories:')
