@@ -197,14 +197,14 @@ def train_classifier2(output_path, data_fpath, labels_fpath, purge=True):
         >>> result = train_classifier2()
         >>> print(result)
     """
-    era_size = 16
-    max_epochs = 128
+    era_size = 32
+    max_epochs = 256
     hyperparams = ut.argparse_dict(
         {
             'era_size'      : era_size,
             'batch_size'    : 128,
-            'learning_rate' : 0.01,
-            'rate_schedule' : 0.75,
+            'learning_rate' : 0.5,
+            'rate_schedule' : 0.5,
             'momentum'      : .9,
             'weight_decay'  : 0.0001,
             'augment_on'    : True,

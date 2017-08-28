@@ -1229,12 +1229,13 @@ def get_background_training_patches2(ibs, dest_path=None, patch_size=48,
     train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
     aids_list = ibs.get_image_aids(train_gid_set)
     bboxes_list = [ ibs.get_annot_bboxes(aid_list) for aid_list in aids_list ]
+    species_list_list = [ ibs.get_annot_species_texts(aid_list) for aid_list in aids_list ]
 
-    zipped = zip(train_gid_set, aids_list, bboxes_list)
+    zipped = zip(train_gid_set, aids_list, bboxes_list, species_list_list)
     label_list = []
     global_positives = 0
     global_negatives = 0
-    for gid, aid_list, bbox_list in zipped:
+    for gid, aid_list, bbox_list, species_list in zipped:
         image = ibs.get_image_imgdata(gid)
         h, w, c = image.shape
 
@@ -1252,7 +1253,7 @@ def get_background_training_patches2(ibs, dest_path=None, patch_size=48,
             aid_list = [None]
             bbox_list = [None]
 
-        for aid, bbox in zip(aid_list, bbox_list):
+        for aid, bbox, species in zip(aid_list, bbox_list, species_list):
             positives = 0
             negatives = 0
 
@@ -1315,6 +1316,7 @@ def get_background_training_patches2(ibs, dest_path=None, patch_size=48,
                         chip = cv2.resize(chip, (patch_size, patch_size),
                                           interpolation=cv2.INTER_LANCZOS4)
 
+                        positive_category = '%s' % (species, )
                         values = (dbname, gid, positive_category, x0, y0, x1, y1, )
                         patch_filename = '%s_patch_gid_%s_%s_bbox_%d_%d_%d_%d.png' % values
                         patch_filepath = join(raw_path, patch_filename)
@@ -1785,6 +1787,8 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
     ut.ensuredir(name_path)
     ut.ensuredir(raw_path)
     ut.ensuredir(labels_path)
+
+    ut.embed()
 
     # train_gid_set = ibs.get_valid_gids()
     train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
