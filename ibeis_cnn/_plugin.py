@@ -267,8 +267,6 @@ def generate_chip_label_list(ibs, chip_list, nInput=None,
 
     model = models.LabelerModel(batch_size=batch_size, data_shape=data_shape)
 
-    ut.embed()
-
     if labeler_weight_filepath in [None, 'v3']:
         weights_path = grabmodels.ensure_model('labeler_v3', redownload=False)
     elif labeler_weight_filepath in ['v1']:
