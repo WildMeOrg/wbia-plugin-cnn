@@ -1316,7 +1316,8 @@ def get_background_training_patches2(ibs, dest_path=None, patch_size=48,
                         chip = cv2.resize(chip, (patch_size, patch_size),
                                           interpolation=cv2.INTER_LANCZOS4)
 
-                        positive_category = '%s' % (species, )
+                        # positive_category = '%s' % (species, )
+                        positive_category = 'positive'
                         values = (dbname, gid, positive_category, x0, y0, x1, y1, )
                         patch_filename = '%s_patch_gid_%s_%s_bbox_%d_%d_%d_%d.png' % values
                         patch_filepath = join(raw_path, patch_filename)
@@ -1822,9 +1823,13 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
     tup_list = list(zip(aid_list, species_list, yaw_list))
     old_len = len(tup_list)
     tup_list = [
-        tup
-        for tup in tup_list
-        if tup[1] in category_set
+        (
+            aid,
+            species,
+            viewpoint_mapping.get(species, {}).get(yaw, yaw),
+        )
+        for aid, species, yaw in tup_list
+        if species in category_set
     ]
     new_len = len(tup_list)
     print('Filtered annotations: %d / %d' % (new_len, old_len, ))
@@ -1841,9 +1846,6 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
         seen_dict[species] += 1
         # Keep track of yaws that aren't None
         if yaw is not None:
-            yaw_ = viewpoint_mapping.get(species, {}).get(yaw, None)
-            if yaw_ is not None:
-                yaw = yaw_
             if species not in yaw_dict:
                 yaw_dict[species] = {}
             if yaw not in yaw_dict[species]:

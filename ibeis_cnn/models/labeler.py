@@ -24,6 +24,8 @@ LABEL_MAPPING_DICT = {
     'backright'  : 'backleft',
     'back'       : 'back',
     'backleft'   : 'backright',
+    'up'         : 'up',
+    'down'       : 'down',
 }
 
 
