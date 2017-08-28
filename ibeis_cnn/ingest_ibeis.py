@@ -1257,6 +1257,9 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
             positives = 0
             negatives = 0
 
+            if target_species == 'turtle_sea':
+                if species not in ['turtle_hawksbill', 'turtle_green', 'turtle_sea']:
+                    continue
             if species != target_species:
                 continue
 
