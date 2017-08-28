@@ -144,9 +144,11 @@ def train_background(output_path, data_fpath, labels_fpath):
         >>> result = train_background()
         >>> print(result)
     """
+    era_size = 8
+    max_epochs = 128
     hyperparams = ut.argparse_dict(
         {
-            'era_size'      : 8,
+            'era_size'      : era_size,
             'era_clean'     : True,
             'batch_size'    : 128,
             'learning_rate' : .01,
@@ -154,6 +156,7 @@ def train_background(output_path, data_fpath, labels_fpath):
             'weight_decay'  : 0.0005,
             'augment_on'    : True,
             'whiten_on'     : True,
+            'max_epochs'    : max_epochs,
         }
     )
 
@@ -182,8 +185,8 @@ def train_background(output_path, data_fpath, labels_fpath):
     ut.colorprint('[netrun] Training Requested', 'yellow')
     # parse training arguments
     config = ut.argparse_dict(dict(
-        era_size=15,
-        max_epochs=120,
+        era_size=era_size,
+        max_epochs=max_epochs,
         show_confusion=False,
     ))
     model.monitor_config.update(**config)
