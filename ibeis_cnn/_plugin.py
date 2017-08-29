@@ -579,6 +579,7 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
 
         model.init_arch()
         model.batch_size = 128
+        model.hyperparams['whiten_on'] = True
         model.set_all_param_values(model.best_results['weights'])
 
     # Create the Theano primitives
