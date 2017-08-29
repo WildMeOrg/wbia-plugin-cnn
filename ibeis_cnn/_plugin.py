@@ -140,6 +140,7 @@ def generate_thumbnail_class_list(ibs, thumbnail_list, nInput=None,
 
     model.init_arch()
     model.batch_size = 128
+    model.hyperparams['whiten_on'] = True
     model.set_all_param_values(model.best_results['weights'])
 
     # Create the Theano primitives
@@ -579,6 +580,8 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
 
         model.init_arch()
         model.batch_size = 128
+        model.data_params['center_mean'] = np.mean(model.data_params['center_mean'])
+        model.data_params['center_std'] = np.mean(model.data_params['center_std'])
         model.hyperparams['whiten_on'] = True
         model.set_all_param_values(model.best_results['weights'])
 
