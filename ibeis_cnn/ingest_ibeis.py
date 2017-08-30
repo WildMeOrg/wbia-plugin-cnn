@@ -1459,19 +1459,24 @@ def get_aoi_training_data(ibs, dest_path=None, target_species_list=None, purge=T
         'algo': 'resnet',
     }
     data_list = ibs.depc_image.get_property('features', train_gid_set, 'vector', config=config)
+    reviewed_list = ibs.get_image_reviewed(train_gid_set)
     aids_list = ibs.get_image_aids(train_gid_set)
     bboxes_list = [ ibs.get_annot_bboxes(aid_list) for aid_list in aids_list ]
     species_list_list = [ ibs.get_annot_species_texts(aid_list) for aid_list in aids_list ]
+    interest_list_list = [ ibs.get_annot_interest(aid_list) for aid_list in aids_list ]
 
     if target_species_list is None:
         target_species_list = list(set(ut.flatten(species_list_list)))
 
-    zipped = zip(train_gid_set, data_list, aids_list, bboxes_list, species_list_list)
+    zipped = zip(train_gid_set, reviewed_list, data_list, aids_list, bboxes_list, species_list_list, interest_list_list)
     label_list = []
-    for gid, data, aid_list, bbox_list, species_list in zipped:
+    for gid, reviewed, data, aid_list, bbox_list, species_list, interest_list in zipped:
         print('Processing GID: %r' % (gid, ))
         print('\tAIDS  : %r' % (aid_list, ))
         print('\tBBOXES: %r' % (bbox_list, ))
+
+        if reviewed in [None, 0]:
+            continue
 
         zipped = zip(aid_list, bbox_list, species_list)
         for aid, bbox, species in zipped:
@@ -1483,10 +1488,15 @@ def get_aoi_training_data(ibs, dest_path=None, target_species_list=None, purge=T
                 np.save(feature_file, data)
 
             temp_list = []
-            for bbox, species in zip(bbox_list, species_list):
+            for bbox, species, interest in zip(bbox_list, species_list, interest_list):
                 if species not in target_species_list:
                     continue
-                label = '^'.join(map(str, map(int, bbox)))
+                if interest is None:
+                    continue
+                print
+                temp = list(map(str, map(int, bbox)))
+                temp.append(1 if interest else 0)
+                label = '^'.join(temp)
                 temp_list.append(label)
 
             label = ';'.join(temp_list)
@@ -1869,8 +1879,6 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
     ut.ensuredir(labels_path)
 
     print(viewpoint_mapping)
-
-    ut.embed()
 
     # train_gid_set = ibs.get_valid_gids()
     train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
