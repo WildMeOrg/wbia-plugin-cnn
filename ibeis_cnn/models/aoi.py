@@ -70,9 +70,10 @@ class AoIModel(abstract_models.AbstractVectorVectorModel):
             'nonlinearity' : nonlinearities.LeakyRectify(leakiness=(1. / 10.)),
         }
 
+        (_, input_size) = model.input_shape
         network_layers_def = (
             [
-                _P(layers.InputLayer, shape=model.input_shape),
+                _P(layers.InputLayer, shape=(None, input_size, )),
 
                 _P(layers.DenseLayer, num_units=1024, name='F0', **hidden_initkw),
                 _P(layers.FeaturePoolLayer, pool_size=2, name='FP0'),
@@ -95,7 +96,7 @@ class AoIModel(abstract_models.AbstractVectorVectorModel):
         )
         return network_layers_def
 
-    def init_arch(model, verbose=ut.VERBOSE, **kwargs):
+    def init_arch(model, verbose=True, **kwargs):
         r"""
         """
         (_, input_size) = model.input_shape
@@ -157,7 +158,7 @@ def train_aoi(output_path, data_fpath, labels_fpath):
         training_dpath=dataset.training_dpath,
         **hyperparams)
 
-    ut.colorprint('[netrun] Initialize archchitecture', 'yellow')
+    ut.colorprint('[netrun] Initialize architecture', 'yellow')
     model.output_dims = 1
     model.input_shape = (None, dataset.data_shape[0] + 4, )
     model.batch_size = batch_size
