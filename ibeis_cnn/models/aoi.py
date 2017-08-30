@@ -13,10 +13,11 @@ from ibeis_cnn.models import abstract_models
 print, rrr, profile = ut.inject2(__name__)
 
 
-def augment_parallel(X, y):
+def augment_parallel(X, y, w):
     return augment_wrapper(
         [X],
-        None if y is None else [y]
+        None if y is None else [y],
+        None if w is None else [w],
     )
 
 
@@ -34,7 +35,7 @@ def augment_wrapper(Xb, yb=None, wb=None):
             wb_.append(1.0)
     Xb_ = np.array(Xb_, dtype=Xb.dtype)
     yb_ = np.array(yb_, dtype=yb.dtype)
-    wb_ = np.array(wb_, dtype=np.float32)
+    wb_ = np.array(wb_, dtype=wb.dtype)
     return Xb_, yb_, wb_
 
 
@@ -46,13 +47,15 @@ class AoIModel(abstract_models.AbstractVectorVectorModel):
                                                data_shape=data_shape,
                                                name=name, **kwargs)
 
-    def augment(model, Xb, yb=None, parallel=False):
+    def augment(model, Xb, yb=None, wb=None, parallel=True):
         if not parallel:
-            return augment_wrapper(Xb, yb)
+            return augment_wrapper(Xb, yb, wb)
         # Run in parallel
         if yb is None:
             yb = [None] * len(Xb)
-        arg_iter = list(zip(Xb, yb))
+        if wb is None:
+            wb = [None] * len(Xb)
+        arg_iter = list(zip(Xb, yb, wb))
         result_list = ut.util_parallel.generate2(augment_parallel, arg_iter,
                                                  ordered=True, verbose=False)
         result_list = list(result_list)
@@ -63,7 +66,12 @@ class AoIModel(abstract_models.AbstractVectorVectorModel):
         else:
             y = [ result[1] for result in result_list ]
             y = np.hstack(y)
-        return X, y
+        if wb is None:
+            w = None
+        else:
+            w = [ result[2] for result in result_list ]
+            w = np.hstack(w)
+        return X, y, w
 
     def get_aoi_def(model, verbose=ut.VERBOSE, **kwargs):
         # _CaffeNet = abstract_models.PretrainedNetwork('caffenet')
