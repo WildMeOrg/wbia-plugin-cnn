@@ -443,6 +443,8 @@ class _ModelFitter(object):
         """
         from ibeis_cnn import utils
 
+        ut.embed()
+
         print('\n[train] --- TRAINING LOOP ---')
         ut.update_existing(model.hyperparams, kwargs)
         ut.delete_dict_keys(kwargs, model.hyperparams.keys())
@@ -452,7 +454,10 @@ class _ModelFitter(object):
         ut.delete_dict_keys(kwargs, model._behavior.keys())
         assert len(kwargs) == 0, 'unhandled kwargs=%r' % (kwargs,)
 
-        model._validate_input(X_train, y_train)
+        try:
+            model._validate_input(X_train, y_train)
+        except:
+            print('[WARNING] Input validation failed...')
 
         X_learn, y_learn, X_valid, y_valid = model._ensure_learnval_split(
             X_train, y_train, X_valid, y_valid, valid_idx)
