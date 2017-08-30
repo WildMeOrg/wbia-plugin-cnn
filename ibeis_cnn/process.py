@@ -312,7 +312,7 @@ def numpy_processed_directory4(extracted_path, numpy_ids_file_name='ids.npy',
         label = line[1].strip()
         label_list = label.split(';')
         label_list = [
-            list(map(int, _.split('^')))
+            list(map(float, _.split('^')))
             for _ in label_list
         ]
         label = np.array(label_list)

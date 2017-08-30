@@ -1462,6 +1462,7 @@ def get_aoi_training_data(ibs, dest_path=None, target_species_list=None, purge=T
     reviewed_list = ibs.get_image_reviewed(train_gid_set)
     reviewed_list = [True] * len(data_list)
     aids_list = ibs.get_image_aids(train_gid_set)
+    size_list = ibs.get_image_size(train_gid_set)
     bboxes_list = [ ibs.get_annot_bboxes(aid_list) for aid_list in aids_list ]
     species_list_list = [ ibs.get_annot_species_texts(aid_list) for aid_list in aids_list ]
     interest_list_list = [ ibs.get_annot_interest(aid_list) for aid_list in aids_list ]
@@ -1469,9 +1470,9 @@ def get_aoi_training_data(ibs, dest_path=None, target_species_list=None, purge=T
     if target_species_list is None:
         target_species_list = list(set(ut.flatten(species_list_list)))
 
-    zipped = zip(train_gid_set, reviewed_list, data_list, aids_list, bboxes_list, species_list_list, interest_list_list)
+    zipped = zip(train_gid_set, reviewed_list, data_list, aids_list, size_list, bboxes_list, species_list_list, interest_list_list)
     label_list = []
-    for gid, reviewed, data, aid_list, bbox_list, species_list, interest_list in zipped:
+    for gid, reviewed, data, aid_list, (w, h), bbox_list, species_list, interest_list in zipped:
         print('Processing GID: %r' % (gid, ))
         print('\tAIDS  : %r' % (aid_list, ))
         print('\tBBOXES: %r' % (bbox_list, ))
@@ -1479,19 +1480,29 @@ def get_aoi_training_data(ibs, dest_path=None, target_species_list=None, purge=T
         if reviewed in [None, 0]:
             continue
 
+        w = float(w)
+        h = float(h)
+
         temp_list = []
         aoi_counter = 0
         zipped = zip(aid_list, bbox_list, species_list, interest_list)
-        for aid, bbox, species, interest in zipped:
+        for aid, (xtl, ytl, width, height), species, interest in zipped:
             if species not in target_species_list:
                 continue
             if interest is None:
                 continue
 
-            temp = list(map(str, map(int, bbox)))
             aoi_flag = 1 if interest else 0
             aoi_counter += aoi_flag
-            temp.append(str(aoi_flag))
+
+            temp = [
+                xtl / w,
+                ytl / h,
+                (xtl + width) / w,
+                (ytl + height) / h,
+                aoi_flag
+            ]
+            temp = list(map(str, map(float, temp)))
             label = '^'.join(temp)
             temp_list.append(label)
 
