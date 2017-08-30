@@ -3454,6 +3454,17 @@ class AbstractVectorVectorModel(AbstractVectorModel):
         #super(AbstractVectorModel, model).__init__(**kwargs)
         super(this_class_now, model).__init__(**kwargs)
 
+    def custom_labeled_outputs(model, network_output, y_batch):
+        from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
+        probs = network_output
+        preds = probs.round()
+        preds.name = 'predictions'
+        is_success = T.eq(preds, y_batch)
+        accuracy = T.mean(is_success)
+        accuracy.name = 'accuracy'
+        labeled_outputs = [accuracy, preds]
+        return labeled_outputs
+
 
 def report_error(msg):
     if False:
