@@ -1541,6 +1541,7 @@ class _ModelBatch(_BatchUtility):
 
     def _prepare_batch(model, Xb_, yb_, wb_, is_int=True, is_cv2=True,
                        augment_on=False, whiten_on=False):
+        ut.embed()
         if augment_on:
             has_encoder = getattr(model, 'encoder', None) is not None
             yb_ = model.encoder.inverse_transform(yb_) if has_encoder else yb_
