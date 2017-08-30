@@ -138,8 +138,8 @@ def train_aoi(output_path, data_fpath, labels_fpath):
         >>> result = train_aoi()
         >>> print(result)
     """
-    era_size = 1024
-    batch_size = 16
+    era_size = 256
+    batch_size = 32
     max_epochs = era_size * 16
     hyperparams = ut.argparse_dict(
         {
