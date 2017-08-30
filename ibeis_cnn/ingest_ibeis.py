@@ -1478,33 +1478,32 @@ def get_aoi_training_data(ibs, dest_path=None, target_species_list=None, purge=T
         if reviewed in [None, 0]:
             continue
 
-        zipped = zip(aid_list, bbox_list, species_list)
-        for aid, bbox, species in zipped:
-            values = (dbname, gid, aid, )
-            feature_filename = '%s_vgg_feature_gid_%s_aid_%s.npy' % values
-            feature_filepath = join(raw_path, feature_filename)
-
-            with open(feature_filepath, 'w') as feature_file:
-                np.save(feature_file, data)
-
-            temp_list = []
-            for bbox, species, interest in zip(bbox_list, species_list, interest_list):
-                if species not in target_species_list:
-                    continue
-                if interest is None:
-                    continue
-                print
-                temp = list(map(str, map(int, bbox)))
-                temp.append(1 if interest else 0)
-                label = '^'.join(temp)
-                temp_list.append(label)
-
-            if len(temp_list) == 0:
+        temp_list = []
+        zipped = zip(aid_list, bbox_list, species_list, interest_list)
+        for aid, bbox, species, interest in zipped:
+            if species not in target_species_list:
+                continue
+            if interest is None:
                 continue
 
-            label = ';'.join(temp_list)
-            label = '%s,%s' % (feature_filename, label)
-            label_list.append(label)
+            temp = list(map(str, map(int, bbox)))
+            temp.append(1 if interest else 0)
+            label = '^'.join(temp)
+            temp_list.append(label)
+
+        if len(temp_list) == 0:
+            continue
+
+        values = (dbname, gid, aid, )
+        feature_filename = '%s_vgg_feature_gid_%s_aid_%s.npy' % values
+        feature_filepath = join(raw_path, feature_filename)
+
+        with open(feature_filepath, 'w') as feature_file:
+            np.save(feature_file, data)
+
+        label = ';'.join(temp_list)
+        label = '%s,%s' % (feature_filename, label)
+        label_list.append(label)
 
     with open(join(labels_path, 'labels.csv'), 'a') as labels:
         label_str = '\n'.join(label_list) + '\n'
