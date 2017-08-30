@@ -47,7 +47,7 @@ class AoIModel(abstract_models.AbstractVectorVectorModel):
                                                data_shape=data_shape,
                                                name=name, **kwargs)
 
-    def augment(model, Xb, yb=None, wb=None, parallel=True):
+    def augment(model, Xb, yb=None, wb=None, parallel=False):
         if not parallel:
             return augment_wrapper(Xb, yb, wb)
         # Run in parallel
