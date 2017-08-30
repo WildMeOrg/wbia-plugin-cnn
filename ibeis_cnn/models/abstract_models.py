@@ -1469,8 +1469,9 @@ class _ModelBatch(_BatchUtility):
         outputs = model._stack_outputs(theano_fn, output_list)
         if y is not None:
             # Hack in special outputs
-            ut.embed()
-            if isinstance(model, AbstractVectorModel):
+            if isinstance(model, AbstractVectorVectorModel):
+                auglbl_list = np.array(aug_yb_list)
+            elif isinstance(model, AbstractVectorModel):
                 auglbl_list = np.vstack(aug_yb_list)
             else:
                 auglbl_list = np.hstack(aug_yb_list)
