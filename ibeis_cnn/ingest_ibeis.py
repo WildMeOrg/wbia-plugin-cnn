@@ -1460,6 +1460,7 @@ def get_aoi_training_data(ibs, dest_path=None, target_species_list=None, purge=T
     }
     data_list = ibs.depc_image.get_property('features', train_gid_set, 'vector', config=config)
     reviewed_list = ibs.get_image_reviewed(train_gid_set)
+    reviewed_list = [True] * len(data_list)
     aids_list = ibs.get_image_aids(train_gid_set)
     bboxes_list = [ ibs.get_annot_bboxes(aid_list) for aid_list in aids_list ]
     species_list_list = [ ibs.get_annot_species_texts(aid_list) for aid_list in aids_list ]
@@ -1467,8 +1468,6 @@ def get_aoi_training_data(ibs, dest_path=None, target_species_list=None, purge=T
 
     if target_species_list is None:
         target_species_list = list(set(ut.flatten(species_list_list)))
-
-    ut.embed()
 
     zipped = zip(train_gid_set, reviewed_list, data_list, aids_list, bboxes_list, species_list_list, interest_list_list)
     label_list = []
@@ -1481,6 +1480,7 @@ def get_aoi_training_data(ibs, dest_path=None, target_species_list=None, purge=T
             continue
 
         temp_list = []
+        aoi_counter = 0
         zipped = zip(aid_list, bbox_list, species_list, interest_list)
         for aid, bbox, species, interest in zipped:
             if species not in target_species_list:
@@ -1489,11 +1489,15 @@ def get_aoi_training_data(ibs, dest_path=None, target_species_list=None, purge=T
                 continue
 
             temp = list(map(str, map(int, bbox)))
-            temp.append(1 if interest else 0)
+            aoi_flag = 1 if interest else 0
+            aoi_counter += aoi_flag
+            temp.append(str(aoi_flag))
             label = '^'.join(temp)
             temp_list.append(label)
 
         if len(temp_list) == 0:
+            continue
+        if aoi_counter == 0:
             continue
 
         values = (dbname, gid, aid, )

@@ -303,8 +303,6 @@ def numpy_processed_directory4(extracted_path, numpy_ids_file_name='ids.npy',
     project_numpy_y_file_name = join(labels_path, numpy_y_file_name)
     project_numpy_labels_file_name = join(labels_path, labels_file_name)
 
-    ut.embed()
-
     # Load raw data
     direct = Directory(raw_path, include_extensions=['npy'])
     label_dict = {}
