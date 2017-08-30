@@ -1770,12 +1770,21 @@ class _ModelBackend(object):
     @property
     def _theano_fn_inputs(model):
         if model._theano_exprs['fn_inputs'] is None:
-            if isinstance(model, AbstractVectorModel):
+            if isinstance(model, AbstractVectorVectorModel):
+                x_type = T.matrix
+            else:
+                x_type = T.tensor4
+
+            if isinstance(model, AbstractVectorVectorModel):
+                y_type = T.ivector
+            elif isinstance(model, AbstractVectorModel):
                 y_type = T.imatrix
             else:
                 y_type = T.ivector
 
-            if isinstance(model, AbstractVectorModel):
+            if isinstance(model, AbstractVectorVectorModel):
+                w_type = T.vector
+            elif isinstance(model, AbstractVectorModel):
                 w_type = T.matrix
             else:
                 w_type = T.vector
@@ -1784,8 +1793,8 @@ class _ModelBackend(object):
 
             fn_inputs = {
                 # Data
-                'X_given': T.tensor4('X_given'),
-                'X_batch': T.tensor4('X_batch'),
+                'X_given': x_type('X_given'),
+                'X_batch': x_type('X_batch'),
 
                 # Labels
                 'y_given': y_type('y_given'),
@@ -3425,6 +3434,20 @@ class AbstractVectorModel(BaseModel):
         accuracy.name = 'accuracy'
         labeled_outputs = [accuracy, preds]
         return labeled_outputs
+
+
+@ut.reloadable_class
+class AbstractVectorVectorModel(AbstractVectorModel):
+    """ base model for catagory classifiers """
+
+    def __init__(model, **kwargs):
+        # BaseModel.__init__(model, **kwargs)
+        # HACKING
+        # <Prototype code to fix reload errors>
+        #this_class_now = ut.fix_super_reload_error(AbstractVectorModel, model)
+        this_class_now = AbstractVectorVectorModel
+        #super(AbstractVectorModel, model).__init__(**kwargs)
+        super(this_class_now, model).__init__(**kwargs)
 
 
 def report_error(msg):
