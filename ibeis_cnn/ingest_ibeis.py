@@ -1462,7 +1462,7 @@ def get_aoi_training_data(ibs, dest_path=None, target_species_list=None, purge=T
     reviewed_list = ibs.get_image_reviewed(train_gid_set)
     reviewed_list = [True] * len(data_list)
     aids_list = ibs.get_image_aids(train_gid_set)
-    size_list = ibs.get_image_size(train_gid_set)
+    size_list = ibs.get_image_sizes(train_gid_set)
     bboxes_list = [ ibs.get_annot_bboxes(aid_list) for aid_list in aids_list ]
     species_list_list = [ ibs.get_annot_species_texts(aid_list) for aid_list in aids_list ]
     interest_list_list = [ ibs.get_annot_interest(aid_list) for aid_list in aids_list ]
