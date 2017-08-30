@@ -159,6 +159,8 @@ def train_aoi(output_path, data_fpath, labels_fpath):
 
     ut.colorprint('[netrun] Initialize archchitecture', 'yellow')
     model.output_dims = 1
+    model.input_shape = (None, dataset.data_shape[0] + 4, )
+    model.batch_size = batch_size
     model.init_arch()
 
     ut.colorprint('[netrun] * Initializing new weights', 'lightgray')
