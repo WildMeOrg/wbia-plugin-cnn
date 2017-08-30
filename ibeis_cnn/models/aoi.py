@@ -125,14 +125,15 @@ def train_aoi(output_path, data_fpath, labels_fpath):
     max_epochs = 256
     hyperparams = ut.argparse_dict(
         {
-            'era_size'      : era_size,
-            'learning_rate' : .01,
-            'rate_schedule' : 0.75,
-            'momentum'      : .9,
-            'weight_decay'  : 0.0001,
-            'augment_on'    : True,
-            'whiten_on'     : True,
-            'max_epochs'    : max_epochs,
+            'era_size'            : era_size,
+            'learning_rate'       : .01,
+            'rate_schedule'       : 0.75,
+            'momentum'            : .9,
+            'weight_decay'        : 0.0001,
+            'augment_on'          : True,
+            'augment_on_validate' : True,
+            'whiten_on'           : True,
+            'max_epochs'          : max_epochs,
         }
     )
 
@@ -142,7 +143,7 @@ def train_aoi(output_path, data_fpath, labels_fpath):
     X_valid, y_valid = dataset.subset('valid')
     print('dataset.training_dpath = %r' % (dataset.training_dpath,))
 
-    input_shape = (batch_size, dataset.data_shape[0], )
+    input_shape = (batch_size, dataset.data_shape[0] + 4, )
     ut.colorprint('[netrun] Architecture Specification', 'yellow')
     model = AoIModel(
         input_shape=input_shape,
@@ -156,12 +157,6 @@ def train_aoi(output_path, data_fpath, labels_fpath):
     ut.colorprint('[netrun] * Initializing new weights', 'lightgray')
     if model.has_saved_state():
         model.load_model_state()
-    # else:
-    #     model.reinit_weights()
-
-    # ut.colorprint('[netrun] Need to initialize training state', 'yellow')
-    # X_train, y_train = dataset.subset('train')
-    # model.ensure_data_params(X_train, y_train)
 
     ut.colorprint('[netrun] Training Requested', 'yellow')
     # parse training arguments
@@ -173,11 +168,6 @@ def train_aoi(output_path, data_fpath, labels_fpath):
         max_epochs=max_epochs,
     ))
     model.monitor_config.update(**config)
-
-    if getattr(model, 'encoder', None) is not None:
-        class_list = list(model.encoder.classes_)
-        y_train = np.array([class_list.index(_) for _ in y_train ])
-        y_valid = np.array([class_list.index(_) for _ in y_valid ])
 
     print('\n[netrun] Model Info')
     model.print_layer_info()

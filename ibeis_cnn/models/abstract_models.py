@@ -380,6 +380,7 @@ class _ModelFitter(object):
         model.hyperparams = {
             'whiten_on': False,
             'augment_on': False,
+            'augment_on_validate': False,
             'augment_delay': 0,
             # 'augment_delay': 2,
             'era_size': 10,  # epochs per era
@@ -1071,7 +1072,7 @@ class _ModelFitter(object):
             >>> theano_backprop = model.build_backprop_func()
         """
         buffered = model._behavior['buffered']
-        augment_on = model.hyperparams['augment_on']
+        augment_on = model.hyperparams.get('augment_on', True)
         if epoch <= model.hyperparams['augment_delay']:
             # Dont augment in the first few epochs so the model can start to
             # get somewhere. This will hopefully help training initialize
@@ -1140,7 +1141,9 @@ class _ModelFitter(object):
         """
         Forwards propagate -- Run validation set through the forwards pass
         """
-        learn_outputs = model.process_batch(theano_forward, X_learn, y_learn, w_learn)
+        augment_on = model.hyperparams.get('augment_on_validate', False)
+        learn_outputs = model.process_batch(theano_forward, X_learn, y_learn, w_learn,
+                                            augment_on=augment_on)
         # average loss over all learning batches
         learn_info = {}
         learn_info['learn_loss'] = learn_outputs['loss_determ'].mean()
@@ -1187,7 +1190,9 @@ class _ModelFitter(object):
         """
         Forwards propagate -- Run validation set through the forwards pass
         """
-        valid_outputs = model.process_batch(theano_forward, X_valid, y_valid, w_valid)
+        augment_on = model.hyperparams.get('augment_on_validate', False)
+        valid_outputs = model.process_batch(theano_forward, X_valid, y_valid, w_valid,
+                                            augment_on=augment_on)
         valid_info = {}
         valid_info['valid_loss'] = valid_outputs['loss_determ'].mean()
         valid_info['valid_loss_std'] = valid_outputs['loss_determ'].std()
@@ -1212,7 +1217,9 @@ class _ModelFitter(object):
         """
         Forwards propogate -- Run set through the forwards pass and clean
         """
-        valid_outputs = model.process_batch(theano_forward, X_general, y_general, w_general)
+        augment_on = model.hyperparams.get('augment_on_validate', False)
+        valid_outputs = model.process_batch(theano_forward, X_general, y_general, w_general,
+                                            augment_on=augment_on)
         predictions = valid_outputs['predictions']
         confidences = valid_outputs['confidences']
         y_cleaned = np.array([
