@@ -152,6 +152,7 @@ def train_aoi(output_path, data_fpath, labels_fpath):
             'augment_on_validate' : True,
             'whiten_on'           : False,
             'max_epochs'          : max_epochs,
+            'stopping_patience'   : max_epochs,
             'class_weight'        : None,
         }
     )
