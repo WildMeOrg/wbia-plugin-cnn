@@ -327,7 +327,10 @@ class DataSet(ut.NiceRepr):
         dataset.subset_metadata.cache['full'] = metadata
         # Infer the rest of the required data info
         dataset._info['num_labels'] = len(labels)
-        dataset._info['unique_labels'] = np.unique(labels)
+        try:
+            dataset._info['unique_labels'] = np.unique(labels)
+        except ValueError:
+            dataset._info['unique_labels'] = np.nan
         dataset._info['data_per_label'] = data_per_label
         ut.save_data(dataset.info_fpath, dataset._info)
 
