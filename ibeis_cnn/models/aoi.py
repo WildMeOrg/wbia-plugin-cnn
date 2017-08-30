@@ -28,7 +28,7 @@ def augment_wrapper(Xb, yb=None):
 
 
 @six.add_metaclass(ut.ReloadingMetaclass)
-class AoIModel(abstract_models.AbstractCategoricalModel):
+class AoIModel(abstract_models.AbstractVectorModel):
     def __init__(model, autoinit=False, batch_size=128, data_shape=(64, 64, 3),
                  name='aoi', **kwargs):
         super(AoIModel, model).__init__(batch_size=batch_size,
@@ -134,6 +134,7 @@ def train_aoi(output_path, data_fpath, labels_fpath):
             'augment_on_validate' : True,
             'whiten_on'           : True,
             'max_epochs'          : max_epochs,
+            'class_weight'        : None,
         }
     )
 
