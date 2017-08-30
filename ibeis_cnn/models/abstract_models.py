@@ -1541,7 +1541,6 @@ class _ModelBatch(_BatchUtility):
 
     def _prepare_batch(model, Xb_, yb_, wb_, is_int=True, is_cv2=True,
                        augment_on=False, whiten_on=False):
-        ut.embed()
         if augment_on:
             has_encoder = getattr(model, 'encoder', None) is not None
             yb_ = model.encoder.inverse_transform(yb_) if has_encoder else yb_
@@ -1556,12 +1555,12 @@ class _ModelBatch(_BatchUtility):
         if whiten_on:
             mean = model.data_params['center_mean']
             std  = model.data_params['center_std']
-            assert np.all(mean <= 1.0)
-            assert np.all(std <= 1.0)
+            # assert np.all(mean <= 1.0)
+            # assert np.all(std <= 1.0)
             np.subtract(Xb, mean, out=Xb)
             np.divide(Xb, std, out=Xb)
             #Xb = (Xb - mean) / (std)
-        if is_cv2:
+        if is_cv2 and len(Xb.shape) == 4:
             # Convert from cv2 to lasagne format
             Xb = Xb.transpose((0, 3, 1, 2))
         if yb is not None:

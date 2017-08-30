@@ -21,7 +21,6 @@ def augment_parallel(X, y):
 
 
 def augment_wrapper(Xb, yb=None):
-    ut.embed()
     Xb_ = []
     yb_ = []
     for index in range(len(Xb)):
@@ -139,7 +138,7 @@ def train_aoi(output_path, data_fpath, labels_fpath):
             'weight_decay'        : 0.0001,
             'augment_on'          : True,
             'augment_on_validate' : True,
-            'whiten_on'           : True,
+            'whiten_on'           : False,
             'max_epochs'          : max_epochs,
             'class_weight'        : None,
         }
