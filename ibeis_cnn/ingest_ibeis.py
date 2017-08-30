@@ -1468,6 +1468,8 @@ def get_aoi_training_data(ibs, dest_path=None, target_species_list=None, purge=T
     if target_species_list is None:
         target_species_list = list(set(ut.flatten(species_list_list)))
 
+    ut.embed()
+
     zipped = zip(train_gid_set, reviewed_list, data_list, aids_list, bboxes_list, species_list_list, interest_list_list)
     label_list = []
     for gid, reviewed, data, aid_list, bbox_list, species_list, interest_list in zipped:
