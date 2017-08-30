@@ -812,12 +812,15 @@ class _ModelFitter(object):
             if 'center_mean' not in model.data_params:
                 print('computing center mean/std. (hacks std=1)')
                 X_ = X_learn.astype(np.float32)
-                if ut.is_int(X_learn):
-                    ut.assert_inbounds(X_learn, 0, 255, eq=True,
+                try:
+                    if ut.is_int(X_learn):
+                        ut.assert_inbounds(X_learn, 0, 255, eq=True,
+                                           verbose=ut.VERBOSE)
+                        X_ = X_ / 255
+                    ut.assert_inbounds(X_, 0.0, 1.0, eq=True,
                                        verbose=ut.VERBOSE)
-                    X_ = X_ / 255
-                ut.assert_inbounds(X_, 0.0, 1.0, eq=True,
-                                   verbose=ut.VERBOSE)
+                except ValueError:
+                    print('[WARNING] Input bounds check failed...')
                 # Ensure that the mean is computed on 0-1 normalized data
                 model.data_params['center_mean'] = np.mean(X_, axis=0)
                 model.data_params['center_std'] = 1.0
