@@ -1499,6 +1499,9 @@ def get_aoi_training_data(ibs, dest_path=None, target_species_list=None, purge=T
                 label = '^'.join(temp)
                 temp_list.append(label)
 
+            if len(temp_list) == 0:
+                continue
+
             label = ';'.join(temp_list)
             label = '%s,%s' % (feature_filename, label)
             label_list.append(label)
