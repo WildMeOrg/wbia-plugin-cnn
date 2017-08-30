@@ -1428,6 +1428,78 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
     return name_path
 
 
+def get_aoi_training_data(ibs, dest_path=None, target_species_list=None):
+    """
+    Get data for bg
+    """
+    from os.path import join, expanduser
+
+    ut.embed()
+
+    if dest_path is None:
+        dest_path = expanduser(join('~', 'Desktop', 'extracted'))
+
+    dbname = ibs.dbname
+
+    name = 'aoi'
+    dbname = ibs.dbname
+    name_path = join(dest_path, name)
+    raw_path = join(name_path, 'raw')
+    labels_path = join(name_path, 'labels')
+
+    print(dest_path)
+    # ut.remove_dirs(dest_path)
+    ut.ensuredir(dest_path)
+    ut.ensuredir(raw_path)
+    ut.ensuredir(labels_path)
+
+    # gid_list = ibs.get_valid_gids()
+    train_gid_set = list(set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET'))))
+    config = {
+        'algo': 'resnet',
+    }
+    data_list = ibs.depc_image.get_property('features', train_gid_set, 'vector', config=config)
+    aids_list = ibs.get_image_aids(train_gid_set)
+    bboxes_list = [ ibs.get_annot_bboxes(aid_list) for aid_list in aids_list ]
+    species_list_list = [ ibs.get_annot_species_texts(aid_list) for aid_list in aids_list ]
+
+    if target_species_list is None:
+        target_species_list = list(set(ut.flatten(species_list_list)))
+
+    zipped = zip(train_gid_set, data_list, aids_list, bboxes_list, species_list_list)
+    label_list = []
+    for gid, data, aid_list, bbox_list, species_list in zipped:
+        print('Processing GID: %r' % (gid, ))
+        print('\tAIDS  : %r' % (aid_list, ))
+        print('\tBBOXES: %r' % (bbox_list, ))
+
+        zipped = zip(aid_list, bbox_list, species_list)
+        for aid, bbox, species in zipped:
+            values = (dbname, gid, aid, )
+            feature_filename = '%s_vgg_feature_gid_%s_aid_%s.npy' % values
+            feature_filepath = join(raw_path, feature_filename)
+
+            with open(feature_filepath, 'w') as feature_file:
+                np.save(feature_file, data)
+
+            temp_list = []
+            for bbox, species in zip(bbox_list, species_list):
+                if species not in target_species_list:
+                    continue
+                label = '^'.join(map(str, map(int, bbox)))
+                temp_list.append(label)
+
+            label = ';'.join(temp_list)
+            label = '%s,%s' % (feature_filename, label)
+            label_list.append(label)
+
+    with open(join(labels_path, 'labels.csv'), 'a') as labels:
+        label_str = '\n'.join(label_list) + '\n'
+        labels.write(label_str)
+
+    return name_path
+
+
 def get_cnn_detector_training_images(ibs, dest_path=None, image_size=128):
     from os.path import join, expanduser
 
