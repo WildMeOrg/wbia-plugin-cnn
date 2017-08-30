@@ -294,8 +294,6 @@ def numpy_processed_directory4(extracted_path, numpy_ids_file_name='ids.npy',
                                reset=True, verbose=False):
     print('Caching images into Numpy files with category vector...')
 
-    ut.embed()
-
     raw_path = join(extracted_path, 'raw')
     labels_path = join(extracted_path, 'labels')
 
@@ -308,17 +306,17 @@ def numpy_processed_directory4(extracted_path, numpy_ids_file_name='ids.npy',
     # Load raw data
     direct = Directory(raw_path, include_extensions=['npy'])
     label_dict = {}
-    count_dict = {}
     for line in open(project_numpy_labels_file_name):
         line = line.strip().split(',')
         file_name = line[0].strip()
         label = line[1].strip()
         label_list = label.split(';')
-        label_list = [map(int, _.split('^')) for _ in label_list]
+        label_list = [
+            list(map(int, _.split('^')))
+            for _ in label_list
+        ]
         label = np.array(label_list)
         label_dict[file_name] = label
-
-    print('count_dict = %s' % (ut.repr3(count_dict), ))
 
     # Create numpy arrays
     ids = []
@@ -331,7 +329,7 @@ def numpy_processed_directory4(extracted_path, numpy_ids_file_name='ids.npy',
         if verbose:
             print('Processing %r' % (file_name, ))
 
-        with open(file_path, 'w') as file_:
+        with open(file_path, 'r') as file_:
             data = np.load(file_)
         try:
             label = label_dict[file_name]
@@ -343,7 +341,7 @@ def numpy_processed_directory4(extracted_path, numpy_ids_file_name='ids.npy',
 
     ids = np.array(ids)
     X = np.array(X, dtype=np.uint8)
-    y = np.array(y, dtype=np.uint8)
+    y = np.array(y)
 
     # Save numpy array
     print('  ids.shape  = %r' % (ids.shape,))
