@@ -340,7 +340,7 @@ def numpy_processed_directory4(extracted_path, numpy_ids_file_name='ids.npy',
             print('Cannot find label...skipping')
 
     ids = np.array(ids)
-    X = np.array(X, dtype=np.uint8)
+    X = np.array(X, dtype=np.float32)
     y = np.array(y)
 
     # Save numpy array
