@@ -22,9 +22,18 @@ def augment_parallel(X, y):
 
 def augment_wrapper(Xb, yb=None):
     ut.embed()
+    Xb_ = []
+    yb_ = []
     for index in range(len(Xb)):
-        pass
-    return Xb, yb
+        X = Xb[index]
+        y = yb[index]
+        for values in y:
+            bbox = values[:4]
+            Xb_.append(np.append(X, bbox))
+            yb_.append(values[4])
+    Xb_ = np.array(Xb_, dtype=Xb.dtype)
+    yb_ = np.array(yb_, dtype=yb.dtype)
+    return Xb_, yb_
 
 
 @six.add_metaclass(ut.ReloadingMetaclass)
