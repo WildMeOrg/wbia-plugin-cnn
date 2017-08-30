@@ -35,7 +35,7 @@ def augment_wrapper(Xb, yb=None, wb=None):
             wb_.append(1.0)
     Xb_ = np.array(Xb_, dtype=Xb.dtype)
     yb_ = np.array(yb_, dtype=yb.dtype)
-    wb_ = np.array(wb_, dtype=wb.dtype)
+    wb_ = np.array(wb_, dtype=np.float32)
     return Xb_, yb_, wb_
 
 

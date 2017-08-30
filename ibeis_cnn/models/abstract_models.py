@@ -1544,10 +1544,10 @@ class _ModelBatch(_BatchUtility):
         if augment_on:
             has_encoder = getattr(model, 'encoder', None) is not None
             yb_ = model.encoder.inverse_transform(yb_) if has_encoder else yb_
-            # try:
-            Xb_, yb_, wb_ = model.augment(Xb_, yb_, wb_)
-            # except:
-            #     Xb_, yb_ = model.augment(Xb_, yb_)
+            try:
+                Xb_, yb_, wb_ = model.augment(Xb_, yb_, wb_)
+            except:
+                Xb_, yb_ = model.augment(Xb_, yb_)
             yb_ = model.encoder.transform(yb_) if has_encoder else yb_
         Xb = Xb_.astype(np.float32, copy=True)
         yb = None if yb_ is None else yb_.astype(np.int32, copy=True)
