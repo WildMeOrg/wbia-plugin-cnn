@@ -1428,13 +1428,11 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
     return name_path
 
 
-def get_aoi_training_data(ibs, dest_path=None, target_species_list=None):
+def get_aoi_training_data(ibs, dest_path=None, target_species_list=None, purge=True):
     """
     Get data for bg
     """
     from os.path import join, expanduser
-
-    ut.embed()
 
     if dest_path is None:
         dest_path = expanduser(join('~', 'Desktop', 'extracted'))
@@ -1447,9 +1445,11 @@ def get_aoi_training_data(ibs, dest_path=None, target_species_list=None):
     raw_path = join(name_path, 'raw')
     labels_path = join(name_path, 'labels')
 
-    print(dest_path)
-    # ut.remove_dirs(dest_path)
+    if purge:
+        ut.delete(name_path)
+
     ut.ensuredir(dest_path)
+    ut.ensuredir(name_path)
     ut.ensuredir(raw_path)
     ut.ensuredir(labels_path)
 
