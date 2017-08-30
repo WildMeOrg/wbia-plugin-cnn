@@ -443,6 +443,8 @@ class _ModelFitter(object):
         """
         from ibeis_cnn import utils
 
+        ut.embed()
+
         print('\n[train] --- TRAINING LOOP ---')
         ut.update_existing(model.hyperparams, kwargs)
         ut.delete_dict_keys(kwargs, model.hyperparams.keys())
