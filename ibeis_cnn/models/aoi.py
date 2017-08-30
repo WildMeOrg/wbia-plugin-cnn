@@ -82,7 +82,7 @@ class AoIModel(abstract_models.AbstractCategoricalModel):
                 _P(layers.FeaturePoolLayer, pool_size=2, name='FP3'),
                 _P(layers.DropoutLayer, p=0.5, name='D3'),
 
-                _P(layers.DenseLayer, num_units=1, name='F4', nonlinearity=nonlinearities.sigmoid),
+                _P(layers.DenseLayer, num_units=model.output_dims, name='F4', nonlinearity=nonlinearities.sigmoid),
             ]
         )
         return network_layers_def
@@ -90,13 +90,11 @@ class AoIModel(abstract_models.AbstractCategoricalModel):
     def init_arch(model, verbose=ut.VERBOSE, **kwargs):
         r"""
         """
-        (_, input_channels, input_width, input_height) = model.input_shape
+        (_, input_size) = model.input_shape
         if verbose:
             print('[model] Initialize aoi model architecture')
             print('[model]   * batch_size     = %r' % (model.batch_size,))
-            print('[model]   * input_width    = %r' % (input_width,))
-            print('[model]   * input_height   = %r' % (input_height,))
-            print('[model]   * input_channels = %r' % (input_channels,))
+            print('[model]   * input_width    = %r' % (input_size,))
             print('[model]   * output_dims    = %r' % (model.output_dims,))
 
         network_layers_def = model.get_aoi_def(verbose=verbose, **kwargs)
@@ -123,11 +121,11 @@ def train_aoi(output_path, data_fpath, labels_fpath):
     ut.embed()
 
     era_size = 16
+    batch_size = 128
     max_epochs = 256
     hyperparams = ut.argparse_dict(
         {
             'era_size'      : era_size,
-            'batch_size'    : 128,
             'learning_rate' : .01,
             'rate_schedule' : 0.75,
             'momentum'      : .9,
@@ -144,17 +142,15 @@ def train_aoi(output_path, data_fpath, labels_fpath):
     X_valid, y_valid = dataset.subset('valid')
     print('dataset.training_dpath = %r' % (dataset.training_dpath,))
 
+    input_shape = (batch_size, dataset.data_shape[0], )
     ut.colorprint('[netrun] Architecture Specification', 'yellow')
     model = AoIModel(
-        data_shape=dataset.data_shape,
+        input_shape=input_shape,
         training_dpath=dataset.training_dpath,
         **hyperparams)
 
-    ut.colorprint('[netrun] Init encoder and convert labels', 'yellow')
-    if hasattr(model, 'init_encoder'):
-        model.init_encoder(y_train)
-
     ut.colorprint('[netrun] Initialize archchitecture', 'yellow')
+    model.output_dims = 1
     model.init_arch()
 
     ut.colorprint('[netrun] * Initializing new weights', 'lightgray')
