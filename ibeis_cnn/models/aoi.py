@@ -20,9 +20,10 @@ def augment_parallel(X, y):
     )
 
 
-def augment_wrapper(Xb, yb=None):
+def augment_wrapper(Xb, yb=None, wb=None):
     Xb_ = []
     yb_ = []
+    wb_ = []
     for index in range(len(Xb)):
         X = Xb[index]
         y = yb[index]
@@ -30,9 +31,11 @@ def augment_wrapper(Xb, yb=None):
             bbox = values[:4]
             Xb_.append(np.append(X, bbox))
             yb_.append(values[4])
+            wb_.append(1.0)
     Xb_ = np.array(Xb_, dtype=Xb.dtype)
     yb_ = np.array(yb_, dtype=yb.dtype)
-    return Xb_, yb_
+    wb_ = np.array(wb_, dtype=wb.dtype)
+    return Xb_, yb_, wb_
 
 
 @six.add_metaclass(ut.ReloadingMetaclass)
