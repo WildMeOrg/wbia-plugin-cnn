@@ -26,71 +26,96 @@ def augment_parallel(X, y, w):
 
 def augment_wrapper(Xb, yb=None, wb=None):
     import random
+    Xb_ = []
+    yb_ = []
+    wb_ = []
     ut.embed()
     for index in range(len(Xb)):
-        X = np.copy(Xb[index])
+        X_base = np.copy(Xb[index])
         y = None if yb is None else yb[index]
-        # Adjust the exposure
-        X_Lab = cv2.cvtColor(X, cv2.COLOR_BGR2LAB)
-        X_L = X_Lab[:, :, 0].astype(dtype=np.float32)
-        # margin = np.min([np.min(X_L), 255.0 - np.max(X_L), 64.0])
-        margin = 64.0
-        exposure = random.uniform(-margin, margin)
-        X_L += exposure
-        X_L = np.around(X_L)
-        X_L[X_L < 0.0] = 0.0
-        X_L[X_L > 255.0] = 255.0
-        X_Lab[:, :, 0] = X_L.astype(dtype=X_Lab.dtype)
-        X = cv2.cvtColor(X_Lab, cv2.COLOR_LAB2BGR)
-        # Rotate, Scale, Skew
-        h, w, c = X.shape
-        degree = random.randint(-15, 15)
-        scale = random.uniform(0.90, 1.10)
-        skew_x = random.uniform(0.90, 1.10)
-        skew_y = random.uniform(0.90, 1.10)
-        skew_x_offset = abs(1.0 - skew_x)
-        skew_y_offset = abs(1.0 - skew_y)
-        skew_offset = np.sqrt(skew_x_offset ** skew_x_offset + skew_y_offset ** skew_y_offset)
-        skew_scale = 1.0 + skew_offset
-        padding = np.sqrt((w) ** 2 / 4 - 2 * (w) ** 2 / 16)
-        padding /= scale
-        padding *= skew_scale
-        padding = int(np.ceil(padding))
-        for channel in range(c):
-            X_ = X[:, :, channel]
-            X_ = np.pad(X_, padding, 'reflect', reflect_type='even')
-            h_, w_ = X_.shape
-            # Calculate Affine transform
-            center = (w_ // 2, h_ // 2)
-            A = cv2.getRotationMatrix2D(center, degree, scale)
-            # Add skew
-            A[0][0] *= skew_x
-            A[1][0] *= skew_x
-            A[0][1] *= skew_y
-            A[1][1] *= skew_y
-            # Apply Affine
-            X_ = cv2.warpAffine(X_, A, (w_, h_), flags=cv2.INTER_LANCZOS4, borderValue=0)
-            X_ = X_[padding: -1 * padding, padding: -1 * padding]
-            X[:, :, channel] = X_
-        # Horizontal flip
-        if random.uniform(0.0, 1.0) <= 0.5:
-            X = cv2.flip(X, 1)
-        # Blur
-        if random.uniform(0.0, 1.0) <= 0.01:
-            X = cv2.blur(X, (3, 3))
-        # Reshape
-        X = X.reshape(Xb[index].shape)
-        X = X.astype(Xb[index].dtype)
-        # Show image
-        canvas_filepath = '/home/jason/Desktop/temp-%s-%d.png' % (y, random.randint(0, 100), )
-        if False and not exists(canvas_filepath):
-            canvas = np.hstack((Xb[index], X))
-            cv2.imwrite(canvas_filepath, canvas)
-        # Save
-        Xb[index] = X
-        if yb is not None:
-            yb[index] = y
-    return Xb, yb, wb
+
+        for xtl, ytl, xbr, ybr, class_ in y:
+            X = np.copy(X_base)
+            mask = X[:, :, 3]
+            X = X[:, :, :3]
+            # Adjust the exposure
+            X_Lab = cv2.cvtColor(X, cv2.COLOR_BGR2LAB)
+            X_L = X_Lab[:, :, 0].astype(dtype=np.float32)
+            # margin = np.min([np.min(X_L), 255.0 - np.max(X_L), 64.0])
+            margin = 64.0
+            exposure = random.uniform(-margin, margin)
+            X_L += exposure
+            X_L = np.around(X_L)
+            X_L[X_L < 0.0] = 0.0
+            X_L[X_L > 255.0] = 255.0
+            X_Lab[:, :, 0] = X_L.astype(dtype=X_Lab.dtype)
+            X = cv2.cvtColor(X_Lab, cv2.COLOR_LAB2BGR)
+            # Rotate, Scale, Skew
+            h, w, c = X.shape
+            degree = random.randint(-15, 15)
+            scale = random.uniform(0.90, 1.10)
+            skew_x = random.uniform(0.90, 1.10)
+            skew_y = random.uniform(0.90, 1.10)
+            skew_x_offset = abs(1.0 - skew_x)
+            skew_y_offset = abs(1.0 - skew_y)
+            skew_offset = np.sqrt(skew_x_offset ** skew_x_offset + skew_y_offset ** skew_y_offset)
+            skew_scale = 1.0 + skew_offset
+            padding = np.sqrt((w) ** 2 / 4 - 2 * (w) ** 2 / 16)
+            padding /= scale
+            padding *= skew_scale
+            padding = int(np.ceil(padding))
+            # Make mask
+            xtl = int(np.around(xtl * w))
+            ytl = int(np.around(ytl * h))
+            xbr = int(np.around(xbr * w))
+            ybr = int(np.around(ybr * h))
+            mask[ytl: ybr, xtl: xbr] = 255
+            X = np.dstack((X, mask))
+            for channel in range(c):
+                X_ = X[:, :, channel]
+                X_ = np.pad(X_, padding, 'reflect', reflect_type='even')
+                h_, w_ = X_.shape
+                # Calculate Affine transform
+                center = (w_ // 2, h_ // 2)
+                A = cv2.getRotationMatrix2D(center, degree, scale)
+                # Add skew
+                A[0][0] *= skew_x
+                A[1][0] *= skew_x
+                A[0][1] *= skew_y
+                A[1][1] *= skew_y
+                # Apply Affine
+                X_ = cv2.warpAffine(X_, A, (w_, h_), flags=cv2.INTER_LANCZOS4, borderValue=0)
+                X_ = X_[padding: -1 * padding, padding: -1 * padding]
+                X[:, :, channel] = X_
+            # Horizontal flip
+            if random.uniform(0.0, 1.0) <= 0.5:
+                X = cv2.flip(X, 1)
+            # Blur
+            if random.uniform(0.0, 1.0) <= 0.01:
+                X[:, :, :3] = cv2.blur(X[:, :, :3], (3, 3))
+            # Reshape
+            X = X.reshape(Xb[index].shape)
+            X = X.astype(Xb[index].dtype)
+            # Show image
+            canvas_filepath = '/home/jason/Desktop/temp-%s-%d.png' % (class_, random.randint(0, 100), )
+            if not exists(canvas_filepath):
+                temp_list = [
+                    Xb[index][:, :, :3],
+                    cv2.merge((Xb[index][:, :, 3], Xb[index][:, :, 3], Xb[index][:, :, 3])),
+                    X[:, :, :3],
+                    cv2.merge((X[:, :, 3], X[:, :, 3], X[:, :, 3])),
+                ]
+                canvas = np.hstack(temp_list)
+                cv2.imwrite(canvas_filepath, canvas)
+            # Save
+            Xb_.append(X)
+            yb_.append(class_)
+            wb_.append(1.0)
+
+    Xb_ = np.array(Xb_, dtype=Xb.dtype)
+    yb_ = np.array(yb_, dtype=np.float32)
+    wb_ = np.array(wb_, dtype=np.float32)
+    return Xb_, yb_, wb_
 
 
 @six.add_metaclass(ut.ReloadingMetaclass)
@@ -216,6 +241,7 @@ def train_aoi2(output_path, data_fpath, labels_fpath, purge=True):
             'momentum'       : .9,
             'weight_decay'   : 0.0001,
             'augment_on'     : True,
+            'augment_on_validate' : True,
             'label_encode_on': False,
             'whiten_on'      : True,
             'class_weight'   : None,
