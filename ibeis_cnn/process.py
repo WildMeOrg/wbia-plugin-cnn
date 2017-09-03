@@ -399,7 +399,7 @@ def numpy_processed_directory5(extracted_path, numpy_ids_file_name='ids.npy',
         if verbose:
             print('Processing %r' % (file_name, ))
 
-        image = cv2.imread(file_path)
+        image = cv2.imread(file_path, -1)
         try:
             label = label_dict[file_name]
             ids.append(file_name)
