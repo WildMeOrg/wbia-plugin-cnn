@@ -1534,7 +1534,6 @@ def get_aoi2_training_data(ibs, image_size=192, dest_path=None,
     """
     Get data for bg
     """
-    ut.embed()
     from os.path import join, expanduser
 
     if dest_path is None:
@@ -1542,7 +1541,7 @@ def get_aoi2_training_data(ibs, image_size=192, dest_path=None,
 
     dbname = ibs.dbname
 
-    name = 'aoi'
+    name = 'aoi2'
     dbname = ibs.dbname
     name_path = join(dest_path, name)
     raw_path = join(name_path, 'raw')
@@ -1569,6 +1568,7 @@ def get_aoi2_training_data(ibs, image_size=192, dest_path=None,
     if target_species_list is None:
         target_species_list = list(set(ut.flatten(species_list_list)))
 
+    mask = np.zeros((image_size, image_size, 1))
     zipped = zip(train_gid_set, reviewed_list, aids_list, size_list, bboxes_list, species_list_list, interest_list_list)
     label_list = []
     for gid, reviewed, aid_list, (w, h), bbox_list, species_list, interest_list in zipped:
@@ -1612,6 +1612,7 @@ def get_aoi2_training_data(ibs, image_size=192, dest_path=None,
 
         image = ibs.get_image_imgdata(gid)
         image_ = cv2.resize(image, (image_size, image_size), interpolation=cv2.INTER_LANCZOS4)
+        image_ = np.dstack((image_, mask))
 
         values = (dbname, gid, )
         patch_filename = '%s_image_gid_%s.png' % values

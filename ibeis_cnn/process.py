@@ -362,7 +362,6 @@ def numpy_processed_directory5(extracted_path, numpy_ids_file_name='ids.npy',
                                numpy_y_file_name='y.npy',
                                labels_file_name='labels.csv',
                                reset=True, verbose=False):
-    ut.embed()
     print('Caching images into Numpy files with category vector...')
 
     raw_path = join(extracted_path, 'raw')
