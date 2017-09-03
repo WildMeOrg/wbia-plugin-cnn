@@ -29,7 +29,6 @@ def augment_wrapper(Xb, yb=None, wb=None):
     Xb_ = []
     yb_ = []
     wb_ = []
-    ut.embed()
     for index in range(len(Xb)):
         X_base = np.copy(Xb[index])
         y = None if yb is None else yb[index]
@@ -71,7 +70,7 @@ def augment_wrapper(Xb, yb=None, wb=None):
             ybr = int(np.around(ybr * h))
             mask[ytl: ybr, xtl: xbr] = 255
             X = np.dstack((X, mask))
-            for channel in range(c):
+            for channel in range(c + 1):
                 X_ = X[:, :, channel]
                 X_ = np.pad(X_, padding, 'reflect', reflect_type='even')
                 h_, w_ = X_.shape
@@ -101,9 +100,11 @@ def augment_wrapper(Xb, yb=None, wb=None):
             if not exists(canvas_filepath):
                 temp_list = [
                     Xb[index][:, :, :3],
-                    cv2.merge((Xb[index][:, :, 3], Xb[index][:, :, 3], Xb[index][:, :, 3])),
+                    cv2.merge((mask, mask, mask)),
+                    Xb[index][:, :, :3] * (mask / 255.0).reshape(192, 192, 1),
                     X[:, :, :3],
                     cv2.merge((X[:, :, 3], X[:, :, 3], X[:, :, 3])),
+                    X[:, :, :3] * (X[:, :, 3] / 255.0).reshape(192, 192, 1),
                 ]
                 canvas = np.hstack(temp_list)
                 cv2.imwrite(canvas_filepath, canvas)
@@ -229,7 +230,6 @@ def train_aoi2(output_path, data_fpath, labels_fpath, purge=True):
         >>> result = train_aoi2()
         >>> print(result)
     """
-    ut.embed()
     era_size = 256
     max_epochs = 256
     hyperparams = ut.argparse_dict(
