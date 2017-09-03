@@ -135,23 +135,25 @@ class AoI2Model(abstract_models.AbstractCategoricalModel):
             yb = [None] * len(Xb)
         if wb is None:
             wb = [None] * len(Xb)
-        arg_iter = list(zip(Xb, yb, wb))
-        ut.embed()
-        result_list = ut.util_parallel.generate2(augment_parallel, arg_iter,
-                                                 ordered=True, verbose=False)
-        result_list = list(result_list)
-        X = [ result[0][0] for result in result_list ]
-        X = np.array(X)
-        if yb is None:
-            y = None
-        else:
-            y = [ result[1] for result in result_list ]
-            y = np.array(y)
-        if wb is None:
-            w = None
-        else:
-            w = [ result[2] for result in result_list ]
-            w = np.hstack(w)
+        try:
+            arg_iter = list(zip(Xb, yb, wb))
+            result_list = ut.util_parallel.generate2(augment_parallel, arg_iter,
+                                                     ordered=True, verbose=False)
+            result_list = list(result_list)
+            X = [ result[0][0] for result in result_list ]
+            X = np.array(X)
+            if yb is None:
+                y = None
+            else:
+                y = [ result[1] for result in result_list ]
+                y = np.array(y)
+            if wb is None:
+                w = None
+            else:
+                w = [ result[2] for result in result_list ]
+                w = np.hstack(w)
+        except:
+            ut.embed()
         return X, y, w
 
     def get_aoi2_def(model, verbose=ut.VERBOSE, **kwargs):
