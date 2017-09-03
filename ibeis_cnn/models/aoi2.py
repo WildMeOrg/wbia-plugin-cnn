@@ -113,7 +113,7 @@ def augment_wrapper(Xb, yb=None, wb=None):
             yb_.append(class_)
             wb_.append(1.0)
 
-    Xb_ = np.array(Xb_, dtype=Xb.dtype)
+    Xb_ = np.array(Xb_, dtype=np.uint8)
     yb_ = np.array(yb_, dtype=np.float32)
     wb_ = np.array(wb_, dtype=np.float32)
     return Xb_, yb_, wb_
@@ -136,6 +136,7 @@ class AoI2Model(abstract_models.AbstractCategoricalModel):
         if wb is None:
             wb = [None] * len(Xb)
         arg_iter = list(zip(Xb, yb, wb))
+        ut.embed()
         result_list = ut.util_parallel.generate2(augment_parallel, arg_iter,
                                                  ordered=True, verbose=False)
         result_list = list(result_list)
@@ -145,7 +146,7 @@ class AoI2Model(abstract_models.AbstractCategoricalModel):
             y = None
         else:
             y = [ result[1] for result in result_list ]
-            y = np.vstack(y)
+            y = np.array(y)
         if wb is None:
             w = None
         else:
