@@ -128,6 +128,10 @@ class AoI2Model(abstract_models.AbstractCategoricalModel):
                                                 data_shape=data_shape,
                                                 name=name, **kwargs)
 
+    def loss_function(model, network_output, truth):
+        from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
+        return T.nnet.binary_crossentropy(network_output, truth)
+
     def augment(model, Xb, yb=None, wb=None, parallel=True):
         if not parallel:
             return augment_wrapper(Xb, yb, wb)
@@ -194,7 +198,7 @@ class AoI2Model(abstract_models.AbstractCategoricalModel):
                 _P(layers.DropoutLayer, p=0.5, name='D1'),
                 _P(layers.DenseLayer, num_units=256, name='F1', **hidden_initkw),
 
-                _P(layers.DenseLayer, num_units=1, name='F2', nonlinearity=nonlinearities.softmax),
+                _P(layers.DenseLayer, num_units=1, name='F2', nonlinearity=nonlinearities.sidmoid),
             ]
         )
         return network_layers_def
