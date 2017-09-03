@@ -198,7 +198,7 @@ class AoI2Model(abstract_models.AbstractCategoricalModel):
                 _P(layers.DropoutLayer, p=0.5, name='D1'),
                 _P(layers.DenseLayer, num_units=256, name='F1', **hidden_initkw),
 
-                _P(layers.DenseLayer, num_units=1, name='F2', nonlinearity=nonlinearities.sidmoid),
+                _P(layers.DenseLayer, num_units=1, name='F2', nonlinearity=nonlinearities.sigmoid),
             ]
         )
         return network_layers_def
