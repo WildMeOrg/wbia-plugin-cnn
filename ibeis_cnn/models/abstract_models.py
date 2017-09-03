@@ -382,6 +382,7 @@ class _ModelFitter(object):
             'whiten_on': False,
             'augment_on': False,
             'augment_on_validate': False,
+            'augment_weights': False,
             'augment_delay': 0,
             # 'augment_delay': 2,
             'era_size': 10,  # epochs per era
@@ -1548,9 +1549,9 @@ class _ModelBatch(_BatchUtility):
         if augment_on:
             has_encoder = getattr(model, 'encoder', None) is not None
             yb_ = model.encoder.inverse_transform(yb_) if has_encoder else yb_
-            try:
+            if model.hyperparams['augment_weights']:
                 Xb_, yb_, wb_ = model.augment(Xb_, yb_, wb_)
-            except:
+            else:
                 Xb_, yb_ = model.augment(Xb_, yb_)
             yb_ = model.encoder.transform(yb_) if has_encoder else yb_
         Xb = Xb_.astype(np.float32, copy=True)

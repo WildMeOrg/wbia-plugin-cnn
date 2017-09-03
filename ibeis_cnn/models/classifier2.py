@@ -201,16 +201,17 @@ def train_classifier2(output_path, data_fpath, labels_fpath, purge=True):
     max_epochs = 256
     hyperparams = ut.argparse_dict(
         {
-            'era_size'      : era_size,
-            'batch_size'    : 128,
-            'learning_rate' : 0.01,
-            'rate_schedule' : 0.75,
-            'momentum'      : .9,
-            'weight_decay'  : 0.0001,
-            'augment_on'    : True,
-            'whiten_on'     : True,
-            'class_weight'  : None,
-            'max_epochs'    : max_epochs,
+            'era_size'       : era_size,
+            'batch_size'     : 128,
+            'learning_rate'  : 0.01,
+            'rate_schedule'  : 0.75,
+            'momentum'       : .9,
+            'weight_decay'   : 0.0001,
+            'augment_on'     : True,
+            'augment_weights': True,
+            'whiten_on'      : True,
+            'class_weight'   : None,
+            'max_epochs'     : max_epochs,
         }
     )
 
