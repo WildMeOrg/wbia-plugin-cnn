@@ -9,7 +9,7 @@ from ibeis_cnn.__LASAGNE__ import layers
 from ibeis_cnn.__LASAGNE__ import nonlinearities
 from ibeis_cnn.__LASAGNE__ import init
 from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
-from ibeis_cnn.models import abstract_models, pretrained
+from ibeis_cnn.models import abstract_models
 from os.path import exists
 import cv2
 
@@ -99,7 +99,7 @@ class AoI2Model(abstract_models.AbstractCategoricalModel):
                                                 data_shape=data_shape,
                                                 name=name, **kwargs)
 
-    def augment(model, Xb, yb=None, parallel=True):
+    def augment(model, Xb, yb=None, parallel=False):
         if not parallel:
             return augment_wrapper(Xb, yb)
         # Run in parallel
@@ -122,8 +122,6 @@ class AoI2Model(abstract_models.AbstractCategoricalModel):
         # _CaffeNet = abstract_models.PretrainedNetwork('caffenet')
         _P = functools.partial
 
-        _CaffeNet = pretrained.PretrainedNetwork('caffenet_conv')
-
         hidden_initkw = {
             'nonlinearity' : nonlinearities.LeakyRectify(leakiness=(1. / 10.)),
         }
@@ -138,13 +136,13 @@ class AoI2Model(abstract_models.AbstractCategoricalModel):
             [
                 _P(layers.InputLayer, shape=model.input_shape),
 
-                _P(Conv2DLayer, num_filters=16, filter_size=(11, 11), name='C0', W=_CaffeNet.get_pretrained_layer(0), **hidden_initkw),  # NOQA
+                _P(Conv2DLayer, num_filters=16, filter_size=(11, 11), name='C0', W=init.Orthogonal('relu'), **hidden_initkw),  # NOQA
                 _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P0'),
 
-                _P(Conv2DLayer, num_filters=32, filter_size=(5, 5), name='C1', W=_CaffeNet.get_pretrained_layer(2), **hidden_initkw),  # NOQA
+                _P(Conv2DLayer, num_filters=32, filter_size=(5, 5), name='C1', W=init.Orthogonal('relu'), **hidden_initkw),  # NOQA
                 _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P1'),
 
-                _P(Conv2DLayer, num_filters=64, filter_size=(3, 3), name='C2', W=_CaffeNet.get_pretrained_layer(4), **hidden_initkw),  # NOQA
+                _P(Conv2DLayer, num_filters=64, filter_size=(3, 3), name='C2', W=init.Orthogonal('relu'), **hidden_initkw),  # NOQA
                 _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P2'),
 
                 _P(Conv2DLayer, num_filters=128, filter_size=(3, 3), name='C3', W=init.Orthogonal('relu'), **hidden_initkw),
@@ -228,7 +226,7 @@ def train_aoi2(output_path, data_fpath, labels_fpath, purge=True):
             data_shape=dataset.data_shape,
             training_dpath=dataset.training_dpath,
             **hyperparams)
-        model.init_output_dims(y_train)
+        model.output_dims = 1
         model.init_arch()
         ut.delete(model.arch_dpath)
 
@@ -238,10 +236,8 @@ def train_aoi2(output_path, data_fpath, labels_fpath, purge=True):
         training_dpath=dataset.training_dpath,
         **hyperparams)
 
-    ut.colorprint('[netrun] Init output_dims', 'yellow')
-    model.init_output_dims(y_train)
-
     ut.colorprint('[netrun] Initialize archchitecture', 'yellow')
+    model.output_dims = 1
     model.init_arch()
 
     ut.colorprint('[netrun] * Initializing new weights', 'lightgray')
@@ -259,7 +255,7 @@ def train_aoi2(output_path, data_fpath, labels_fpath, purge=True):
     config = ut.argparse_dict(dict(
         monitor=False,
         monitor_updates=False,
-        show_confusion=False,
+        show_confusion=True,
         era_size=era_size,
         max_epochs=max_epochs,
     ))
