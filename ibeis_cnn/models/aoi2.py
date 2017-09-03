@@ -16,15 +16,17 @@ import cv2
 print, rrr, profile = ut.inject2(__name__)
 
 
-def augment_parallel(X, y):
+def augment_parallel(X, y, w):
     return augment_wrapper(
         [X],
-        None if y is None else [y]
+        None if y is None else [y],
+        None if w is None else [w],
     )
 
 
-def augment_wrapper(Xb, yb=None):
+def augment_wrapper(Xb, yb=None, wb=None):
     import random
+    ut.embed()
     for index in range(len(Xb)):
         X = np.copy(Xb[index])
         y = None if yb is None else yb[index]
@@ -88,7 +90,7 @@ def augment_wrapper(Xb, yb=None):
         Xb[index] = X
         if yb is not None:
             yb[index] = y
-    return Xb, yb
+    return Xb, yb, wb
 
 
 @six.add_metaclass(ut.ReloadingMetaclass)
@@ -99,13 +101,15 @@ class AoI2Model(abstract_models.AbstractCategoricalModel):
                                                 data_shape=data_shape,
                                                 name=name, **kwargs)
 
-    def augment(model, Xb, yb=None, parallel=False):
+    def augment(model, Xb, yb=None, wb=None, parallel=False):
         if not parallel:
-            return augment_wrapper(Xb, yb)
+            return augment_wrapper(Xb, yb, wb)
         # Run in parallel
         if yb is None:
             yb = [None] * len(Xb)
-        arg_iter = list(zip(Xb, yb))
+        if wb is None:
+            wb = [None] * len(Xb)
+        arg_iter = list(zip(Xb, yb, wb))
         result_list = ut.util_parallel.generate2(augment_parallel, arg_iter,
                                                  ordered=True, verbose=False)
         result_list = list(result_list)
@@ -116,7 +120,12 @@ class AoI2Model(abstract_models.AbstractCategoricalModel):
         else:
             y = [ result[1] for result in result_list ]
             y = np.vstack(y)
-        return X, y
+        if wb is None:
+            w = None
+        else:
+            w = [ result[2] for result in result_list ]
+            w = np.hstack(w)
+        return X, y, w
 
     def get_aoi2_def(model, verbose=ut.VERBOSE, **kwargs):
         # _CaffeNet = abstract_models.PretrainedNetwork('caffenet')
