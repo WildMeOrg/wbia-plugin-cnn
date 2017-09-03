@@ -139,6 +139,7 @@ class AoI2Model(abstract_models.AbstractCategoricalModel):
             arg_iter = list(zip(Xb, yb, wb))
             result_list = ut.util_parallel.generate2(augment_parallel, arg_iter,
                                                      ordered=True, verbose=False)
+            ut.embed()
             result_list = list(result_list)
             X = [ result[0][0] for result in result_list ]
             X = np.array(X)
@@ -146,7 +147,7 @@ class AoI2Model(abstract_models.AbstractCategoricalModel):
                 y = None
             else:
                 y = [ result[1] for result in result_list ]
-                y = np.array(y)
+                y = np.hstack(y)
             if wb is None:
                 w = None
             else:
