@@ -116,6 +116,11 @@ def augment_wrapper(Xb, yb=None, wb=None):
     Xb_ = np.array(Xb_, dtype=np.uint8)
     yb_ = np.array(yb_, dtype=np.float32)
     wb_ = np.array(wb_, dtype=np.float32)
+
+    print(Xb_.shape)
+    print(yb_.shape)
+    print(wb_.shape)
+
     return Xb_, yb_, wb_
 
 
