@@ -153,10 +153,6 @@ class AoI2Model(abstract_models.AbstractCategoricalModel):
             w = [ result[2] for result in result_list ]
             w = np.hstack(w)
 
-        print(X.shape)
-        print(y.shape)
-        print(w.shape)
-
         return X, y, w
 
     def get_aoi2_def(model, verbose=ut.VERBOSE, **kwargs):
