@@ -117,10 +117,6 @@ def augment_wrapper(Xb, yb=None, wb=None):
     yb_ = np.array(yb_, dtype=np.float32)
     wb_ = np.array(wb_, dtype=np.float32)
 
-    print(Xb_.shape)
-    print(yb_.shape)
-    print(wb_.shape)
-
     return Xb_, yb_, wb_
 
 
@@ -145,7 +141,7 @@ class AoI2Model(abstract_models.AbstractCategoricalModel):
                                                  ordered=True, verbose=False)
         result_list = list(result_list)
         X = [ result[0][0] for result in result_list ]
-        X = np.array(X)
+        X = np.vstack(X)
         if yb is None:
             y = None
         else:
@@ -156,6 +152,11 @@ class AoI2Model(abstract_models.AbstractCategoricalModel):
         else:
             w = [ result[2] for result in result_list ]
             w = np.hstack(w)
+
+        print(X.shape)
+        print(y.shape)
+        print(w.shape)
+
         return X, y, w
 
     def get_aoi2_def(model, verbose=ut.VERBOSE, **kwargs):
