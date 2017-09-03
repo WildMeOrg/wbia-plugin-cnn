@@ -141,6 +141,7 @@ class AoI2Model(abstract_models.AbstractCategoricalModel):
                                                  ordered=True, verbose=False)
         result_list = list(result_list)
         X = [ result[0][0] for result in result_list ]
+        ut.embed()
         X = np.vstack(X)
         if yb is None:
             y = None
