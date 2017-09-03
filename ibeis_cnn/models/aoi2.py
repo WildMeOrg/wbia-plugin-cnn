@@ -153,6 +153,7 @@ class AoI2Model(abstract_models.AbstractCategoricalModel):
                 w = [ result[2] for result in result_list ]
                 w = np.hstack(w)
         except:
+            print('augment')
             ut.embed()
         return X, y, w
 

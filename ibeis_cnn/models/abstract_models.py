@@ -1546,17 +1546,21 @@ class _ModelBatch(_BatchUtility):
 
     def _prepare_batch(model, Xb_, yb_, wb_, is_int=True, is_cv2=True,
                        augment_on=False, whiten_on=False):
-        if augment_on:
-            has_encoder = getattr(model, 'encoder', None) is not None
-            yb_ = model.encoder.inverse_transform(yb_) if has_encoder else yb_
-            if model.hyperparams['augment_weights']:
-                Xb_, yb_, wb_ = model.augment(Xb_, yb_, wb_)
-            else:
-                Xb_, yb_ = model.augment(Xb_, yb_)
-            yb_ = model.encoder.transform(yb_) if has_encoder else yb_
-        Xb = Xb_.astype(np.float32, copy=True)
-        yb = None if yb_ is None else yb_.astype(np.int32, copy=True)
-        wb = None if wb_ is None else wb_.astype(np.float32, copy=False)
+        try:
+            if augment_on:
+                has_encoder = getattr(model, 'encoder', None) is not None
+                yb_ = model.encoder.inverse_transform(yb_) if has_encoder else yb_
+                if model.hyperparams['augment_weights']:
+                    Xb_, yb_, wb_ = model.augment(Xb_, yb_, wb_)
+                else:
+                    Xb_, yb_ = model.augment(Xb_, yb_)
+                yb_ = model.encoder.transform(yb_) if has_encoder else yb_
+            Xb = Xb_.astype(np.float32, copy=True)
+            yb = None if yb_ is None else yb_.astype(np.int32, copy=True)
+            wb = None if wb_ is None else wb_.astype(np.float32, copy=False)
+        except:
+            print('_prepare_batch')
+            ut.embed()
         if is_int:
             # Rescale the batch data to the range 0 to 1
             Xb = Xb / 255.0
