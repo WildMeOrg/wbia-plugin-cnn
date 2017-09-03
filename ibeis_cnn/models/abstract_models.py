@@ -378,6 +378,7 @@ class _ModelFitter(object):
         # dictionary is always static in a fit session and only indicates the
         # initial state of these variables.
         model.hyperparams = {
+            'label_encode_on': True,
             'whiten_on': False,
             'augment_on': False,
             'augment_on_validate': False,
@@ -839,9 +840,10 @@ class _ModelFitter(object):
         else:
             ut.delete_dict_keys(model.data_params, ['class_to_weight'])
 
-        if getattr(model, 'encoder', None) is None:
-            if hasattr(model, 'init_encoder'):
-                model.init_encoder(y_learn)
+        if model.hyperparams['label_encode_on']:
+            if getattr(model, 'encoder', None) is None:
+                if hasattr(model, 'init_encoder'):
+                    model.init_encoder(y_learn)
 
     def _rename_old_sessions(model):
         import re

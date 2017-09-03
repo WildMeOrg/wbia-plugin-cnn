@@ -1530,11 +1530,12 @@ def get_aoi_training_data(ibs, dest_path=None, target_species_list=None, purge=T
 
 
 def get_aoi2_training_data(ibs, image_size=192, dest_path=None,
-                           target_species_list=None, purge=True):
+                           target_species_list=None, purge=True,
+                           cache=True):
     """
     Get data for bg
     """
-    from os.path import join, expanduser
+    from os.path import join, expanduser, exists
 
     if dest_path is None:
         dest_path = expanduser(join('~', 'Desktop', 'extracted'))
@@ -1547,85 +1548,88 @@ def get_aoi2_training_data(ibs, image_size=192, dest_path=None,
     raw_path = join(name_path, 'raw')
     labels_path = join(name_path, 'labels')
 
-    if purge:
-        ut.delete(name_path)
+    if cache and exists(name_path):
+        print('Using cached exported data')
+    else:
+        if purge:
+            ut.delete(name_path)
 
-    ut.ensuredir(dest_path)
-    ut.ensuredir(name_path)
-    ut.ensuredir(raw_path)
-    ut.ensuredir(labels_path)
+        ut.ensuredir(dest_path)
+        ut.ensuredir(name_path)
+        ut.ensuredir(raw_path)
+        ut.ensuredir(labels_path)
 
-    # gid_list = ibs.get_valid_gids()
-    train_gid_set = list(set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET'))))
-    # reviewed_list = ibs.get_image_reviewed(train_gid_set)
-    reviewed_list = [True] * len(train_gid_set)
-    aids_list = ibs.get_image_aids(train_gid_set)
-    size_list = ibs.get_image_sizes(train_gid_set)
-    bboxes_list = [ ibs.get_annot_bboxes(aid_list) for aid_list in aids_list ]
-    species_list_list = [ ibs.get_annot_species_texts(aid_list) for aid_list in aids_list ]
-    interest_list_list = [ ibs.get_annot_interest(aid_list) for aid_list in aids_list ]
+        # gid_list = ibs.get_valid_gids()
+        train_gid_set = list(set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET'))))
+        # reviewed_list = ibs.get_image_reviewed(train_gid_set)
+        reviewed_list = [True] * len(train_gid_set)
+        aids_list = ibs.get_image_aids(train_gid_set)
+        size_list = ibs.get_image_sizes(train_gid_set)
+        bboxes_list = [ ibs.get_annot_bboxes(aid_list) for aid_list in aids_list ]
+        species_list_list = [ ibs.get_annot_species_texts(aid_list) for aid_list in aids_list ]
+        interest_list_list = [ ibs.get_annot_interest(aid_list) for aid_list in aids_list ]
 
-    if target_species_list is None:
-        target_species_list = list(set(ut.flatten(species_list_list)))
+        if target_species_list is None:
+            target_species_list = list(set(ut.flatten(species_list_list)))
 
-    mask = np.zeros((image_size, image_size, 1))
-    zipped = zip(train_gid_set, reviewed_list, aids_list, size_list, bboxes_list, species_list_list, interest_list_list)
-    label_list = []
-    for gid, reviewed, aid_list, (w, h), bbox_list, species_list, interest_list in zipped:
-        print('Processing GID: %r' % (gid, ))
-        print('\tAIDS  : %r' % (aid_list, ))
-        print('\tBBOXES: %r' % (bbox_list, ))
+        mask = np.zeros((image_size, image_size, 1))
+        zipped = zip(train_gid_set, reviewed_list, aids_list, size_list, bboxes_list, species_list_list, interest_list_list)
+        label_list = []
+        for gid, reviewed, aid_list, (w, h), bbox_list, species_list, interest_list in zipped:
+            print('Processing GID: %r' % (gid, ))
+            print('\tAIDS  : %r' % (aid_list, ))
+            print('\tBBOXES: %r' % (bbox_list, ))
 
-        if reviewed in [None, 0]:
-            continue
-
-        w = float(w)
-        h = float(h)
-
-        temp_list = []
-        aoi_counter = 0
-        zipped = zip(aid_list, bbox_list, species_list, interest_list)
-        for aid, (xtl, ytl, width, height), species, interest in zipped:
-            if species not in target_species_list:
-                continue
-            if interest is None:
+            if reviewed in [None, 0]:
                 continue
 
-            aoi_flag = 1 if interest else 0
-            aoi_counter += aoi_flag
+            w = float(w)
+            h = float(h)
 
-            temp = [
-                xtl / w,
-                ytl / h,
-                (xtl + width) / w,
-                (ytl + height) / h,
-                aoi_flag
-            ]
-            temp = list(map(str, map(float, temp)))
-            label = '^'.join(temp)
-            temp_list.append(label)
+            temp_list = []
+            aoi_counter = 0
+            zipped = zip(aid_list, bbox_list, species_list, interest_list)
+            for aid, (xtl, ytl, width, height), species, interest in zipped:
+                if species not in target_species_list:
+                    continue
+                if interest is None:
+                    continue
 
-        if len(temp_list) == 0:
-            continue
-        if aoi_counter == 0:
-            continue
+                aoi_flag = 1 if interest else 0
+                aoi_counter += aoi_flag
 
-        image = ibs.get_image_imgdata(gid)
-        image_ = cv2.resize(image, (image_size, image_size), interpolation=cv2.INTER_LANCZOS4)
-        image_ = np.dstack((image_, mask))
+                temp = [
+                    xtl / w,
+                    ytl / h,
+                    (xtl + width) / w,
+                    (ytl + height) / h,
+                    aoi_flag
+                ]
+                temp = list(map(str, map(float, temp)))
+                label = '^'.join(temp)
+                temp_list.append(label)
 
-        values = (dbname, gid, )
-        patch_filename = '%s_image_gid_%s.png' % values
-        patch_filepath = join(raw_path, patch_filename)
-        cv2.imwrite(patch_filepath, image_)
+            if len(temp_list) == 0:
+                continue
+            if aoi_counter == 0:
+                continue
 
-        label = ';'.join(temp_list)
-        label = '%s,%s' % (patch_filename, label)
-        label_list.append(label)
+            image = ibs.get_image_imgdata(gid)
+            image_ = cv2.resize(image, (image_size, image_size), interpolation=cv2.INTER_LANCZOS4)
+            image_ = np.dstack((image_, mask))
 
-    with open(join(labels_path, 'labels.csv'), 'a') as labels:
-        label_str = '\n'.join(label_list) + '\n'
-        labels.write(label_str)
+            values = (dbname, gid, )
+            patch_filename = '%s_image_gid_%s.png' % values
+            patch_filepath = join(raw_path, patch_filename)
+            cv2.imwrite(patch_filepath, image_)
+
+            label = ';'.join(temp_list)
+            label = '%s,%s' % (patch_filename, label)
+            label_list.append(label)
+
+        with open(join(labels_path, 'labels.csv'), 'a') as labels:
+            label_str = '\n'.join(label_list) + '\n'
+            labels.write(label_str)
 
     return name_path
 
