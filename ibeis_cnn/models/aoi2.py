@@ -97,7 +97,7 @@ def augment_wrapper(Xb, yb=None, wb=None):
             X = X.astype(Xb[index].dtype)
             # Show image
             canvas_filepath = '/home/jason/Desktop/temp-%s-%d.png' % (class_, random.randint(0, 100), )
-            if not exists(canvas_filepath):
+            if False and not exists(canvas_filepath):
                 temp_list = [
                     Xb[index][:, :, :3],
                     cv2.merge((mask, mask, mask)),
@@ -127,7 +127,7 @@ class AoI2Model(abstract_models.AbstractCategoricalModel):
                                                 data_shape=data_shape,
                                                 name=name, **kwargs)
 
-    def augment(model, Xb, yb=None, wb=None, parallel=False):
+    def augment(model, Xb, yb=None, wb=None, parallel=True):
         if not parallel:
             return augment_wrapper(Xb, yb, wb)
         # Run in parallel
