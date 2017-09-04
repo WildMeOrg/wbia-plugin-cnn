@@ -116,11 +116,11 @@ def augment_wrapper(Xb, yb=None, wb=None):
                 cv2.imwrite(canvas_filepath, canvas)
             # Save
             Xb_.append(X)
-            yb_.append(class_)
+            yb_.append(int(class_))
             wb_.append(1.0)
 
     Xb_ = np.array(Xb_, dtype=np.uint8)
-    yb_ = np.array(yb_, dtype=np.float32)
+    yb_ = np.array(yb_, dtype=np.uint8)
     wb_ = np.array(wb_, dtype=np.float32)
 
     return Xb_, yb_, wb_
@@ -204,7 +204,7 @@ class AoI2Model(abstract_models.AbstractCategoricalModel):
                 _P(layers.DropoutLayer, p=0.5, name='D1'),
                 _P(layers.DenseLayer, num_units=256, name='F1', **hidden_initkw),
 
-                _P(layers.DenseLayer, num_units=1, name='F2', nonlinearity=nonlinearities.sigmoid),
+                _P(layers.DenseLayer, num_units=2, name='F2', nonlinearity=nonlinearities.sigmoid),
             ]
         )
         return network_layers_def
