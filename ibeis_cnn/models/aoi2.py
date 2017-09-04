@@ -64,12 +64,11 @@ def augment_wrapper(Xb, yb=None, wb=None):
             padding *= skew_scale
             padding = int(np.ceil(padding))
             # Make mask
-            if class_ == 1.0:
-                xtl = int(np.around(xtl * w))
-                ytl = int(np.around(ytl * h))
-                xbr = int(np.around(xbr * w))
-                ybr = int(np.around(ybr * h))
-                mask[ytl: ybr, xtl: xbr] = 255
+            xtl = int(np.around(xtl * w))
+            ytl = int(np.around(ytl * h))
+            xbr = int(np.around(xbr * w))
+            ybr = int(np.around(ybr * h))
+            mask[ytl: ybr, xtl: xbr] = 255
             X = np.dstack((X, mask))
             for channel in range(c + 1):
                 X_ = X[:, :, channel]
