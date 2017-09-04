@@ -10,7 +10,7 @@ from ibeis_cnn.__LASAGNE__ import nonlinearities
 from ibeis_cnn.__LASAGNE__ import init
 from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
 from ibeis_cnn.models import abstract_models
-from os.path import exists
+from os.path import exists  # NOQA
 import cv2
 
 print, rrr, profile = ut.inject2(__name__)
@@ -64,11 +64,12 @@ def augment_wrapper(Xb, yb=None, wb=None):
             padding *= skew_scale
             padding = int(np.ceil(padding))
             # Make mask
-            xtl = int(np.around(xtl * w))
-            ytl = int(np.around(ytl * h))
-            xbr = int(np.around(xbr * w))
-            ybr = int(np.around(ybr * h))
-            mask[ytl: ybr, xtl: xbr] = 255
+            if class_ == 1.0:
+                xtl = int(np.around(xtl * w))
+                ytl = int(np.around(ytl * h))
+                xbr = int(np.around(xbr * w))
+                ybr = int(np.around(ybr * h))
+                mask[ytl: ybr, xtl: xbr] = 255
             X = np.dstack((X, mask))
             for channel in range(c + 1):
                 X_ = X[:, :, channel]
@@ -97,7 +98,7 @@ def augment_wrapper(Xb, yb=None, wb=None):
             X = X.astype(Xb[index].dtype)
             # Show image
             canvas_filepath = '/home/jason/Desktop/temp-%s-%d.png' % (class_, random.randint(0, 100), )
-            if False and not exists(canvas_filepath):
+            if random.uniform(0.0, 1.0) < 0.01:  # False and not exists(canvas_filepath)
                 temp_list = [
                     Xb[index][:, :, :3],
                     cv2.merge((mask, mask, mask)),
