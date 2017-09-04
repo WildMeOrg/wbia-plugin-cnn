@@ -71,11 +71,6 @@ def augment_wrapper(Xb, yb=None, wb=None):
                 ybr = int(np.around(ybr * h))
                 mask[ytl: ybr, xtl: xbr] = 255
             X = np.dstack((X, mask))
-            X[:, :, :3] = 0.0
-            if class_ == 1.0:
-                X[:, :, 3] = 255.0
-            else:
-                X[:, :, 3] = 0.0
             for channel in range(c + 1):
                 X_ = X[:, :, channel]
                 X_ = np.pad(X_, padding, 'reflect', reflect_type='even')
@@ -200,7 +195,7 @@ class AoI2Model(abstract_models.AbstractCategoricalModel):
                 _P(layers.DropoutLayer, p=0.5, name='D1'),
                 _P(layers.DenseLayer, num_units=256, name='F1', **hidden_initkw),
 
-                _P(layers.DenseLayer, num_units=2, name='F2', nonlinearity=nonlinearities.softmax),
+                _P(layers.DenseLayer, num_units=model.output_dims, name='F2', nonlinearity=nonlinearities.softmax),
             ]
         )
         return network_layers_def
@@ -271,7 +266,7 @@ def train_aoi2(output_path, data_fpath, labels_fpath, purge=True):
             data_shape=dataset.data_shape,
             training_dpath=dataset.training_dpath,
             **hyperparams)
-        model.output_dims = 1
+        model.output_dims = 2
         model.init_arch()
         ut.delete(model.arch_dpath)
 
@@ -282,7 +277,7 @@ def train_aoi2(output_path, data_fpath, labels_fpath, purge=True):
         **hyperparams)
 
     ut.colorprint('[netrun] Initialize archchitecture', 'yellow')
-    model.output_dims = 1
+    model.output_dims = 2
     model.init_arch()
 
     ut.colorprint('[netrun] * Initializing new weights', 'lightgray')
