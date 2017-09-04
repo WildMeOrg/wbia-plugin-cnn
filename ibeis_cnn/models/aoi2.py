@@ -72,7 +72,10 @@ def augment_wrapper(Xb, yb=None, wb=None):
                 mask[ytl: ybr, xtl: xbr] = 255
             X = np.dstack((X, mask))
             X[:, :, :3] = 0.0
-            X[:, :, 3] = 255.0
+            if class_ == 1.0:
+                X[:, :, 3] = 255.0
+            else:
+                X[:, :, 3] = 0.0
             for channel in range(c + 1):
                 X_ = X[:, :, channel]
                 X_ = np.pad(X_, padding, 'reflect', reflect_type='even')
