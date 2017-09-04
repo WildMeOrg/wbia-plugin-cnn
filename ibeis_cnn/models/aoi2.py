@@ -244,7 +244,7 @@ def train_aoi2(output_path, data_fpath, labels_fpath, purge=True):
         {
             'era_size'           : era_size,
             'batch_size'         : 128,
-            'learning_rate'      : 0.01,
+            'learning_rate'      : 0.001,
             'rate_schedule'      : 0.75,
             'momentum'           : .9,
             'weight_decay'       : 0.0001,
