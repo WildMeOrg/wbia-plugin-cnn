@@ -72,7 +72,10 @@ def augment_wrapper(Xb, yb=None, wb=None):
             X = np.dstack((X, mask))
             for channel in range(c + 1):
                 X_ = X[:, :, channel]
-                X_ = np.pad(X_, padding, 'reflect', reflect_type='even')
+                if channel >= c:
+                    X_ = np.pad(X_, padding, 'constant', constant_values=0.0)
+                else:
+                    X_ = np.pad(X_, padding, 'reflect', reflect_type='even')
                 h_, w_ = X_.shape
                 # Calculate Affine transform
                 center = (w_ // 2, h_ // 2)
