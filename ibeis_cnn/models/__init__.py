@@ -4,6 +4,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 from ibeis_cnn.models import _model_legacy
 from ibeis_cnn.models import abstract_models
+from ibeis_cnn.models import aoi2
 from ibeis_cnn.models import background
 from ibeis_cnn.models import classifier
 from ibeis_cnn.models import classifier2
@@ -69,6 +70,7 @@ def reload_subs(verbose=True):
         return getattr(mod, 'reload_subs', wrap_fbrrr(mod))
     get_rrr(_model_legacy)(verbose=verbose)
     get_rrr(abstract_models)(verbose=verbose)
+    get_rrr(aoi2)(verbose=verbose)
     get_rrr(background)(verbose=verbose)
     get_rrr(classifier)(verbose=verbose)
     get_rrr(classifier2)(verbose=verbose)
@@ -90,6 +92,7 @@ rrrr = reload_subs
 IMPORT_TUPLES = [
     ('_model_legacy', None),
     ('abstract_models', None),
+    ('aoi2', None),
     ('background', None),
     ('classifier', None),
     ('classifier2', None),
