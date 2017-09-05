@@ -248,6 +248,109 @@ def generate_thumbnail_class2_list(ibs, thumbnail_list, nInput=None,
 
 
 @register_ibs_method
+def generate_thumbnail_aoi2_list(ibs, thumbnail_list, bbox_list, size_list,
+                                 nInput=None, aoi_two_weight_filepath=None,
+                                 **kwargs):
+    ut.embed()
+    # Load chips and resize to the target
+    data_shape = (192, 192, 4)
+    batch_size = None
+    # Define model and load weights
+    print('\n[ibeis_cnn] Loading model...')
+    if nInput is None:
+        try:
+            nInput = len(thumbnail_list)
+        except TypeError:
+            print('Warning passed in generator without specifying nInput hint')
+            print('Explicitly evaluating generator')
+            print('type(chip_list) = %r' % (type(thumbnail_list),))
+            thumbnail_list = list(thumbnail_list)
+            nInput = len(thumbnail_list)
+
+    model = models.Classifier2Model(batch_size=batch_size, data_shape=data_shape)
+
+    if aoi_two_weight_filepath in ['candidacy']:
+        weights_path = grabmodels.ensure_model('aoi2_candidacy', redownload=False)
+    elif os.path.exists(aoi_two_weight_filepath):
+        weights_path = aoi_two_weight_filepath
+    else:
+        raise ValueError('AoI2 does not have a valid trained model')
+
+    model_state_fpath = model.get_model_state_fpath(fpath=weights_path)
+    print('[model] loading model state from: %s' % (model_state_fpath,))
+    model_state = ut.load_cPkl(model_state_fpath)
+
+    model.encoder      = model_state.get('encoder', None)
+    model.output_dims  = model_state['output_dims']
+    model.data_params  = model_state['data_params']
+    model._fix_center_mean_std()
+
+    model.init_arch()
+    model.batch_size = 128
+    model.hyperparams['whiten_on'] = True
+    model.best_results = model_state['best_results']
+    model.set_all_param_values(model.best_results['weights'])
+
+    # Create the Theano primitives
+    # create theano symbolic expressions that define the network
+    print('\n[ibeis_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---')
+    print('[model] creating Theano primitives...')
+    theano_predict = model.build_predict_func()
+
+    mask = np.zeros((192, 192, 1), dtype=np.uint8)
+    data_list = []
+    for thumbnail, bbox, size in zip(thumbnail_list, bbox_list, size_list):
+        xtl, ytl, width, height = bbox
+        w, h = size
+        w = float(w)
+        h = float(h)
+        xbr = xtl + width
+        ybr = ytl + height
+        xtl = int(np.round((xtl / w) * data_shape[1]))
+        ytl = int(np.round((ytl / h) * data_shape[0]))
+        xbr = int(np.round((xbr / w) * data_shape[1]))
+        ybr = int(np.round((ybr / h) * data_shape[0]))
+        mask_ = np.copy(mask)
+        mask_[ytl: ybr, xtl: xbr] = 255
+        data = np.dstack((thumbnail, mask))
+        data_list.append(data)
+
+    print('[ibeis_cnn] Performing inference...')
+    test_results = model.process_batch(theano_predict, np.array(data_list))
+
+    confidences_list = test_results['confidences']
+    confidences_list[confidences_list > 1.0] = 1.0
+    confidences_list[confidences_list < 0.0] = 0.0
+
+    confidence_dict_list = [
+        dict(zip(category_list, confidence_list))
+        for confidence_list in confidences_list
+    ]
+
+    # zipped = zip(thumbnail_list, confidence_dict_list)
+    # for index, (thumbnail, confidence_dict) in enumerate(zipped):
+    #     print(index)
+    #     y = []
+    #     for key in confidence_dict:
+    #         y.append('%s-%0.04f' % (key, confidence_dict[key], ))
+    #     y = ';'.join(y)
+    #     image_path = '/home/jason/Desktop/batch2/image-%s-%s.png'
+    #     cv2.imwrite(image_path % (index, y), thumbnail)
+
+    predictions_list = [
+        [
+            key
+            for key in confidence_dict
+            if confidence_dict[key] >= 0.5
+        ]
+        for confidence_dict in confidence_dict_list
+    ]
+
+    result_list = list(zip(confidence_dict_list, predictions_list))
+    return result_list
+
+
+@register_ibs_method
 def generate_chip_label_list(ibs, chip_list, nInput=None,
                              labeler_weight_filepath=None, **kwargs):
 

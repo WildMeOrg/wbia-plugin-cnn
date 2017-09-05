@@ -1439,7 +1439,7 @@ def get_aoi_training_data(ibs, dest_path=None, target_species_list=None, purge=T
 
     dbname = ibs.dbname
 
-    name = 'aoi2'
+    name = 'aoi'
     dbname = ibs.dbname
     name_path = join(dest_path, name)
     raw_path = join(name_path, 'raw')
