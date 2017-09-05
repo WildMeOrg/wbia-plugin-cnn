@@ -251,7 +251,6 @@ def generate_thumbnail_class2_list(ibs, thumbnail_list, nInput=None,
 def generate_thumbnail_aoi2_list(ibs, thumbnail_list, bbox_list, size_list,
                                  nInput=None, aoi_two_weight_filepath=None,
                                  **kwargs):
-    ut.embed()
     # Load chips and resize to the target
     data_shape = (192, 192, 4)
     batch_size = None
@@ -312,41 +311,17 @@ def generate_thumbnail_aoi2_list(ibs, thumbnail_list, bbox_list, size_list,
         ybr = int(np.round((ybr / h) * data_shape[0]))
         mask_ = np.copy(mask)
         mask_[ytl: ybr, xtl: xbr] = 255
-        data = np.dstack((thumbnail, mask))
+        data = np.dstack((thumbnail, mask_))
         data_list.append(data)
 
     print('[ibeis_cnn] Performing inference...')
     test_results = model.process_batch(theano_predict, np.array(data_list))
 
-    confidences_list = test_results['confidences']
-    confidences_list[confidences_list > 1.0] = 1.0
-    confidences_list[confidences_list < 0.0] = 0.0
+    confidence_list = test_results['confidences']
+    prediction_list = test_results['predictions']
+    prediction_list = [prediction == 1 for prediction in prediction_list]
 
-    confidence_dict_list = [
-        dict(zip(category_list, confidence_list))
-        for confidence_list in confidences_list
-    ]
-
-    # zipped = zip(thumbnail_list, confidence_dict_list)
-    # for index, (thumbnail, confidence_dict) in enumerate(zipped):
-    #     print(index)
-    #     y = []
-    #     for key in confidence_dict:
-    #         y.append('%s-%0.04f' % (key, confidence_dict[key], ))
-    #     y = ';'.join(y)
-    #     image_path = '/home/jason/Desktop/batch2/image-%s-%s.png'
-    #     cv2.imwrite(image_path % (index, y), thumbnail)
-
-    predictions_list = [
-        [
-            key
-            for key in confidence_dict
-            if confidence_dict[key] >= 0.5
-        ]
-        for confidence_dict in confidence_dict_list
-    ]
-
-    result_list = list(zip(confidence_dict_list, predictions_list))
+    result_list = list(zip(confidence_list, prediction_list))
     return result_list
 
 
