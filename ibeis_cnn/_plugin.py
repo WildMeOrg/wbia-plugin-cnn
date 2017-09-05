@@ -319,7 +319,10 @@ def generate_thumbnail_aoi2_list(ibs, thumbnail_list, bbox_list, size_list,
 
     confidence_list = test_results['confidences']
     prediction_list = test_results['predictions']
-    prediction_list = [prediction == 1 for prediction in prediction_list]
+    prediction_list = [
+        'positive' if prediction == 1 else 'negative'
+        for prediction in prediction_list
+    ]
 
     result_list = list(zip(confidence_list, prediction_list))
     return result_list
