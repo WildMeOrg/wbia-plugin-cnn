@@ -1427,7 +1427,7 @@ class _BatchUtility(object):
         num_inputs = X.shape[0] / model.data_per_label_input
         num_outputs = num_inputs * model.data_per_label_output
         for key in outputs.keys():
-            outputs[key] = outputs[key][0:num_outputs]
+            outputs[key] = outputs[key][0:int(num_outputs)]
         return outputs
 
 
@@ -3051,7 +3051,10 @@ class _ModelIO(object):
         model.output_dims  = model_state['output_dims']
         model.encoder      = model_state.get('encoder', None)
         if 'era_history' in model_state:
-            model.history = History.from_oldstyle(model_state['era_history'])
+            try:
+                model.history = History.from_oldstyle(model_state['era_history'])
+            except TypeError:
+                model.history = model_state['era_history']
         else:
             model.history = History()
             model.history.__dict__.update(**model_state['history'])
