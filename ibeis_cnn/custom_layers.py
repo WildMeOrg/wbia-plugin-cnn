@@ -56,7 +56,7 @@ try:
         raise NotImplementedError('conv_impl = %r' % (conv_impl,))
 
     USING_GPU = True
-except ImportError as ex:
+except (Exception, ImportError) as ex:
     Conv2DLayer = lasagne.layers.Conv2DLayer
     MaxPool2DLayer = lasagne.layers.MaxPool2DLayer
 
