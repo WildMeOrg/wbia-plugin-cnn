@@ -122,6 +122,8 @@ def generate_thumbnail_class_list(ibs, thumbnail_list, nInput=None,
         weights_path = grabmodels.ensure_model('classifier_cameratrap_megan_v4', redownload=False)
     elif classifier_weight_filepath in ['megan1.5']:
         weights_path = grabmodels.ensure_model('classifier_cameratrap_megan_v5', redownload=False)
+    elif classifier_weight_filepath in ['megan1.6']:
+        weights_path = grabmodels.ensure_model('classifier_cameratrap_megan_v6', redownload=False)
     elif classifier_weight_filepath in ['megan2.1']:
         weights_path = grabmodels.ensure_model('classifier_cameratrap_megan2_v1', redownload=False)
     elif classifier_weight_filepath in ['megan2.2']:
@@ -142,7 +144,8 @@ def generate_thumbnail_class_list(ibs, thumbnail_list, nInput=None,
     model.data_params  = model_state['data_params']
     model._fix_center_mean_std()
 
-    model.best_results = model_state['best_results']
+    selected_weights = model_state['best_results']['weights']
+    selected_weights = model_state['current_weights']
 
     model.init_arch()
     model.batch_size = 128

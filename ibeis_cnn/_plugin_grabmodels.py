@@ -14,6 +14,7 @@ MODEL_URLS = {
     'classifier_cameratrap_megan_v3'           : 'classifier.cameratrap.megan.v3.pkl',
     'classifier_cameratrap_megan_v4'           : 'classifier.cameratrap.megan.v4.pkl',
     'classifier_cameratrap_megan_v5'           : 'classifier.cameratrap.megan.v5.pkl',
+    'classifier_cameratrap_megan_v6'           : 'classifier.cameratrap.megan.v6.pkl',
 
     'classifier_cameratrap_megan2_v1'          : 'classifier.cameratrap.megan2.v1.pkl',
     'classifier_cameratrap_megan2_v2'          : 'classifier.cameratrap.megan2.v2.pkl',
