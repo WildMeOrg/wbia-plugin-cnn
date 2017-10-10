@@ -144,12 +144,10 @@ def generate_thumbnail_class_list(ibs, thumbnail_list, nInput=None,
     model.data_params  = model_state['data_params']
     model._fix_center_mean_std()
 
-    selected_weights = model_state['best_results']['weights']
-    selected_weights = model_state['current_weights']
-
     model.init_arch()
     model.batch_size = 128
     model.hyperparams['whiten_on'] = True
+    model.best_results = model_state['best_results']
     model.set_all_param_values(model.best_results['weights'])
 
     # Create the Theano primitives
