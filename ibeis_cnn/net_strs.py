@@ -495,8 +495,11 @@ def get_layer_info_str(output_layer, batch_size=128):
 
         row_list = zip(*ut.dict_take(columns_, header_order))
         for row in row_list:
-            str_ = fmtstr.format(*row)
-            _print(str_)
+            try:
+                str_ = fmtstr.format(*row)
+                _print(str_)
+            except TypeError:
+                print('Error printing %r with args %r' % (fmtstr, row, ))
 
         total_bytes = count_bytes(output_layer)
         num_params = lasagne.layers.count_params(output_layer)
