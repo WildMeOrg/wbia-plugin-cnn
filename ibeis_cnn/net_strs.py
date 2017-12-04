@@ -496,6 +496,7 @@ def get_layer_info_str(output_layer, batch_size=128):
         row_list = zip(*ut.dict_take(columns_, header_order))
         for row in row_list:
             try:
+                row = ['' if _ is None else _ for _ in row]
                 str_ = fmtstr.format(*row)
                 _print(str_)
             except TypeError:

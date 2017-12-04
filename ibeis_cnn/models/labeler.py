@@ -152,7 +152,7 @@ class LabelerModel(abstract_models.AbstractCategoricalModel):
 
         network_layers_def = (
             [
-                _P(layers.InputLayer, shape=model.input_shape),
+                _P(layers.InputLayer, name='Input', shape=model.input_shape),
 
                 _P(Conv2DLayer, num_filters=32, filter_size=(11, 11), name='C0', W=_CaffeNet.get_pretrained_layer(0), **hidden_initkw),  # NOQA
                 _P(layers.batch_norm),
