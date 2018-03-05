@@ -397,6 +397,7 @@ def generate_chip_label_list(ibs, chip_list, nInput=None,
     test_results = model.process_batch(theano_predict, np.array(chip_list))
 
     class_list = list(model.encoder.classes_)
+    class_list = [_.decode('ascii') for _ in class_list]
     prediction_list = model.encoder.inverse_transform(test_results['predictions'])
     confidence_list = test_results['confidences']
     probability_list = test_results['network_output_determ']
@@ -405,6 +406,7 @@ def generate_chip_label_list(ibs, chip_list, nInput=None,
     viewpoint_list = []
     for prediction in prediction_list:
         prediction = prediction.strip()
+        prediction = prediction.decode('ascii')
         if ':' in prediction:
             prediction = prediction.split(':')
             species, viewpoint = prediction
