@@ -132,6 +132,8 @@ def generate_thumbnail_class_list(ibs, thumbnail_list, nInput=None,
         weights_path = grabmodels.ensure_model('classifier_cameratrap_megan2_v3', redownload=False)
     elif classifier_weight_filepath in ['megan2.4']:
         weights_path = grabmodels.ensure_model('classifier_cameratrap_megan2_v4', redownload=False)
+    elif classifier_weight_filepath in ['megan2.5']:
+        weights_path = grabmodels.ensure_model('classifier_cameratrap_megan2_v5', redownload=False)
     elif os.path.exists(classifier_weight_filepath):
         weights_path = classifier_weight_filepath
     else:
