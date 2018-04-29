@@ -1223,7 +1223,7 @@ def detect_image_cnn(ibs, gid, confidence=0.90, extraction='bing'):
     # gid = gid_list[random.randint(0, len(gid_list))]
     # gid = gid_list[0]
     print('Detecting with gid=%r...' % (gid, ))
-    image = ibs.get_image_imgdata(gid)
+    image = ibs.get_images(gid)
     rects = np.copy(image)
     h, w, c = image.shape
 
