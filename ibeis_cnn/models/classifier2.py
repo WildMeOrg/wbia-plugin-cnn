@@ -23,11 +23,12 @@ def augment_parallel(X, y):
     )
 
 
-def augment_wrapper(Xb, yb=None):
+def augment_wrapper(Xb, yb=None, wb=None):
     import random
     for index in range(len(Xb)):
         X = np.copy(Xb[index])
         y = None if yb is None else yb[index]
+        w = None if wb is None else wb[index]
         # Adjust the exposure
         X_Lab = cv2.cvtColor(X, cv2.COLOR_BGR2LAB)
         X_L = X_Lab[:, :, 0].astype(dtype=np.float32)
@@ -88,7 +89,9 @@ def augment_wrapper(Xb, yb=None):
         Xb[index] = X
         if yb is not None:
             yb[index] = y
-    return Xb, yb
+        if wb is not None:
+            wb[index] = w
+    return Xb, yb, wb
 
 
 @six.add_metaclass(ut.ReloadingMetaclass)
@@ -99,13 +102,15 @@ class Classifier2Model(abstract_models.AbstractVectorModel):
                                                 data_shape=data_shape,
                                                 name=name, **kwargs)
 
-    def augment(model, Xb, yb=None, parallel=True):
+    def augment(model, Xb, yb=None, wb=None, parallel=True):
         if not parallel:
             return augment_wrapper(Xb, yb)
         # Run in parallel
         if yb is None:
             yb = [None] * len(Xb)
-        arg_iter = list(zip(Xb, yb))
+        if wb is None:
+            wb = [None] * len(Xb)
+        arg_iter = list(zip(Xb, yb, wb))
         result_list = ut.util_parallel.generate2(augment_parallel, arg_iter,
                                                  ordered=True, verbose=False)
         result_list = list(result_list)
@@ -116,7 +121,13 @@ class Classifier2Model(abstract_models.AbstractVectorModel):
         else:
             y = [ result[1] for result in result_list ]
             y = np.vstack(y)
-        return X, y
+        if wb is None:
+            w = None
+        else:
+            w = [ result[2] for result in result_list ]
+            w = np.hstack(w)
+
+        return X, y, w
 
     def get_classifier2_def(model, verbose=ut.VERBOSE, **kwargs):
         # _CaffeNet = abstract_models.PretrainedNetwork('caffenet')
