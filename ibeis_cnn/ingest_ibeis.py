@@ -1897,6 +1897,7 @@ def get_cnn_classifier_binary_training_images(ibs, category_list, dest_path=None
 def get_cnn_classifier2_training_images(ibs, category_set=None,
                                         category_mapping={},
                                         dest_path=None,
+                                        train_gid_set=None,
                                         image_size=192, purge=True,
                                         cache=True,
                                         skip_rate=0.0):
@@ -1911,8 +1912,9 @@ def get_cnn_classifier2_training_images(ibs, category_set=None,
     raw_path = join(name_path, 'raw')
     labels_path = join(name_path, 'labels')
 
-    # gid_list = ibs.get_valid_gids()
-    train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
+    if train_gid_set is None:
+        train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
+
     aids_list = ibs.get_image_aids(train_gid_set)
     species_set_list = [
         set(ibs.get_annot_species_texts(aid_list_))
