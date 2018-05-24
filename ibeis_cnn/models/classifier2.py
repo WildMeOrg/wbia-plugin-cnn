@@ -16,10 +16,11 @@ import cv2
 print, rrr, profile = ut.inject2(__name__)
 
 
-def augment_parallel(X, y):
+def augment_parallel(X, y, w):
     return augment_wrapper(
         [X],
-        None if y is None else [y]
+        None if y is None else [y],
+        None if w is None else [w],
     )
 
 
