@@ -1895,6 +1895,7 @@ def get_cnn_classifier_binary_training_images(ibs, category_list, dest_path=None
 
 
 def get_cnn_classifier2_training_images(ibs, category_set=None,
+                                        category_mapping={},
                                         dest_path=None,
                                         image_size=192, purge=True,
                                         cache=True,
@@ -1943,6 +1944,11 @@ def get_cnn_classifier2_training_images(ibs, category_set=None,
             if skip_rate > 0.0 and random.uniform(0.0, 1.0) <= skip_rate:
                 print('\t Skipping')
                 continue
+
+            species_set = set([
+                category_mapping.get(species, species)
+                for species in species_set
+            ])
 
             category_list_ = [
                 category
