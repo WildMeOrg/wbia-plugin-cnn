@@ -1528,7 +1528,8 @@ def get_aoi_training_data(ibs, dest_path=None, target_species_list=None, purge=T
 
 
 def get_aoi2_training_data(ibs, image_size=192, dest_path=None,
-                           target_species_list=None, purge=True,
+                           target_species_list=None,
+                           train_gid_list=None, purge=True,
                            cache=True):
     """
     Get data for bg
@@ -1558,11 +1559,13 @@ def get_aoi2_training_data(ibs, image_size=192, dest_path=None,
         ut.ensuredir(labels_path)
 
         # gid_list = ibs.get_valid_gids()
-        train_gid_set = list(set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET'))))
-        # reviewed_list = ibs.get_image_reviewed(train_gid_set)
-        reviewed_list = [True] * len(train_gid_set)
-        aids_list = ibs.get_image_aids(train_gid_set)
-        size_list = ibs.get_image_sizes(train_gid_set)
+        if train_gid_list is None:
+            train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
+            train_gid_list = list(train_gid_set)
+        # reviewed_list = ibs.get_image_reviewed(train_gid_list)
+        reviewed_list = [True] * len(train_gid_list)
+        aids_list = ibs.get_image_aids(train_gid_list)
+        size_list = ibs.get_image_sizes(train_gid_list)
         bboxes_list = [ ibs.get_annot_bboxes(aid_list) for aid_list in aids_list ]
         species_list_list = [ ibs.get_annot_species_texts(aid_list) for aid_list in aids_list ]
         interest_list_list = [ ibs.get_annot_interest(aid_list) for aid_list in aids_list ]
@@ -1571,7 +1574,7 @@ def get_aoi2_training_data(ibs, image_size=192, dest_path=None,
             target_species_list = list(set(ut.flatten(species_list_list)))
 
         mask = np.zeros((image_size, image_size, 1))
-        zipped = zip(train_gid_set, reviewed_list, aids_list, size_list, bboxes_list, species_list_list, interest_list_list)
+        zipped = zip(train_gid_list, reviewed_list, aids_list, size_list, bboxes_list, species_list_list, interest_list_list)
         label_list = []
         for gid, reviewed, aid_list, (w, h), bbox_list, species_list, interest_list in zipped:
             print('Processing GID: %r' % (gid, ))
