@@ -99,7 +99,7 @@ def augment_wrapper(Xb, yb=None, wb=None):
             X = X.reshape(Xb[index].shape)
             X = X.astype(Xb[index].dtype)
             # Show image
-            canvas_filepath = '/home/jason/Desktop/temp-%s-%d.png' % (class_, random.randint(0, 100), )
+            canvas_filepath = '/home/jason.parham/Desktop/temp-%s-%d.png' % (class_, random.randint(0, 100), )
             if random.uniform(0.0, 1.0) < 0.01:  # False and not exists(canvas_filepath)
                 temp_list = [
                     Xb[index][:, :, :3],
