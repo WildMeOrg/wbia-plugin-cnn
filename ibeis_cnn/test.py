@@ -42,8 +42,8 @@ if __name__ == '__main__':
         python -m ibeis_cnn.test --allexamples --noface --nosrc
 
     CommandLine:
-        cd %CODE_DIR%/ibies_cnn/code
-        cd $CODE_DIR/ibies_cnn/code
+        cd %CODE_DIR%/ibeis_cnn/code
+        cd $CODE_DIR/ibeis_cnn/code
         code
         cd ibeis_cnn/code
         python test.py

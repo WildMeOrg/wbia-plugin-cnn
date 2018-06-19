@@ -11,8 +11,8 @@ from os.path import join
 
 """
 CommandLine:
-    cd %CODE_DIR%/ibies_cnn/code
-    cd $CODE_DIR/ibies_cnn/code
+    cd %CODE_DIR%/ibeis_cnn/code
+    cd $CODE_DIR/ibeis_cnn/code
     code
     cd ibeis_cnn/code
     python train.py
