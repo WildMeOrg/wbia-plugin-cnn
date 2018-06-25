@@ -240,9 +240,9 @@ def train_aoi2(output_path, data_fpath, labels_fpath, purge=True):
     hyperparams = ut.argparse_dict(
         {
             'era_size'           : era_size,
-            'batch_size'         : 128,
-            'learning_rate'      : 0.001,
-            'rate_schedule'      : 0.75,
+            'batch_size'         : 32,
+            'learning_rate'      : 0.01,
+            'rate_schedule'      : 0.5,
             'momentum'           : .9,
             'weight_decay'       : 0.0001,
             'augment_on'         : True,

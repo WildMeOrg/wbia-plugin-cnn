@@ -607,17 +607,20 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
     confidence_thresh = 0.5
     print(species)
 
+    candidacy_species_list = [
+        'giraffe_masai',
+        'giraffe_reticulated',
+        'turtle_sea',
+        'whale_fluke',
+        'zebra_grevys',
+        'zebra_plains',
+    ]
+
     CANDIDACY = True
+    CANDIDACY = CANDIDACY and species in candidacy_species_list
 
     if CANDIDACY:
-        species_list = [
-            'giraffe_masai',
-            'giraffe_reticulated',
-            'turtle_sea',
-            'whale_fluke',
-            'zebra_grevys',
-            'zebra_plains',
-        ]
+        species_list = candidacy_species_list
         assert species in species_list
 
         LEGACY = False
