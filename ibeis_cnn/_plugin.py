@@ -285,6 +285,8 @@ def generate_thumbnail_aoi2_list(ibs, thumbnail_list, bbox_list, size_list,
         weights_path = grabmodels.ensure_model('aoi2_candidacy', redownload=False)
     elif aoi_two_weight_filepath in ['ggr2']:
         weights_path = grabmodels.ensure_model('aoi2_ggr2', redownload=False)
+    elif aoi_two_weight_filepath in ['hammerhead']:
+        weights_path = grabmodels.ensure_model('aoi2_hammerhead', redownload=False)
     elif os.path.exists(aoi_two_weight_filepath):
         weights_path = aoi_two_weight_filepath
     else:
