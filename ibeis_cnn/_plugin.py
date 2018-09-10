@@ -289,6 +289,8 @@ def generate_thumbnail_aoi2_list(ibs, thumbnail_list, bbox_list, size_list,
         weights_path = grabmodels.ensure_model('aoi2_ggr2', redownload=False)
     elif aoi_two_weight_filepath in ['hammerhead']:
         weights_path = grabmodels.ensure_model('aoi2_hammerhead', redownload=False)
+    elif aoi_two_weight_filepath in ['jaguar']:
+        weights_path = grabmodels.ensure_model('aoi2_jaguar', redownload=False)
     elif os.path.exists(aoi_two_weight_filepath):
         weights_path = aoi_two_weight_filepath
     else:
@@ -411,7 +413,7 @@ def generate_chip_label_list(ibs, chip_list, nInput=None,
     test_results = model.process_batch(theano_predict, np.array(chip_list))
 
     class_list = list(model.encoder.classes_)
-    class_list = [str(_).decode('ascii') for _ in class_list]
+    # class_list = [_.decode('ascii') for _ in class_list]
     prediction_list = model.encoder.inverse_transform(test_results['predictions'])
     confidence_list = test_results['confidences']
     probability_list = test_results['network_output_determ']
@@ -420,7 +422,7 @@ def generate_chip_label_list(ibs, chip_list, nInput=None,
     viewpoint_list = []
     for prediction in prediction_list:
         prediction = prediction.strip()
-        prediction = str(prediction).decode('ascii')
+        # prediction = prediction.decode('ascii')
         if ':' in prediction:
             prediction = prediction.split(':')
             species, viewpoint = prediction

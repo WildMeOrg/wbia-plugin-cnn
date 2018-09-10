@@ -56,6 +56,7 @@ MODEL_URLS = {
     'aoi2_candidacy'                           : 'aoi2.candidacy.pkl',
     'aoi2_ggr2'                                : 'aoi2.ggr2.pkl',
     'aoi2_hammerhead'                          : 'aoi2.shark_hammerhead.pkl',
+    'aoi2_jaguar'                              : 'aoi2.jaguar.pkl',
 
     'viewpoint'                                : 'viewpoint.v1.pkl',
 
