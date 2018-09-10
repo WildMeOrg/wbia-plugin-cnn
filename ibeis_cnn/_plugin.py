@@ -378,6 +378,8 @@ def generate_chip_label_list(ibs, chip_list, nInput=None,
         weights_path = grabmodels.ensure_model('labeler_lynx', redownload=False)
     elif labeler_weight_filepath in ['candidacy']:
         weights_path = grabmodels.ensure_model('labeler_candidacy', redownload=False)
+    if labeler_weight_filepath in ['jaguar']:
+        weights_path = grabmodels.ensure_model('labeler_jaguar', redownload=False)
     elif os.path.exists(weights_path):
         weights_path = labeler_weight_filepath
     else:
@@ -666,6 +668,13 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_cheetah', redownload=False)
         canvas_key = 1
+    elif species in ['jaguar']:
+        LEGACY = False
+        species = 'jaguar'
+        confidence_thresh = 0.2
+        model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
+        weights_path = grabmodels.ensure_model('background_jaguar', redownload=False)
+        canvas_key = 0
     else:
         raise ValueError('species %r key does not have a trained model' % (species, ))
 

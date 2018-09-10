@@ -31,10 +31,11 @@ MODEL_URLS = {
     'classifier2_ggr2'                         : 'classifier2.ggr2.pkl',
 
     'labeler_v1'                               : 'labeler.v1.pkl',
-    'labeler_cheetah'                          : 'labeler.cheetah.pkl',
-    'labeler_lynx'                             : 'labeler.lynx.pkl',
     'labeler_v3'                               : 'labeler.29.pkl',
     'labeler_candidacy'                        : 'labeler.candidacy.pkl',
+    'labeler_cheetah'                          : 'labeler.cheetah.pkl',
+    'labeler_lynx'                             : 'labeler.lynx.pkl',
+    'labeler_jaguar'                           : 'labeler.jaguar.pkl',
 
     'background_giraffe_masai'                 : 'background.giraffe_masai.npy',
     'background_zebra_plains'                  : 'background.zebra_plains.npy',
@@ -43,6 +44,7 @@ MODEL_URLS = {
     'background_lynx'                          : 'background.lynx.pkl',
     'background_lynx_v2'                       : 'background.lynx.v2.pkl',
     'background_cheetah'                       : 'background.cheetah.pkl',
+    'background_jaguar'                        : 'background.jaguar.pkl',
 
     'background_candidacy_giraffe_masai'       : 'background.candidacy.giraffe_masai.pkl',
     'background_candidacy_giraffe_reticulated' : 'background.candidacy.giraffe_reticulated.pkl',
