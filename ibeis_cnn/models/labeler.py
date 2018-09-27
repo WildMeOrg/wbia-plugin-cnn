@@ -15,20 +15,6 @@ import cv2
 print, rrr, profile = ut.inject2(__name__)
 
 
-LABEL_MAPPING_DICT = {
-    'left'       : 'right',
-    'frontleft'  : 'frontright',
-    'front'      : 'front',
-    'frontright' : 'frontleft',
-    'right'      : 'left',
-    'backright'  : 'backleft',
-    'back'       : 'back',
-    'backleft'   : 'backright',
-    'up'         : 'up',
-    'down'       : 'down',
-}
-
-
 def augment_parallel(X, y):
     return augment_wrapper(
         [X],
@@ -88,7 +74,10 @@ def augment_wrapper(Xb, yb=None):
             X = cv2.flip(X, 1)
             if y is not None and ':' in y:
                 species, viewpoint = y.split(':')
-                viewpoint = LABEL_MAPPING_DICT[viewpoint]
+                if 'left' in viewpoint:
+                    viewpoint.replace('left', 'right')
+                elif 'right' in viewpoint:
+                    viewpoint.replace('right', 'left')
                 y = '%s:%s' % (species, viewpoint)
         # Blur
         if random.uniform(0.0, 1.0) <= 0.01:
