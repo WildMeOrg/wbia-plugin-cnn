@@ -278,7 +278,7 @@ def get_layer_info(layer):
         'Noise'     : ['sigma'],
         'Input'     : ['shape'],
         'Dropout'   : ['p', 'shared_axes'],
-        'Conv2D'    : ['num_filters', 'filter_size', 'stride', 'output_shape'],
+        'Conv2D'    : ['num_filters', 'filter_size', 'stride', 'output_shape', 'num_groups'],
         'MaxPool2D' : ['stride', 'pool_size', 'output_shape'],  # 'mode'],
         'Dense'     : ['num_units', 'num_leading_axes'],
         'SoftMax'   : ['num_units', 'num_leading_axes'],
