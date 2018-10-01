@@ -36,6 +36,7 @@ MODEL_URLS = {
     'labeler_cheetah'                          : 'labeler.cheetah.pkl',
     'labeler_lynx'                             : 'labeler.lynx.pkl',
     'labeler_jaguar'                           : 'labeler.jaguar.pkl',
+    'labeler_manta'                            : 'labeler.manta_ray_giant.pkl',
 
     'background_giraffe_masai'                 : 'background.giraffe_masai.npy',
     'background_zebra_plains'                  : 'background.zebra_plains.npy',
@@ -45,6 +46,7 @@ MODEL_URLS = {
     'background_lynx_v2'                       : 'background.lynx.v2.pkl',
     'background_cheetah'                       : 'background.cheetah.pkl',
     'background_jaguar'                        : 'background.jaguar.pkl',
+    'background_manta'                         : 'background.manta_ray_giant.pkl',
 
     'background_candidacy_giraffe_masai'       : 'background.candidacy.giraffe_masai.pkl',
     'background_candidacy_giraffe_reticulated' : 'background.candidacy.giraffe_reticulated.pkl',

@@ -382,6 +382,8 @@ def generate_chip_label_list(ibs, chip_list, nInput=None,
         weights_path = grabmodels.ensure_model('labeler_candidacy', redownload=False)
     elif labeler_weight_filepath in ['jaguar']:
         weights_path = grabmodels.ensure_model('labeler_jaguar', redownload=False)
+    elif labeler_weight_filepath in ['manta']:
+        weights_path = grabmodels.ensure_model('labeler_manta', redownload=False)
     elif os.path.exists(weights_path):
         weights_path = labeler_weight_filepath
     else:
@@ -677,6 +679,13 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_jaguar', redownload=False)
+        canvas_key = 1
+    elif species in ['manta']:
+        LEGACY = False
+        species = 'manta'
+        confidence_thresh = 0.2
+        model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
+        weights_path = grabmodels.ensure_model('background_manta', redownload=False)
         canvas_key = 1
     else:
         raise ValueError('species %r key does not have a trained model' % (species, ))
