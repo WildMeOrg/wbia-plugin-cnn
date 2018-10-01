@@ -419,8 +419,14 @@ def generate_chip_label_list(ibs, chip_list, nInput=None,
     confidence_list = test_results['confidences']
     probability_list = test_results['network_output_determ']
 
-    class_list = [_.decode('ascii') for _ in class_list]
-    prediction_list = [prediction.decode('ascii') for prediction in prediction_list]
+    class_list = list(map(
+        lambda x: x if isinstance(x, six.text_type) else x.decode('utf-8'),
+        class_list
+    ))
+    prediction_list = list(map(
+        lambda x: x if isinstance(x, six.text_type) else x.decode('utf-8'),
+        prediction_list
+    ))
 
     species_list = []
     viewpoint_list = []
