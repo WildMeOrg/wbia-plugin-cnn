@@ -686,7 +686,7 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_jaguar', redownload=False)
         canvas_key = 1
-    elif species in ['manta']:
+    elif species in ['manta_ray_giant']:
         LEGACY = False
         species = 'manta'
         confidence_thresh = 0.2
