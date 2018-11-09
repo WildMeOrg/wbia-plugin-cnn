@@ -254,7 +254,7 @@ def netrun():
         # https://www.dropbox.com/developers/core/start/python
         # import dropbox  # need oauth
         #client.share('/myfile.txt', short_url=False)
-        # https://lev.cs.rpi.edu/public/models/siaml2_128_model_state.pkl
+        # https://cthulhu.dyn.wildme.io/public/models/siaml2_128_model_state.pkl
 
     if ut.get_argflag('--cmd'):
         ut.embed()
