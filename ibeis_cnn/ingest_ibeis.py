@@ -1826,6 +1826,95 @@ def get_cnn_classifier_cameratrap_binary_training_images(ibs, positive_imageset_
     return name_path
 
 
+def get_cnn_classifier_cameratrap_binary_training_images_pytorch(ibs, positive_imageset_id,
+                                                                 negative_imageset_id,
+                                                                 dest_path=None,
+                                                                 valid_rate=0.2,
+                                                                 image_size=224, purge=True,
+                                                                 skip_rate=0.0,
+                                                                 skip_rate_pos=0.0,
+                                                                 skip_rate_neg=0.0):
+    from os.path import join, expanduser
+    import random
+    import cv2
+    if dest_path is None:
+        dest_path = expanduser(join('~', 'Desktop', 'extracted'))
+
+    name = 'classifier-cameratrap-pytorch'
+    dbname = ibs.dbname
+    name_path = join(dest_path, name)
+    train_path = join(name_path, 'train')
+    valid_path = join(name_path, 'val')
+
+    train_pos_path = join(train_path, 'positive')
+    train_neg_path = join(train_path, 'negative')
+    valid_pos_path = join(valid_path, 'positive')
+    valid_neg_path = join(valid_path, 'negative')
+
+    if purge:
+        ut.delete(name_path)
+
+    ut.ensuredir(name_path)
+    ut.ensuredir(train_path)
+    ut.ensuredir(valid_path)
+
+    ut.ensuredir(train_pos_path)
+    ut.ensuredir(train_neg_path)
+    ut.ensuredir(valid_pos_path)
+    ut.ensuredir(valid_neg_path)
+
+    train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
+
+    positive_gid_set = set(ibs.get_imageset_gids(positive_imageset_id))
+    negative_gid_set = set(ibs.get_imageset_gids(negative_imageset_id))
+
+    candidate_gid_set = positive_gid_set | negative_gid_set
+    candidate_gid_set = train_gid_set & candidate_gid_set
+
+    for gid in candidate_gid_set:
+        args = (gid, )
+        print('Processing GID: %r' % args)
+
+        if skip_rate > 0.0 and random.uniform(0.0, 1.0) <= skip_rate:
+            print('\t Skipping - Sampling')
+            continue
+
+        if gid in positive_gid_set:
+            category = 'positive'
+        elif gid in negative_gid_set:
+            category = 'negative'
+        else:
+            print('\t Skipping - No Label')
+            continue
+
+        if skip_rate_pos > 0.0 and category == 'positive' and random.uniform(0.0, 1.0) <= skip_rate_pos:
+            print('\t Skipping Positive')
+            continue
+
+        if skip_rate_neg > 0.0 and category == 'negative' and random.uniform(0.0, 1.0) <= skip_rate_neg:
+            print('\t Skipping Negative')
+            continue
+
+        is_valid = random.uniform(0.0, 1.0) < valid_rate
+
+        if category == 'positive':
+            dest_path = valid_pos_path if is_valid else train_pos_path
+        elif category == 'negative':
+            dest_path = valid_neg_path if is_valid else train_neg_path
+        else:
+            raise ValueError()
+
+        image = ibs.get_images(gid)
+        image_ = cv2.resize(image, (image_size, image_size), interpolation=cv2.INTER_LANCZOS4)
+
+        values = (dbname, gid, )
+        patch_filename = '%s_image_gid_%s.png' % values
+        patch_filepath = join(dest_path, patch_filename)
+        cv2.imwrite(patch_filepath, image_)
+
+    return name_path
+
+
 def get_cnn_classifier_binary_training_images(ibs, category_list, dest_path=None,
                                               image_size=192, purge=True,
                                               skip_rate=0.0,
