@@ -1177,7 +1177,11 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
                                      patch_size_min=0.80, patch_size_max=1.25,
                                      annot_size=300, patience=20,
                                      patches_per_annotation=30,
-                                     global_limit=None):
+                                     global_limit=None,
+                                     train_gid_set=None,
+                                     visualize=False,
+                                     visualize_path=None,
+                                     tiles=False):
     """
     Get data for bg
     """
@@ -1209,6 +1213,10 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
     if dest_path is None:
         dest_path = expanduser(join('~', 'Desktop', 'extracted'))
 
+    if visualize_path is None:
+        visualize_path = expanduser(join('~', 'Desktop', 'visualize', 'background'))
+        ut.ensuredir(visualize_path)
+
     dbname = ibs.dbname
 
     name = 'background'
@@ -1223,10 +1231,17 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
     ut.ensuredir(raw_path)
     ut.ensuredir(labels_path)
 
-    # gid_list = ibs.get_valid_gids()
-    train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
+    if train_gid_set is None:
+        train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
+
     aids_list = ibs.get_image_aids(train_gid_set)
-    bboxes_list = [ ibs.get_annot_bboxes(aid_list) for aid_list in aids_list ]
+    if tiles:
+        bboxes_list = [
+            ibs.get_annot_bboxes(aid_list, reference_tile_gid=gid)
+            for gid, aid_list in zip(train_gid_set, aids_list)
+        ]
+    else:
+        bboxes_list = [ ibs.get_annot_bboxes(aid_list) for aid_list in aids_list ]
     species_list_list = [ ibs.get_annot_species_texts(aid_list) for aid_list in aids_list ]
 
     zipped = zip(train_gid_set, aids_list, bboxes_list, species_list_list)
@@ -1236,6 +1251,11 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
     for gid, aid_list, bbox_list, species_list in zipped:
         image = ibs.get_images(gid)
         h, w, c = image.shape
+
+        if visualize:
+            canvas = image.copy()
+        else:
+            canvas = None
 
         args = (gid, global_positives, global_negatives, len(label_list), )
         print('Processing GID: %r [ %r / %r = %r]' % args)
@@ -1265,7 +1285,8 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
                 xtl, ytl, w_, h_ = bbox
                 xbr, ybr = xtl + w_, ytl + h_
 
-                # cv2.rectangle(image, (xtl, ytl), (xbr, ybr), (255, 0, 0))
+                if canvas is not None:
+                    cv2.rectangle(canvas, (xtl, ytl), (xbr, ybr), (255, 0, 0))
 
                 if min(w_, h_) / max(w_, h_) <= 0.25:
                     continue
@@ -1315,7 +1336,8 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
 
                     if found:
                         positives += 1
-                        # cv2.rectangle(image, (x0, y0), (x1, y1), (0, 255, 0))
+                        if canvas is not None:
+                            cv2.rectangle(canvas, (x0, y0), (x1, y1), (0, 255, 0))
                         chip = image[y0: y1, x0: x1]
                         chip = cv2.resize(chip, (patch_size, patch_size),
                                           interpolation=cv2.INTER_LANCZOS4)
@@ -1397,7 +1419,8 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
 
                 if found:
                     negatives += 1
-                    # cv2.rectangle(image, (x0, y0), (x1, y1), (0, 0, 255))
+                    if canvas is not None:
+                        cv2.rectangle(canvas, (x0, y0), (x1, y1), (0, 0, 255))
                     chip = image[y0: y1, x0: x1]
                     chip = cv2.resize(chip, (patch_size, patch_size),
                                       interpolation=cv2.INTER_LANCZOS4)
@@ -1412,9 +1435,11 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
             global_positives += positives
             global_negatives += negatives
 
-        # image = resize_target(image, target_width=1000)
-        # cv2.imshow('', image)
-        # cv2.waitKey(0)
+        if canvas is not None:
+            canvas_filename = 'background_aid_%s_species_%s.png' % (aid, target_species, )
+            canvas_filepath = join(visualize_path, canvas_filename)
+            image = resize_target(canvas, target_width=1000)
+            cv2.imwrite(canvas_filepath, canvas)
 
     args = (global_positives, global_negatives, len(label_list), )
     print('Final Split: [ %r / %r = %r]' % args)
