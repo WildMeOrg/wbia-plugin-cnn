@@ -1183,7 +1183,9 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
                                      visualize_path=None,
                                      tiles=False,
                                      inside_boundary=True,
-                                     purge=False):
+                                     purge=False,
+                                     supercharge_negative_multiplier=2.0,
+                                     undercharge_negative_multiplier=0.5):
     """
     Get data for bg
     """
@@ -1382,10 +1384,10 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
             delta = global_positives - global_negatives
             if delta >= 2 * patches_per_annotation:
                 print('SUPERCHARGE NEGATIVES')
-                positives_ = int(positives_ * 2.0)
+                positives_ = int(positives_ * supercharge_negative_multiplier)
             elif delta <= -2 * patches_per_annotation:
                 print('UNDERCHARGE NEGATIVES')
-                positives_ = int(positives_ * 0.5)
+                positives_ = int(positives_ * undercharge_negative_multiplier)
 
             for index in range(positives_):
                 counter = 0
