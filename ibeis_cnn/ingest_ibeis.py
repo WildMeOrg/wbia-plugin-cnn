@@ -1182,7 +1182,8 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
                                      visualize=False,
                                      visualize_path=None,
                                      tiles=False,
-                                     inside_boundary=True):
+                                     inside_boundary=True,
+                                     purge=False):
     """
     Get data for bg
     """
@@ -1216,7 +1217,8 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
 
     if visualize_path is None:
         visualize_path = expanduser(join('~', 'Desktop', 'visualize', 'background'))
-        ut.delete(visualize_path)
+        if purge:
+            ut.delete(visualize_path)
         ut.ensuredir(visualize_path)
 
     dbname = ibs.dbname
@@ -1228,7 +1230,8 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
     labels_path = join(name_path, 'labels')
 
     print(dest_path)
-    # ut.remove_dirs(dest_path)
+    if purge:
+        ut.delete(dest_path)
     ut.ensuredir(dest_path)
     ut.ensuredir(raw_path)
     ut.ensuredir(labels_path)
@@ -1279,8 +1282,10 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
 
             if target_species == 'turtle_sea':
                 if species not in ['turtle_hawksbill', 'turtle_green', 'turtle_sea']:
+                    print('Skipping aid %r (bad species)' % (aid, ))
                     continue
             if species != target_species:
+                print('Skipping aid %r (bad species)' % (aid, ))
                 continue
 
             if aid is not None:
@@ -1291,6 +1296,7 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
                     cv2.rectangle(canvas, (xtl, ytl), (xbr, ybr), (255, 0, 0))
 
                 if min(w_, h_) / max(w_, h_) <= 0.25:
+                    print('Skipping aid %r (aspect ratio)' % (aid, ))
                     continue
 
                 modifier = w_ / annot_size
@@ -1310,6 +1316,7 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
 
                         if inside_boundary:
                             if patch_size_final > w_ or patch_size_final > h_:
+                                print('Skipping aid %r (patch_size_final too big)' % (aid, ))
                                 continue
 
                             centerx = random.randint(xtl + radius, xbr - radius)
@@ -1324,8 +1331,10 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
                         y1 = centery + radius
 
                         if x0 < 0 or x0 >= w or x1 < 0 or x1 >= w:
+                            print('Skipping aid %r (bounds check, width)' % (aid, ))
                             continue
                         if y0 < 0 or y0 >= w or y1 < 0 or y1 >= w:
+                            print('Skipping aid %r (bounds check, height)' % (aid, ))
                             continue
 
                         found = True
@@ -1339,6 +1348,7 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
                         assert x0 >= 0 and x0 < w and x1 >= 0 and x1 < w
                         assert y0 >= 0 and y0 < h and y1 >= 0 and y1 < h
                     except AssertionError:
+                        print('Skipping aid %r (sanity check)' % (aid, ))
                         found = False
 
                     if found:
@@ -1357,6 +1367,8 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
                         cv2.imwrite(patch_filepath, chip)
                         label = '%s,%s' % (patch_filename, positive_category)
                         label_list.append(label)
+                    else:
+                        print('Skipping aid %r (not found)' % (aid, ))
 
                 positives_ = positives
             else:
@@ -1369,7 +1381,7 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
             delta = global_positives - global_negatives
             if delta >= 2 * patches_per_annotation:
                 print('SUPERCHARGE NEGATIVES')
-                positives_ = int(positives_ * 1.5)
+                positives_ = int(positives_ * 2.0)
             elif delta <= -2 * patches_per_annotation:
                 print('UNDERCHARGE NEGATIVES')
                 positives_ = int(positives_ * 0.5)
