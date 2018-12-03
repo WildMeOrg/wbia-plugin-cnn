@@ -1181,7 +1181,8 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
                                      train_gid_set=None,
                                      visualize=False,
                                      visualize_path=None,
-                                     tiles=False):
+                                     tiles=False,
+                                     inside_boundary=True):
     """
     Get data for bg
     """
@@ -1215,6 +1216,7 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
 
     if visualize_path is None:
         visualize_path = expanduser(join('~', 'Desktop', 'visualize', 'background'))
+        ut.delete(visualize_path)
         ut.ensuredir(visualize_path)
 
     dbname = ibs.dbname
@@ -1304,12 +1306,17 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
                         patch_size_random = random.uniform(patch_size_min_, patch_size_max_)
                         patch_size_final = int(round(patch_size_random))
 
-                        if patch_size_final > w_ or patch_size_final > h_:
-                            continue
-
                         radius = patch_size_final // 2
-                        centerx = random.randint(xtl + radius, xbr - radius)
-                        centery = random.randint(ytl + radius, ybr - radius)
+
+                        if inside_boundary:
+                            if patch_size_final > w_ or patch_size_final > h_:
+                                continue
+
+                            centerx = random.randint(xtl + radius, xbr - radius)
+                            centery = random.randint(ytl + radius, ybr - radius)
+                        else:
+                            centerx = random.randint(xtl, xbr)
+                            centery = random.randint(ytl, ybr)
 
                         x0 = centerx - radius
                         y0 = centery - radius
