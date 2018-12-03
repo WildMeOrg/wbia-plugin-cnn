@@ -1343,8 +1343,9 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
                     try:
                         assert x1 > x0
                         assert y1 > y0
-                        assert x1 - x0 >= patch_size // 2
-                        assert y1 - y0 >= patch_size // 2
+                        if inside_boundary:
+                            assert x1 - x0 >= patch_size // 2
+                            assert y1 - y0 >= patch_size // 2
                         assert x0 >= 0 and x0 < w and x1 >= 0 and x1 < w
                         assert y0 >= 0 and y0 < h and y1 >= 0 and y1 < h
                     except AssertionError:
@@ -1455,7 +1456,7 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
             global_negatives += negatives
 
         if canvas is not None:
-            canvas_filename = 'background_aid_%s_species_%s.png' % (aid, target_species, )
+            canvas_filename = 'background_gid_%s_species_%s.png' % (gid, target_species, )
             canvas_filepath = join(visualize_path, canvas_filename)
             image = resize_target(canvas, target_width=1000)
             cv2.imwrite(canvas_filepath, canvas)
