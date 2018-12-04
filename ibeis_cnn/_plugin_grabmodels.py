@@ -55,6 +55,8 @@ MODEL_URLS = {
     'background_candidacy_zebra_grevys'        : 'background.candidacy.zebra_grevys.pkl',
     'background_candidacy_zebra_plains'        : 'background.candidacy.zebra_plains.pkl',
 
+    'background_vulcan'                        : 'background.vulcan.pkl',
+
     'aoi2_candidacy'                           : 'aoi2.candidacy.pkl',
     'aoi2_ggr2'                                : 'aoi2.ggr2.pkl',
     'aoi2_hammerhead'                          : 'aoi2.shark_hammerhead.pkl',
