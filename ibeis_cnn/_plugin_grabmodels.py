@@ -43,7 +43,7 @@ MODEL_URLS = {
     'background_zebra_plains_grevys'           : 'background.zebra_plains_grevys.npy',
     'background_whale_fluke'                   : 'background.whale_fluke.npy',
     'background_lynx'                          : 'background.lynx.pkl',
-    'background_lynx_v2'                       : 'background.lynx.v2.pkl',
+    # 'background_lynx_v2'                       : 'background.lynx.v2.pkl',
     'background_cheetah'                       : 'background.cheetah.pkl',
     'background_jaguar'                        : 'background.jaguar.pkl',
     'background_manta'                         : 'background.manta_ray_giant.pkl',
