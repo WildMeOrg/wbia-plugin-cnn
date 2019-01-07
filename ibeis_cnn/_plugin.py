@@ -384,6 +384,8 @@ def generate_chip_label_list(ibs, chip_list, nInput=None,
         weights_path = grabmodels.ensure_model('labeler_jaguar', redownload=False)
     elif labeler_weight_filepath in ['manta']:
         weights_path = grabmodels.ensure_model('labeler_manta', redownload=False)
+    elif labeler_weight_filepath in ['dorsal', 'hendrik_dorsal']:
+        weights_path = grabmodels.ensure_model('labeler_hendrik_dorsal', redownload=False)
     elif os.path.exists(weights_path):
         weights_path = labeler_weight_filepath
     else:

@@ -37,6 +37,7 @@ MODEL_URLS = {
     'labeler_lynx'                             : 'labeler.lynx.pkl',
     'labeler_jaguar'                           : 'labeler.jaguar.pkl',
     'labeler_manta'                            : 'labeler.manta_ray_giant.pkl',
+    'labeler_hendrik_dorsal'                   : 'labeler.hendrik_dorsal.pkl',
 
     'background_giraffe_masai'                 : 'background.giraffe_masai.npy',
     'background_zebra_plains'                  : 'background.zebra_plains.npy',

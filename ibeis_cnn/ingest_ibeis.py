@@ -2147,7 +2147,7 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
     ut.ensuredir(raw_path)
     ut.ensuredir(labels_path)
 
-    print(viewpoint_mapping)
+    print('viewpoint mapping = %s' % (ut.repr3(viewpoint_mapping), ))
 
     # train_gid_set = ibs.get_valid_gids()
     train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
