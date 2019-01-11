@@ -35,7 +35,8 @@ MODEL_URLS = {
     'labeler_candidacy'                        : 'labeler.candidacy.pkl',
     'labeler_cheetah'                          : 'labeler.cheetah.pkl',
     'labeler_lynx'                             : 'labeler.lynx.pkl',
-    'labeler_jaguar'                           : 'labeler.jaguar.pkl',
+    'labeler_jaguar_v1'                        : 'labeler.jaguar.v1.pkl',
+    'labeler_jaguar_v2'                        : 'labeler.jaguar.v2.pkl',
     'labeler_manta'                            : 'labeler.manta_ray_giant.pkl',
     'labeler_hendrik_dorsal'                   : 'labeler.hendrik_dorsal.pkl',
 
@@ -46,7 +47,8 @@ MODEL_URLS = {
     'background_lynx'                          : 'background.lynx.pkl',
     # 'background_lynx_v2'                       : 'background.lynx.v2.pkl',
     'background_cheetah'                       : 'background.cheetah.pkl',
-    'background_jaguar'                        : 'background.jaguar.pkl',
+    'background_jaguar_v1'                     : 'background.jaguar.v1.pkl',
+    'background_jaguar_v2'                     : 'background.jaguar.v2.pkl',
     'background_manta'                         : 'background.manta_ray_giant.pkl',
 
     'background_candidacy_giraffe_masai'       : 'background.candidacy.giraffe_masai.pkl',
@@ -61,7 +63,8 @@ MODEL_URLS = {
     'aoi2_candidacy'                           : 'aoi2.candidacy.pkl',
     'aoi2_ggr2'                                : 'aoi2.ggr2.pkl',
     'aoi2_hammerhead'                          : 'aoi2.shark_hammerhead.pkl',
-    'aoi2_jaguar'                              : 'aoi2.jaguar.pkl',
+    'aoi2_jaguar_v1'                           : 'aoi2.jaguar.v1.pkl',
+    'aoi2_jaguar_v2'                           : 'aoi2.jaguar.v2.pkl',
 
     'viewpoint'                                : 'viewpoint.v1.pkl',
 

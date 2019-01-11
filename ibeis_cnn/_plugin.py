@@ -380,13 +380,15 @@ def generate_chip_label_list(ibs, chip_list, nInput=None,
         weights_path = grabmodels.ensure_model('labeler_lynx', redownload=False)
     elif labeler_weight_filepath in ['candidacy']:
         weights_path = grabmodels.ensure_model('labeler_candidacy', redownload=False)
-    elif labeler_weight_filepath in ['jaguar']:
-        weights_path = grabmodels.ensure_model('labeler_jaguar', redownload=False)
+    elif labeler_weight_filepath in ['jaguar_v1']:
+        weights_path = grabmodels.ensure_model('labeler_jaguar_v1', redownload=False)
+    elif labeler_weight_filepath in ['jaguar', 'jaguar_v2']:
+        weights_path = grabmodels.ensure_model('labeler_jaguar_v2', redownload=False)
     elif labeler_weight_filepath in ['manta']:
         weights_path = grabmodels.ensure_model('labeler_manta', redownload=False)
     elif labeler_weight_filepath in ['dorsal', 'hendrik_dorsal']:
         weights_path = grabmodels.ensure_model('labeler_hendrik_dorsal', redownload=False)
-    elif os.path.exists(weights_path):
+    elif os.path.exists(labeler_weight_filepath):
         weights_path = labeler_weight_filepath
     else:
         raise ValueError('Labeler does not have a valid trained model')
