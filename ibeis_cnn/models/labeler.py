@@ -31,7 +31,7 @@ def augment_wrapper(Xb, yb=None):
         X_Lab = cv2.cvtColor(X, cv2.COLOR_BGR2LAB)
         X_L = X_Lab[:, :, 0].astype(dtype=np.float32)
         # margin = np.min([np.min(X_L), 255.0 - np.max(X_L), 64.0])
-        margin = 64.0
+        margin = 32.0
         exposure = random.uniform(-margin, margin)
         X_L += exposure
         X_L = np.around(X_L)
@@ -80,7 +80,7 @@ def augment_wrapper(Xb, yb=None):
                     viewpoint.replace('right', 'left')
                 y = '%s:%s' % (species, viewpoint)
         # Blur
-        if random.uniform(0.0, 1.0) <= 0.01:
+        if random.uniform(0.0, 1.0) <= 0.1:
             X = cv2.blur(X, (3, 3))
         # Reshape
         X = X.reshape(Xb[index].shape)
@@ -205,7 +205,7 @@ def train_labeler(output_path, data_fpath, labels_fpath):
         >>> result = train_labeler()
         >>> print(result)
     """
-    era_size = 16
+    era_size = 8
     max_epochs = 256
     hyperparams = ut.argparse_dict(
         {
@@ -213,8 +213,8 @@ def train_labeler(output_path, data_fpath, labels_fpath):
             # 'batch_size'    : 128,
             # 'learning_rate' : .01,
             'batch_size'    : 128,
-            'learning_rate' : .005,
-            'rate_schedule' : 0.75,
+            'learning_rate' : .001,
+            'rate_schedule' : 0.5,
             'momentum'      : .9,
             # 'weight_decay'  : 0.0001,
             'augment_on'    : True,
@@ -255,9 +255,9 @@ def train_labeler(output_path, data_fpath, labels_fpath):
     ut.colorprint('[netrun] Training Requested', 'yellow')
     # parse training arguments
     config = ut.argparse_dict(dict(
-        monitor=True,
-        monitor_updates=True,
-        show_confusion=True,
+        monitor=False,
+        monitor_updates=False,
+        show_confusion=False,
         era_size=era_size,
         max_epochs=max_epochs,
     ))

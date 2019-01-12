@@ -1659,8 +1659,8 @@ def get_aoi2_training_data(ibs, image_size=192, dest_path=None,
 
             if len(temp_list) == 0:
                 continue
-            if aoi_counter == 0:
-                continue
+            # if aoi_counter == 0:
+            #     continue
 
             image = ibs.get_images(gid)
             image_ = cv2.resize(image, (image_size, image_size), interpolation=cv2.INTER_LANCZOS4)
