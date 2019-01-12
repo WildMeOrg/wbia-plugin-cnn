@@ -2124,6 +2124,86 @@ def get_cnn_classifier2_training_images(ibs, category_set=None,
     return name_path, category_list
 
 
+def get_cnn_canonical_training_images_pytorch(ibs, aid_list, flag_list,
+                                              dest_path=None,
+                                              valid_rate=0.2,
+                                              image_size=224, purge=True,
+                                              skip_rate=0.0,
+                                              skip_rate_pos=0.0,
+                                              skip_rate_neg=0.0):
+    from os.path import join, expanduser
+    import random
+    import cv2
+
+    if dest_path is None:
+        dest_path = expanduser(join('~', 'Desktop', 'extracted'))
+
+    name = 'classifier-canonical-pytorch'
+    dbname = ibs.dbname
+    name_path = join(dest_path, name)
+    train_path = join(name_path, 'train')
+    valid_path = join(name_path, 'val')
+
+    train_pos_path = join(train_path, 'positive')
+    train_neg_path = join(train_path, 'negative')
+    valid_pos_path = join(valid_path, 'positive')
+    valid_neg_path = join(valid_path, 'negative')
+
+    if purge:
+        ut.delete(name_path)
+
+    ut.ensuredir(name_path)
+    ut.ensuredir(train_path)
+    ut.ensuredir(valid_path)
+
+    ut.ensuredir(train_pos_path)
+    ut.ensuredir(train_neg_path)
+    ut.ensuredir(valid_pos_path)
+    ut.ensuredir(valid_neg_path)
+
+    config = {
+        'dim_size': (image_size, image_size),
+        'resize_dim': 'wh',
+    }
+    chip_list = ibs.depc_annot.get_property('chips', aid_list, 'img', config=config)
+    for aid, chip, flag in zip(aid_list, chip_list, flag_list):
+        args = (aid, )
+        print('Processing AID: %r' % args)
+
+        if skip_rate > 0.0 and random.uniform(0.0, 1.0) <= skip_rate:
+            print('\t Skipping - Sampling')
+            continue
+
+        if flag:
+            category = 'positive'
+        else:
+            category = 'negative'
+
+        if skip_rate_pos > 0.0 and category == 'positive' and random.uniform(0.0, 1.0) <= skip_rate_pos:
+            print('\t Skipping Positive')
+            continue
+
+        if skip_rate_neg > 0.0 and category == 'negative' and random.uniform(0.0, 1.0) <= skip_rate_neg:
+            print('\t Skipping Negative')
+            continue
+
+        is_valid = random.uniform(0.0, 1.0) < valid_rate
+
+        if category == 'positive':
+            dest_path = valid_pos_path if is_valid else train_pos_path
+        elif category == 'negative':
+            dest_path = valid_neg_path if is_valid else train_neg_path
+        else:
+            raise ValueError()
+
+        values = (dbname, aid, )
+        patch_filename = '%s_image_aid_%s.png' % values
+        patch_filepath = join(dest_path, patch_filename)
+        cv2.imwrite(patch_filepath, chip)
+
+    return name_path
+
+
 def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
                                     category_list=None, min_examples=10,
                                     viewpoint_mapping=None,
