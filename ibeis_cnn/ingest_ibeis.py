@@ -2124,7 +2124,7 @@ def get_cnn_classifier2_training_images(ibs, category_set=None,
     return name_path, category_list
 
 
-def get_cnn_canonical_training_images_pytorch(ibs, aid_list, flag_list,
+def get_cnn_canonical_training_images_pytorch(ibs, species,
                                               dest_path=None,
                                               valid_rate=0.2,
                                               image_size=224, purge=True,
@@ -2160,6 +2160,11 @@ def get_cnn_canonical_training_images_pytorch(ibs, aid_list, flag_list,
     ut.ensuredir(train_neg_path)
     ut.ensuredir(valid_pos_path)
     ut.ensuredir(valid_neg_path)
+
+    train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
+    aid_list = ut.flatten(ibs.get_image_aids(train_gid_set))
+    aid_list = ibs.filter_annotation_set(aid_list, species=species)
+    flag_list = ibs.get_annot_canonical(aid_list)
 
     config = {
         'dim_size': (image_size, image_size),
