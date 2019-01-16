@@ -2262,6 +2262,7 @@ def get_cnn_localizer_canonical_training_images_pytorch(ibs, species,
         label_filepath = join(dest_path, label_filename)
         cv2.imwrite(patch_filepath, chip)
         with open(label_filepath, 'w') as label_file:
+            bbox = list(map(float, bbox))
             label_file.write('%s\n' % (','.join(bbox), ))
 
     return name_path
