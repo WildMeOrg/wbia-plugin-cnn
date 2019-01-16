@@ -10,7 +10,6 @@ from six.moves import zip, map, range
 from functools import partial
 import dtool
 from ibeis_cnn import draw_results  # NOQA
-from ibeis.web.appfuncs import CANONICAL_PART_TYPE
 print, rrr, profile = ut.inject2(__name__)
 
 
@@ -2216,6 +2215,7 @@ def get_cnn_localizer_canonical_training_images_pytorch(ibs, species,
                                                         image_size=224, purge=True,
                                                         skip_rate=0.0):
     from os.path import join, expanduser
+    from ibeis.other.detectfuncs import _canonical_get_boxes
     import random
     import cv2
 
@@ -2236,47 +2236,8 @@ def get_cnn_localizer_canonical_training_images_pytorch(ibs, species,
     ut.ensuredir(valid_path)
 
     train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
-    aid_list = ut.flatten(ibs.get_image_aids(train_gid_set))
-    aid_list = ibs.filter_annotation_set(aid_list, species=species)
-    flag_list = ibs.get_annot_canonical(aid_list)
-
-    part_rowids_list = ibs.get_annot_part_rowids(aid_list)
-    part_types_list = list(map(ibs.get_part_types, part_rowids_list))
-
-    aid_list_ = []
-    bbox_list = []
-    zipped = zip(aid_list, flag_list, part_rowids_list, part_types_list)
-    for aid, flag, part_rowid_list, part_type_list in zipped:
-        part_rowid_ = None
-        if flag:
-            for part_rowid, part_type in zip(part_rowid_list, part_type_list):
-                if part_type == CANONICAL_PART_TYPE:
-                    assert part_rowid_ is None, 'Cannot have multiple CA for one image'
-                    part_rowid_ = part_rowid
-
-        if part_rowid_ is not None:
-            axtl, aytl, aw, ah = ibs.get_annot_bboxes(aid)
-            axbr, aybr = axtl + aw, aytl + ah
-            pxtl, pytl, pw, ph = ibs.get_part_bboxes(part_rowid_)
-            pxbr, pybr = pxtl + pw, pytl + ph
-            x0 = pxtl - axtl
-            y0 = pytl - aytl
-            x1 = axbr - pxbr
-            y1 = aybr - pybr
-            x0 = max(x0 / aw, 0.0)
-            y0 = max(y0 / ah, 0.0)
-            x1 = max(x1 / aw, 0.0)
-            y1 = max(y1 / ah, 0.0)
-            assert x0 + x1 < 0.99
-            assert y0 + y1 < 0.99
-            bbox = (
-                '%0.08f' % (x0, ),
-                '%0.08f' % (y0, ),
-                '%0.08f' % (x1, ),
-                '%0.08f' % (y1, ),
-            )
-            aid_list_.append(aid)
-            bbox_list.append(bbox)
+    train_gid_list = list(train_gid_set)
+    aid_list_, bbox_list = _canonical_get_boxes(ibs, train_gid_list, species)
 
     config = {
         'dim_size': (image_size, image_size),
