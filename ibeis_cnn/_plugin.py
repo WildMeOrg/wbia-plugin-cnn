@@ -377,17 +377,17 @@ def generate_chip_label_list(ibs, chip_list, nInput=None,
     elif labeler_weight_filepath in ['cheetah']:
         weights_path = grabmodels.ensure_model('labeler_cheetah', redownload=False)
     elif labeler_weight_filepath in ['lynx']:
-        weights_path = grabmodels.ensure_model('labeler_lynx', redownload=False)
+        weights_path = grabmodels.ensure_model('labeler_lynx_v2', redownload=False)
     elif labeler_weight_filepath in ['candidacy']:
         weights_path = grabmodels.ensure_model('labeler_candidacy', redownload=False)
-    elif labeler_weight_filepath in ['jaguar_v1']:
-        weights_path = grabmodels.ensure_model('labeler_jaguar_v1', redownload=False)
     elif labeler_weight_filepath in ['jaguar', 'jaguar_v2']:
         weights_path = grabmodels.ensure_model('labeler_jaguar_v2', redownload=False)
     elif labeler_weight_filepath in ['manta']:
         weights_path = grabmodels.ensure_model('labeler_manta', redownload=False)
     elif labeler_weight_filepath in ['dorsal', 'hendrik_dorsal']:
         weights_path = grabmodels.ensure_model('labeler_hendrik_dorsal', redownload=False)
+    elif labeler_weight_filepath in ['seaturtle']:
+        weights_path = grabmodels.ensure_model('labeler_seaturtle_v2', redownload=False)
     elif os.path.exists(labeler_weight_filepath):
         weights_path = labeler_weight_filepath
     else:
@@ -674,8 +674,7 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         species = 'lynx'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
-        weights_path = grabmodels.ensure_model('background_lynx', redownload=False)
-        # weights_path = grabmodels.ensure_model('background_lynx_v2', redownload=False)
+        weights_path = grabmodels.ensure_model('background_lynx_v3', redownload=False)
         canvas_key = 0
     elif species in ['cheetah']:
         LEGACY = False
@@ -689,7 +688,7 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         species = 'jaguar'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
-        weights_path = grabmodels.ensure_model('background_jaguar', redownload=False)
+        weights_path = grabmodels.ensure_model('background_jaguar_v2', redownload=False)
         canvas_key = 1
     elif species in ['manta_ray_giant']:
         LEGACY = False
