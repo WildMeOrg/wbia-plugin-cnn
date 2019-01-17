@@ -2272,6 +2272,7 @@ def get_cnn_localizer_canonical_training_images_pytorch(ibs, species,
 
 def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
                                     category_list=None, min_examples=10,
+                                    category_mapping=None,
                                     viewpoint_mapping=None,
                                     purge=True, strict=True, skip_rate=0.0):
     from os.path import join, expanduser
@@ -2293,6 +2294,7 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
     ut.ensuredir(raw_path)
     ut.ensuredir(labels_path)
 
+    print('category mapping = %s' % (ut.repr3(category_mapping), ))
     print('viewpoint mapping = %s' % (ut.repr3(viewpoint_mapping), ))
 
     # train_gid_set = ibs.get_valid_gids()
@@ -2306,6 +2308,11 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
     # random.shuffle(aid_list)
     # aid_list = sorted(aid_list[:100])
     species_list = ibs.get_annot_species_texts(aid_list)
+    if category_mapping is not None:
+        species_list = [
+            category_mapping.get(species, species)
+            for species in species_list
+        ]
     species_set = set(species_list)
     yaw_list = ibs.get_annot_viewpoints(aid_list)
 
