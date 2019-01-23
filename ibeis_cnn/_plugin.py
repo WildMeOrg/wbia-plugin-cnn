@@ -376,7 +376,7 @@ def generate_chip_label_list(ibs, chip_list, nInput=None,
         weights_path = grabmodels.ensure_model('labeler_v1', redownload=False)
     elif labeler_weight_filepath in ['cheetah']:
         weights_path = grabmodels.ensure_model('labeler_cheetah', redownload=False)
-    elif labeler_weight_filepath in ['lynx']:
+    elif labeler_weight_filepath in ['lynx', 'lynx_pardinus']:
         weights_path = grabmodels.ensure_model('labeler_lynx_v2', redownload=False)
     elif labeler_weight_filepath in ['candidacy']:
         weights_path = grabmodels.ensure_model('labeler_candidacy', redownload=False)

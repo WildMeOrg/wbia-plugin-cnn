@@ -75,9 +75,9 @@ def augment_wrapper(Xb, yb=None):
             if y is not None and ':' in y:
                 species, viewpoint = y.split(':')
                 if 'left' in viewpoint:
-                    viewpoint.replace('left', 'right')
+                    viewpoint = viewpoint.replace('left', 'right')
                 elif 'right' in viewpoint:
-                    viewpoint.replace('right', 'left')
+                    viewpoint = viewpoint.replace('right', 'left')
                 y = '%s:%s' % (species, viewpoint)
         # Blur
         if random.uniform(0.0, 1.0) <= 0.1:
