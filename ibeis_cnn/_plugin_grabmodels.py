@@ -23,6 +23,8 @@ MODEL_URLS = {
     'classifier_cameratrap_megan2_v5'          : 'classifier.cameratrap.megan2.v5.pkl',
     'classifier_cameratrap_megan2_v6'          : 'classifier.cameratrap.megan2.v6.pkl',
 
+    'classifier_cameratrap_ryan_ibeis_cnn_v1'  : 'classifier.cameratrap.ryan.ibeis_cnn.v1.pkl',
+
     'classifier_coco_zebra'                    : 'classifier.coco.zebra.pkl',
     'classifier_v3_zebra'                      : 'classifier.29.zebra.pkl',
 
