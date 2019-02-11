@@ -2226,7 +2226,7 @@ def get_cnn_localizer_canonical_training_images_pytorch(ibs, species,
                                                         valid_rate=0.2,
                                                         image_size=224, purge=True,
                                                         skip_rate=0.0):
-    from os.path import join, expanduser
+    from os.path import join, expanduser, exists
     from ibeis.other.detectfuncs import _canonical_get_boxes
     import random
     import cv2
@@ -2267,11 +2267,24 @@ def get_cnn_localizer_canonical_training_images_pytorch(ibs, species,
         is_valid = random.uniform(0.0, 1.0) < valid_rate
         dest_path = valid_path if is_valid else train_path
 
-        values = (dbname, aid, )
-        patch_filename = '%s_image_aid_%s.png' % values
-        patch_filepath = join(dest_path, patch_filename)
-        label_filename = '%s_image_aid_%s.csv' % values
-        label_filepath = join(dest_path, label_filename)
+        index = 0
+        while True:
+            values = (dbname, aid, index, )
+            patch_filename = '%s_image_aid_%s_%d.png' % values
+            patch_filepath = join(dest_path, patch_filename)
+            if not exists(patch_filepath):
+                break
+            index += 1
+
+        index = 0
+        while True:
+            values = (dbname, aid, index, )
+            label_filename = '%s_image_aid_%s_%d.csv' % values
+            label_filepath = join(dest_path, label_filename)
+            if not exists(label_filepath):
+                break
+            index += 1
+
         cv2.imwrite(patch_filepath, chip)
         with open(label_filepath, 'w') as label_file:
             bbox = list(bbox)
