@@ -2131,7 +2131,7 @@ def get_cnn_classifier_canonical_training_images_pytorch(ibs, species,
                                                          skip_rate=0.0,
                                                          skip_rate_pos=0.0,
                                                          skip_rate_neg=0.0):
-    from os.path import join, expanduser
+    from os.path import join, expanduser, exists
     import random
     import cv2
 
@@ -2162,9 +2162,13 @@ def get_cnn_classifier_canonical_training_images_pytorch(ibs, species,
     ut.ensuredir(valid_neg_path)
 
     train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
-    aid_list = ut.flatten(ibs.get_image_aids(train_gid_set))
-    aid_list = ibs.filter_annotation_set(aid_list, species=species)
+    aid_list  = ut.flatten(ibs.get_image_aids(train_gid_set))
+    aid_list  = ibs.filter_annotation_set(aid_list, species=species)
     flag_list = ibs.get_annot_canonical(aid_list)
+
+    bool_list = [flag is not None for flag in flag_list]
+    aid_list  = ut.compress(aid_list, bool_list)
+    flag_list = ut.compress(flag_list, bool_list)
 
     config = {
         'dim_size': (image_size, image_size),
@@ -2178,6 +2182,8 @@ def get_cnn_classifier_canonical_training_images_pytorch(ibs, species,
         if skip_rate > 0.0 and random.uniform(0.0, 1.0) <= skip_rate:
             print('\t Skipping - Sampling')
             continue
+
+        assert flag is not None
 
         if flag:
             category = 'positive'
@@ -2201,9 +2207,15 @@ def get_cnn_classifier_canonical_training_images_pytorch(ibs, species,
         else:
             raise ValueError()
 
-        values = (dbname, aid, )
-        patch_filename = '%s_image_aid_%s.png' % values
-        patch_filepath = join(dest_path, patch_filename)
+        index = 0
+        while True:
+            values = (dbname, aid, index, )
+            patch_filename = '%s_image_aid_%s_%d.png' % values
+            patch_filepath = join(dest_path, patch_filename)
+            if not exists(patch_filepath):
+                break
+            index += 1
+
         cv2.imwrite(patch_filepath, chip)
 
     return name_path
