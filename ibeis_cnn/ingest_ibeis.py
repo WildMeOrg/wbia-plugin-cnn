@@ -2644,7 +2644,7 @@ def get_cnn_labeler_training_images_pytorch(ibs, dest_path=None, image_size=128,
         else:
             skipped_seen += 1
             continue
-        category_set.append(category)
+        category_set.add(category)
         tup_list_.append((tup, category))
         aid_list_.append(aid)
     print('Skipped Yaw:  %d / %d' % (skipped_yaw, len(tup_list), ))
