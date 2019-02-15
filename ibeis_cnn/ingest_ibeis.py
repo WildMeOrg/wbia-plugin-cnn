@@ -2490,7 +2490,7 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
     return name_path
 
 
-def get_cnn_labeler_training_images_pytorch(ibs, dest_path=None, image_size=128,
+def get_cnn_labeler_training_images_pytorch(ibs, dest_path=None, image_size=224,
                                             category_list=None, min_examples=10,
                                             category_mapping=None,
                                             viewpoint_mapping=None,
@@ -2503,7 +2503,7 @@ def get_cnn_labeler_training_images_pytorch(ibs, dest_path=None, image_size=128,
     if dest_path is None:
         dest_path = expanduser(join('~', 'Desktop', 'extracted'))
 
-    name = 'classifier-cameratrap-pytorch'
+    name = 'labeler-pytorch'
     dbname = ibs.dbname
     name_path = join(dest_path, name)
     train_path = join(name_path, 'train')
@@ -2628,9 +2628,8 @@ def get_cnn_labeler_training_images_pytorch(ibs, dest_path=None, image_size=128,
 
     skipped_yaw = 0
     skipped_seen = 0
-    tup_list_ = []
     aid_list_ = []
-    category_set = set([])
+    category_list_ = []
     for tup in tup_list:
         aid, species, yaw = tup
         if species in valid_yaw_set:
@@ -2644,24 +2643,26 @@ def get_cnn_labeler_training_images_pytorch(ibs, dest_path=None, image_size=128,
         else:
             skipped_seen += 1
             continue
-        category_set.add(category)
-        tup_list_.append((tup, category))
         aid_list_.append(aid)
+        category_list_.append(category)
     print('Skipped Yaw:  %d / %d' % (skipped_yaw, len(tup_list), ))
     print('Skipped Seen: %d / %d' % (skipped_seen, len(tup_list), ))
 
-    # Precompute chips
-    ibs.compute_all_chips(aid_list_)
-
-    for category in sorted(category_set):
+    for category in sorted(set(category_list_)):
         print('Making folder for %r' % (category, ))
         ut.ensuredir(join(train_path, category))
         ut.ensuredir(join(valid_path, category))
 
+    config = {
+        'dim_size': (image_size, image_size),
+        'resize_dim': 'wh',
+    }
+    chip_list_ = ibs.depc_annot.get_property('chips', aid_list_, 'img', config=config)
+
     # Get training data
     label_list = []
-    for tup, category in tup_list_:
-        aid, species, yaw = tup
+    for aid, chip, category in zip(aid_list_, chip_list_, category_list_):
+
         args = (aid, )
         print('Processing AID: %r' % args)
 
@@ -2688,9 +2689,7 @@ def get_cnn_labeler_training_images_pytorch(ibs, dest_path=None, image_size=128,
         label_list.append(label)
 
     print('Using labels for labeler training:')
-    label_list_ = set([ _[1] for _ in tup_list_ ])
-    label_list_ = sorted(label_list_)
-    ut.print_list(label_list_)
+    print(ut.repr3(ut.dict_hist(category_list_)))
 
     return name_path
 
