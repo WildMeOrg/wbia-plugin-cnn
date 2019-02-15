@@ -2490,6 +2490,211 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
     return name_path
 
 
+def get_cnn_labeler_training_images_pytorch(ibs, dest_path=None, image_size=128,
+                                            category_list=None, min_examples=10,
+                                            category_mapping=None,
+                                            viewpoint_mapping=None,
+                                            purge=True, strict=True,
+                                            skip_rate=0.0,
+                                            valid_rate=0.2):
+    from os.path import join, expanduser, exists
+    import random
+    import cv2
+    if dest_path is None:
+        dest_path = expanduser(join('~', 'Desktop', 'extracted'))
+
+    name = 'classifier-cameratrap-pytorch'
+    dbname = ibs.dbname
+    name_path = join(dest_path, name)
+    train_path = join(name_path, 'train')
+    valid_path = join(name_path, 'val')
+
+    if purge:
+        ut.delete(name_path)
+
+    ut.ensuredir(name_path)
+    ut.ensuredir(train_path)
+    ut.ensuredir(valid_path)
+
+    print('category mapping = %s' % (ut.repr3(category_mapping), ))
+    print('viewpoint mapping = %s' % (ut.repr3(viewpoint_mapping), ))
+
+    # train_gid_set = ibs.get_valid_gids()
+    train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
+
+    aids_list = ibs.get_image_aids(train_gid_set)
+    # bboxes_list = [ ibs.get_annot_bboxes(aid_list) for aid_list in aids_list ]
+    # aid_list = ibs.get_valid_aids()
+    aid_list = ut.flatten(aids_list)
+    # import random
+    # random.shuffle(aid_list)
+    # aid_list = sorted(aid_list[:100])
+    species_list = ibs.get_annot_species_texts(aid_list)
+    if category_mapping is not None:
+        species_list = [
+            category_mapping.get(species, species)
+            for species in species_list
+        ]
+    species_set = set(species_list)
+    yaw_list = ibs.get_annot_viewpoints(aid_list)
+
+    if category_list is None:
+        category_list = sorted(list(species_set))
+        undesired_list = [
+            'unspecified_animal',
+            ibs.get_species_nice(ibs.const.UNKNOWN_SPECIES_ROWID)
+        ]
+        for undesired_species in undesired_list:
+            if undesired_species in category_list:
+                category_list.remove(undesired_species)
+    category_set = set(category_list)
+
+    # Filter the tup_list based on the requested categories
+    tup_list = list(zip(aid_list, species_list, yaw_list))
+    old_len = len(tup_list)
+    tup_list = [
+        (
+            aid,
+            species,
+            viewpoint_mapping.get(species, {}).get(yaw, yaw),
+        )
+        for aid, species, yaw in tup_list
+        if species in category_set
+    ]
+    new_len = len(tup_list)
+    print('Filtered annotations: %d / %d' % (new_len, old_len, ))
+
+    # Skip any annotations that are of the wanted category and don't have a specified viewpoint
+    counter = 0
+    seen_dict = {}
+    yaw_dict = {}
+    for tup in tup_list:
+        aid, species, yaw = tup
+        # Keep track of the number of overall instances
+        if species not in seen_dict:
+            seen_dict[species] = 0
+        seen_dict[species] += 1
+        # Keep track of yaws that aren't None
+        if yaw is not None:
+            if species not in yaw_dict:
+                yaw_dict[species] = {}
+            if yaw not in yaw_dict[species]:
+                yaw_dict[species][yaw] = 0
+            yaw_dict[species][yaw] += 1
+        else:
+            counter += 1
+
+    # Get the list of species that do not have enough viewpoint examples for training
+    invalid_seen_set = set([])
+    invalid_yaw_set = set([])
+    for species in seen_dict:
+        # Check that the number of instances is above the min_examples
+        if seen_dict[species] < min_examples:
+            invalid_seen_set.add(species)
+            continue
+        # If the species has viewpoints, check them as well
+        if strict:
+            if species in yaw_dict:
+                # Check that all viewpoints exist
+                # if len(yaw_dict[species]) < 8:
+                #     invalid_yaw_set.add(species)
+                #     continue
+                # Check that all viewpoints have a minimum number of instances
+                for yaw in yaw_dict[species]:
+                    # assert yaw in ibs.const.VIEWTEXT_TO_YAW_RADIANS
+                    if yaw_dict[species][yaw] < min_examples:
+                        invalid_yaw_set.add(species)
+                        continue
+            else:
+                invalid_yaw_set.add(species)
+                continue
+
+    print('Null yaws: %d' % (counter, ))
+    valid_seen_set = category_set - invalid_seen_set
+    valid_yaw_set = valid_seen_set - invalid_yaw_set
+    print('Requested categories:')
+    category_set = sorted(category_set)
+    ut.print_list(category_set)
+    # print('Invalid yaw categories:')
+    # ut.print_list(sorted(invalid_yaw_set))
+    # print('Valid seen categories:')
+    # ut.print_list(sorted(valid_seen_set))
+    print('Valid yaw categories:')
+    valid_yaw_set = sorted(valid_yaw_set)
+    ut.print_list(valid_yaw_set)
+    print('Invalid seen categories (could not fulfill request):')
+    invalid_seen_set = sorted(invalid_seen_set)
+    ut.print_list(invalid_seen_set)
+
+    skipped_yaw = 0
+    skipped_seen = 0
+    tup_list_ = []
+    aid_list_ = []
+    category_set = set([])
+    for tup in tup_list:
+        aid, species, yaw = tup
+        if species in valid_yaw_set:
+            # If the species is valid, but this specific annotation has no yaw, skip it
+            if yaw is None:
+                skipped_yaw += 1
+                continue
+            category = '%s:%s' % (species, yaw, )
+        elif species in valid_seen_set:
+            category = '%s' % (species, )
+        else:
+            skipped_seen += 1
+            continue
+        category_set.append(category)
+        tup_list_.append((tup, category))
+        aid_list_.append(aid)
+    print('Skipped Yaw:  %d / %d' % (skipped_yaw, len(tup_list), ))
+    print('Skipped Seen: %d / %d' % (skipped_seen, len(tup_list), ))
+
+    # Precompute chips
+    ibs.compute_all_chips(aid_list_)
+
+    for category in sorted(category_set):
+        print('Making folder for %r' % (category, ))
+        ut.ensuredir(join(train_path, category))
+        ut.ensuredir(join(valid_path, category))
+
+    # Get training data
+    label_list = []
+    for tup, category in tup_list_:
+        aid, species, yaw = tup
+        args = (aid, )
+        print('Processing AID: %r' % args)
+
+        if skip_rate > 0.0 and random.uniform(0.0, 1.0) <= skip_rate:
+            print('\t Skipping')
+            continue
+
+        is_valid = random.uniform(0.0, 1.0) < valid_rate
+        dest_path = valid_path if is_valid else train_path
+        raw_path = join(dest_path, category)
+        assert exists(dest_path)
+
+        # Compute data
+        image = ibs.get_annot_chips(aid)
+        image_ = cv2.resize(image, (image_size, image_size), interpolation=cv2.INTER_LANCZOS4)
+
+        values = (dbname, aid, )
+        patch_filename = '%s_annot_aid_%s.png' % values
+        patch_filepath = join(raw_path, patch_filename)
+        cv2.imwrite(patch_filepath, image_)
+
+        # Compute label
+        label = '%s,%s' % (patch_filename, category, )
+        label_list.append(label)
+
+    print('Using labels for labeler training:')
+    label_list_ = set([ _[1] for _ in tup_list_ ])
+    label_list_ = sorted(label_list_)
+    ut.print_list(label_list_)
+
+    return name_path
+
+
 def get_cnn_qualifier_training_images(ibs, dest_path=None, image_size=128,
                                       purge=True):
     from os.path import join
