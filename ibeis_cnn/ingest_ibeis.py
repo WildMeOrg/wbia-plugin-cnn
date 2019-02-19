@@ -2676,13 +2676,10 @@ def get_cnn_labeler_training_images_pytorch(ibs, dest_path=None, image_size=224,
         assert exists(dest_path)
 
         # Compute data
-        image = ibs.get_annot_chips(aid)
-        image_ = cv2.resize(image, (image_size, image_size), interpolation=cv2.INTER_LANCZOS4)
-
         values = (dbname, aid, )
         patch_filename = '%s_annot_aid_%s.png' % values
         patch_filepath = join(raw_path, patch_filename)
-        cv2.imwrite(patch_filepath, image_)
+        cv2.imwrite(patch_filepath, chip)
 
         # Compute label
         label = '%s,%s' % (patch_filename, category, )
