@@ -2365,7 +2365,7 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
         if species in category_set
     ]
     new_len = len(tup_list)
-    print('Filtered annotations: %d / %d' % (new_len, old_len, ))
+    print('Filtered annotations: keep %d / original %d' % (new_len, old_len, ))
 
     # Skip any annotations that are of the wanted category and don't have a specified viewpoint
     counter = 0
@@ -2448,8 +2448,8 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
             continue
         tup_list_.append((tup, category))
         aid_list_.append(aid)
-    print('Skipped Yaw:  %d / %d' % (skipped_yaw, len(tup_list), ))
-    print('Skipped Seen: %d / %d' % (skipped_seen, len(tup_list), ))
+    print('Skipped Yaw:  skipped %d / total %d' % (skipped_yaw, len(tup_list), ))
+    print('Skipped Seen: skipped %d / total %d' % (skipped_seen, len(tup_list), ))
 
     # Precompute chips
     ibs.compute_all_chips(aid_list_)
@@ -2562,7 +2562,7 @@ def get_cnn_labeler_training_images_pytorch(ibs, dest_path=None, image_size=224,
         if species in category_set
     ]
     new_len = len(tup_list)
-    print('Filtered annotations: %d / %d' % (new_len, old_len, ))
+    print('Filtered annotations: keep %d / original %d' % (new_len, old_len, ))
 
     # Skip any annotations that are of the wanted category and don't have a specified viewpoint
     counter = 0
@@ -2645,8 +2645,8 @@ def get_cnn_labeler_training_images_pytorch(ibs, dest_path=None, image_size=224,
             continue
         aid_list_.append(aid)
         category_list_.append(category)
-    print('Skipped Yaw:  %d / %d' % (skipped_yaw, len(tup_list), ))
-    print('Skipped Seen: %d / %d' % (skipped_seen, len(tup_list), ))
+    print('Skipped Yaw:  skipped %d / total %d' % (skipped_yaw, len(tup_list), ))
+    print('Skipped Seen: skipped %d / total %d' % (skipped_seen, len(tup_list), ))
 
     for category in sorted(set(category_list_)):
         print('Making folder for %r' % (category, ))
