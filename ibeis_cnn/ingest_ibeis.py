@@ -1919,7 +1919,7 @@ def get_cnn_classifier_cameratrap_binary_training_images_pytorch(ibs, positive_i
     candidate_gid_set = train_gid_set & candidate_gid_set
 
     for gid in candidate_gid_set:
-        args = (gid, )
+        # args = (gid, )
         # print('Processing GID: %r' % args)
 
         if skip_rate > 0.0 and random.uniform(0.0, 1.0) <= skip_rate:
