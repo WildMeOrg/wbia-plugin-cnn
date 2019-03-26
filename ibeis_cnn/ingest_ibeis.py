@@ -2496,7 +2496,8 @@ def get_cnn_labeler_training_images_pytorch(ibs, dest_path=None, image_size=224,
                                             viewpoint_mapping=None,
                                             purge=True, strict=True,
                                             skip_rate=0.0,
-                                            valid_rate=0.2):
+                                            valid_rate=0.2,
+                                            train_gid_set=None):
     from os.path import join, expanduser, exists
     import random
     import cv2
@@ -2520,7 +2521,8 @@ def get_cnn_labeler_training_images_pytorch(ibs, dest_path=None, image_size=224,
     print('viewpoint mapping = %s' % (ut.repr3(viewpoint_mapping), ))
 
     # train_gid_set = ibs.get_valid_gids()
-    train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
+    if train_gid_set is None:
+        train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
 
     aids_list = ibs.get_image_aids(train_gid_set)
     # bboxes_list = [ ibs.get_annot_bboxes(aid_list) for aid_list in aids_list ]
