@@ -1972,8 +1972,6 @@ def get_cnn_classifier_multiclass_training_images_pytorch(ibs, gid_list, label_l
     import random
     import cv2
 
-    ut.embed()
-
     if dest_path is None:
         dest_path = expanduser(join('~', 'Desktop', 'extracted'))
 
@@ -2010,8 +2008,8 @@ def get_cnn_classifier_multiclass_training_images_pytorch(ibs, gid_list, label_l
         if gid not in train_gid_set:
             continue
 
-        # args = (gid, )
-        # print('Processing GID: %r' % args)
+        args = (gid, )
+        print('Processing GID: %r' % args)
 
         if skip_rate > 0.0 and random.uniform(0.0, 1.0) <= skip_rate:
             print('\t Skipping - Sampling')
