@@ -1962,6 +1962,76 @@ def get_cnn_classifier_cameratrap_binary_training_images_pytorch(ibs, positive_i
     return name_path
 
 
+def get_cnn_classifier_multiclass_training_images_pytorch(ibs, gid_list, label_list,
+                                                          dest_path=None,
+                                                          valid_rate=0.2,
+                                                          image_size=224,
+                                                          purge=True,
+                                                          skip_rate=0.0):
+    from os.path import join, expanduser
+    import random
+    import cv2
+
+    ut.embed()
+
+    if dest_path is None:
+        dest_path = expanduser(join('~', 'Desktop', 'extracted'))
+
+    name = 'classifier-multiclass-pytorch'
+    dbname = ibs.dbname
+    name_path = join(dest_path, name)
+    train_path = join(name_path, 'train')
+    valid_path = join(name_path, 'val')
+
+    label_set = sorted(set(label_list))
+
+    train_dict = {}
+    valid_dict = {}
+    for label in label_set:
+        assert label not in train_dict
+        assert label not in valid_dict
+        train_dict[label] = join(train_path, label)
+        valid_dict[label] = join(valid_path, label)
+
+    if purge:
+        ut.delete(name_path)
+
+    ut.ensuredir(name_path)
+    ut.ensuredir(train_path)
+    ut.ensuredir(valid_path)
+
+    for label in label_set:
+        ut.ensuredir(train_dict[label])
+        ut.ensuredir(valid_dict[label])
+
+    train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
+
+    for gid, label in zip(gid_list, label_list):
+        if gid not in train_gid_set:
+            continue
+
+        # args = (gid, )
+        # print('Processing GID: %r' % args)
+
+        if skip_rate > 0.0 and random.uniform(0.0, 1.0) <= skip_rate:
+            print('\t Skipping - Sampling')
+            continue
+
+        is_valid = random.uniform(0.0, 1.0) < valid_rate
+        dest_dict = valid_dict if is_valid else train_dict
+        dest_path = dest_dict[label]
+
+        image = ibs.get_images(gid)
+        image_ = cv2.resize(image, (image_size, image_size), interpolation=cv2.INTER_LANCZOS4)
+
+        values = (dbname, gid, )
+        patch_filename = '%s_image_gid_%s.png' % values
+        patch_filepath = join(dest_path, patch_filename)
+        cv2.imwrite(patch_filepath, image_)
+
+    return name_path
+
+
 def get_cnn_classifier_binary_training_images(ibs, category_list, dest_path=None,
                                               image_size=192, purge=True,
                                               skip_rate=0.0,
