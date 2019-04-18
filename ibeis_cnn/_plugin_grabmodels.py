@@ -55,6 +55,7 @@ MODEL_URLS = {
     'background_jaguar_v1'                     : 'background.jaguar.v1.pkl',
     'background_jaguar_v2'                     : 'background.jaguar.v2.pkl',
     'background_manta'                         : 'background.manta_ray_giant.pkl',
+    'background_skunk_spotted'                 : 'background.skunk_spotted.pkl',
 
     'background_candidacy_giraffe_masai'       : 'background.candidacy.giraffe_masai.pkl',
     'background_candidacy_giraffe_reticulated' : 'background.candidacy.giraffe_reticulated.pkl',

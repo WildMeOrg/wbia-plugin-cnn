@@ -699,6 +699,13 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_manta', redownload=False)
         canvas_key = 1
+    elif species in ['skunk_spotted']:
+        LEGACY = False
+        species = 'skunk_spotted'
+        confidence_thresh = 0.2
+        model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
+        weights_path = grabmodels.ensure_model('background_skunk_spotted', redownload=False)
+        canvas_key = 1
     elif species in ['vulcan']:
         LEGACY = False
         species = 'vulcan'
