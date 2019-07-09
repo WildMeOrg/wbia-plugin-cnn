@@ -4,7 +4,7 @@ import warnings
 import six
 import theano
 import functools
-from ibeis_cnn.__THEANO__ import tensor as T
+from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
 from ibeis_cnn import __LASAGNE__ as lasagne
 from ibeis_cnn import utils
 import utool as ut
@@ -19,7 +19,8 @@ try:
     # use cuda_convnet for a speed improvement
     # will not be available without a GPU
 
-    conv_impl = 'cuda_convnet'
+    conv_impl = 'cuDNN'
+    # conv_impl = 'cuda_convnet'
     if ut.get_computer_name().lower() == 'hyrule':
         # cuda_convnet seems broken on hyrule
         conv_impl = 'cuDNN'
@@ -27,7 +28,7 @@ try:
     # http://lasagne.readthedocs.org/en/latest/modules/layers/conv.html#lasagne.layers.Conv2DLayer
 
     if conv_impl == 'cuda_convnet':
-        # cannot handle non-square images
+        # cannot handle non-square images (pylearn2 module)
         import lasagne.layers.cuda_convnet
         Conv2DLayer = lasagne.layers.cuda_convnet.Conv2DCCLayer
         MaxPool2DLayer = lasagne.layers.cuda_convnet.MaxPool2DCCLayer
@@ -45,7 +46,6 @@ try:
         Inputs strides: [(676, 86528, 26, 1), (8,)]
         Inputs values: ['not shown', array([128, 676])]
         Outputs clients: [[GpuDot22(GpuReshape{2}.0, GpuReshape{2}.0)]]
-
         """
     elif conv_impl == 'gemm':
         # Dont use gemm
@@ -56,11 +56,11 @@ try:
         raise NotImplementedError('conv_impl = %r' % (conv_impl,))
 
     USING_GPU = True
-except ImportError as ex:
+except (Exception, ImportError) as ex:
     Conv2DLayer = lasagne.layers.Conv2DLayer
     MaxPool2DLayer = lasagne.layers.MaxPool2DLayer
 
-    if ut.VERBOSE:
+    if utils.VERBOSE_CNN:
         print('Conv2DLayer = %r' % (Conv2DLayer,))
         print('MaxPool2DLayer = %r' % (MaxPool2DLayer,))
 
@@ -462,7 +462,6 @@ class SiameseConcatLayer(lasagne.layers.Layer):
         Example1:
             >>> # DISABLE_DOCTEST
             >>> from ibeis_cnn.custom_layers import *  # NOQA
-item_shape            >>> from ibeis_cnn.custom_layers import *  # NOQA
             >>> from ibeis_cnn import utils
             >>> from ibeis_cnn import draw_net
             >>> import theano
@@ -516,6 +515,7 @@ def testdata_centersurround(item_shape):
 
 class CenterSurroundLayer(lasagne.layers.Layer):
     def __init__(self, input_layer, *args, **kwargs):
+        #self.name = kwargs.pop('name', None)
         super(CenterSurroundLayer, self).__init__(input_layer, *args, **kwargs)
 
     def get_output_shape_for(self, input_shape):
@@ -696,6 +696,631 @@ class CyclicPoolLayer(lasagne.layers.Layer):
     def get_output_for(self, input_, *args, **kwargs):
         unfolded_input = input_.reshape((4, input_.shape[0] // 4, input_.shape[1]))
         return self.pool_function(unfolded_input, axis=0)
+
+
+class BatchNormLayer2(lasagne.layers.BatchNormLayer):
+    """
+    Adds a nonlinearity to batch norm layer to reduce number of layers
+    """
+    def __init__(self, incoming, nonlinearity=None, **kwargs):
+        #this_class_now = ut.fix_super_reload_error(BatchNormLayer2, self)
+        this_class_now = BatchNormLayer2
+        super(this_class_now, self).__init__(incoming, **kwargs)
+        #super(BatchNormLayer2, self).__init__(incoming, **kwargs)
+        self.nonlinearity = (lasagne.nonlinearities.identity
+                             if nonlinearity is None else nonlinearity)
+
+    def get_output_for(self, input, **kwargs):
+        #this_class_now = ut.fix_super_reload_error(BatchNormLayer2, self)
+        this_class_now = BatchNormLayer2
+        normalized = super(this_class_now, self).get_output_for(input, **kwargs)
+        #normalized = super(BatchNormLayer2, self).get_output_for(input, **kwargs)
+        normalized_activation = self.nonlinearity(normalized)
+        return normalized_activation
+
+
+class FlipLayer(lasagne.layers.Layer):
+    def get_output_shape_for(self, input_shape):
+        return input_shape
+
+    def get_output_for(self, input, **kwargs):
+        return input[:, :, ::-1, ::-1]
+
+
+def load_json_arch_def(arch_json_fpath):
+    """
+    layer_list = lasagne.layers.get_all_layers(output_layer)
+
+    from ibeis_cnn import net_strs
+    layer_json_list = [net_strs.make_layer_json_dict(layer)
+                       for layer in layer_list]
+
+    arch_json_fpath = '/media/raid/work/WS_ALL/_ibsdb/_ibeis_cache/nets/injur-shark_10056_224x224x3_auqbfhle/models/arch_injur-shark_o2_d11_c688_acioqbst/saved_sessions/fit_session_2016-08-26T173854+5/fit_arch_info.json'
+    """
+    from ibeis_cnn import custom_layers
+    import lasagne.layers.dnn
+
+    # FIXME: Need to redo the saved arch json file.
+    # Need to give layers identifiers and specify their inputs / outputs
+    # They are not implicit
+    arch_json = ut.load_json(arch_json_fpath)
+    layer_json_list = arch_json['layers']
+
+    network_def_list = []
+    for layer_json in layer_json_list:
+        classname = layer_json['type']
+        classkw = ut.delete_dict_keys(layer_json.copy(), ['type', 'output_shape'])
+
+        # Rectify nonlinearity definition
+        if 'nonlinearity' in classkw:
+            nonlin = classkw['nonlinearity']
+            nonlinclass = getattr(lasagne.nonlinearities, nonlin['type'], None)
+            nonlinkw = ut.delete_dict_keys(nonlin.copy(), ['type'])
+            if nonlin['type'] in ['softmax', 'linear']:
+                classkw['nonlinearity'] = nonlinclass
+            else:
+                classkw['nonlinearity'] = nonlinclass(**nonlinkw)
+
+        classtype = None
+        if classtype is None:
+            classtype = getattr(lasagne.layers, classname, None)
+        if classtype is None:
+            classtype = getattr(lasagne.layers.dnn, classname, None)
+        if classtype is None:
+            classtype = getattr(custom_layers, classname, None)
+
+        if classtype is not None:
+            layer_func = ut.NamedPartial(classtype, **classkw)
+            network_def_list.append(layer_func)
+        else:
+            network_def_list.append(None)
+
+    layer_list = custom_layers.evaluate_layer_list(network_def_list)
+    # Hack, remove all biases before batch norm
+    for layer in layer_list:
+        if isinstance(layer, lasagne.layers.BatchNormLayer):
+            in_layer = layer.input_layer
+            if in_layer is not None:
+                if getattr(in_layer, 'b') is not None:
+                    del in_layer.params[in_layer.b]
+                    in_layer.b = None
+
+    output_layer = layer_list[-1]
+    return output_layer
+
+
+def evaluate_layer_list(network_layers_def, verbose=None):
+    r"""
+    compiles a sequence of partial functions into a network
+    """
+    if verbose is None:
+        verbose = utils.VERBOSE_CNN
+    total = len(network_layers_def)
+    network_layers = []
+    if verbose:
+        print('Evaluting List of %d Layers' % (total,))
+    layer_fn_iter = iter(network_layers_def)
+    layer = None
+    try:
+        with ut.Indenter(' ' * 4, enabled=verbose):
+            next_args = tuple()
+            for count, layer_fn in enumerate(layer_fn_iter, start=1):
+                if verbose:
+                    print('Evaluating layer %d/%d (%s) ' %
+                          (count, total, ut.get_funcname(layer_fn), ))
+                with ut.Timer(verbose=False) as tt:
+                    layer = layer_fn(*next_args)
+                next_args = (layer,)
+                network_layers.append(layer)
+                if verbose:
+                    print('  * took %.4fs' % (tt.toc(),))
+                    print('  * layer = %r' % (layer,))
+                    if hasattr(layer, 'input_shape'):
+                        print('  * layer.input_shape = %r' % (
+                            layer.input_shape,))
+                    if hasattr(layer, 'shape'):
+                        print('  * layer.shape = %r' % (
+                            layer.shape,))
+                    print('  * layer.output_shape = %r' % (
+                        layer.output_shape,))
+    except Exception as ex:
+        keys = ['layer_fn', 'layer_fn.func', 'layer_fn.args',
+                'layer_fn.keywords', 'layer_fn.__dict__', 'layer', 'count']
+        ut.printex(ex, ('Error building layers.\n' 'layer=%r') % (layer,),
+                   keys=keys)
+        raise
+    return network_layers
+
+
+# Bundle common layers together
+
+
+def make_bundles(nonlinearity='lru', batch_norm=True,
+                 filter_size=(3, 3),
+                 stride=(1, 1),
+                 pool_stride=(2, 2),
+                 pool_size=(2, 2),
+                 branches=None,
+                 W=None,
+                 ):
+
+    # FIXME; dropout is a pre-operation
+    import ibeis_cnn.__LASAGNE__ as lasagne
+    import itertools
+    import six
+
+    if W is None:
+        #W = init.GlorotUniform()
+        W = lasagne.init.Orthogonal('relu')
+
+    # Rectify default inputs
+    if nonlinearity == 'lru':
+        nonlinearity = lasagne.nonlinearities.LeakyRectify(leakiness=(1. / 10.))
+    nonlinearity = nonlinearity
+    namer = ut.partial(lambda x: str(six.next(x)), itertools.count(1))
+
+    bundles = {}
+
+    def register_bundle(class_):
+        classname = ut.get_classname(class_, local=True)
+        bundles[classname] = class_
+        return class_
+
+    class Bundle(object):
+        def __init__(self):
+            self.suffix = namer()
+            self.name = self.suffix
+
+        def debug_layer(self, layer):
+            if False:
+                print('layer = %r' % layer)
+                if hasattr(layer, 'name'):
+                    print('  * layer.name = %r' % layer.name)
+                if hasattr(layer, 'input_shape'):
+                    print('  * layer.input_shape = %r' % (layer.input_shape,))
+                if hasattr(layer, 'shape'):
+                    print('  * layer.shape = %r' % (layer.shape,))
+                print('  * layer.output_shape = %r' % (layer.output_shape,))
+
+        def apply_dropout(self, layer):
+            # change name standard
+            outgoing = lasagne.layers.DropoutLayer(layer, p=self.dropout,
+                                                   name='D' + self.name)
+            return outgoing
+
+        def apply_batch_norm(self, layer, **kwargs):
+            # change name standard
+            nonlinearity = getattr(layer, 'nonlinearity', None)
+            if nonlinearity is not None:
+                layer.nonlinearity = lasagne.nonlinearities.identity
+            if hasattr(layer, 'b') and layer.b is not None:
+                del layer.params[layer.b]
+                layer.b = None
+            #bn_name = (kwargs.pop('name', None) or
+            #           (getattr(layer, 'name', None) and self.name + '/bn'))
+            bn_name = layer.name + '/bn'
+            layer = BatchNormLayer2(layer, name=bn_name,
+                                    nonlinearity=nonlinearity, **kwargs)
+            #layer._is_main_layer = False
+            #if nonlinearity is not None:
+            #    nonlin_name = 'g' + self.name
+            #    layer = lasagne.layers.special.NonlinearityLayer(layer,
+            #                                                     nonlinearity,
+            #                                                     name=nonlin_name)
+            #outgoing = lasagne.layers.normalization.batch_norm(layer, **kwargs)
+            #outgoing.input_layer.name = 'bn' + self.name
+            #outgoing.name = 'nl' + self.name
+            outgoing = layer
+            return outgoing
+
+    @register_bundle
+    class InputBundle(Bundle):
+        def __init__(self, shape, noise=False):
+            self.shape = shape
+            self.noise = noise
+            super(InputBundle, self).__init__()
+
+        def __call__(self):
+            outgoing = lasagne.layers.InputLayer(shape=self.shape,
+                                                 name='I' + self.name)
+            if self.noise:
+                outgoing = lasagne.layers.GaussianNoiseLayer(
+                    outgoing, name='N' + self.name)
+            return outgoing
+
+    @register_bundle
+    class ConvBundle(Bundle):
+        def __init__(self, num_filters, filter_size=filter_size,
+                     stride=stride, nonlinearity=nonlinearity,
+                     batch_norm=batch_norm, pool_size=pool_size,
+                     W=W, pool_stride=pool_stride, dropout=None,
+                     pool=False, preactivate=False, pad=0, name=None):
+            self.num_filters = num_filters
+            self.filter_size = filter_size
+            self.stride = stride
+            self.nonlinearity = nonlinearity
+            self.batch_norm = batch_norm
+            self.pool_size = pool_size
+            self.pool_stride = pool_stride
+            self.dropout = dropout
+            self.preactivate = preactivate
+            self.pool = pool
+            self.pad = pad
+            self.W = W
+            if name is None:
+                super(ConvBundle, self).__init__()
+                self.name = 'C' + self.suffix
+            else:
+                self.name = name
+
+        def __call__(self, incoming):
+            outgoing = incoming
+
+            if self.preactivate or self.batch_norm:
+                b = None
+                nonlinearity = None
+            else:
+                b = lasagne.init.Constant(0)
+                nonlinearity = self.nonlinearity
+
+            if self.preactivate:
+                outgoing = BatchNormLayer2(outgoing,
+                                           nonlinearity=self.nonlinearity,
+                                           name=self.name + '/_bn')
+
+            if self.dropout is not None and self.dropout > 0:
+                outgoing = self.apply_dropout(outgoing)
+
+            outgoing = Conv2DLayer(outgoing, num_filters=self.num_filters,
+                                   filter_size=self.filter_size,
+                                   stride=self.stride, name=self.name,
+                                   pad=self.pad, W=W,
+                                   nonlinearity=nonlinearity, b=b)
+
+            if self.batch_norm and not self.preactivate:
+                outgoing = BatchNormLayer2(outgoing,
+                                           nonlinearity=self.nonlinearity,
+                                           name=self.name + '/bn_')
+
+            if self.pool:
+                outgoing = MaxPool2DLayer(outgoing, pool_size=self.pool_size,
+                                          name=self.name + '/P',
+                                          stride=self.pool_stride)
+            return outgoing
+
+    @register_bundle
+    class ResidualBundle(Bundle):
+        def __init__(self, num_filters, filter_size=filter_size,
+                     stride=stride, nonlinearity=nonlinearity,
+                     pool_size=pool_size, W=W, pool_stride=pool_stride,
+                     dropout=None, pool=False,
+                     preactivate=True,
+                     postactivate=False):
+            self.num_filters = num_filters
+            self.filter_size = filter_size
+            self.stride = stride
+            self.nonlinearity = nonlinearity
+            self.pool_size = pool_size
+            self.pool_stride = pool_stride
+            self.dropout = dropout
+            self.pool = pool
+            self.W = W
+            self.preactivate = preactivate
+            self.postactivate = postactivate
+            super(ResidualBundle, self).__init__()
+            self.name = 'R' + self.name
+
+        #def projectionA(l_inp):
+        #    n_filters = l_inp.output_shape[1] * 2
+
+        #    def ceildiv(a, b):
+        #        return -(-a // b)
+
+        #    l = lasagne.layers.ExpressionLayer(
+        #        l_inp,
+        #        lambda X: X[:, :, ::2, ::2],
+        #        lambda s: (s[0], s[1], ceildiv(s[2], 2), ceildiv(s[3], 2)))
+        #    l = lasagne.layers.PadLayer(l, [n_filters // 4, 0, 0], batch_ndim=1)
+        #    return l
+
+        def projectionB(self, incoming):
+            """
+            The projection shortcut in Eqn.(2) is used to match dimensions
+            (done by 1x1 convolutions). When the shortcuts go across feature
+            maps of two sizes, they are performed with a stride of 2.
+            """
+            # Projection is a strided 1x1 convolution.
+            # I think preactivation should not trigger any nonlinearities. Just
+            # batch normalization. But I haven't been able to confirm.
+            projector = ConvBundle(
+                filter_size=(1, 1), num_filters=self.num_filters,
+                stride=self.stride, W=self.W, pad='same',
+                dropout=self.dropout, name=self.name + '/proj',
+                nonlinearity=None, preactivate=self.preactivate)
+            shortcut = projector(incoming)
+            return shortcut
+
+        def __call__(self, incoming):
+            """
+            https://github.com/Lasagne/Lasagne/issues/531
+            https://github.com/alrojo/lasagne_residual_network/search?utf8=%E2%9C%93&q=residual
+            https://github.com/FlorianMuellerklein/Identity-Mapping-ResNet-Lasagne/blob/master/models.py
+            """
+
+            # Check if this bundle is going to reduce the spatial dimensions
+            size_reduced = (np.prod(self.stride) != 1)
+
+            # Define convolvers
+            convkw = dict(W=self.W, pad='same', dropout=self.dropout,
+                          batch_norm=False, filter_size=self.filter_size,
+                          num_filters=self.num_filters)
+
+            # Do not preactivate if this is the first layer in the network
+            convolver1 = ConvBundle(stride=self.stride, preactivate=self.preactivate,
+                                    name=self.name + '/C1', **convkw)
+            convolver2 = ConvBundle(stride=(1, 1), preactivate=True,
+                                    name=self.name + '/C2', **convkw)
+
+            branch = incoming
+            branch = convolver1(branch)
+            branch = convolver2(branch)
+            branch._is_main_layer = False
+
+            # Need to project the shortcut branch
+            if size_reduced:
+                shortcut = self.projectionB(incoming)
+            else:
+                shortcut = incoming
+
+            outgoing = lasagne.layers.ElemwiseSumLayer(
+                [branch, shortcut], name=self.name + '/sum')
+
+            # Postactivate if this is the last residual layer.
+            if self.postactivate:
+                outgoing = BatchNormLayer2(
+                    outgoing, name=self.name + '/bn_',
+                    nonlinearity=nonlinearity)
+
+            if self.pool:
+                outgoing = MaxPool2DLayer(outgoing, pool_size=self.pool_size,
+                                          name=self.name + '/P',
+                                          stride=self.pool_stride)
+
+            return outgoing
+
+    @register_bundle
+    class InceptionBundle(Bundle):
+        # https://github.com/317070/lasagne-googlenet/blob/master/googlenet.py
+
+        def __init__(self, branches=branches,
+                     nonlinearity=nonlinearity, batch_norm=batch_norm,
+                     dropout=None, pool=False, pool_size=pool_size,
+                     pool_stride=pool_stride, W=W):
+            # standard
+            self.branches = branches
+            self.nonlinearity = nonlinearity
+            self.dropout = dropout
+            self.batch_norm = batch_norm
+            self.pool = pool
+            self.pool_size = pool_size
+            self.W = W
+            self.pool_stride = pool_stride
+            super(InceptionBundle, self).__init__()
+            self.name = 'INCEP' + self.name
+
+        def __call__(self, incoming):
+            in_ = incoming
+            if self.dropout is not None and self.dropout > 0:
+                in_ = self.apply_dropout(in_)
+            name = self.name
+
+            #branches = self.inception_v0(in_)
+            if self.branches is not None:
+                branches = []
+                for b in self.branches:
+                    print(b)
+                    if b['t'] == 'c':
+                        branch = self.conv_branch(
+                            in_, b['s'], b['n'], b['r'], b.get('d', 1))
+                    elif b['t'] == 'p':
+                        branch = self.proj_branch(
+                            in_, b['s'], b['n'])
+                    else:
+                        print('b = %r' % (b,))
+                        assert False
+                    branches.append(branch)
+            else:
+                #branches = self.inception_v3_A(in_)
+                branches = self.inception_v0(in_)
+
+            #print(branches)
+            #for b in branches:
+            #    print(b.output_shape)
+
+            outgoing = lasagne.layers.ConcatLayer(branches,
+                                                  name=name + '/cat')
+            outgoing._is_main_layer = True
+            if self.pool:
+                outgoing = MaxPool2DLayer(outgoing, pool_size=self.pool_size,
+                                          name='P' + self.name,
+                                          stride=self.pool_stride)
+            return outgoing
+
+        def conv_branch(self, incoming, filter_size, num_filters, num_reduce,
+                        depth=1):
+            name = self.name
+            name_aug = 'x'.join([str(s) for s in filter_size])
+            if num_reduce > 0:
+                if False:
+                    bias = .1
+                    redu = lasagne.layers.NINLayer(
+                        incoming, num_units=num_reduce,
+                        W=self.W,
+                        b=lasagne.init.Constant(bias),
+                        nonlinearity=self.nonlinearity,
+                        name=name + '/' + name_aug + '_reduce',)
+
+                else:
+                    redu = Conv2DLayer(incoming, num_filters=num_reduce,
+                                       filter_size=(1, 1), pad=0, stride=(1, 1),
+                                       nonlinearity=self.nonlinearity,
+                                       W=self.W,
+                                       name=name + '/' + name_aug + '_reduce',)
+                if self.batch_norm:
+                    redu = self.apply_batch_norm(redu)
+            else:
+                redu = incoming
+            conv = redu
+            for d in range(depth):
+                pad = min(filter_size) // 2
+                conv = Conv2DLayer(conv, num_filters=num_filters,
+                                   filter_size=filter_size, pad=pad, stride=(1, 1),
+                                   nonlinearity=self.nonlinearity,
+                                   W=self.W,
+                                   name=name + '/' + name_aug + '_' + str(d))
+                if d > 0:
+                    conv._is_main_layer = False
+                if self.batch_norm:
+                    conv = self.apply_batch_norm(conv)
+            #if num_reduce > 0:
+            #    conv._is_main_layer = False
+            return conv
+
+        def proj_branch(self, incoming, pool_size, num_proj):
+            name = self.name
+            flipped = FlipLayer(incoming, name=name + '/Flip')
+            pool = MaxPool2DLayer(flipped, pool_size=pool_size,
+                                  stride=(1, 1), pad=(1, 1),
+                                  name=name + '/pool')
+            unflipped = FlipLayer(pool, name=name + '/Unflip')
+
+            project = Conv2DLayer(unflipped, num_filters=num_proj,
+                                  filter_size=(1, 1), pad=0, stride=(1, 1),
+                                  nonlinearity=self.nonlinearity,
+                                  name=name + '/proj')
+            if self.batch_norm:
+                project = self.apply_batch_norm(project)
+            return project
+
+        def inception_v0(self, in_):
+            # Define the 3 convolutional branches
+            conv_branches = [
+                self.conv_branch(in_, (1, 1), 64, 0),
+                self.conv_branch(in_, (3, 3), 128, 96),
+                self.conv_branch(in_, (5, 5), 16, 16),
+            ]
+            # Define the projection branch
+            proj_branches = [
+                self.proj_branch(in_, (3, 3), 32)
+            ]
+            branches = conv_branches + proj_branches
+            return branches
+
+        def inception_v3_A(self, in_):
+            conv_branches = [
+                self.conv_branch(in_, (1, 1), 64, 0),
+                self.conv_branch(in_, (3, 3), 128, 96),
+                self.conv_branch(in_, (3, 3), 16, 16, depth=2),
+            ]
+            proj_branches = [
+                self.proj_branch(in_, (3, 3), 32)
+            ]
+            branches = conv_branches + proj_branches
+            return branches
+
+    @register_bundle
+    class DenseBundle(Bundle):
+        def __init__(self, num_units, batch_norm=batch_norm,
+                     nonlinearity=nonlinearity, W=W, dropout=None):
+            self.num_units = num_units
+            self.batch_norm = batch_norm
+            self.nonlinearity = nonlinearity
+            self.dropout = dropout
+            self.W = W
+            super(DenseBundle, self).__init__()
+
+        def __call__(self, incoming):
+            outgoing = incoming
+            if self.dropout is not None and self.dropout > 0:
+                outgoing = self.apply_dropout(outgoing)
+            outgoing = lasagne.layers.DenseLayer(
+                outgoing, num_units=self.num_units, name='F' + self.name,
+                nonlinearity=self.nonlinearity, W=self.W)
+            if self.batch_norm:
+                outgoing = self.apply_batch_norm(outgoing)
+            return outgoing
+
+    @register_bundle
+    class SoftmaxBundle(Bundle):
+        def __init__(self, num_units, dropout=None, W=W):
+            self.num_units = num_units
+            self.batch_norm = batch_norm
+            self.dropout = dropout
+            self.W = W
+            super(SoftmaxBundle, self).__init__()
+
+        def __call__(self, incoming):
+            outgoing = incoming
+            if self.dropout is not None and self.dropout > 0:
+                outgoing = self.apply_dropout(outgoing)
+            outgoing = lasagne.layers.DenseLayer(
+                outgoing, num_units=self.num_units, name='F' + self.name,
+                W=self.W, nonlinearity=lasagne.nonlinearities.softmax)
+            return outgoing
+
+    @register_bundle
+    class NonlinearitySoftmax(Bundle):
+        def __call__(self, incoming):
+            return lasagne.layers.NonlinearityLayer(
+                incoming,
+                nonlinearity=lasagne.nonlinearities.softmax,
+                name='Softmax' + self.name,
+            )
+
+    @register_bundle
+    class GlobalPool(Bundle):
+        def __call__(self, incoming, ):
+            outgoing = lasagne.layers.GlobalPoolLayer(
+                incoming,
+                name='GP' + self.name,
+            )
+            outgoing._is_main_layer = True
+            return outgoing
+
+    @register_bundle
+    class AveragePool(Bundle):
+        def __call__(self, incoming, ):
+            outgoing = lasagne.layers.GlobalPoolLayer(
+                incoming,
+                name='AP' + self.name,
+            )
+            outgoing._is_main_layer = True
+            return outgoing
+
+    @register_bundle
+    class MaxPool2D(Bundle):
+        def __init__(self, pool_size=pool_size, pool_stride=pool_stride):
+            self.pool_size = pool_size
+            self.pool_stride = pool_stride
+            super(MaxPool2D, self).__init__()
+
+        def __call__(self, incoming):
+            return MaxPool2DLayer(
+                incoming,
+                pool_size=self.pool_size,
+                stride=self.pool_stride,
+                name='P' + self.name,
+            )
+
+    #def inception_module(l_in, num_1x1, reduce_3x3, num_3x3, reduce_5x5,
+    #                     num_5x5, gain=1.0, bias=0.1):
+    #    """
+    #    inception module (without the 3x3x1 pooling and projection because
+    #    that's difficult in Theano right now)
+
+    #    http://www.cv-foundation.org/openaccess/content_cvpr_2015/papers/Szegedy_Going_Deeper_With_2015_CVPR_paper.pdf
+    #    """
+    return bundles
 
 
 if __name__ == '__main__':

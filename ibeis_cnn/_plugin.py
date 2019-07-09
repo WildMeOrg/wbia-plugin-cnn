@@ -6,16 +6,17 @@ tests a test set of data using a specified, pre-trained model and weights
 python -c "import ibeis_cnn"
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
-# from ibeis_cnn import utils
 from ibeis_cnn import models
-#from ibeis_cnn import test
 from ibeis_cnn import _plugin_grabmodels as grabmodels
 import utool as ut
 import cv2
+import six
 import numpy as np
 import random
+import os
 import ibeis.constants as const
-print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn._plugin]')
+from six.moves import zip, range
+print, rrr, profile = ut.inject2(__name__)
 
 
 try:
@@ -87,6 +88,385 @@ def get_verified_aid_pairs(ibs):
 
 
 @register_ibs_method
+def generate_thumbnail_class_list(ibs, thumbnail_list, nInput=None,
+                                  classifier_weight_filepath=None, **kwargs):
+
+    # Load chips and resize to the target
+    data_shape = (192, 192, 3)
+    batch_size = None
+    # Define model and load weights
+    print('\n[ibeis_cnn] Loading model...')
+    if nInput is None:
+        try:
+            nInput = len(thumbnail_list)
+        except TypeError:
+            print('Warning passed in generator without specifying nInput hint')
+            print('Explicitly evaluating generator')
+            print('type(chip_list) = %r' % (type(thumbnail_list),))
+            thumbnail_list = list(thumbnail_list)
+            nInput = len(thumbnail_list)
+
+    model = models.ClassifierModel(batch_size=batch_size, data_shape=data_shape)
+
+    if classifier_weight_filepath in [None, 'v3_zebra']:
+        weights_path = grabmodels.ensure_model('classifier_v3_zebra', redownload=False)
+    elif classifier_weight_filepath in ['coco_zebra']:
+        weights_path = grabmodels.ensure_model('classifier_coco_zebra', redownload=False)
+    elif classifier_weight_filepath in ['megan1.1']:
+        weights_path = grabmodels.ensure_model('classifier_cameratrap_megan_v1', redownload=False)
+    elif classifier_weight_filepath in ['megan1.2']:
+        weights_path = grabmodels.ensure_model('classifier_cameratrap_megan_v2', redownload=False)
+    elif classifier_weight_filepath in ['megan1.3']:
+        weights_path = grabmodels.ensure_model('classifier_cameratrap_megan_v3', redownload=False)
+    elif classifier_weight_filepath in ['megan1.4']:
+        weights_path = grabmodels.ensure_model('classifier_cameratrap_megan_v4', redownload=False)
+    elif classifier_weight_filepath in ['megan1.5']:
+        weights_path = grabmodels.ensure_model('classifier_cameratrap_megan_v5', redownload=False)
+    elif classifier_weight_filepath in ['megan1.6']:
+        weights_path = grabmodels.ensure_model('classifier_cameratrap_megan_v6', redownload=False)
+    elif classifier_weight_filepath in ['megan2.1']:
+        weights_path = grabmodels.ensure_model('classifier_cameratrap_megan2_v1', redownload=False)
+    elif classifier_weight_filepath in ['megan2.2']:
+        weights_path = grabmodels.ensure_model('classifier_cameratrap_megan2_v2', redownload=False)
+    elif classifier_weight_filepath in ['megan2.3']:
+        weights_path = grabmodels.ensure_model('classifier_cameratrap_megan2_v3', redownload=False)
+    elif classifier_weight_filepath in ['megan2.4']:
+        weights_path = grabmodels.ensure_model('classifier_cameratrap_megan2_v4', redownload=False)
+    elif classifier_weight_filepath in ['megan2.5']:
+        weights_path = grabmodels.ensure_model('classifier_cameratrap_megan2_v5', redownload=False)
+    elif classifier_weight_filepath in ['megan2.6']:
+        weights_path = grabmodels.ensure_model('classifier_cameratrap_megan2_v6', redownload=False)
+    elif classifier_weight_filepath in ['ryan.ibeis_cnn.v1']:
+        weights_path = grabmodels.ensure_model('classifier_cameratrap_ryan_ibeis_cnn_v1', redownload=False)
+    elif os.path.exists(classifier_weight_filepath):
+        weights_path = classifier_weight_filepath
+    else:
+        raise ValueError('Classifier does not have a valid trained model')
+
+    model_state_fpath = model.get_model_state_fpath(fpath=weights_path)
+    print('[model] loading model state from: %s' % (model_state_fpath,))
+    model_state = ut.load_cPkl(model_state_fpath)
+
+    model.encoder      = model_state.get('encoder', None)
+    model.output_dims  = model_state['output_dims']
+    model.data_params  = model_state['data_params']
+    model._fix_center_mean_std()
+
+    model.init_arch()
+    model.batch_size = 128
+    model.hyperparams['whiten_on'] = True
+    model.best_results = model_state['best_results']
+    model.set_all_param_values(model.best_results['weights'])
+
+    # Create the Theano primitives
+    # create theano symbolic expressions that define the network
+    print('\n[ibeis_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---')
+    print('[model] creating Theano primitives...')
+    theano_predict = model.build_predict_func()
+
+    print('[ibeis_cnn] Performing inference...')
+    test_results = model.process_batch(theano_predict, np.array(thumbnail_list))
+
+    prediction_list = model.encoder.inverse_transform(test_results['predictions'])
+    confidence_list = test_results['confidences']
+
+    result_list = list(zip(confidence_list, prediction_list))
+    return result_list
+
+
+@register_ibs_method
+def generate_thumbnail_class2_list(ibs, thumbnail_list, nInput=None,
+                                   classifier_two_weight_filepath=None,
+                                   **kwargs):
+
+    # Load chips and resize to the target
+    data_shape = (192, 192, 3)
+    batch_size = None
+    # Define model and load weights
+    print('\n[ibeis_cnn] Loading model...')
+    if nInput is None:
+        try:
+            nInput = len(thumbnail_list)
+        except TypeError:
+            print('Warning passed in generator without specifying nInput hint')
+            print('Explicitly evaluating generator')
+            print('type(chip_list) = %r' % (type(thumbnail_list),))
+            thumbnail_list = list(thumbnail_list)
+            nInput = len(thumbnail_list)
+
+    model = models.Classifier2Model(batch_size=batch_size, data_shape=data_shape)
+
+    if classifier_two_weight_filepath in [None, 'v3']:
+        weights_path = grabmodels.ensure_model('classifier2_v3', redownload=False)
+    elif classifier_two_weight_filepath in ['candidacy']:
+        weights_path = grabmodels.ensure_model('classifier2_candidacy', redownload=False)
+    elif classifier_two_weight_filepath in ['ggr2']:
+        weights_path = grabmodels.ensure_model('classifier2_ggr2', redownload=False)
+    elif os.path.exists(classifier_two_weight_filepath):
+        weights_path = classifier_two_weight_filepath
+    else:
+        raise ValueError('Classifier does not have a valid trained model')
+
+    model_state_fpath = model.get_model_state_fpath(fpath=weights_path)
+    print('[model] loading model state from: %s' % (model_state_fpath,))
+    model_state = ut.load_cPkl(model_state_fpath)
+
+    category_list      = model_state['category_list']
+    model.encoder      = model_state.get('encoder', None)
+    model.output_dims  = model_state['output_dims']
+    model.data_params  = model_state['data_params']
+    model._fix_center_mean_std()
+
+    model.init_arch()
+    model.batch_size = 128
+    model.hyperparams['whiten_on'] = True
+    model.best_results = model_state['best_results']
+    model.set_all_param_values(model.best_results['weights'])
+
+    # Create the Theano primitives
+    # create theano symbolic expressions that define the network
+    print('\n[ibeis_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---')
+    print('[model] creating Theano primitives...')
+    theano_predict = model.build_predict_func()
+
+    print('[ibeis_cnn] Performing inference...')
+    test_results = model.process_batch(theano_predict, np.array(thumbnail_list))
+
+    confidences_list = test_results['confidences']
+    confidences_list[confidences_list > 1.0] = 1.0
+    confidences_list[confidences_list < 0.0] = 0.0
+
+    confidence_dict_list = [
+        dict(zip(category_list, confidence_list))
+        for confidence_list in confidences_list
+    ]
+
+    # zipped = zip(thumbnail_list, confidence_dict_list)
+    # for index, (thumbnail, confidence_dict) in enumerate(zipped):
+    #     print(index)
+    #     y = []
+    #     for key in confidence_dict:
+    #         y.append('%s-%0.04f' % (key, confidence_dict[key], ))
+    #     y = ';'.join(y)
+    #     image_path = '/home/jason/Desktop/batch2/image-%s-%s.png'
+    #     cv2.imwrite(image_path % (index, y), thumbnail)
+
+    predictions_list = [
+        [
+            key
+            for key in confidence_dict
+            if confidence_dict[key] >= 0.5
+        ]
+        for confidence_dict in confidence_dict_list
+    ]
+
+    result_list = list(zip(confidence_dict_list, predictions_list))
+    return result_list
+
+
+@register_ibs_method
+def generate_thumbnail_aoi2_list(ibs, thumbnail_list, bbox_list, size_list,
+                                 nInput=None, aoi_two_weight_filepath=None,
+                                 **kwargs):
+    # Load chips and resize to the target
+    data_shape = (192, 192, 4)
+    batch_size = None
+    # Define model and load weights
+    print('\n[ibeis_cnn] Loading model...')
+    if nInput is None:
+        try:
+            nInput = len(thumbnail_list)
+        except TypeError:
+            print('Warning passed in generator without specifying nInput hint')
+            print('Explicitly evaluating generator')
+            print('type(chip_list) = %r' % (type(thumbnail_list),))
+            thumbnail_list = list(thumbnail_list)
+            nInput = len(thumbnail_list)
+
+    model = models.AoI2Model(batch_size=batch_size, data_shape=data_shape)
+
+    if aoi_two_weight_filepath in [None, 'candidacy']:
+        weights_path = grabmodels.ensure_model('aoi2_candidacy', redownload=False)
+    elif aoi_two_weight_filepath in ['ggr2']:
+        weights_path = grabmodels.ensure_model('aoi2_ggr2', redownload=False)
+    elif aoi_two_weight_filepath in ['hammerhead']:
+        weights_path = grabmodels.ensure_model('aoi2_hammerhead', redownload=False)
+    elif aoi_two_weight_filepath in ['jaguar']:
+        weights_path = grabmodels.ensure_model('aoi2_jaguar', redownload=False)
+    elif os.path.exists(aoi_two_weight_filepath):
+        weights_path = aoi_two_weight_filepath
+    else:
+        raise ValueError('AoI2 does not have a valid trained model')
+
+    model_state_fpath = model.get_model_state_fpath(fpath=weights_path)
+    print('[model] loading model state from: %s' % (model_state_fpath,))
+    model_state = ut.load_cPkl(model_state_fpath)
+
+    model.encoder      = model_state.get('encoder', None)
+    model.output_dims  = model_state['output_dims']
+    model.data_params  = model_state['data_params']
+    model._fix_center_mean_std()
+
+    model.init_arch()
+    model.batch_size = 128
+    model.hyperparams['whiten_on'] = True
+    model.best_results = model_state['best_results']
+    model.set_all_param_values(model.best_results['weights'])
+
+    # Create the Theano primitives
+    # create theano symbolic expressions that define the network
+    print('\n[ibeis_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---')
+    print('[model] creating Theano primitives...')
+    theano_predict = model.build_predict_func()
+
+    mask = np.zeros((192, 192, 1), dtype=np.uint8)
+    data_list = []
+    for thumbnail, bbox, size in zip(thumbnail_list, bbox_list, size_list):
+        xtl, ytl, width, height = bbox
+        w, h = size
+        w = float(w)
+        h = float(h)
+        xbr = xtl + width
+        ybr = ytl + height
+        xtl = int(np.round((xtl / w) * data_shape[1]))
+        ytl = int(np.round((ytl / h) * data_shape[0]))
+        xbr = int(np.round((xbr / w) * data_shape[1]))
+        ybr = int(np.round((ybr / h) * data_shape[0]))
+        mask_ = np.copy(mask)
+        mask_[ytl: ybr, xtl: xbr] = 255
+        data = np.dstack((thumbnail, mask_))
+        data_list.append(data)
+
+    print('[ibeis_cnn] Performing inference...')
+    test_results = model.process_batch(theano_predict, np.array(data_list))
+
+    confidence_list = test_results['confidences']
+    prediction_list = test_results['predictions']
+    prediction_list = [
+        'positive' if prediction == 1 else 'negative'
+        for prediction in prediction_list
+    ]
+
+    result_list = list(zip(confidence_list, prediction_list))
+    return result_list
+
+
+@register_ibs_method
+def generate_chip_label_list(ibs, chip_list, nInput=None,
+                             labeler_weight_filepath=None, **kwargs):
+
+    # Load chips and resize to the target
+    data_shape = (128, 128, 3)
+    batch_size = None
+    # Define model and load weights
+    print('\n[ibeis_cnn] Loading model...')
+    if nInput is None:
+        try:
+            nInput = len(chip_list)
+        except TypeError:
+            print('Warning passed in generator without specifying nInput hint')
+            print('Explicitly evaluating generator')
+            print('type(chip_list) = %r' % (type(chip_list),))
+            chip_list = list(chip_list)
+            nInput = len(chip_list)
+
+    model = models.LabelerModel(batch_size=batch_size, data_shape=data_shape)
+
+    if labeler_weight_filepath in [None, 'v3']:
+        weights_path = grabmodels.ensure_model('labeler_v3', redownload=False)
+    elif labeler_weight_filepath in ['v1']:
+        weights_path = grabmodels.ensure_model('labeler_v1', redownload=False)
+    elif labeler_weight_filepath in ['cheetah']:
+        weights_path = grabmodels.ensure_model('labeler_cheetah', redownload=False)
+    elif labeler_weight_filepath in ['lynx', 'lynx_pardinus']:
+        weights_path = grabmodels.ensure_model('labeler_lynx_v2', redownload=False)
+    elif labeler_weight_filepath in ['candidacy']:
+        weights_path = grabmodels.ensure_model('labeler_candidacy', redownload=False)
+    elif labeler_weight_filepath in ['jaguar', 'jaguar_v2']:
+        weights_path = grabmodels.ensure_model('labeler_jaguar_v2', redownload=False)
+    elif labeler_weight_filepath in ['manta']:
+        weights_path = grabmodels.ensure_model('labeler_manta', redownload=False)
+    elif labeler_weight_filepath in ['dorsal', 'hendrik_dorsal']:
+        weights_path = grabmodels.ensure_model('labeler_hendrik_dorsal', redownload=False)
+    elif labeler_weight_filepath in ['seaturtle']:
+        weights_path = grabmodels.ensure_model('labeler_seaturtle_v2', redownload=False)
+    elif os.path.exists(labeler_weight_filepath):
+        weights_path = labeler_weight_filepath
+    else:
+        raise ValueError('Labeler does not have a valid trained model')
+
+    model_state_fpath = model.get_model_state_fpath(fpath=weights_path)
+    print('[model] loading model state from: %s' % (model_state_fpath,))
+    model_state = ut.load_cPkl(model_state_fpath)
+
+    model.encoder      = model_state.get('encoder', None)
+    model.output_dims  = model_state['output_dims']
+    model.data_params  = model_state['data_params']
+    model._fix_center_mean_std()
+
+    model.best_results = model_state['best_results']
+
+    model.init_arch()
+    model.batch_size = 128
+    model.hyperparams['whiten_on'] = True
+    model.set_all_param_values(model.best_results['weights'])
+
+    # Create the Theano primitives
+    # create theano symbolic expressions that define the network
+    print('\n[ibeis_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---')
+    print('[model] creating Theano primitives...')
+    theano_predict = model.build_predict_func()
+
+    print('[ibeis_cnn] Performing inference...')
+    test_results = model.process_batch(theano_predict, np.array(chip_list))
+
+    class_list = list(model.encoder.classes_)
+    prediction_list = model.encoder.inverse_transform(test_results['predictions'])
+    confidence_list = test_results['confidences']
+    probability_list = test_results['network_output_determ']
+
+    class_list = list(map(
+        lambda x: x if isinstance(x, six.text_type) else x.decode('utf-8'),
+        class_list
+    ))
+    prediction_list = list(map(
+        lambda x: x if isinstance(x, six.text_type) else x.decode('utf-8'),
+        prediction_list
+    ))
+
+    species_list = []
+    viewpoint_list = []
+    for prediction in prediction_list:
+        prediction = prediction.strip()
+        if ':' in prediction:
+            prediction = prediction.split(':')
+            species, viewpoint = prediction
+        else:
+            species = prediction
+            viewpoint = None
+        if species.lower() == 'ignore':
+            species = const.UNKNOWN
+        species_list.append(species)
+        viewpoint_list.append(viewpoint)
+
+    quality_list = [const.QUAL_UNKNOWN] * len(prediction_list)
+    orientation_list = [0.0] * len(prediction_list)
+
+    probability_dict_list = []
+    for probability in probability_list:
+        probability_dict = {
+            class_ : prob
+            for class_, prob in zip(class_list, probability)
+        }
+        probability_dict_list.append(probability_dict)
+
+    result_list = list(zip(confidence_list, species_list, viewpoint_list,
+                       quality_list, orientation_list, probability_dict_list))
+
+    return result_list
+
+
+@register_ibs_method
 def detect_annot_zebra_background_mask(ibs, aid_list, species=None, config2_=None):
     r"""
     Args:
@@ -97,7 +477,7 @@ def detect_annot_zebra_background_mask(ibs, aid_list, species=None, config2_=Non
         list: mask_list
     """
     # Read the data
-    print('\n[harness] Loading chips...')
+    print('\n[ibeis_cnn] Loading chips...')
     chip_list = ibs.get_annot_chips(aid_list, verbose=True, config2_=config2_)
     mask_list = list(generate_species_background(ibs, chip_list, species=species))
     return mask_list
@@ -114,7 +494,7 @@ def detect_annot_whale_fluke_background_mask(ibs, aid_list, species='whale_fluke
         list: mask_list
     """
     # Read the data
-    print('\n[harness] Loading chips...')
+    print('\n[ibeis_cnn] Loading chips...')
     chip_list = ibs.get_annot_chips(aid_list, verbose=True, config2_=config2_)
     mask_list = list(generate_species_background(ibs, chip_list, species=species))
     return mask_list
@@ -140,10 +520,11 @@ def generate_species_background_mask(ibs, chip_fpath_list, species=None):
         >>> import ibeis
         >>> from ibeis_cnn._plugin import *  # NOQA
         >>> ibs = ibeis.opendb(defaultdb='testdb1')
-        >>> aid_list = ut.get_argval(('--aids', '--aid'), type_=list, default=ibs.get_valid_aids()[0:10])
+        >>> aid_list = ut.get_argval(('--aids', '--aid'), type_=list, default=ibs.get_valid_aids()[0:2])
         >>> chip_fpath_list = ibs.get_annot_chip_fpath(aid_list)
         >>> species = ibs.const.TEST_SPECIES.ZEB_PLAIN
         >>> mask_list = generate_species_background_mask(ibs, chip_fpath_list, species)
+        >>> mask_list = list(mask_list)
         >>> ut.quit_if_noshow()
         >>> import plottool as pt
         >>> iteract_obj = pt.interact_multi_image.MultiImageInteraction(mask_list, nPerPage=4)
@@ -158,7 +539,7 @@ def generate_species_background_mask(ibs, chip_fpath_list, species=None):
         #>>> ut.show_if_requested()
     """
     # Read the data
-    print('\n[harness] Loading chips...')
+    print('\n[ibeis_cnn] Loading chips...')
     import vtool as vt
     nInput = len(chip_fpath_list)
 
@@ -183,7 +564,7 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
     TODO: Use this as the primary function
 
     CommandLine:
-        python -m ibeis_cnn._plugin --exec-generate_species_background --show
+        python -m ibeis_cnn._plugin --exec-generate_species_background --db PZ_MTEST --species=zebra_plains --show
         python -m ibeis_cnn._plugin --exec-generate_species_background --db GZ_Master1 --species=zebra_grevys --save cnn_detect_results_gz.png --diskshow --clipwhite
         python -m ibeis_cnn._plugin --exec-generate_species_background --db PZ_Master1 --species=zebra_plains --save cnn_detect_results_pz.png --diskshow --clipwhite
         python -m ibeis_cnn._plugin --exec-generate_species_background --db PZ_Master1 --show
@@ -197,7 +578,7 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         >>> from ibeis_cnn._plugin import *  # NOQA
         >>> ibs = ibeis.opendb(defaultdb='testdb1')
         >>> aid_list = ibs.get_valid_aids()[0:8]
-        >>> species = ut.get_argval('--species', type_=str, default=None)
+        >>> species = ut.get_argval('--species', type_=str, default='zebra_plains')
         >>> config2_ = None
         >>> nInput = len(aid_list)
         >>> chip_iter = ibs.get_annot_chips(aid_list, verbose=True, config2_=config2_, eager=False)
@@ -209,6 +590,7 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         >>> chip_list = ibs.get_annot_chips(aid_list, verbose=True, config2_=config2_, eager=True)
         >>> stacked_list = [vt.stack_images(chip, mask)[0] for chip, mask in  zip(chip_list, mask_list)]
         >>> iteract_obj = pt.interact_multi_image.MultiImageInteraction(stacked_list, nPerPage=4)
+        >>> iteract_obj.start()
         >>> #hough_cpath = ibs.get_annot_probchip_fpath(aid_list, config2_=config2_)
         >>> #iteract_obj2 = pt.interact_multi_image.MultiImageInteraction(hough_cpath, nPerPage=4)
         >>> #pt.imshow(mask_list[0])
@@ -222,15 +604,14 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         #>>> result = interact_siamsese_data_patches(labels, data, flat_metadata)
         #>>> ut.show_if_requested()
     """
-    from ibeis_cnn import harness
-
     if species is None:
-        species = 'zebra_plains'
+        # species = 'zebra_plains'
+        raise ValueError('must specify a species for the background detector')
 
     # Load chips and resize to the target
     data_shape = (256, 256, 3)
     # Define model and load weights
-    print('\n[harness] Loading model...')
+    print('\n[ibeis_cnn] Loading model...')
     if nInput is None:
         try:
             nInput = len(chip_list)
@@ -244,9 +625,33 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
     # batch_size = int(min(128, 2 ** np.floor(np.log2(nInput))))
     batch_size = None
 
+    LEGACY = True
     NEW = True
+    confidence_thresh = 0.5
     print(species)
-    if species in ['zebra_plains', 'zebra_grevys']:
+
+    candidacy_species_list = [
+        'giraffe_masai',
+        'giraffe_reticulated',
+        'turtle_sea',
+        'whale_fluke',
+        'zebra_grevys',
+        'zebra_plains',
+    ]
+
+    CANDIDACY = True
+    CANDIDACY = CANDIDACY and species in candidacy_species_list
+
+    if CANDIDACY:
+        species_list = candidacy_species_list
+        assert species in species_list
+
+        LEGACY = False
+        confidence_thresh = 0.2
+        model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
+        weights_path = grabmodels.ensure_model('background_candidacy_' + species, redownload=False)
+        canvas_key = 1
+    elif species in ['zebra_plains', 'zebra_grevys']:
         if NEW:
             assert species in ['zebra_plains', 'zebra_grevys']
             model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape, num_output=3)
@@ -266,29 +671,88 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_whale_fluke', redownload=False)
         canvas_key = species
-
+    elif species in ['lynx', 'lynx_pardinus']:
+        LEGACY = False
+        species = 'lynx'
+        confidence_thresh = 0.2
+        model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
+        weights_path = grabmodels.ensure_model('background_lynx_v3', redownload=False)
+        canvas_key = 1
+    elif species in ['cheetah']:
+        LEGACY = False
+        species = 'cheetah'
+        confidence_thresh = 0.2
+        model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
+        weights_path = grabmodels.ensure_model('background_cheetah', redownload=False)
+        canvas_key = 1
+    elif species in ['jaguar']:
+        LEGACY = False
+        species = 'jaguar'
+        confidence_thresh = 0.2
+        model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
+        weights_path = grabmodels.ensure_model('background_jaguar_v2', redownload=False)
+        canvas_key = 1
+    elif species in ['manta_ray_giant']:
+        LEGACY = False
+        species = 'manta'
+        confidence_thresh = 0.2
+        model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
+        weights_path = grabmodels.ensure_model('background_manta', redownload=False)
+        canvas_key = 1
+    elif species in ['skunk_spotted']:
+        LEGACY = False
+        species = 'skunk_spotted'
+        confidence_thresh = 0.2
+        model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
+        weights_path = grabmodels.ensure_model('background_skunk_spotted', redownload=False)
+        canvas_key = 1
+    elif species in ['vulcan']:
+        LEGACY = False
+        species = 'vulcan'
+        confidence_thresh = 0.2
+        model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
+        weights_path = grabmodels.ensure_model('background_vulcan', redownload=False)
+        canvas_key = 1
     else:
-        raise ValueError('species key does not have a trained model')
+        raise ValueError('species %r key does not have a trained model' % (species, ))
 
-    old_weights_fpath = weights_path
-    model.load_old_weights_kw2(old_weights_fpath)
+    if LEGACY:
+        old_weights_fpath = weights_path
+        model.load_old_weights_kw2(old_weights_fpath)
+    else:
+        model_state_fpath = model.get_model_state_fpath(fpath=weights_path)
+        print('[model] loading model state from: %s' % (model_state_fpath,))
+        model_state = ut.load_cPkl(model_state_fpath)
+
+        model.output_dims  = model_state['output_dims']
+        model.data_params = model_state['data_params']
+        model._fix_center_mean_std()
+
+        model.best_results = model_state['best_results']
+
+        model.init_arch()
+        model.batch_size = 128
+        model.data_params['center_mean'] = np.mean(model.data_params['center_mean'])
+        model.data_params['center_std'] = np.mean(model.data_params['center_std'])
+        model.hyperparams['whiten_on'] = True
+        model.set_all_param_values(model.best_results['weights'])
 
     # Create the Theano primitives
     # create theano symbolic expressions that define the network
-    print('\n[harness] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---')
+    print('\n[ibeis_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---')
     print('[model] creating Theano primitives...')
-    theano_funcs = model.build_theano_funcs(request_predict=True,
-                                            request_forward=False,
-                                            request_backprop=False)
-    theano_backprop, theano_forward, theano_predict, updates = theano_funcs
+    model.build_predict_func()
 
-    print('[harness] Performing inference...')
+    print('[ibeis_cnn] Performing inference...')
 
     _iter = ut.ProgressIter(chip_list, nTotal=nInput, lbl=species + ' fgdetect', adjust=True, freq=10, time_thresh=30.0)
     for chip in _iter:
         try:
-            samples, canvas_dict = harness.test_convolutional(model, theano_predict, chip, padding=24)
-            if NEW:
+            if LEGACY:
+                samples, canvas_dict = test_convolutional(model, chip, padding=24, confidence_thresh=confidence_thresh)
+            else:
+                samples, canvas_dict = test_convolutional(model, chip, padding=25, confidence_thresh=confidence_thresh)
+            if NEW and LEGACY:
                 mask = np.maximum(255 - canvas_dict['negative'], canvas_dict[canvas_key])
             else:
                 mask = canvas_dict[canvas_key]
@@ -298,6 +762,222 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
                                 chip.shape, chip.dtype))
             raise
         yield mask
+
+
+def test_convolutional(model, image, patch_size='auto', stride='auto',
+                       padding=32, batch_size=None, verbose=False,
+                       confidence_thresh=0.5, **kwargs):
+    """ Using a network, test an entire image full convolutionally
+
+    This function will test an entire image full convolutionally (or a close
+    approximation of full convolutionally).  The CUDA framework and driver is a
+    limiting factor for how large an image can be given to a network for full
+    convolutional inference.  As a result, we implement a non-overlapping (or
+    little overlapping) patch extraction approximation that processes the entire
+    image within a single batch or very few batches.  This is an extremely
+    efficient process for processing an image with a CNN.
+
+    The patches are given a slight overlap in order to smooth the effects of
+    boundary conditions, which are seen on every patch.  We also mirror the
+    border of each patch and add an additional amount of padding to cater to the
+    architecture's receptive field reduction.
+
+    See :func:`utils.extract_patches_stride` for patch extraction behavior.
+
+    Args:
+        model (Model): the network to use to perform feedforward inference
+        image (numpy.ndarray): the image passed in to make a coreresponding
+            sized dictionarf of response maps
+        patch_size (int, tuple of int, optional): the size of the patches
+            extracted across the image, passed in as a 2-tuple of (width,
+            height).  Defaults to (200, 200).
+        stride (int, tuple of int, optional): the stride of the patches
+            extracted across the image.  Defaults to [patch_size - padding].
+        padding (int, optional): the mirrored padding added to every patch
+            during testing, which can be used to offset the effects of the
+            receptive field reduction in the network.  Defaults to 32.
+        **kwargs: arbitrary keyword arguments, passed to
+            :func:`model.test()`
+
+    Returns:
+        samples, canvas_dict (tuple of int and dict): the number of total
+            samples used to generate the response map and the actual response
+            maps themselves as a dictionary.  The dictionary uses the class
+            labels as the strings and the numpy array image as the values.
+    """
+    from ibeis_cnn import utils
+
+    def _add_pad(data_):
+        if len(data_.shape) == 2:
+            data_padded = np.pad(data_, padding, 'reflect', reflect_type='even')
+        else:
+            h, w, c = data_.shape
+            data_padded = np.dstack([
+                np.pad(data_[:, :, _], padding, 'reflect', reflect_type='even')
+                for _ in range(c)
+            ])
+        return data_padded
+
+    def _resize_target(image, target_height=None, target_width=None):
+        assert target_height is not None or target_width is not None
+        height, width = image.shape[:2]
+        if target_height is not None and target_width is not None:
+            h = target_height
+            w = target_width
+        elif target_height is not None:
+            h = target_height
+            w = (width / height) * h
+        elif target_width is not None:
+            w = target_width
+            h = (height / width) * w
+        w, h = int(w), int(h)
+        return cv2.resize(image, (w, h), interpolation=cv2.INTER_LANCZOS4)
+
+    if verbose:
+        # Start timer
+        tt = ut.tic()
+        print('[harness] Loading the testing data (convolutional)...')
+    # Try to get the image's shape
+    h, w = image.shape[:2]
+
+    original_shape = None
+    if h < w and h < 256:
+        original_shape = image.shape
+        image = _resize_target(image, target_height=256)
+    if w < h and w < 256:
+        original_shape = image.shape
+        image = _resize_target(image, target_width=256)
+
+    h, w = image.shape[:2]
+
+    #GLOBAL_LIMIT = min(256, w, h)
+    # HACK, this only works for square data shapes
+    GLOBAL_LIMIT = model.data_shape[0]
+    # Inference
+    if patch_size == 'auto':
+        patch_size = (GLOBAL_LIMIT - 2 * padding, GLOBAL_LIMIT - 2 * padding)
+    if stride == 'auto':
+        psx, psy = patch_size
+        stride = (psx - padding, psy - padding)
+    _tup = utils.extract_patches_stride(image, patch_size, stride)
+    data_list, coord_list = _tup
+    samples = len(data_list)
+    if batch_size is None:
+        batch_size = samples
+    start = 0
+    label_list = []
+    confidence_list = []
+
+    theano_predict = model.build_predict_func()
+    while start < samples:
+        end = min(samples, start + batch_size)
+        data_list_segment = data_list[start: end]
+        # coord_list_segment = coord_list[start: end]
+
+        # Augment the data_list by adding a reflected pad
+        data_list_ = np.array([
+            _add_pad(data_)
+            for data_ in data_list_segment
+        ])
+
+        #batchiter_kw = dict(
+        #    fix_output=False,
+        #    showprog=True,
+        #    spatial=True
+        #)
+        #test_results = model._predict(data_list_)
+        test_results = model.process_batch(theano_predict, data_list_, unwrap=False)
+        #test_results2 = batch.process_batch(model, data_list_, None,
+        #                                   theano_predict, **batchiter_kw)
+        #label_list.extend(test_results['labeled_predictions'])
+        if model.encoder is not None:
+            labeled_predictions = model.encoder.inverse_transform(test_results['predictions'])
+        else:
+            labeled_predictions = test_results['predictions']
+        label_list.extend(labeled_predictions)
+        confidence_list.extend(test_results['confidences'])
+        start += batch_size
+
+    # Get all of the labels for the data, inheritted from the model
+    if model.encoder is not None:
+        # python2 backwards compatibility
+        if isinstance(model.encoder.classes_, np.ndarray):
+            label_list_ = model.encoder.classes_.tolist()
+        else:
+            label_list_ = list(model.encoder.classes_)
+        label_list_ = list(map(
+            lambda x: x if isinstance(x, six.text_type) else x.decode('utf-8'),
+            label_list_))
+    else:
+        label_list_ = list(range(model.output_dims))
+    # Create a dictionary of canvases
+    canvas_dict = {}
+    for label in label_list_:
+        canvas_dict[label] = np.zeros((h, w))  # We want float precision
+    # Construct the canvases using the forward inference results
+    label_list_ = label_list_[::-1]
+    # print('[harness] Labels: %r' %(label_list_, ))
+    zipped = list(zip(data_list, coord_list, label_list, confidence_list))
+    for label in label_list_:
+        for data, coord, label_, confidence in zipped:
+            x1, y1, x2, y2 = coord
+            # Get label and apply to confidence
+            confidence_ = np.copy(confidence)
+
+            # OLD
+            # confidence_[label_ != label] = 0
+
+            # NEW
+            # if isinstance(label_, np.ndarray):
+            #     flip_index = (label_ != label).astype(np.int)
+            # else:
+            #     flip_index = int(label_ != label)
+            if isinstance(label, six.text_type):
+                # fix for python3, can't compare numpy byte arrays with
+                # unicode.
+                label2_ = label.encode('utf-8')
+            else:
+                label2_ = label
+            flip_index = label_ != label2_
+            confidence_[flip_index] = 1.0 - confidence_[flip_index]
+            confidence_[confidence_ <= confidence_thresh] = 0
+
+            confidence_ *= 255.0
+
+            # Blow up canvas
+            mask = cv2.resize(confidence_, data.shape[0:2])
+            # Get the current values
+            current = canvas_dict[label][y1:y2, x1:x2]
+            # Where the current canvas is zero (most of it), make it mask
+            flags = current == 0
+            current[flags] = mask[flags]
+            # Average the current with the mask, which address overlapping areas
+            mask = 0.5 * mask + 0.5 * current
+            # Aggregate
+            canvas_dict[label][y1:y2, x1:x2] = mask
+        # Blur
+        # FIXME: Should this postprocessing step applied here?
+        # There is postprocessing in ibeis/algos/preproc/preproc_probchip.py
+        ksize = 3
+        kernel = (ksize, ksize)
+        canvas_dict[label] = cv2.blur(canvas_dict[label], kernel)
+    # Cast all images to uint8
+    for label in label_list_:
+        canvas = np.around(canvas_dict[label])
+        canvas = canvas.astype(np.uint8)
+        if original_shape is not None:
+            canvas = _resize_target(
+                canvas,
+                target_height=original_shape[0],
+                target_width=original_shape[1]
+            )
+        canvas_dict[label] = canvas
+    if verbose:
+        # End timer
+        duration = ut.toc(tt, verbose=False)
+        print('[harness] Interface took %s seconds...' % (duration, ))
+    # Return the canvas dict
+    return samples, canvas_dict
 
 
 @register_ibs_method
@@ -327,11 +1007,8 @@ def fix_annot_species_viewpoint_quality_cnn(ibs, aid_list, min_conf=0.8):
     ]
     # Build data for network
     X_test = np.array(chip_list_resized, dtype=np.uint8)
-    y_test = None
-
-    from ibeis_cnn import harness
     # Predict on the data and convert labels to IBEIS namespace
-    test_outputs = harness.test_data2(model, X_test, y_test)
+    test_outputs = model.predict2(X_test)
     label_list = test_outputs['labeled_predictions']
     conf_list = test_outputs['confidences']
     species_viewpoint_list = [ convert_label(label) for label in label_list ]
@@ -398,11 +1075,8 @@ def detect_annot_species_viewpoint_cnn(ibs, aid_list):
     ]
     # Build data for network
     X_test = np.array(chip_list_resized, dtype=np.uint8)
-    y_test = None
-
-    from ibeis_cnn import harness
     # Predict on the data and convert labels to IBEIS namespace
-    test_outputs = harness.test_data2(model, X_test, y_test)
+    test_outputs = model.predict2(X_test)
     label_list = test_outputs['labeled_predictions']
     species_viewpoint_list = [ convert_label(label) for label in label_list ]
     #pred_list, label_list, conf_list = test.test_data(X_test, y_test, model, weights_path)
@@ -470,126 +1144,6 @@ def validate_annot_species_viewpoint_cnn(ibs, aid_list, verbose=False):
             print('    AID %4d (%r, %r) should be %r' % bad_viewpoint)
     # Return bad
     return bad_species_list, bad_viewpoint_list
-
-
-@register_ibs_method
-def detect_yolo(ibs, gid_list):
-    r"""
-    Args:
-        ibs (IBEISController):  ibeis controller object
-        gid_list (int):  list of image ids
-
-    Returns:
-        list: aid_list
-
-    CommandLine:
-        python -m ibeis_cnn._plugin --exec-detect_yolo
-
-    Example:
-        >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn._plugin import *  # NOQA
-        >>> import ibeis
-        >>> ibs = ibeis.opendb(defaultdb='PZ_MTEST')
-        >>> gid_list = ibs.get_valid_gids()
-        >>> aid_list = detect_yolo(ibs, gid_list)
-        >>> print(aid_list)
-    """
-    # Load images and resize to the target
-    # Define model and load weights
-    print('Loading model...')
-    # batch_size = int(min(128, 2 ** np.floor(np.log2(len(gid_list)))))
-    batch_size = 1
-    model = models.DetectYoloModel(batch_size=batch_size)
-
-    model.print_layer_info()
-
-    # from ibeis_cnn.__LASAGNE__ import layers
-    # from ibeis_cnn.draw_net import show_convolutional_weights
-    # output_layer = model.get_output_layer()
-    # nn_layers = layers.get_all_layers(output_layer)
-    # weighted_layers = [layer for layer in nn_layers if hasattr(layer, 'W')]
-    # index = ut.get_argval('--index', type_=int, default=0)
-    # all_weights = weighted_layers[index].W.get_value()
-    # print('all_weights.shape = %r' % (all_weights.shape,))
-    # use_color = None
-    # limit = 12
-    # fig = show_convolutional_weights(all_weights, use_color, limit)  # NOQA
-    # ut.show_if_requested()
-
-    # Read the data
-    target = (448, 448)
-    print('Loading images...')
-    # image_list = ibs.get_images(gid_list)
-    image_list = [
-        cv2.imread('/Users/bluemellophone/code/darknet-clean/test.jpg'),
-        cv2.imread('/Users/bluemellophone/code/darknet-clean/test.jpg'),
-    ]
-    print('Resizing images...')
-    image_list_resized = [
-        cv2.resize(image, target, interpolation=cv2.INTER_LANCZOS4)
-        for image in ut.ProgressIter(image_list, lbl='resizing images')
-    ]
-
-    # Build data for network
-    X_test = np.array(image_list_resized, dtype=np.uint8)
-    y_test = None
-
-    from ibeis_cnn import harness
-    # Predict on the data and convert labels to IBEIS namespace
-    test_outputs = harness.test_data2(model, X_test, y_test)
-    raw_output_list = test_outputs['network_output_determ']
-
-    side = 7
-    num = 2
-    classes = 5
-    square = True
-    for image, raw_output in zip(image_list, raw_output_list):
-        print(raw_output.shape)
-        box_list = []
-        probs_list = []
-        h, w = image.shape[:2]
-        min_, max_ = 1.0, 0.0
-        for i in range(side * side):
-            row = i / side
-            col = i % side
-            for n in range(num):
-                index = i * num + n
-                p_index = side * side * classes + index
-                scale = raw_output[p_index]
-                box_index = side * side * (classes + num) + (index) * 4
-                box = [
-                    (raw_output[box_index + 0] + col) / side * w,
-                    (raw_output[box_index + 1] + row) / side * h,
-                    raw_output[box_index + 2] ** (2 if square else 1) * w,
-                    raw_output[box_index + 3] ** (2 if square else 1) * h,
-                ]
-                box_list.append(box)
-                prob_list = []
-                for j in range(classes):
-                    class_index = i * classes
-                    prob = scale * raw_output[class_index + j]
-                    min_ = min(min_, prob)
-                    max_ = max(max_, prob)
-                    prob_list.append(prob)
-                probs_list.append(prob_list)
-        box_list = np.array(box_list)
-        probs_list = np.array(probs_list)
-
-        for (xc, yc, w, h), prob_list in zip(box_list, probs_list):
-            prob = max(prob_list)
-            point1 = (int(xc - w), int(yc - h))
-            point2 = (int(xc + w), int(yc + h))
-            width = (prob ** 0.5) * 10 + 1
-            width = 1 if np.isnan(width) or width < 1.0 else int(width)
-            cv2.rectangle(image, point1, point2, (255, 0, 0), width)
-
-        image = cv2.resize(image, target, interpolation=cv2.INTER_LANCZOS4)
-
-        cv2.imshow('', image)
-        cv2.waitKey(0)
-        # raise AssertionError
-
-    return True
 
 
 def _suggest_random_candidate_regions(ibs, image, min_size, num_candidates=2000):
@@ -757,10 +1311,8 @@ def detect_image_cnn(ibs, gid, confidence=0.90, extraction='bing'):
 
     # Build data for network
     X_test = np.array(chip_list_resized, dtype=np.uint8)
-    y_test = None
     # Define model and load weights
     print('Loading model...')
-    from ibeis_cnn import harness
     data_shape = (96, 96, 3)
     # Define model and load weights
     print('Loading model...')
@@ -772,7 +1324,7 @@ def detect_image_cnn(ibs, gid, confidence=0.90, extraction='bing'):
     model.load_old_weights_kw(old_weights_fpath)
 
     # Predict on the data and convert labels to IBEIS namespace
-    test_outputs = harness.test_data2(model, X_test, y_test)
+    test_outputs = model.predict2(X_test)
     conf_list = test_outputs['confidences']
     label_list = test_outputs['labeled_predictions']
     pred_list = test_outputs['predictions']
@@ -823,7 +1375,7 @@ def get_siam_l2_model():
     """
     model.show_weights_image()
     """
-    model_url = 'https://lev.cs.rpi.edu/public/models/siaml2_128_model_state.pkl'
+    model_url = 'https://cthulhu.dyn.wildme.io/public/models/siaml2_128_model_state.pkl'
     model_dpath = ut.ensure_app_resource_dir('ibeis_cnn', 'models')
     model_fpath = ut.grab_file_url(model_url, download_dir=model_dpath)
     model_state = ut.load_cPkl(model_fpath)
@@ -858,28 +1410,16 @@ def generate_siam_l2_128_feats(ibs, cid_list, config2_=None):
         >>> cid_list = ibs.depc_annot.get_rowids('chips', ibs.get_valid_aids())
         >>> config2_ = None
         >>> # megahack
+        >>> cfg = Config.FeatureConfig() # fixme
         >>> config2_ = dict(feat_type='hesaff+siam128',
-        >>>                 feat_cfgstr=ibs.cfg.feat_cfg.get_cfgstr().replace('sift', 'siam128'),
-        >>>                 hesaff_params=ibs.cfg.feat_cfg.get_hesaff_params())
+        >>>                 feat_cfgstr=cfg.feat_cfg.get_cfgstr().replace('sift', 'siam128'),
+        >>>                 hesaff_params=cfg.feat_cfg.get_hesaff_params())
         >>> featgen = generate_siam_l2_128_feats(ibs, cid_list, config2_)
         >>> result = ut.depth_profile(list(featgen))
         >>> print(result)
     """
-    #if config2_ is not None:
-    #    # Get config from config2_ object
-    #    #print('id(config2_) = ' + str(id(config2_)))
-    #    feat_cfgstr     = config2_.get('feat_cfgstr')
-    #    hesaff_params   = config2_.get('hesaff_params')
-    #    assert feat_cfgstr is not None
-    #    assert hesaff_params is not None
-    #else:
-    #    # Get config from IBEIS controller
-    #    feat_cfgstr     = ibs.cfg.feat_cfg.get_cfgstr()
-    #    hesaff_params   = ibs.cfg.feat_cfg.get_hesaff_params()
-
     # hack because we need the old features
     import vtool as vt
-    import ibeis_cnn
     model = get_siam_l2_model()
     colorspace = 'gray' if model.input_shape[1] else None  # 'bgr'
     patch_size = model.input_shape[-1]
@@ -891,9 +1431,7 @@ def generate_siam_l2_128_feats(ibs, cid_list, config2_=None):
         assert feat_cfgstr is not None
         assert hesaff_params is not None
     else:
-        # Get config from IBEIS controller
-        feat_cfgstr     = ibs.cfg.feat_cfg.get_cfgstr()
-        hesaff_params   = ibs.cfg.feat_cfg.get_hesaff_params()
+        assert False
     hack_config2_ = dict(feat_type='hesaff+sift',
                          feat_cfgstr=feat_cfgstr.replace('siam128', 'sift'),
                          hesaff_params=hesaff_params)
@@ -914,7 +1452,7 @@ def generate_siam_l2_128_feats(ibs, cid_list, config2_=None):
             flat_list, cumlen_list = ut.invertible_flatten2(warped_patches_list)
             stacked_patches = np.transpose(np.array(flat_list)[None, :], (1, 2, 3, 0))
 
-            test_outputs = ibeis_cnn.harness.test_data2(model, stacked_patches, None)
+            test_outputs = model.predict2(X_test=stacked_patches)
             network_output_determ = test_outputs['network_output_determ']
             #network_output_determ.min()
             #network_output_determ.max()
@@ -935,7 +1473,7 @@ def generate_siam_l2_128_feats(ibs, cid_list, config2_=None):
         flat_list, cumlen_list = ut.invertible_flatten2(warped_patches_list)
         stacked_patches = np.transpose(np.array(flat_list)[None, :], (1, 2, 3, 0))
 
-        test_outputs = ibeis_cnn.harness.test_data2(model, stacked_patches, None)
+        test_outputs = model.predict2(X_test=stacked_patches)
         network_output_determ = test_outputs['network_output_determ']
         #network_output_determ.min()
         #network_output_determ.max()
@@ -950,7 +1488,6 @@ def extract_siam128_vecs(chip_list, kpts_list):
     Duplicate testing func for vtool
     """
     import vtool as vt
-    import ibeis_cnn
     model = get_siam_l2_model()
     colorspace = 'gray' if model.input_shape[1] else None  # 'bgr'
     patch_size = model.input_shape[-1]
@@ -960,8 +1497,8 @@ def extract_siam128_vecs(chip_list, kpts_list):
                            for chip, kpts in zip(chip_list_, kpts_list)]
     flat_list, cumlen_list = ut.invertible_flatten2(warped_patches_list)
     stacked_patches = np.transpose(np.array(flat_list)[None, :], (1, 2, 3, 0))
-
-    test_outputs = ibeis_cnn.harness.test_data2(model, stacked_patches, None)
+    X_test = stacked_patches
+    test_outputs = model.predict2(X_test)
     network_output_determ = test_outputs['network_output_determ']
     #network_output_determ.min()
     #network_output_determ.max()

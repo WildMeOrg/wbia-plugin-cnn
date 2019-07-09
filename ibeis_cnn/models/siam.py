@@ -27,18 +27,12 @@ from lasagne import nonlinearities
 from lasagne import init
 import functools
 import six
-#import theano.tensor as T
-from ibeis_cnn.__THEANO__ import tensor as T
+from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
 import numpy as np
 from ibeis_cnn.models import abstract_models
-from ibeis_cnn import custom_layers
 import utool as ut
 from ibeis_cnn import augment
-print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.models]')
-
-
-Conv2DLayer = custom_layers.Conv2DLayer
-MaxPool2DLayer = custom_layers.MaxPool2DLayer
+print, rrr, profile = ut.inject2(__name__)
 
 
 @six.add_metaclass(ut.ReloadingMetaclass)
@@ -81,7 +75,7 @@ class SiameseL2(AbstractSiameseModel):
         model.data_per_label_output = 2
         #model.arch_tag = arch_tag
         if autoinit:
-            model.initialize_architecture()
+            model.init_arch()
 
     def get_siaml2_def(model, verbose=True, **kwargs):
         """
@@ -99,6 +93,10 @@ class SiameseL2(AbstractSiameseModel):
         hidden_initkw = leaky_kw
 
         #ReshapeLayer = layers.ReshapeLayer
+
+        from ibeis_cnn import custom_layers
+        Conv2DLayer = custom_layers.Conv2DLayer
+        MaxPool2DLayer = custom_layers.MaxPool2DLayer
 
         network_layers_def = (
             [
@@ -139,6 +137,10 @@ class SiameseL2(AbstractSiameseModel):
 
         #ReshapeLayer = layers.ReshapeLayer
 
+        from ibeis_cnn import custom_layers
+        Conv2DLayer = custom_layers.Conv2DLayer
+        MaxPool2DLayer = custom_layers.MaxPool2DLayer
+
         network_layers_def = (
             [
                 _P(layers.InputLayer, shape=model.input_shape),
@@ -164,8 +166,8 @@ class SiameseL2(AbstractSiameseModel):
     def get_siam_deepfaceish_def(model, verbose=True, **kwargs):
         """
         CommandLine:
-            python -m ibeis_cnn --tf  SiameseL2.initialize_architecture --archtag siam_deepfaceish --datashape=128,256,1 --verbose  --show
-            python -m ibeis_cnn --tf  SiameseL2.initialize_architecture --archtag siam_deepface --datashape=152,152,3 --verbose  --show
+            python -m ibeis_cnn --tf  SiameseL2.init_arch --archtag siam_deepfaceish --datashape=128,256,1 --verbose  --show
+            python -m ibeis_cnn --tf  SiameseL2.init_arch --archtag siam_deepface --datashape=152,152,3 --verbose  --show
         """
         _P = functools.partial
 
@@ -177,6 +179,10 @@ class SiameseL2(AbstractSiameseModel):
         #ReshapeLayer = layers.ReshapeLayer
 
         _tmp = [1]
+
+        from ibeis_cnn import custom_layers
+        Conv2DLayer = custom_layers.Conv2DLayer
+        MaxPool2DLayer = custom_layers.MaxPool2DLayer
 
         def CDP_layer(num_filters=32,
                               conv_size=(5, 5), conv_stride=(3, 3),
@@ -236,7 +242,7 @@ class SiameseL2(AbstractSiameseModel):
     def get_siaml2_partmatch_def(model, verbose=True, **kwargs):
         """
         CommandLine:
-            python -m ibeis_cnn --tf  SiameseL2.initialize_architecture --archtag siaml2_partmatch --datashape=128,256,1 --verbose  --show
+            python -m ibeis_cnn --tf  SiameseL2.init_arch --archtag siaml2_partmatch --datashape=128,256,1 --verbose  --show
         """
         _P = functools.partial
 
@@ -248,6 +254,10 @@ class SiameseL2(AbstractSiameseModel):
         #ReshapeLayer = layers.ReshapeLayer
 
         _tmp = [1]
+
+        from ibeis_cnn import custom_layers
+        Conv2DLayer = custom_layers.Conv2DLayer
+        MaxPool2DLayer = custom_layers.MaxPool2DLayer
 
         def CDP_layer(num_filters=32,
                               conv_size=(5, 5), conv_stride=(3, 3),
@@ -304,7 +314,7 @@ class SiameseL2(AbstractSiameseModel):
                 C0(96, 7, 3) - ReLU - P0(2, 2) - C1(192, 5, 1) - ReLU - P1(2, 2) - C2(256, 3, 1)
 
         CommandLine:
-            python -m ibeis_cnn --tf  SiameseL2.initialize_architecture --archtag siam2streaml2 --datashape=64,64,1 --verbose  --show
+            python -m ibeis_cnn --tf  SiameseL2.init_arch --archtag siam2streaml2 --datashape=64,64,1 --verbose  --show
         """
         _P = functools.partial
 
@@ -314,6 +324,10 @@ class SiameseL2(AbstractSiameseModel):
         hidden_initkw = leaky_kw
 
         #ReshapeLayer = layers.ReshapeLayer
+
+        from ibeis_cnn import custom_layers
+        Conv2DLayer = custom_layers.Conv2DLayer
+        MaxPool2DLayer = custom_layers.MaxPool2DLayer
 
         network_layers_def = (
             [
@@ -343,7 +357,7 @@ class SiameseL2(AbstractSiameseModel):
 
     def get_mnist_siaml2_def(model, verbose=True, **kwargs):
         """
-        python -m ibeis_cnn --tf  SiameseL2.initialize_architecture --archtag mnist_siaml2 --datashape=28,28,1 --verbose  --show
+        python -m ibeis_cnn --tf  SiameseL2.init_arch --archtag mnist_siaml2 --datashape=28,28,1 --verbose  --show
 
         """
         _P = functools.partial
@@ -352,6 +366,10 @@ class SiameseL2(AbstractSiameseModel):
         #orthog_kw = dict(W=init.Orthogonal())
         #hidden_initkw = ut.merge_dicts(orthog_kw, leaky_kw)
         hidden_initkw = leaky_kw
+
+        from ibeis_cnn import custom_layers
+        Conv2DLayer = custom_layers.Conv2DLayer
+        MaxPool2DLayer = custom_layers.MaxPool2DLayer
 
         network_layers_def = (
             [
@@ -377,14 +395,14 @@ class SiameseL2(AbstractSiameseModel):
         )
         return network_layers_def
 
-    def initialize_architecture(model, verbose=ut.VERBOSE, **kwargs):
+    def init_arch(model, verbose=ut.VERBOSE, **kwargs):
         r"""
         Notes:
             http://arxiv.org/pdf/1504.03641.pdf
 
         CommandLine:
-            python -m ibeis_cnn.models.siam --test-SiameseL2.initialize_architecture --verbcnn --show
-            python -m ibeis_cnn --tf  SiameseL2.initialize_architecture --verbcnn --show
+            python -m ibeis_cnn.models.siam --test-SiameseL2.init_arch --verbcnn --show
+            python -m ibeis_cnn --tf  SiameseL2.init_arch --verbcnn --show
 
         Example:
             >>> # ENABLE_DOCTEST
@@ -393,15 +411,15 @@ class SiameseL2(AbstractSiameseModel):
             >>> arch_tag = ut.get_argval('--archtag', default='siaml2')
             >>> data_shape = tuple(ut.get_argval('--datashape', type_=list, default=(64, 64, 3)))
             >>> model = SiameseL2(batch_size=128, data_shape=data_shape, arch_tag=arch_tag)
-            >>> output_layer = model.initialize_architecture()
-            >>> model.print_dense_architecture_str()
+            >>> output_layer = model.init_arch()
+            >>> model.print_model_info_str()
             >>> ut.quit_if_noshow()
-            >>> model.show_architecture_image()
+            >>> model.show_arch()
             >>> ut.show_if_requested()
         """
         # TODO: remove output dims
         #_P = functools.partial
-        print('[model] initialize_architecture')
+        print('[model] init_arch')
         #(_, input_channels, input_width, input_height) = model.input_shape
         (_, input_channels, input_height, input_width) = model.input_shape
         if verbose:
@@ -423,7 +441,8 @@ class SiameseL2(AbstractSiameseModel):
         #elif model.arch_tag == 'mnist_siaml2':
         #    network_layers_def = model.get_mnist_siaml2_def(verbose=verbose, **kwargs)
         # connect and record layers
-        network_layers = abstract_models.evaluate_layer_list(network_layers_def, verbose=verbose)
+        from ibeis_cnn import custom_layers
+        network_layers = custom_layers.evaluate_layer_list(network_layers_def, verbose=verbose)
         #model.network_layers = network_layers
         output_layer = network_layers[-1]
         model.output_layer = output_layer
@@ -701,17 +720,17 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
         model.data_per_label_input  = 2
         model.data_per_label_output = 1
         if autoinit:
-            model.initialize_architecture()
+            model.init_arch()
 
-    def initialize_architecture(model, verbose=True, **kwargs):
+    def init_arch(model, verbose=True, **kwargs):
         r"""
         Notes:
             http://arxiv.org/pdf/1504.03641.pdf
 
         CommandLine:
-            python -m ibeis_cnn.models.siam --test-SiameseCenterSurroundModel.initialize_architecture
-            python -m ibeis_cnn.models.siam --test-SiameseCenterSurroundModel.initialize_architecture --verbcnn
-            python -m ibeis_cnn.models.siam --test-SiameseCenterSurroundModel.initialize_architecture --verbcnn --show
+            python -m ibeis_cnn.models.siam --test-SiameseCenterSurroundModel.init_arch
+            python -m ibeis_cnn.models.siam --test-SiameseCenterSurroundModel.init_arch --verbcnn
+            python -m ibeis_cnn.models.siam --test-SiameseCenterSurroundModel.init_arch --verbcnn --show
             python -m ibeis_cnn.train --test-pz_patchmatch --vtd --max-examples=5 --batch_size=128 --learning_rate .0000001 --verbcnn
             python -m ibeis_cnn.train --test-pz_patchmatch --vtd
 
@@ -724,16 +743,16 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
             >>> verbose = True
             >>> model = SiameseCenterSurroundModel(batch_size=batch_size, input_shape=input_shape)
             >>> # execute function
-            >>> output_layer = model.initialize_architecture()
-            >>> model.print_dense_architecture_str()
+            >>> output_layer = model.init_arch()
+            >>> model.print_model_info_str()
             >>> result = str(output_layer)
             >>> print(result)
             >>> ut.quit_if_noshow()
             >>> import plottool as pt
-            >>> model.show_architecture_image()
+            >>> model.show_arch()
             >>> ut.show_if_requested()
         """
-        print('[model] initialize_architecture')
+        print('[model] init_arch')
         (_, input_channels, input_width, input_height) = model.input_shape
         if verbose:
             print('[model] Initialize center surround siamese model architecture')
@@ -744,7 +763,8 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
             print('[model]   * output_dims    = %r' % (model.output_dims,))
         network_layers_def = model.get_siam2stream_def(verbose=verbose, **kwargs)
         # connect and record layers
-        network_layers = abstract_models.evaluate_layer_list(network_layers_def)
+        from ibeis_cnn import custom_layers
+        network_layers = custom_layers.evaluate_layer_list(network_layers_def)
         #model.network_layers = network_layers
         output_layer = network_layers[-1]
         model.output_layer = output_layer
@@ -835,6 +855,10 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
         orthog_kw = dict(W=init.Orthogonal())
         hidden_initkw = ut.merge_dicts(orthog_kw, leaky_kw)
 
+        from ibeis_cnn import custom_layers
+        Conv2DLayer = custom_layers.Conv2DLayer
+        MaxPool2DLayer = custom_layers.MaxPool2DLayer
+
         network_layers_def = (
             [
                 _P(layers.InputLayer, shape=model.input_shape),
@@ -871,6 +895,10 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
         """
         _P = functools.partial
 
+        from ibeis_cnn import custom_layers
+        Conv2DLayer = custom_layers.Conv2DLayer
+        MaxPool2DLayer = custom_layers.MaxPool2DLayer
+
         leaky_kw = dict(nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)))
         orthog_kw = dict(W=init.Orthogonal())
         hidden_initkw = ut.merge_dicts(orthog_kw, leaky_kw)
@@ -885,7 +913,7 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
             [
                 _P(layers.InputLayer, shape=model.input_shape),
                 # TODO: Stack Inputs by making a 2 Channel Layer
-                _P(custom_layers.CenterSurroundLayer),
+                _P(custom_layers.CenterSurroundLayer, name='CS'),
 
                 layers.GaussianNoiseLayer,
                 #caffenet.get_conv2d_layer(0, trainable=False, **leaky),
@@ -893,7 +921,7 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
                 _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P0'),
                 _P(Conv2DLayer, num_filters=192, filter_size=(3, 3), name='C2', **hidden_initkw),
                 _P(Conv2DLayer, num_filters=256, filter_size=(3, 3), name='C3', **hidden_initkw),
-                _P(Conv2DLayer, num_filters=256, filter_size=(3, 3), name='C3', **hidden_initkw),
+                _P(Conv2DLayer, num_filters=256, filter_size=(3, 3), name='C4', **hidden_initkw),
                 #_P(custom_layers.L2NormalizeLayer, axis=2),
                 _P(custom_layers.SiameseConcatLayer, axis=1, data_per_label=4),  # 4 when CenterSurroundIsOn
                 #_P(custom_layers.SiameseConcatLayer, data_per_label=2),
@@ -914,6 +942,10 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
         raise NotImplementedError('Need to implement L2 distance layer')
         _P = functools.partial
 
+        from ibeis_cnn import custom_layers
+        Conv2DLayer = custom_layers.Conv2DLayer
+        MaxPool2DLayer = custom_layers.MaxPool2DLayer
+
         leaky_kw = dict(nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)))
         orthog_kw = dict(W=init.Orthogonal())
         hidden_initkw = ut.merge_dicts(orthog_kw, leaky_kw)
@@ -936,7 +968,7 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
                 _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P0'),
                 _P(Conv2DLayer, num_filters=192, filter_size=(3, 3), name='C2', **hidden_initkw),
                 _P(Conv2DLayer, num_filters=256, filter_size=(3, 3), name='C3', **hidden_initkw),
-                _P(Conv2DLayer, num_filters=256, filter_size=(3, 3), name='C3', **hidden_initkw),
+                _P(Conv2DLayer, num_filters=256, filter_size=(3, 3), name='C4', **hidden_initkw),
                 #_P(custom_layers.L2NormalizeLayer, axis=2),
                 _P(custom_layers.SiameseConcatLayer, axis=1, data_per_label=4),  # 4 when CenterSurroundIsOn
                 # TODO: L2 distance layer

@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 from __future__ import absolute_import, division, print_function
 import six
 from utool import util_setup
@@ -18,7 +18,7 @@ CLUTTER_PATTERNS = [
     '*.prof.txt',
     '*.lprof',
     '*.ln.pkg',
-    'test_times.txt',
+    'timeings.txt',
 ]
 
 CLUTTER_DIRS = [

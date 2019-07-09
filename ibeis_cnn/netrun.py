@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Defines the models and the data we will send to the harness
 
 FIXME:
     sometimes you have to chown -R user:user ~/.theano or run with sudo the
@@ -29,11 +28,10 @@ CommandLineHelp:
 from __future__ import absolute_import, division, print_function
 from ibeis_cnn import models
 from ibeis_cnn import ingest_data
-from ibeis_cnn import harness
 from ibeis_cnn import experiments
 import utool as ut
 import sys
-print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.train]')
+print, rrr, profile = ut.inject2(__name__)
 
 
 # This is more of a history tag
@@ -45,7 +43,7 @@ CHECKPOINT_TAG_ALIAS = {
 # second level of alias indirection
 # This is more of a dataset tag
 DS_TAG_ALIAS2 = {
-    'flankhack'    : "dict(acfg_name='ctrl:pername=None,excluderef=False,contrib_contains=FlankHack', colorspace='gray', db='PZ_Master1')",
+    'flankhack'    : "dict(acfg_name='ctrl:pername=None,excluderef=False,contributor_contains=FlankHack', colorspace='gray', db='PZ_Master1')",
     'pzmtest-bgr'  : "PZ_MTEST;dict(colorspace='bgr', controlled=True, max_examples=None, num_top=None)",  # NOQA
 
     'pzmtest'      : "PZ_MTEST;dict(colorspace='gray', controlled=True, max_examples=None, num_top=None)",  # NOQA
@@ -78,7 +76,7 @@ def netrun():
         python -m ibeis_cnn --tf netrun --db mnist --ensuredata --show --datatype=category
         python -m ibeis_cnn --tf netrun --db mnist --ensuredata --show --datatype=siam-patch
 
-        python -m ibeis_cnn --tf netrun --db PZ_Master1 --acfg ctrl:pername=None,excluderef=False,contrib_contains=FlankHack --ensuredata --show --datatype=siam-part
+        python -m ibeis_cnn --tf netrun --db PZ_Master1 --acfg ctrl:pername=None,excluderef=False,contributor_contains=FlankHack --ensuredata --show --datatype=siam-part
 
         # Parts based datasets
         python -m ibeis_cnn --tf netrun --db PZ_MTEST --acfg ctrl --datatype=siam-part --ensuredata --show
@@ -92,7 +90,7 @@ def netrun():
         # --- TRAINING ---
         python -m ibeis_cnn --tf netrun --db PZ_Master1 --acfg default:is_known=True,qmin_pername=2,view=primary,species=primary,minqual=ok --weights=new --arch=siaml2_128 --train --monitor
 
-        python -m ibeis_cnn --tf netrun --ds timectrl_pzmaster1 --acfg ctrl:pername=None,excluderef=False,contrib_contains=FlankHack --train --weights=new --arch=siaml2_128  --monitor  # NOQA
+        python -m ibeis_cnn --tf netrun --ds timectrl_pzmaster1 --acfg ctrl:pername=None,excluderef=False,contributor_contains=FlankHack --train --weights=new --arch=siaml2_128  --monitor  # NOQA
         python -m ibeis_cnn --tf netrun --ds timectrl_pzmaster1 --acfg ctrl:pername=None,excluderef=False --train --weights=new --arch=siaml2_128  --monitor  # NOQA
         python -m ibeis_cnn --tf netrun --ds pzmtest --weights=new --arch=siaml2_128 --train --monitor --DEBUG_AUGMENTATION
         python -m ibeis_cnn --tf netrun --ds pzmtest --weights=new --arch=siaml2_128 --train --monitor
@@ -174,7 +172,7 @@ def netrun():
         raise ValueError('Unknown arch_tag=%r' % (arch_tag,))
 
     ut.colorprint('[netrun] Initialize archchitecture', 'yellow')
-    model.initialize_architecture()
+    model.init_arch()
 
     # ----------------------------
     # Choose weight initialization
@@ -207,32 +205,34 @@ def netrun():
     # ----------------------------
     if not model.is_train_state_initialized():
         ut.colorprint('[netrun] Need to initialize training state', 'yellow')
-        X_train, y_train = dataset.load_subset('train')
-        model.ensure_training_state(X_train, y_train)
+        X_train, y_train = dataset.subset('train')
+        model.ensure_data_params(X_train, y_train)
 
     # Run Actions
     if requests['train']:
         ut.colorprint('[netrun] Training Requested', 'yellow')
         # parse training arguments
         config = ut.argparse_dict(dict(
-            learning_rate_schedule=15,
+            era_size=15,
             max_epochs=1200,
-            learning_rate_adjust=.8,
+            rate_decay=.8,
         ))
-        X_train, y_train = dataset.load_subset('train')
-        X_valid, y_valid = dataset.load_subset('valid')
-        harness.train(model, X_train, y_train, X_valid, y_valid, dataset, config)
+        model.monitor_config.update(**config)
+        X_train, y_train = dataset.subset('train')
+        X_valid, y_valid = dataset.subset('valid')
+        model.fit(X_train, y_train, X_valid=X_valid, y_valid=y_valid)
+
     elif requests['test']:
         #assert model.best_results['epoch'] is not None
         ut.colorprint('[netrun] Test Requested', 'yellow')
         if requests['testall']:
             ut.colorprint('[netrun]  * Testing on all data', 'lightgray')
-            X_test, y_test = dataset.load_subset('all')
-            flat_metadata = dataset.load_subset_metadata('all')
+            X_test, y_test = dataset.subset('all')
+            flat_metadata = dataset.subset_metadata('all')
         else:
             ut.colorprint('[netrun]  * Testing on test subset', 'lightgray')
-            X_test, y_test = dataset.load_subset('test')
-            flat_metadata = dataset.load_subset_metadata('test')
+            X_test, y_test = dataset.subset('test')
+            flat_metadata = dataset.subset_metadata('test')
         data, labels = X_test, y_test
         dataname = dataset.alias_key
         experiments.test_siamese_performance(model, data, labels,
@@ -254,7 +254,7 @@ def netrun():
         # https://www.dropbox.com/developers/core/start/python
         # import dropbox  # need oauth
         #client.share('/myfile.txt', short_url=False)
-        # https://lev.cs.rpi.edu/public/models/siaml2_128_model_state.pkl
+        # https://cthulhu.dyn.wildme.io/public/models/siaml2_128_model_state.pkl
 
     if ut.get_argflag('--cmd'):
         ut.embed()
@@ -362,64 +362,6 @@ def merge_ds_tags(ds_alias_list):
     merged_dataset = ingest_data.merge_datasets(dataset_list)
     print(merged_dataset.alias_key)
     return merged_dataset
-
-
-def train_background():
-    r"""
-    CommandLine:
-        python -m ibeis_cnn.train --test-train_background
-
-    Example:
-        >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.train import *  # NOQA
-        >>> result = train_background()
-        >>> print(result)
-    """
-    hyperparams = ut.argparse_dict(
-        {
-            'batch_size': 128,
-            'learning_rate': .001,
-            'momentum': .9,
-            'weight_decay': 0.0005,
-        }
-    )
-
-    from os.path import join
-    source_path = join('data', 'numpy', 'background_patches')
-    data_fpath = join(source_path, 'X.npy')
-    labels_fpath = join(source_path, 'y.npy')
-    training_dpath = join('data', 'results', 'backgound_patches')
-    dataset = ingest_data.get_numpy_dataset(data_fpath, labels_fpath, training_dpath)
-
-    data_shape = dataset.data_shape
-    input_shape = (None, data_shape[2], data_shape[0], data_shape[1])
-
-    # Choose model
-    model = models.BackgroundModel(
-        input_shape=input_shape, output_dims=dataset.output_dims,
-        training_dpath=dataset.training_dpath, **hyperparams)
-
-    # Initialize architecture
-    model.initialize_architecture()
-
-    # Load previously learned weights or initialize new weights
-    if model.has_saved_state():
-        model.load_model_state()
-    else:
-        model.reinit_weights()
-
-    config = dict(
-        learning_rate_schedule=15,
-        max_epochs=120,
-        show_confusion=False,
-        run_test=None,
-        show_features=False,
-        print_timing=False,
-    )
-
-    X_train, y_train = dataset.load_subset('train')
-    X_valid, y_valid = dataset.load_subset('valid')
-    harness.train(model, X_train, y_train, X_valid, y_valid, dataset, config)
 
 
 if __name__ == '__main__':

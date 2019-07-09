@@ -4,7 +4,7 @@ import numpy as np
 import functools
 from ibeis_cnn import draw_results
 import utool as ut
-print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.experiments]')
+print, rrr, profile = ut.inject2(__name__)
 
 
 def sift_dataset_separability(dataset):
@@ -29,7 +29,7 @@ def sift_dataset_separability(dataset):
     import vtool as vt
     @ut.cached_func('tempsiftscorecache', cache_dir='.')
     def cached_siftscores():
-        data, labels = dataset.load_subset('test')
+        data, labels = dataset.subset('test')
         sift_scores, sift_list = test_sift_patchmatch_scores(data, labels)
         sift_scores = sift_scores.astype(np.float64)
         return sift_scores, labels, sift_list
@@ -71,7 +71,7 @@ def sift_dataset_separability(dataset):
 
     if ut.get_argflag('--contextadjust'):
         pt.adjust_subplots(left=.1, bottom=.25, wspace=.2, hspace=.2)
-        pt.adjust_subplots2(use_argv=True)
+        pt.adjust_subplots(use_argv=True)
     return inter_sift
 
 
@@ -129,14 +129,14 @@ def test_siamese_performance(model, data, labels, flat_metadata, dataname=''):
     """
     import vtool as vt
     import plottool as pt
-    from ibeis_cnn import harness
 
     # TODO: save in model.trainind_dpath/diagnostics/figures
     ut.colorprint('\n[siam_perf] Testing Siamese Performance', 'white')
-    epoch_dpath = model.get_epoch_diagnostic_dpath()
+    #epoch_dpath = model.get_epoch_diagnostic_dpath()
+    epoch_dpath = model.arch_dpath
     ut.vd(epoch_dpath)
 
-    dataname += ' ' + model.get_model_history_hashid() + '\n'
+    dataname += ' ' + model.get_history_hashid() + '\n'
 
     history_text = ut.list_str(model.era_history, newlines=True)
 
@@ -156,7 +156,7 @@ def test_siamese_performance(model, data, labels, flat_metadata, dataname=''):
     fnum_gen = pt.make_fnum_nextgen()
 
     ut.colorprint('[siam_perf] Show era history', 'white')
-    fig = model.show_era_history(fnum=fnum_gen())
+    fig = model.show_era_loss(fnum=fnum_gen())
     pt.save_figure(fig=fig, dpath=epoch_dpath, dpi=180)
 
     # hack
@@ -169,7 +169,7 @@ def test_siamese_performance(model, data, labels, flat_metadata, dataname=''):
 
     # Compute each type of score
     ut.colorprint('[siam_perf] Building Scores', 'white')
-    test_outputs = harness.test_data2(model, data, labels)
+    test_outputs = model.predict2(model, data)
     network_output = test_outputs['network_output_determ']
     # hack converting network output to distances for non-descriptor networks
     if len(network_output.shape) == 2 and network_output.shape[1] == 1:

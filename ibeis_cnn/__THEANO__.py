@@ -10,6 +10,7 @@ DEVICE = ut.get_argval('--device', type_=str, default=None)
 def parse_theano_flags():
     """
     export THEANO_FLAGS="device=cpu,print_active_device=True,enable_initial_driver_test=True"
+    export THEANO_FLAGS="device=gpu2,print_active_device=True,enable_initial_driver_test=False"
     set THEANO_FLAGS="device=cpu,print_active_device=True,enable_initial_driver_test=True"
     """
     theano_flags_str = os.environ.get('THEANO_FLAGS', '')
@@ -34,7 +35,8 @@ if DEVICE is not None:
     #python -c 'import theano; print theano.config'
 
 # assert 'theano' not in sys.modules, 'Theano should not be imported yet'
-print('IBEIS_CNN cannot apply settings to theano because it was already imported')
+if 'theano' in sys.modules:
+    print('IBEIS_CNN cannot apply settings to theano because it was already imported')
 
 from theano import *  # NOQA
 #from theano import tensor

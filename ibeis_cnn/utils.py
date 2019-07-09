@@ -12,15 +12,12 @@ from six.moves import cPickle as pickle
 import utool as ut
 import six
 from ibeis_cnn import net_strs
-import ibeis_cnn.__THEANO__ as theano
-from ibeis_cnn.__THEANO__ import tensor as T
-from ibeis_cnn.__LASAGNE__ import layers
-import sklearn.cross_validation
 import cv2
-print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.utils]')
+print, rrr, profile = ut.inject2(__name__)
 
 
-VERBOSE_CNN = ut.get_argflag(('--verbose-cnn', '--verbcnn')) or ut.VERBOSE
+#VERBOSE_CNN = ut.get_argflag(('--verbose-cnn', '--verbcnn')) or ut.VERBOSE
+VERBOSE_CNN = ut.get_module_verbosity_flags('cnn')[0] or ut.VERBOSE
 
 RANDOM_SEED = None
 # RANDOM_SEED = 42
@@ -50,6 +47,7 @@ def get_gpu_memory():
         >>> result = get_gpu_memory()
         >>> print(result)
     """
+    import ibeis_cnn.__THEANO__ as theano
     return theano.sandbox.cuda.cuda_ndarray.cuda_ndarray.mem_info()
 
 
@@ -167,8 +165,12 @@ def convert_theano_images_to_cv2_images(data, *args):
     return img_list
 
 
-def evaluate_symbolic_layer(get_output_for, inputdata_, input_type=T.tensor4, **kwargs):
+def evaluate_symbolic_layer(get_output_for, inputdata_, input_type=None, **kwargs):
     """ helper for testing lasagne layers """
+    import ibeis_cnn.__THEANO__ as theano
+    from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
+    if input_type is None:
+        input_type = T.tensor4
     input_expr = input_type(name='test_input_expr')  # T.tensor4()
     output_expr = get_output_for(input_expr, **kwargs)
     func = theano.function(inputs=[input_expr], outputs=[output_expr])
@@ -231,6 +233,11 @@ def train_test_split(X, y, eval_size, data_per_label=1, shuffle=True):
     # take the data and label arrays, split them preserving the class distributions
     assert len(X) == len(y) * data_per_label, 'len(X)=%r, len(y)=%r, data_per_label=%r' % (len(X), len(y), data_per_label)
     nfolds = round(1. / eval_size)
+    # TODO: use sklearn.model_selection instead
+    #import sklearn.model_selection
+    # kf_ = sklearn.model_selection.StratifiedKFold(nfolds, shuffle=shuffle)
+    # kf  = kf_.split(np.empty(len(y)), y)
+    import sklearn.cross_validation
     kf = sklearn.cross_validation.StratifiedKFold(y, nfolds, shuffle=shuffle)
     train_indices, valid_indices = six.next(iter(kf))
     data_train_indicies = expand_data_indicies(train_indices, data_per_label)
@@ -248,32 +255,6 @@ def random_xy_sample(X, y, size_, data_per_label, seed=0):
     X_subset = X.take(data_indicies, axis=0)
     y_sbuset = y.take(label_indicies, axis=0)
     return X_subset, y_sbuset
-
-
-def write_data_and_labels(data, labels, data_fpath, labels_fpath):
-    print('[write_data_and_labels] np.shape(data) = %r' % (np.shape(data),))
-    print('[write_data_and_labels] np.shape(labels) = %r' % (np.shape(labels),))
-    # to resize the images back to their 2D-structure:
-    # X = images_array.reshape(-1, 3, 48, 48)
-    print('[write_data_and_labels] data_fpath=%s...' % (data_fpath))
-    print('[write_data_and_labels] labels_fpath=%s...' % (labels_fpath))
-    ut.save_data(data_fpath, data)
-    ut.save_data(labels_fpath, labels) if labels_fpath is not None else None
-    #if splitext(data_fpath)[1] == '.hdf5':
-    #    ut.save_hdf5(data_fpath, data)
-    #elif splitext(data_fpath)[1] == '.npz':
-    #    with open(data_fpath, 'wb') as ofile:
-    #        np.save(ofile, data)
-    #else:
-    #    ut.save_data(data_fpath, data)
-
-    #if splitext(labels_fpath)[1] == '.hdf5':
-    #    ut.save_hdf5(labels_fpath, labels)
-    #elif splitext(data_fpath)[1] == '.npz':
-    #    with open(labels_fpath, 'wb') as ofile:
-    #        np.save(ofile, labels)
-    #else:
-    #    ut.save_data(labels_fpath, labels)
 
 
 def load(data_fpath, labels_fpath=None):
@@ -310,13 +291,16 @@ def get_printcolinfo(requested_headers_):
         >>> printcol_info = get_printcolinfo(requested_headers)
     """
     if requested_headers_ is None:
-        requested_headers_ = ['train_loss', 'valid_loss', 'trainval_rat', 'valid_acc', 'test_acc']
-    requested_headers = ['epoch'] + requested_headers_ + ['duration']
+        requested_headers_ = ['learn_loss', 'valid_loss', 'learnval_rat', 'valid_acc', 'test_acc']
+    requested_headers = ['epoch_num'] + requested_headers_ + ['duration']
     header_dict = {
-        'epoch'        : '   Epoch ',
-        'train_loss'   : '  Train Loss (determ)  ',
+        'epoch_num'     : '   Epoch ',
+        #'learn_loss'   : '  Learn Loss (determ)  ',
+        # We always use determenistic reporting, so dont be redundant
+        'learn_loss'   : '  Learn Loss  ',
         'valid_loss'   : '  Valid Loss  ',
-        'trainval_rat' : '  Train / Val (determ)  ',
+        'learnval_rat' : '  Learn / Val  ',
+        #'learnval_rat' : '  Learn / Val (determ)  ',
         'valid_acc'    : '  Valid Acc ',
         'test_acc'     : '  Test Acc  ',
         'duration'     : '  Dur ',
@@ -334,10 +318,10 @@ def get_printcolinfo(requested_headers_):
         return sep.join((lspace, middle_fmt, rspace))
 
     format_dict = {
-        'epoch'        : datafmt(header_dict['epoch'], '>'),
-        'train_loss'   : datafmt(header_dict['train_loss'], '<', colored=True),
+        'epoch_num'    : datafmt(header_dict['epoch_num'], '>'),
+        'learn_loss'   : datafmt(header_dict['learn_loss'], '<', colored=True),
         'valid_loss'   : datafmt(header_dict['valid_loss'], '>', 6, 'f', colored=True),
-        'trainval_rat' : datafmt(header_dict['trainval_rat'], '<', colored=True),
+        'learnval_rat' : datafmt(header_dict['learnval_rat'], '<', colored=True),
         'valid_acc'    : datafmt(header_dict['valid_acc'], '>', colored=True),
         'test_acc'     : datafmt(header_dict['test_acc'], '>', colored=True),
         'duration'     : datafmt(header_dict['duration'], '>', 1, 'f', lbl='s'),
@@ -358,60 +342,28 @@ def print_header_columns(printcol_info):
     header_line1 = '[info] ' + '|'.join(header_nice_list)
     header_line2 = '[info] ' + '|'.join(header_line_list)
     header_str = ('\n' + header_line1 + '\n' + header_line2)
-    #print(header_str)
-    #header_str = ut.codeblock(
-    #    '''
-    #    [info]   Epoch |  Train Loss (determ)  |  Valid Loss  |  Train / Val (determ)  |  Valid Acc  |  Test Acc   |  Dur
-    #    [info] --------|-----------------------|--------------|------------------------|-------------|-------------|------\
-    #    '''
-    #)
     print(header_str)
 
 
 def print_epoch_info(model, printcol_info, epoch_info):
     requested_headers = printcol_info['requested_headers']
-    keys = ut.setdiff_ordered(requested_headers, ['epoch', 'duration'])
+    keys = ut.setdiff_ordered(requested_headers, ['epoch_num', 'duration'])
     data_fmt_list = printcol_info['data_fmt_list']
     data_fmtstr = '[info] ' +  '|'.join(data_fmt_list)
-    #data_fmtstr = ('[info]  {:>5}  |  {}{:<19}{}  |  {}{:>10.6f}{}  '
-    #               '|  {}{:<20}{}  |  {}{:>9}{}  |  {}{:>9}{}  |  {:>3.1f}s')
     import colorama
     ANSI = colorama.Fore
 
-    # NOTE: can use pygments or colorama (which supports windows) instead
-    #class ANSI(object):
-    #    RED     = '\033[91m'
-    #    GREEN   = '\033[92m'
-    #    BLUE    = '\033[94m'
-    #    CYAN    = '\033[96m'
-    #    WHITE   = '\033[97m'
-    #    YELLOW  = '\033[93m'
-    #    MAGENTA = '\033[95m'
-    #    GREY    = '\033[90m'
-    #    BLACK   = '\033[90m'
-    #    # DEFAULT = '\033[99m'
-    #    RESET   = '\033[0m'
+    def epoch_num_str():
+        return (epoch_info['epoch_num'],)
 
-    def epoch_str():
-        return (epoch_info['epoch'],)
-
-    def train_loss_str():
-        key = 'train_loss'
+    def learn_loss_str():
+        key = 'learn_loss'
         isbest = epoch_info[key] == model.best_results[key]
         return (
             ANSI.BLUE if isbest else '',
             '%0.6f' % (epoch_info[key],),
             ANSI.RESET if isbest else '',
         )
-        #train_loss = epoch_info['train_loss']
-        #best_train_loss = epoch_info['best_train_loss']
-        #train_determ_loss = epoch_info['train_determ_loss']
-        #best_train      = train_loss == best_train_loss
-        #return (
-        #    ANSI.BLUE if best_train else '',
-        #    '%0.6f' % (train_loss, ) if train_determ_loss is None else '%0.6f (%0.6f)' % (train_loss, train_determ_loss),
-        #    ANSI.RESET if best_train else '',
-        #)
 
     def valid_loss_str():
         key = 'valid_loss'
@@ -422,18 +374,14 @@ def print_epoch_info(model, printcol_info, epoch_info):
             ANSI.RESET if isbest else '',
         )
 
-    def trainval_rat_str():
-        ratio = epoch_info['trainval_rat']
+    def learnval_rat_str():
+        ratio = epoch_info['learnval_rat']
         unhealthy_ratio = ratio <= 0.5 or 2.0 <= ratio
         return (
             ANSI.RED if unhealthy_ratio else '',
             '%0.6f' % (ratio, ),
             ANSI.RESET if unhealthy_ratio else '',
         )
-        #return (
-        #    ANSI.RED if unhealthy_ratio else '',
-        #    '%0.6f' % (ratio, ) if ratio_determ is None else '%0.6f (%0.6f)' % (ratio, ratio_determ),
-        #    ANSI.RESET if unhealthy_ratio else '',)
 
     def valid_acc_str():
         key = 'valid_acc'
@@ -441,11 +389,6 @@ def print_epoch_info(model, printcol_info, epoch_info):
         return (ANSI.MAGENTA if isbest else '',
                 '{:.2f}%'.format(model.best_results[key] * 100),
                 ANSI.RESET if isbest else '',)
-
-    #def test_acc_str():
-    #    return (ANSI.CYAN if best_train_accuracy else '',
-    #            '{:.2f}%'.format(test_accuracy * 100) if test_accuracy is not None else '',
-    #            ANSI.RESET if best_train_accuracy else '',)
 
     def duration_str():
         return (epoch_info['duration'],)
@@ -456,25 +399,6 @@ def print_epoch_info(model, printcol_info, epoch_info):
     fmttup = tuple()
     for func in func_list:
         fmttup += func()
-    #fmttup = (
-    #    epoch,
-    #    ANSI.BLUE if best_train else '',
-    #    '%0.6f' % (train_loss, ) if train_determ_loss is None else '%0.6f (%0.6f)' % (train_loss, train_determ_loss),
-    #    ANSI.RESET if best_train else '',
-    #    ANSI.GREEN if best_valid else '',
-    #    valid_loss,
-    #    ANSI.RESET if best_valid else '',
-    #    ANSI.RED if unhealthy_ratio else '',
-    #    '%0.6f' % (ratio, ) if ratio_determ is None else '%0.6f (%0.6f)' % (ratio, ratio_determ),
-    #    ANSI.RESET if unhealthy_ratio else '',
-    #    ANSI.MAGENTA if best_valid_accuracy else '',
-    #    '{:.2f}%'.format(valid_accuracy * 100),
-    #    ANSI.RESET if best_valid_accuracy else '',
-    #    ANSI.CYAN if best_train_accuracy else '',
-    #    '{:.2f}%'.format(test_accuracy * 100) if test_accuracy is not None else '',
-    #    ANSI.RESET if best_train_accuracy else '',
-    #    duration,
-    #)
     epoch_info_str = data_fmtstr.format(*fmttup)
     print(epoch_info_str)
 
@@ -606,6 +530,7 @@ def slice_data_labels(X, y, batch_size, batch_index, data_per_label, wraparound=
 
 
 def multinomial_nll(x, t):
+    from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
     #coding_dist=x, true_dist=t
     return T.nnet.categorical_crossentropy(x, t)
 
@@ -701,6 +626,7 @@ def save_model(kwargs, weights_file):
 
 def shock_network(output_layer, voltage=0.10):
     print('[model] shocking the network with voltage: %0.2f%%' % (voltage, ))
+    from ibeis_cnn.__LASAGNE__ import layers
     current_weights = layers.get_all_param_values(output_layer)
     for index in range(len(current_weights)):
         temp = current_weights[index] * voltage
@@ -751,26 +677,6 @@ def save_pretrained_weights_slice(pretrained_weights, weights_path, slice_=slice
     return sliced_weights_path
 
 
-def print_data_label_info(data, labels, key=''):
-    """ DEPRICATE """
-    # print('[load] adding channels...')
-    # data = utils.add_channels(data)
-    print('[train] %s_memory(data) = %r' % (key, ut.get_object_size_str(data),))
-    print('[train] %s_data.shape   = %r' % (key, data.shape,))
-    print('[train] %s_data.dtype   = %r' % (key, data.dtype,))
-    print('[train] %s_labels.shape = %r' % (key, labels.shape,))
-    print('[train] %s_labels.dtype = %r' % (key, labels.dtype,))
-    labelhist = {key: len(val) for key, val in six.iteritems(ut.group_items(labels, labels))}
-    print('[train] %s_label histogram = \n%s' % (key, ut.dict_str(labelhist)))
-    print('[train] %s_label total = %d' % (key, sum(labelhist.values())))
-
-
-#def load_from_fpath_dicts(data_fpath_dict, label_fpath_dict, key):
-#    data, labels = load(data_fpath_dict[key], label_fpath_dict[key])
-#    print_data_label_info(data, labels, key)
-#    return data, labels
-
-
 def extract_patches_stride(image, patch_size, stride):
     """ Using the input image, take a strided sampling of patches from the image
 
@@ -805,9 +711,9 @@ def extract_patches_stride(image, patch_size, stride):
     coord_list = []
     extrax = [w - 1 - pw] if w % pw != 0 else []
     extray = [h - 1 - ph] if h % ph != 0 else []
-    for y in range(0, h - ph, sy) + extray:
+    for y in list(range(0, h - ph, sy)) + extray:
         y_ = y + ph
-        for x in range(0, w - pw, sx) + extrax:
+        for x in list(range(0, w - pw, sx)) + extrax:
             x_ = x + pw
             patch = image[y: y_, x: x_]
             patch_list.append(patch)

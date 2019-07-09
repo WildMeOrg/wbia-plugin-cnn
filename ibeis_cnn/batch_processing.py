@@ -5,21 +5,24 @@ import numpy as np
 import six
 import utool as ut
 #import warnings
-print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.batch_processing]')
+print, rrr, profile = ut.inject2(__name__)
 
 
-VERBOSE_BATCH = (ut.get_argflag(('--verbose-batch', '--verbbatch')) or
-                 utils.VERBOSE_CNN)
-VERYVERBOSE_BATCH = (
-    ut.get_argflag(('--veryverbose-batch', '--veryverbbatch')) or
-    ut.VERYVERBOSE)
+VERBOSE_BATCH = ut.get_module_verbosity_flags('batch')[0] or utils.VERBOSE_CNN
+if ut.VERYVERBOSE:
+    VERBOSE_BATCH = 2
+
+DEBUG_AUGMENTATION = ut.get_argflag('--DEBUG_AUGMENTATION')
 
 
 @profile
 def process_batch(model, X, y, theano_fn, fix_output=False, buffered=False,
-                  show=False, spatial=False, **kwargs):
+                  show=False, spatial=False, showprog=True, **kwargs):
     """
-    compute the loss over all training batches
+    Compute the loss over all training batches.
+    Passes data to function that splits it into batches and appropriately
+    preproecsses the data. Then this function sends that data to theano. Then
+    the results are packaged up nicely before returning.
 
     CommandLine:
         python -m ibeis_cnn --tf process_batch --verbose
@@ -32,9 +35,8 @@ def process_batch(model, X, y, theano_fn, fix_output=False, buffered=False,
         >>> from ibeis_cnn import models
         >>> model = models.DummyModel(batch_size=128)
         >>> X, y = model.make_random_testdata(num=2000, seed=None)
-        >>> model.initialize_architecture()
-        >>> theano_funcs = model.build_theano_funcs(request_predict=True)
-        >>> theano_fn = theano_funcs.theano_forward
+        >>> model.init_arch()
+        >>> theano_fn = model.build_predict_func()
         >>> kwargs = {'X_is_cv2_native': False, 'showprog': True,
         ...           'randomize_batch_order': True}
         >>> outputs_ = process_batch(model, X, y, theano_fn, **kwargs)
@@ -48,9 +50,8 @@ def process_batch(model, X, y, theano_fn, fix_output=False, buffered=False,
         >>> model = models.SiameseL2(batch_size=128, data_shape=(32, 32, 1),
         ...                          strict_batch_size=True)
         >>> X, y = model.make_random_testdata(num=2000, seed=None)
-        >>> model.initialize_architecture()
-        >>> theano_funcs = model.build_theano_funcs(request_predict=True)
-        >>> theano_fn = theano_funcs[1]
+        >>> model.init_arch()
+        >>> theano_fn = model.build_predict_func()
         >>> kwargs = {'X_is_cv2_native': False, 'showprog': True,
         ...           'randomize_batch_order': True}
         >>> outputs_ = process_batch(model, X, y, theano_fn, **kwargs)
@@ -66,7 +67,6 @@ def process_batch(model, X, y, theano_fn, fix_output=False, buffered=False,
         X, y = model.make_random_testdata(num=2000, seed=None)
         kwargs = {'X_is_cv2_native': False, 'showprog': True,
                   'randomize_batch_order': True, 'time_thresh': .5,
-                  'adjust': False,
                   }
 
         print('Testing Unbuffered')
@@ -86,6 +86,7 @@ def process_batch(model, X, y, theano_fn, fix_output=False, buffered=False,
         for Xb, yb in ut.ProgressIter(batch_iter2, lbl=':EXEC FG'):
             [ut.is_prime(346373) for _ in range(2)]
     """
+    import vtool as vt
     batch_output_list = []
     output_names = [
         str(outexpr.variable)
@@ -99,9 +100,16 @@ def process_batch(model, X, y, theano_fn, fix_output=False, buffered=False,
 
     # Break data into generated batches
     # generated data with explicit iteration
-    batch_iter = batch_iterator(model, X, y, lbl=theano_fn.name, **kwargs)
+    batch_iter = batch_iterator(model, X, y, **kwargs)
     if buffered:
         batch_iter = ut.buffered_generator(batch_iter)
+
+    if showprog:
+        bs = VERBOSE_BATCH < 1
+        num_batches = (X.shape[0] + model.batch_size - 1) // model.batch_size
+        # progress iterator should be outside of this function
+        batch_iter = ut.ProgressIter(batch_iter, nTotal=num_batches, lbl=theano_fn.name,
+                                     freq=10, bs=bs, adjust=True)
     if y is None:
         # Labels are not known, only one argument
         for Xb, yb in batch_iter:
@@ -137,7 +145,8 @@ def process_batch(model, X, y, theano_fn, fix_output=False, buffered=False,
             stacked_output_list[index] = output
     else:
         stacked_output_list  = [
-            concatenate_hack(_output_unstacked, axis=0)
+            vt.safe_cat(_output_unstacked, axis=0)
+            # concatenate_hack(_output_unstacked, axis=0)
             for _output_unstacked in unstacked_output_gen
         ]
 
@@ -148,7 +157,7 @@ def process_batch(model, X, y, theano_fn, fix_output=False, buffered=False,
         outputs_['auglbl_list'] = auglbl_list
 
     if fix_output:
-        # batch iteration may wrap-around returned data. slice of the padding
+        # batch iteration may wrap-around returned data. slice off the padding
         num_inputs = X.shape[0] / model.data_per_label_input
         num_outputs = num_inputs * model.data_per_label_output
         for key in six.iterkeys(outputs_):
@@ -163,53 +172,46 @@ def process_batch(model, X, y, theano_fn, fix_output=False, buffered=False,
 
 @profile
 def batch_iterator(model, X, y, randomize_batch_order=False, augment_on=False,
-                   X_is_cv2_native=True, verbose=VERBOSE_BATCH,
-                   veryverbose=VERYVERBOSE_BATCH, showprog=ut.VERBOSE,
-                   lbl='verbose batch iteration',
-                   time_thresh=10, time_thresh_growth=1.0, adjust=True):
+                   X_is_cv2_native=True, verbose=None,
+                   lbl='verbose batch iteration'):
     r"""
-    Breaks up data into to batches
+    Breaks up data into to batches defined by model batch size
 
     CommandLine:
         python -m ibeis_cnn --tf batch_iterator:0
         python -m ibeis_cnn --tf batch_iterator:1
+        python -m ibeis_cnn --tf batch_iterator:2
         python -m ibeis_cnn --tf batch_iterator:1 --DEBUG_AUGMENTATION
 
         python -m ibeis_cnn --tf batch_iterator:1 --noaugment
         # Threaded buffering seems to help a lot
         python -m ibeis_cnn --tf batch_iterator:1 --augment
 
-    Example:
+    Example0:
         >>> # ENABLE_DOCTEST
         >>> from ibeis_cnn.batch_processing import *  # NOQA
         >>> from ibeis_cnn import models
-        >>> # build test data
-        >>> model = models.DummyModel(batch_size=16, strict_batch_size=False)
+        >>> model = models.DummyModel(batch_size=16)
         >>> X, y = model.make_random_testdata(num=99, seed=None, cv2_format=True)
-        >>> model.ensure_training_state(X, y)
+        >>> model.ensure_data_params(X, y)
         >>> y = None
         >>> encoder = None
         >>> randomize_batch_order = True
-        >>> # execute function
         >>> result_list = [(Xb, Yb) for Xb, Yb in batch_iterator(model, X, y,
         ...                randomize_batch_order)]
-        >>> # verify results
         >>> result = ut.depth_profile(result_list, compress_consecutive=True)
         >>> print(result)
         [[(16, 1, 4, 4), 16]] * 6 + [[(3, 1, 4, 4), 3]]
 
-    Example2:
+    Example1:
         >>> # ENABLE_DOCTEST
         >>> from ibeis_cnn.batch_processing import *  # NOQA
         >>> from ibeis_cnn import models
         >>> import time
-        >>> # build test data
-        >>> model = models.SiameseL2(batch_size=128, data_shape=(8, 8, 1),
-        ...                          strict_batch_size=True)
+        >>> model = models.SiameseL2(batch_size=128, data_shape=(8, 8, 1))
         >>> X, y = model.make_random_testdata(num=1000, seed=None, cv2_format=True)
-        >>> model.ensure_training_state(X, y)
+        >>> model.ensure_data_params(X, y)
         >>> encoder = None
-        >>> # execute function
         >>> result_list1 = []
         >>> result_list2 = []
         >>> augment_on=not ut.get_argflag('--noaugment')
@@ -243,19 +245,68 @@ def batch_iterator(model, X, y, randomize_batch_order=False, augment_on=False,
         >>> print('Efficiency Buffered    = %.2f' % (100 * inside_time2 / t2.ellapsed,))
         >>> assert result_list1 == result_list2
         >>> print(len(result_list2))
-        >>> # verify results
-        >>> #result = ut.depth_profile(result_list, compress_consecutive=True)
+
+    Example2:
+        >>> # DISABLE_DOCTEST
+        >>> from ibeis_cnn.batch_processing import *  # NOQA
+        >>> from ibeis_cnn.models.mnist import MNISTModel
+        >>> from ibeis_cnn import ingest_data
+        >>> # should yield float32 regardlesss of original format
+        >>> ut.exec_funckw(batch_iterator, globals())
+        >>> randomize_batch_order = False
+        >>> # ---
+        >>> dataset1 = ingest_data.grab_mnist_category_dataset_float()
+        >>> model1 = MNISTModel(batch_size=8, data_shape=dataset1.data_shape,
+        >>>                    output_dims=dataset1.output_dims,
+        >>>                    arch_tag=dataset1.alias_key,
+        >>>                    training_dpath=dataset1.training_dpath)
+        >>> X1, y1 = dataset1.subset('train')
+        >>> model1.ensure_data_params(X1, y1)
+        >>> _iter1 = batch_iterator(model1, X1, y1, randomize_batch_order)
+        >>> Xb1, yb1 = six.next(_iter1)
+        >>> # ---
+        >>> dataset2 = ingest_data.grab_mnist_category_dataset()
+        >>> model2 = MNISTModel(batch_size=8, data_shape=dataset2.data_shape,
+        >>>                    output_dims=dataset2.output_dims,
+        >>>                    arch_tag=dataset2.alias_key,
+        >>>                    training_dpath=dataset2.training_dpath)
+        >>> X2, y2 = dataset2.subset('train')
+        >>> model2.ensure_data_params(X2, y2)
+        >>> _iter2 = batch_iterator(model2, X2, y2, randomize_batch_order)
+        >>> Xb2, yb2 = six.next(_iter2)
+        >>> # ---
+        >>> X, y, model = X1, y1, model1
+        >>> assert np.all(yb2 == yb2)
+        >>> # The uint8 and float32 data should produce similar values
+        >>> # For this mnist set it will be a bit more off because the
+        >>> # original uint8 scaling value was 256 not 255.
+        >>> assert (Xb1[0] - Xb2[0]).max() < .1
+        >>> assert np.isclose(Xb1.mean(), 0, atol=.01)
+        >>> assert np.isclose(Xb2.mean(), 0, atol=.01)
+        >>> assert Xb1.max() <  1.0 and Xb2.max() <  1.0, 'out of (-1, 1)'
+        >>> assert Xb1.min() > -1.0 and Xb1.min() > -1.0, 'out of (-1, 1)'
+        >>> assert Xb1.min() < 0, 'should have some negative values'
+        >>> assert Xb2.min() < 0, 'should have some negative values'
+        >>> assert Xb1.max() > 0, 'should have some positive values'
+        >>> assert Xb2.max() > 0, 'should have some positive values'
     """
-    data_per_label_input = model.data_per_label_input
+    if verbose:
+        verbose = VERBOSE_BATCH
+
     # need to be careful with batchsizes if directly specified to theano
-    equal_batch_sizes = model.input_shape[0] is not None
+    wraparound = model.input_shape[0] is not None
     augment_on = augment_on and hasattr(model, 'augment')
     encoder = getattr(model, 'encoder', None)
-    # divides X and y into batches of size bs for sending to the GPU
+    needs_convert = ut.is_int(X)
+    if y is not None:
+        assert X.shape[0] == (y.shape[0] * model.data_per_label_input), (
+            'bad data / label alignment')
+    num_batches = (X.shape[0] + model.batch_size - 1) // model.batch_size
+
     if randomize_batch_order:
         # Randomly shuffle data
         # 0.079 mnist time fraction
-        X, y = utils.data_label_shuffle(X, y, data_per_label_input)
+        X, y = utils.data_label_shuffle(X, y, model.data_per_label_input)
     if verbose:
         print('[batchiter] BEGIN')
         print('[batchiter] X.shape %r' % (X.shape, ))
@@ -263,41 +314,21 @@ def batch_iterator(model, X, y, randomize_batch_order=False, augment_on=False,
             print('[batchiter] y.shape %r' % (y.shape, ))
         print('[batchiter] augment_on %r' % (augment_on, ))
         print('[batchiter] encoder %r' % (encoder, ))
-        print('[batchiter] equal_batch_sizes %r' % (equal_batch_sizes, ))
-        print('[batchiter] data_per_label_input %r' % (data_per_label_input, ))
-    if y is not None:
-        assert X.shape[0] == (y.shape[0] * data_per_label_input), (
-            'bad data / label alignment')
-    batch_size = model.batch_size
-    num_batches = (X.shape[0] + batch_size - 1) // batch_size
-    if verbose:
-        print('[batchiter] num_batches = %r' % (num_batches,))
+        print('[batchiter] wraparound %r' % (wraparound, ))
+        print('[batchiter] model.data_per_label_input %r' % (model.data_per_label_input, ))
+        print('[batchiter] needs_convert = %r' % (needs_convert,))
 
-    batch_index_iter = range(num_batches)
     # FIXME: put in a layer?
     center_mean = None
     center_std  = None
-    if model.preproc_kw is not None:
-        center_std  = np.array(model.preproc_kw['center_std'], dtype=np.float32)
-        center_mean = np.array(model.preproc_kw['center_mean'], dtype=np.float32)
+    # Load precomputed whitening parameters
+    if model.data_params is not None:
+        center_mean = np.array(model.data_params['center_mean'], dtype=np.float32)
+        center_std  = np.array(model.data_params['center_std'], dtype=np.float32)
     do_whitening = (center_mean is not None and
                     center_std is not None and
                     center_std != 0.0)
-    #assert do_whitening, 'should be whitening'
 
-    if showprog:
-        # progress iterator should be outside of this function
-        batch_index_iter = ut.ProgressIter(batch_index_iter,
-                                           nTotal=num_batches, lbl=lbl,
-                                           time_thresh=time_thresh,
-                                           time_thresh_growth=time_thresh_growth,
-                                           adjust=adjust)
-
-    DEBUG_AUGMENTATION = ut.get_argflag('--DEBUG_AUGMENTATION')
-
-    # messy messy messy
-
-    needs_convert = ut.is_int(X)
     if needs_convert:
         ceneter_mean01 = center_mean / np.array(255.0, dtype=np.float32)
         center_std01 = center_std / np.array(255.0, dtype=np.float32)
@@ -305,94 +336,100 @@ def batch_iterator(model, X, y, randomize_batch_order=False, augment_on=False,
         ceneter_mean01 = center_mean
         center_std01 = center_std
 
-    for batch_index in batch_index_iter:
-        # Get batch slice
-        # .113 time fraction
+    # Slice and preprocess data in batch
+    for batch_index in range(num_batches):
+        # Take a slice from the data
         Xb_orig, yb_orig = utils.slice_data_labels(
-            X, y, batch_size, batch_index,
-            data_per_label_input, wraparound=equal_batch_sizes)
-        # FIRST CONVERT TO 0/1
-        Xb = Xb_orig.copy().astype(np.float32)
+            X, y, model.batch_size, batch_index, model.data_per_label_input,
+            wraparound=wraparound)
+        # Ensure correct format for the GPU
+        Xb = Xb_orig.astype(np.float32)
+        yb = None if yb_orig is None else yb_orig.astype(np.int32)
         if needs_convert:
-            Xb /= 255.0
-        if yb_orig is not None:
-            yb = yb_orig.copy()
-        else:
-            yb = None
-        # Augment
-        # MAKE SURE DATA AUGMENTATION HAS MEAN FILL VALUES NOT 0
-        # AUGMENT DATA IN 0-1 SPACE
+            # Rescale the batch data to the range 0 to 1
+            Xb = Xb / 255.0
         if augment_on:
-            if verbose or veryverbose:
-                if veryverbose or (batch_index + 1) % num_batches <= 1:
-                    print('Augmenting Data')
-                    # only copy if we have't yet
-            Xb, yb = model.augment(Xb, yb)
-            if DEBUG_AUGMENTATION:
-                #Xb, yb = augment.augment_siamese_patches2(Xb, yb)
-                from ibeis_cnn import augment
-                import plottool as pt
-                '''
-                from ibeis_cnn import augment
-                import plottool as pt
-                import IPython; IPython.get_ipython().magic('pylab qt4')
-                augment.show_augmented_patches(Xb_orig, Xb, yb_orig, yb)
-                '''
-                augment.show_augmented_patches(Xb_orig, Xb, yb_orig, yb)
-                pt.show_if_requested()
-                ut.embed()
-        # DO WHITENING AFTER DATA AUGMENTATION
-        # MOVE DATA INTO -1 to 1 space
-        # Whiten (applies centering), not really whitening
-        USE_YOLO = True
+            # Apply defined transformations
+            Xb, yb, = augment_batch(model, Xb, yb, batch_index, verbose, num_batches)
         if do_whitening:
-            if USE_YOLO:
-                Xb = (Xb * center_std) - center_mean
-            else:
-                # .563 time fraction
-                Xb = (Xb - (ceneter_mean01)) / (center_std01,)
-        # Encode
+            # Center the batch data in the range (-1.0, 1.0)
+            Xb = (Xb - ceneter_mean01) / (center_std01)
+        if X_is_cv2_native:
+            # Convert from cv2 to lasange format
+            Xb = Xb.transpose((0, 3, 1, 2))
         if yb is not None:
             if encoder is not None:
-                yb = encoder.transform(yb)  # .201 time fraction
-            # Get corret dtype for y (after encoding)
-            if data_per_label_input > 1:
-                # TODO: FIX data_per_label_input ISSUES
-                if getattr(model, 'needs_padding', False):
-                    # most models will do the padding implicitly
-                    # in the layer architecture
-                    pad_size = len(yb) * (data_per_label_input - 1)
-                    yb_buffer = -np.ones(pad_size, np.int32)
-                    yb = np.hstack((yb, yb_buffer))
-            yb = yb.astype(np.int32)
-        # Convert cv2 format to Lasagne format for batching
-        if X_is_cv2_native:
-            Xb = Xb.transpose((0, 3, 1, 2))
-        if verbose or veryverbose:
-            if veryverbose or (batch_index + 1) % num_batches <= 1:
-                print('[batchiter] Yielding batch: batch_index = %r ' % (
-                    batch_index,))
-                print('[batchiter]   * Xb.shape = %r, Xb.dtype=%r' % (
-                    Xb.shape, Xb.dtype))
-                if y is not None:
-                    print('[batchiter]   * yb.shape = %r, yb.dtype=%r' % (
-                        yb.shape, yb.dtype))
-                    print('[batchiter]   * yb.sum = %r' % (yb.sum(),))
-        # Ugg, we can't have data and labels of different lengths
-        #del Xb_orig
-        #del yb_orig
+                # Apply an encoding if applicable
+                yb = encoder.transform(yb).astype(np.int32)
+            if model.data_per_label_input > 1 and getattr(model, 'needs_padding', False):
+                # Pad data for siamese networks
+                yb = pad_labels(model, yb)
+        if verbose:
+            # Print info if requested
+            print_batch_info(Xb, yb, verbose, batch_index, num_batches)
         yield Xb, yb
     if verbose:
-        print('[batchiter] END')
+        print('[batch] END')
+
+
+def augment_batch(model, Xb, yb, batch_index, verbose, num_batches):
+    """
+    Make sure to augment data in 0-1 space.
+    This means use a mean fill values not 0.
+
+    >>> from ibeis_cnn import augment
+    >>> import plottool as pt
+    >>> pt.qt4ensure()
+    >>> augment.show_augmented_patches(Xb_orig, Xb, yb_orig, yb)
+    """
+    if verbose:
+        if verbose > 1 or (batch_index + 1) % num_batches <= 1:
+            print('Augmenting Data')
+            # only copy if we have't yet
+    Xb, yb = model.augment(Xb, yb)
+    #if DEBUG_AUGMENTATION:
+    #    #Xb, yb = augment.augment_siamese_patches2(Xb, yb)
+    #    from ibeis_cnn import augment
+    #    import plottool as pt
+    #    augment.show_augmented_patches(Xb_orig, Xb, yb_orig, yb)
+    #    pt.show_if_requested()
+    #    ut.embed()
+    return Xb, yb
+
+
+def pad_labels(model, yb):
+    # TODO: FIX data_per_label_input ISSUES
+    # most models will do the padding implicitly
+    # in the layer architecture
+    pad_size = len(yb) * (model.data_per_label_input - 1)
+    yb_buffer = -np.ones(pad_size, dtype=np.int32)
+    yb = np.hstack((yb, yb_buffer))
+    return yb
+
+
+def print_batch_info(Xb, yb, verbose, batch_index, num_batches):
+    if verbose > 1 or (batch_index + 1) % num_batches <= 1:
+        print('[batch] Yielding batch: batch_index = %r ' % (batch_index,))
+        print('[batch]   * Xb.shape = %r, Xb.dtype=%r' % (Xb.shape, Xb.dtype))
+        if yb is not None:
+            print('[batch]   * yb.shape = %r, yb.dtype=%r' % (yb.shape, yb.dtype))
+            print('[batch]   * yb.sum = %r' % (yb.sum(),))
 
 
 def concatenate_hack(sequence, axis=0):
-    # Hack to fix numpy bug. concatenate should do hstacks on 0-dim arrays
-    if len(sequence) > 0 and len(sequence[1].shape) == 0:
-        res = np.hstack(sequence)
+    """
+    Hack to fix numpy bug.
+    concatenate fails when one item in sequence is empty
+
+    >>> sequence = (np.array([[]]), np.array([[1, 2, 3]]))
+    >>> sequence = (np.array([[1, 2, 3]]), np.array([[]]))
+    """
+    #print(sequence)
+    if len(sequence) > 1 and len(sequence[1].shape) == 0:
+        arr = np.hstack(sequence)
     else:
-        res = np.concatenate(sequence, axis=axis)
-    return res
+        arr = np.concatenate(sequence, axis=axis)
+    return arr
 
 
 if __name__ == '__main__':

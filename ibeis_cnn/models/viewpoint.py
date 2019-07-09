@@ -5,14 +5,9 @@ import random
 from ibeis_cnn.__LASAGNE__ import layers
 from ibeis_cnn.__LASAGNE__ import nonlinearities
 # from ibeis_cnn.__LASAGNE__ import init
-from ibeis_cnn import custom_layers
 from ibeis_cnn.models import abstract_models
 import utool as ut
-print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.models.viewpoint]')
-
-
-Conv2DLayer = custom_layers.Conv2DLayer
-MaxPool2DLayer = custom_layers.MaxPool2DLayer
+print, rrr, profile = ut.inject2(__name__)
 
 
 @six.add_metaclass(ut.ReloadingMetaclass)
@@ -20,7 +15,7 @@ class ViewpointModel(abstract_models.AbstractCategoricalModel):
     def __init__(model, autoinit=False, batch_size=128, data_shape=(96, 96, 3), arch_tag='viewpoint', **kwargs):
         super(ViewpointModel, model).__init__(batch_size=batch_size, data_shape=data_shape, arch_tag=arch_tag, **kwargs)
         if autoinit:
-            model.initialize_architecture()
+            model.init_arch()
 
     def augment(model, Xb, yb=None):
         # Invert label function
@@ -99,7 +94,11 @@ class ViewpointModel(abstract_models.AbstractCategoricalModel):
         return x * 2.0
 
     #def build_model(model, batch_size, input_width, input_height, input_channels, output_dims):
-    def initialize_architecture(model):
+    def init_arch(model):
+
+        from ibeis_cnn import custom_layers
+        Conv2DLayer = custom_layers.Conv2DLayer
+        MaxPool2DLayer = custom_layers.MaxPool2DLayer
 
         (_, input_channels, input_width, input_height) = model.input_shape
         output_dims = model.output_dims

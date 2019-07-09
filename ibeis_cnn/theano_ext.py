@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function
 import utool as ut
-from ibeis_cnn.__THEANO__ import tensor as T
-print, rrr, profile = ut.inject2(__name__, '[theano_ext]')
+from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
+print, rrr, profile = ut.inject2(__name__)
 
 
 def get_symbol_inputs(expr_list=[]):

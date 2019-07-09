@@ -138,7 +138,7 @@ r"""
 #            'weight_decay': 0.0005,
 #        }
 #    )
-#    dataset = ingest_data.grab_mnist_category_dataset()
+#    dataset = ingest_data.grab_mnist_category_dataset_float()
 #    data_shape = dataset.data_shape
 #    input_shape = (None, data_shape[2], data_shape[0], data_shape[1])
 
@@ -148,7 +148,7 @@ r"""
 #        training_dpath=dataset.training_dpath, **hyperparams)
 
 #    # Initialize architecture
-#    model.initialize_architecture()
+#    model.init_arch()
 
 #    # Load previously learned weights or initialize new weights
 #    if model.has_saved_state():
@@ -165,7 +165,7 @@ r"""
 #        print_timing=False,
 #    )
 
-#    X_train, y_train = dataset.load_subset('train')
-#    X_valid, y_valid = dataset.load_subset('valid')
+#    X_train, y_train = dataset.subset('train')
+#    X_valid, y_valid = dataset.subset('valid')
 #    #X_test, y_test = utils.load_from_fpath_dicts(data_fpath_dict, label_fpath_dict, 'test')
 #    harness.train(model, X_train, y_train, X_valid, y_valid, dataset, config)

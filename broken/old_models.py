@@ -48,7 +48,7 @@ class ViewpointModel(abstract_models.AbstractCategoricalModel):
         viewpoints = len(viewpoint_mapping.keys())
         category_mapping = {}
         for index, species in enumerate(species_list):
-            for viewpoint, value in viewpoint_mapping.iteritems():
+            for viewpoint, value in viewpoint_mapping.items():
                 key = '%s:%s' % (species, viewpoint, )
                 base = viewpoints * index
                 category_mapping[key] = base + value
@@ -371,8 +371,8 @@ class SiameseModel(abstract_models.BaseModel):
             >>> verbose = True
             >>> output_layer = model.build_model(batch_size, input_width, input_height, input_channels, output_dims, verbose)
             >>> print('----')
-            >>> model.print_architecture_str(sep='\n')
-            >>> print('hashid=%r' % (model.get_architecture_hashid()),)
+            >>> model.print_arch_str(sep='\n')
+            >>> print('hashid=%r' % (model.architecture_hashid),)
             >>> print('----')
             >>> result = str(output_layer)
             >>> print(result)
@@ -381,11 +381,11 @@ class SiameseModel(abstract_models.BaseModel):
         model.input_shape = input_shape
         model.batch_size = batch_size
         model.output_dims = 256
-        model.initialize_architecture(verbose=verbose)
+        model.init_arch(verbose=verbose)
         output_layer = model.get_output_layer()
         return output_layer
 
-    def initialize_architecture(model, verbose=True):
+    def init_arch(model, verbose=True):
         # TODO: remove output dims
         _P = functools.partial
         (_, input_channels, input_width, input_height) = model.input_shape
@@ -421,7 +421,8 @@ class SiameseModel(abstract_models.BaseModel):
         ]
 
         # connect and record layers
-        network_layers = abstract_models.evaluate_layer_list(network_layers_def)
+        from ibeis_cnn import custom_layers
+        network_layers = custom_layers.evaluate_layer_list(network_layers_def)
         model.network_layers = network_layers
         output_layer = model.network_layers[-1]
         model.output_layer = output_layer

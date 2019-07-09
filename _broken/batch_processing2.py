@@ -8,7 +8,7 @@ import theano.tensor as T
 from lasagne import layers
 import warnings
 import theano
-print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.batch_processing]')
+print, rrr, profile = ut.inject2(__name__)
 
 
 def batch_iterator(X, y, batch_size, encoder=None, rand=False, augment=None,

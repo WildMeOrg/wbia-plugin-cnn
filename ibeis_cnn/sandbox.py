@@ -27,15 +27,13 @@ def check_external_training_paths():
         tmp_model = abstract_models.BaseModel()
         tmp_model.load_model_state(fpath=fpath)
         tmp_model_list.append(tmp_model)
-        #hashid = tmp_model.get_model_history_hashid()
+        #hashid = tmp_model.get_history_hashid()
         #dpath = dirname(fpath)
         #new_dpath = join(dirname(dpath), hashid)
         #ut.move(dpath, new_dpath)
 
     for model in tmp_model_list:
         model.rrr(verbose=False)
-    print(model.get_architecture_str())
-    print(model.get_architecture_hashid())
 
     vallist_ = [tmp_model.get_total_epochs() for tmp_model in tmp_model_list]
     tmp_model_list = ut.sortedby(tmp_model_list, vallist_)
@@ -50,7 +48,7 @@ def check_external_training_paths():
     for tmp_model in ut.InteractiveIter(tmp_model_list):
         print(fpath)
         print(sum([len(era['epoch_list']) for era in tmp_model.era_history]))
-        tmp_model.show_era_history(fnum=1)
+        tmp_model.show_era_loss(fnum=1)
 
 
 def load_tmp_model():
@@ -62,7 +60,7 @@ def load_tmp_model():
     tmp_model = abstract_models.BaseModel()
     tmp_model.load_model_state(fpath=fpath)
     tmp_model.rrr()
-    tmp_model.show_era_history(fnum=1)
+    tmp_model.show_era_loss(fnum=1)
     pt.iup()
 
 

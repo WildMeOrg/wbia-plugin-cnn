@@ -10,7 +10,7 @@ from __future__ import absolute_import, division, print_function
 import functools
 import numpy as np
 import utool as ut
-print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.augment]')
+print, rrr, profile = ut.inject2(__name__)
 
 
 rot_transforms  = [functools.partial(np.rot90, k=k) for k in range(1, 4)]
@@ -143,7 +143,8 @@ def affine_perterb(img, rng=np.random):
     y1, x1 = h1 / 2.0, w1 / 2.0
     Aff = vt.affine_around_mat3x3(x1, y1, *affine_args)
     dsize = (w1, h1)
-    img_warped = cv2.warpAffine(img, Aff[0:2], dsize, flags=cv2.INTER_LANCZOS4, borderMode=cv2.BORDER_CONSTANT)
+    img_warped = cv2.warpAffine(img, Aff[0:2], dsize, flags=cv2.INTER_LANCZOS4,
+                                borderMode=cv2.BORDER_CONSTANT)
     return img_warped
 
 
@@ -256,19 +257,20 @@ def stacked_img_pairs(Xb, modified_indexes, label_list=None, num=None):
     num = min(len(modified_indexes), num)
     patch_list1 = Xb[0::2]
     patch_list2 = Xb[1::2]
-    per_row = 8
+    per_row = 1
     cols = int(num / per_row)
     #print('len(patch_list1) = %r' % (len(patch_list1),))
     #print('len(patch_list2) = %r' % (len(patch_list2),))
     #print('len(modified_indexes) = %r' % (len(modified_indexes),))
     #print('modified_indexes = %r' % ((modified_indexes),))
-    tup = draw_results.get_patch_sample_img(patch_list1, patch_list2, label_list, {}, modified_indexes, (cols, per_row))
+    tup = draw_results.get_patch_sample_img(patch_list1, patch_list2,
+                                            label_list, {}, modified_indexes,
+                                            (cols, per_row))
     stacked_img, stacked_offsets, stacked_sfs = tup
     return stacked_img
-    pass
 
 
-def show_augmented_patches(Xb_orig, Xb, yb_orig, yb, shadows=None):
+def show_augmented_patches(Xb, Xb_, yb, yb_, data_per_label=1, shadows=None):
     """
     from ibeis_cnn.augment import *  # NOQA
     std_ = center_std
@@ -276,30 +278,52 @@ def show_augmented_patches(Xb_orig, Xb, yb_orig, yb, shadows=None):
     """
     import plottool as pt
     import vtool as vt
-    Xb_orig = vt.rectify_to_float01(Xb_orig)
-    Xb_ = vt.rectify_to_float01(Xb)
+    Xb_old = vt.rectify_to_float01(Xb)
+    Xb_new = vt.rectify_to_float01(Xb_)
 
-    #num_examples = len(Xb_orig) // 2
     # only look at ones that were actually augmented
-    diff1 = np.abs((Xb_[0::2] - Xb_orig[0::2]))
-    diff2 = np.abs((Xb_[1::2] - Xb_orig[1::2]))
-    diff_batches1 = diff1.sum(-1).sum(-1).sum(-1)
-    diff_batches2 = diff2.sum(-1).sum(-1).sum(-1)
-    diff_batches = diff_batches1 + diff_batches2
+    sample1 = Xb_old[0::data_per_label]
+    sample2 = Xb_new[0::data_per_label]
+    diff = np.abs((sample1 - sample2))
+    diff_batches = diff.sum(-1).sum(-1).sum(-1) > 0
     modified_indexes = np.where(diff_batches > 0)[0]
-    #import vtool as vt                       nnnnnnnnnnnnnnnnnnnn
-    #nonmodified_flags = ~vt.other.index_to_boolmask(modified_indexes_, num_examples)
-    #print(ut.debug_consec_list(modified_indexes_))
-    # hack
+    print('modified_indexes = %r' % (modified_indexes,))
     #modified_indexes = np.arange(num_examples)
-    Xb_orig = vt.rectify_to_uint8(Xb_orig)
-    Xb_ = vt.rectify_to_uint8(Xb_)
 
-    orig_stack = stacked_img_pairs(Xb_orig, modified_indexes, yb_orig)
-    warp_stack = stacked_img_pairs(Xb_, modified_indexes, yb)
+    Xb_old = vt.rectify_to_uint8(Xb_old)
+    Xb_new = vt.rectify_to_uint8(Xb_new)
+
+    # Group data into n-tuples
+    grouped_idxs = [np.arange(n, len(Xb_), data_per_label)
+                    for n in range(data_per_label)]
+    data_lists_old = vt.apply_grouping(Xb_old, grouped_idxs, axis=0)
+    data_lists_new = vt.apply_grouping(Xb_new, grouped_idxs, axis=0)
+
+    import six
+    #chunck_sizes = (4, 10)
+    import utool
+    with utool.embed_on_exception_context:
+        chunk_sizes = pt.get_square_row_cols(len(modified_indexes), max_cols=10,
+                                             fix=False, inclusive=False)
+        _iter = ut.iter_multichunks(modified_indexes, chunk_sizes)
+        multiindices = six.next(_iter)
+
+        from ibeis_cnn import draw_results
+        tup = draw_results.get_patch_multichunks(data_lists_old, yb, {},
+                                                 multiindices)
+        orig_stack = tup[0]
+        #stacked_img, stacked_offsets, stacked_sfs = tup
+
+        tup = draw_results.get_patch_multichunks(data_lists_new, yb_, {},
+                                                 multiindices)
+        warp_stack = tup[0]
+    #stacked_img, stacked_offsets, stacked_sfs = tup
+
+    #orig_stack = stacked_img_pairs(Xb_old, modified_indexes, yb)
+    #warp_stack = stacked_img_pairs(Xb_new, modified_indexes, yb_)
     if shadows is not None:
         # hack
-        shadow_stack = stacked_img_pairs(shadows, modified_indexes, yb)
+        shadow_stack = stacked_img_pairs(shadows, modified_indexes, yb_)
 
     fnum = None
     fnum = pt.ensure_fnum(fnum)
@@ -317,7 +341,7 @@ def testdata_augment():
     from ibeis_cnn import ingest_data, utils
     import vtool as vt
     dataset = ingest_data.grab_siam_dataset()
-    cv2_data, labels = dataset.load_subset('valid')
+    cv2_data, labels = dataset.subset('valid')
     batch_size = 128
     Xb, yb = utils.random_xy_sample(cv2_data, labels, batch_size / 2, 2, seed=0)
     Xb = vt.rectify_to_float01(Xb)
@@ -327,10 +351,135 @@ def testdata_augment():
 
 
 @profile
-def augment_affine(Xb, yb=None, rng=np.random):
+def augment_affine(Xb, yb=None, rng=np.random, data_per_label=1,
+                   inplace=False, affperterb_ranges=None, aug_prop=.5):
+    """
+    CommandLine:
+        python -m ibeis_cnn.augment --test-augment_affine --show
+        utprof.py -m ibeis_cnn.augment --test-augment_affine
+
+    Example:
+        >>> # ENABLE_DOCTEST
+        >>> from ibeis_cnn.augment import *  # NOQA
+        >>> from ibeis_cnn.models import mnist
+        >>> model, dataset = mnist.testdata_mnist()
+        >>> X, y = dataset.subset('test')
+        >>> batch_size = 1000
+        >>> Xb = (X[0:batch_size] / 255).astype(np.float32)
+        >>> yb = y[0:batch_size]
+        >>> rng = np.random.RandomState(0)
+        >>> data_per_label = 1
+        >>> inplace = False
+        >>> affperterb_ranges = dict(
+        >>>     zoom_range=(1.0, 1.3),
+        >>>     max_tx=2,
+        >>>     max_ty=2,
+        >>>     max_shear=TAU / 32,
+        >>>     max_theta=None,
+        >>>     enable_stretch=True,
+        >>>     enable_flip=False,
+        >>> )
+        >>> Xb_, yb_ = augment_affine(Xb, yb, data_per_label=data_per_label, rng=rng, affperterb_ranges=affperterb_ranges)
+        >>> assert Xb_ is not Xb
+        >>> ut.quit_if_noshow()
+        >>> import plottool as pt
+        >>> pt.qt4ensure()
+        >>> show_augmented_patches(Xb, Xb_, yb, yb_, data_per_label=data_per_label)
+        >>> ut.show_if_requested()
+    """
+    import vtool as vt
+    import cv2
+    assert Xb.max() <= 1.0, 'max/min = %r, %r' % (Xb.min(), Xb.max())
+    assert Xb.min() >= 0.0, 'max/min = %r, %r' % (Xb.min(), Xb.max())
+
+    Xb_ = Xb if inplace else Xb.copy()
+    yb_ = yb if inplace or yb is None else yb.copy()
+
+    nGroups = len(Xb_) // data_per_label
+
+    # Make the same affine parameters for each group
+    # Determine which groups will be augmented
+    affperterb_flags = rng.uniform(0.0, 1.0, size=nGroups) <= aug_prop
+    # Build augmentation params for each group
+    if affperterb_ranges is None:
+        affperterb_ranges = dict(
+            zoom_range=None,
+            max_tx=None,
+            max_ty=None,
+            max_shear=None,
+            max_theta=None,
+            enable_flip=False,
+            enable_stretch=False,
+        )
+    #affperterb_ranges.update(
+    #    dict(
+    #        #zoom_range=(1.0, 1.7),
+    #        zoom_range=(1.0, 1.3),
+    #        #zoom_range=(.7, 1.7),
+    #        max_tx=2,
+    #        max_ty=2,
+    #        max_shear=TAU / 32,
+    #        max_theta=TAU,
+    #        enable_stretch=True,
+    #        enable_flip=True,
+    #    )
+    #)
+    index_list = np.where(affperterb_flags)[0]
+
+    affperterb_kw_list = [
+        random_affine_kwargs(rng=rng, **affperterb_ranges)
+        for index in index_list
+    ]
+
+    # Partition data into groups
+    #grouped_slices = [slice(n, len(Xb_), data_per_label)
+    #                  for n in range(data_per_label)]
+    grouped_idxs = [np.arange(n, len(Xb_), data_per_label)
+                    for n in range(data_per_label)]
+
+    # Take only the groups that were augmented
+    aug_grouped = ut.take(zip(*grouped_idxs), index_list)
+
+    borderMode = cv2.BORDER_CONSTANT
+    #borderMode = cv2.BORDER_REPLICATE
+    flags = cv2.INTER_LANCZOS4
+    num_channels = Xb.shape[-1]
+    borderValue = [.5] * num_channels
+    for xs, affkw in zip(aug_grouped, affperterb_kw_list):
+        # Modify each index in the group with the same params
+        for index in xs:
+            Xref = Xb_[index]
+            Xref = vt.affine_warp_around_center(
+                Xref, borderMode=borderMode, flags=flags,
+                borderValue=borderValue, out=Xref, **affkw)
+            np.clip(Xref, 0, 1, out=Xref)
+            # Modify the batch
+            Xb_[index] = Xref
+    #Xb_ = Xb_.astype(np.float32)
+    return Xb_, yb_
+
+
+@profile
+def augment_affine_siam(Xb, yb=None, rng=np.random):
     """
     CommandLine:
         python -m ibeis_cnn.augment --test-augment_affine --show --db PZ_MTEST
+
+    Example:
+        >>> # ENABLE_DOCTEST
+        >>> from ibeis_cnn.augment import *  # NOQA
+        >>> from ibeis_cnn.models import mnist
+        >>> model, dataset = mnist.testdata_mnist()
+        >>> X, y = dataset.subset('test')
+        >>> Xb = (X[0:8] / 255).astype(np.float32)
+        >>> yb = y[0:8]
+        >>> rng = np.random.RandomState(0)
+        >>> Xb_, yb_ = augment_affine(Xb, yb, rng=rng)
+        >>> import plottool as pt
+        >>> pt.qt4ensure()
+        >>> ut.quit_if_noshow()
+        >>> show_augmented_patches(Xb, Xb_, yb, yb_)
+        >>> ut.show_if_requested()
 
     Example:
         >>> # ENABLE_DOCTEST
@@ -571,7 +720,7 @@ def augment_siamese_patches2(Xb, yb=None, rng=np.random):
         >>> show_augmented_patches(Xb_orig, Xb, yb_orig, yb)
         >>> ut.show_if_requested()
     """
-    augment_affine(Xb, yb, rng)
+    augment_affine(Xb, yb, rng, data_per_label=2)
     #augment_shadow(Xb, yb, rng)
     #augment_gamma(Xb, yb, rng)
     return Xb, yb

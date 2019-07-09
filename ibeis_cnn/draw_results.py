@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import utool as ut
 import numpy as np
 import six
-print, rrr, profile = ut.inject2(__name__, '[ibeis_cnn.draw_results]')
+print, rrr, profile = ut.inject2(__name__)
 
 
 def interact_siamsese_data_patches(labels, data, flat_metadata, **kwargs):
@@ -81,6 +81,7 @@ def interact_patches(label_list, data_lists,
         >>> ut.show_if_requested()
         >>> print(result)
     """
+    import vtool as vt
     #from ibeis.viz import viz_helpers as vh
     print('Building patch interaction')
     num_datas = list(map(len, data_lists))
@@ -106,7 +107,6 @@ def interact_patches(label_list, data_lists,
         else:
             raise NotImplementedError('sortby = %r' % (sortby,))
     else:
-        import vtool as vt
         unique_labels, groupxs = vt.group_indices(label_list)
         idx_lists = groupxs[::-1]
 
@@ -188,7 +188,7 @@ def make_InteractSiamPatches(*args, **kwargs):
             else:
                 self.current_pagenum = pagenum
             self.prepare_page()
-            print('pagenum = %r' % (pagenum,))
+            # print('pagenum = %r' % (pagenum,))
             next_pnum = pt.make_pnum_nextgen(1, self.nCols)
             self.multiindicies = self.multi_chunked_indicies[self.current_pagenum]
             self.offset_lists = []
@@ -310,6 +310,149 @@ def make_InteractSiamPatches(*args, **kwargs):
     return InteractSiamPatches(*args, **kwargs)
 
 
+def make_InteractClasses(*args, **kwargs):
+    import plottool as pt
+    from plottool import abstract_interaction
+
+    @ut.reloadable_class
+    class InteractAnnotClasses(abstract_interaction.AbstractInteraction):
+        def __init__(inter, ibs, config, df_chunks, nCols, metadata=None, **kwargs):
+            inter.df_chunks = df_chunks
+            inter.ibs = ibs
+            inter.nCols = nCols
+            inter.config = config
+            inter._init_lists()
+            inter.metadata = metadata
+            super(InteractAnnotClasses, inter).__init__(**kwargs)
+
+        def _init_lists(inter):
+            inter.offset_lists = []
+            inter.sizes_lists = []
+            inter.sf_lists = []
+            inter.ax_list = []
+            inter.metadata_lists = []
+            inter.data_lists = []
+
+        def _show_page(inter):
+            from ibeis_cnn import draw_results
+            inter._ensure_running()
+            inter._init_lists()
+
+            pnum_ = pt.make_pnum_nextgen(nCols=inter.nCols,
+                                         nSubplots=len(inter.df_chunks))
+            for df_chunk in inter.df_chunks:
+                ibs = inter.ibs
+                config = inter.config
+                annots_chunk = ibs.annots(df_chunk['aid'].values,
+                                          config=config)
+                #data_lists = [(np.array(annots_chunk.hog_img) * 255).astype(np.uint8),
+                #              annots_chunk.chips]
+                #data_lists = [annots_chunk.chips]
+                data_lists = [ibs.get_image_thumbnail(annots_chunk.gids,
+                                                      draw_annots=True)]
+                label_list = (1 - df_chunk['failed']).values
+                flat_metadata = df_chunk.to_dict(orient='list')
+                flat_metadata['tags'] = annots_chunk.case_tags
+                tup = draw_results.get_patch_chunk(
+                    data_lists, label_list, flat_metadata,
+                    draw_meta=['decision', 'tags'], vert=False,
+                    fontScale=4.0)
+                inter.metadata_lists.append(flat_metadata)
+                img, offset_list, sf_list, sizes_list = tup
+                inter.offset_lists.append(offset_list)
+                inter.sf_lists.append(sf_list)
+                inter.sizes_lists.append(sizes_list)
+                inter.data_lists.append(data_lists)
+                fig, ax = pt.imshow(img, fnum=inter.fnum, pnum=pnum_())
+                ax.set_title(getattr(df_chunk, 'nice', 'no-title'))
+                inter.ax_list.append(ax)
+            pt.adjust_subplots(top=.95, left=0, right=1, bottom=.00,
+                                hspace=.1, wspace=0)
+
+        def on_click_inside(inter, event, ax):
+            print('click inside')
+
+            def get_label_index(inter, event, ax):
+                """ generalize """
+                x, y = event.xdata, event.ydata
+                def find_offset_index(offsets, sizes, x, y):
+                    x1_pts = offsets.T[0]
+                    x2_pts = offsets.T[0] + sizes.T[0]
+                    y1_pts = offsets.T[1]
+                    y2_pts = offsets.T[1] + sizes.T[1]
+
+                    in_bounds = np.logical_and.reduce([
+                        x >= x1_pts, x < x2_pts,
+                        y >= y1_pts, y < y2_pts
+                    ])
+                    valid_idxs = np.where(in_bounds)[0]
+                    #print('valid_idxs = %r' % (valid_idxs,))
+                    assert len(valid_idxs) == 1
+                    return valid_idxs[0]
+                try:
+                    # Find plot axes index
+                    px = inter.ax_list.index(ax)
+                except ValueError:
+                    label_index = None
+                else:
+                    offsets = np.array(inter.offset_lists[px])
+                    sfs = np.array(inter.sf_lists[px])
+                    orig_sizes = np.array(inter.sizes_lists[px])
+                    sizes = np.array(orig_sizes) * sfs
+                    data_list = inter.data_lists[px]
+                    data_per_label = len(data_list)
+                    #num_rows = data_per_label
+                    num_cols = (len(offsets) // data_per_label)
+                    _subindex = find_offset_index(offsets, sizes, x, y)
+                    row_index = _subindex // num_cols
+                    col_index = _subindex % num_cols
+                    #label_index = inter.multiindicies[plot_index][row_index]
+                    print('_subindex = %r' % (_subindex,))
+                    print('row_index = %r' % (row_index,))
+                    print('col_index = %r' % (col_index,))
+                    print('px = %r' % (px,))
+                    #print('label_index = %r' % (label_index,))
+                    label_index = (px, col_index)
+                return label_index
+
+            options = []
+
+            label_index = get_label_index(inter, event, ax)
+
+            if label_index is not None:
+                px, col_index = label_index
+                flat_metadata = inter.metadata_lists[px]
+
+                if 'aid' in flat_metadata:
+                    from ibeis.viz.interact import interact_chip
+                    ibs = inter.ibs
+                    aid = flat_metadata['aid'][col_index]
+                    if ibs is not None:
+                        options += interact_chip.build_annot_context_options(
+                            ibs, aid)
+                        print('Annot Info:' + ut.repr3(
+                            inter.ibs.get_annot_info([aid], case_tags=True)))
+
+            if event.dblclick:
+                print('Doubleclick')
+                import guitool as gt
+                option_dict = gt.make_option_dict(options, shortcuts=False)
+                #print('options = %s' % (ut.repr3(options),))
+                #print('option_dict = %s' % (ut.repr3(option_dict),))
+                func = option_dict.get('Interact image', None)
+                if func is not None:
+                    func()
+
+            if event.button == 3:
+                #options = inter.context_option_funcs[index]()
+                options += [
+                    ('Present', pt.present),
+                ]
+                inter.show_popup_menu(options, event)
+
+    return InteractAnnotClasses(*args, **kwargs)
+
+
 def get_sample_pairimg_from_X(Xb, index_list):
     warped_patch1_list, warped_patch2_list = Xb[::2], Xb[1::2]
     label_list = None
@@ -385,15 +528,17 @@ def get_patch_multichunks(data_lists, label_list, flat_metadata, multiindicies):
     sfs_list = sfs_list[:-1]
 
     import vtool as vt
-    stacked_img, stacked_offsets, stacked_sfs = vt.stack_multi_images2(multiimg_list, offsets_list, sfs_list, vert=False)
+    tup = vt.stack_multi_images2(multiimg_list, offsets_list, sfs_list, vert=False)
+    stacked_img, stacked_offsets, stacked_sfs = tup
     return stacked_img, stacked_offsets, stacked_sfs
 
     # TODO; use offset_list for interaction
 
 
 def get_patch_chunk(data_lists, label_list,
-                    flat_metadata, indicies, border_color=(0, 0, 0),
-                    draw_meta=True):
+                    flat_metadata, indicies=None, border_color=(0, 0, 0),
+                    draw_meta=True,
+                    vert=True, fontScale=2.5):
     """
     indicies = chunked_indicies[0]
 
@@ -426,6 +571,8 @@ def get_patch_chunk(data_lists, label_list,
         >>> ut.show_if_requested()
         (1920, 384, 3)
     """
+    if indicies is None:
+        indicies = list(range(len(label_list)))
     #warped_patch1_list, warped_patch2_list = data_lists
     data_per_label = len(data_lists)
     import utool as ut
@@ -440,20 +587,19 @@ def get_patch_chunk(data_lists, label_list,
         flat_metadata_subset = dict([(key, ut.take(vals, indicies))
                                      for key, vals in six.iteritems(flat_metadata)])
 
-    import utool
-    with utool.embed_on_exception_context:
-
-        patch_list_subsets_ = [
-            [vt.ensure_3channel(patch)
-             for patch in ut.take(warped_patch_list, indicies)]
-            for warped_patch_list in data_lists
-        ]
+    #import utool
+    #with utool.embed_on_exception_context:
+    patch_list_subsets_ = [
+        [vt.ensure_3channel(patch)
+         for patch in ut.take(warped_patch_list, indicies)]
+        for warped_patch_list in data_lists
+    ]
 
     thickness = 2
     if label_list is not None:
         # draw label border
         label_list_subset = ut.take(label_list, indicies)
-        if data_per_label == 2:
+        if data_per_label in [1, 2]:
             #truecol  = tuple(pt.color_funcs.to_base255(pt.TRUE_GREEN)[0:3])[::-1]
             truecol  = tuple(pt.color_funcs.to_base255(pt.TRUE_BLUE)[0:3])[::-1]
             falsecol = tuple(pt.color_funcs.to_base255(pt.FALSE_RED)[0:3])[::-1]
@@ -464,6 +610,10 @@ def get_patch_chunk(data_lists, label_list,
             unique_colors = [tuple(pt.color_funcs.to_base255(color)[0:3])[::-1]
                              for color in pt.distinct_colors(len(unique_labels))]
             colorfn = dict(zip(unique_labels, unique_colors))
+
+        num_labels = len(np.unique(label_list))
+        if num_labels > 3:
+            colorfn = pt.distinct_colors(num_labels)
 
         patch_list_subsets = [
             [vt.draw_border(patch, color=colorfn[label], thickness=thickness, out=patch)
@@ -489,7 +639,7 @@ def get_patch_chunk(data_lists, label_list,
     # stack into single image
     stack_kw = dict(modifysize=False, return_offset=True, return_sf=True)
     stacktup_list = [
-        vt.stack_image_list(patch_list, vert=True, **stack_kw)
+        vt.stack_image_list(patch_list, vert=vert, **stack_kw)
         for patch_list in patch_lists
     ]
 
@@ -497,23 +647,30 @@ def get_patch_chunk(data_lists, label_list,
     offsets_list = ut.get_list_column(stacktup_list, 1)
     sfs_list = ut.get_list_column(stacktup_list, 2)
 
-    stacked_patches, offset_list, sf_list = vt.stack_multi_images2(multiimg_list, offsets_list, sfs_list, vert=False, modifysize=False)
+    stacked_patches, offset_list, sf_list = vt.stack_multi_images2(multiimg_list, offsets_list, sfs_list, vert=not vert, modifysize=False)
 
     if False:
         stacked_patches_, offset_list_, sf_list_ = vt.stack_multi_images(
             multiimg_list[0], multiimg_list[1], offsets_list[0], sfs_list[0], offsets_list[0], sfs_list[1],
-            vert=False, modifysize=False)
+            vert=not vert, modifysize=False)
         #stacked_orig_sizes = patchsize1_list + patchsize2_list
 
     # Draw scores
     patch_texts = None
-    if draw_meta:
+    if draw_meta is True:
         if 'fs' in flat_metadata_subset:
             scores = flat_metadata_subset['fs']
             patch_texts = ['%.3f' % s for s in scores]
             #right_offsets = offset_list[len(offset_list) // 2:]
         if 'text' in flat_metadata_subset:
             patch_texts = flat_metadata_subset['text']
+    elif isinstance(draw_meta, list):
+        requested_text = []
+        for key in draw_meta:
+            if key in flat_metadata_subset:
+                col_text = [ut.repr2(v, precision=3) for v in flat_metadata_subset[key]]
+                requested_text.append(col_text)
+        patch_texts = [' '.join(t) for t in zip(*requested_text)]
 
     if patch_texts is not None:
         scale_up = 3
@@ -538,7 +695,7 @@ def get_patch_chunk(data_lists, label_list,
             org = tuple(text_bottom_left.astype(np.int32).tolist())
             #fontFace = cv2.FONT_HERSHEY_COMPLEX_SMALL
             fontFace = cv2.FONT_HERSHEY_PLAIN
-            fontkw = dict(bottomLeftOrigin=False, fontScale=2.5, fontFace=fontFace)
+            fontkw = dict(bottomLeftOrigin=False, fontScale=fontScale, fontFace=fontFace)
             # Bordered text
             vt.draw_text(img, text, org, thickness=6, textcolor_rgb=textcolor_rgb1, **fontkw)
             vt.draw_text(img, text, org, thickness=2, textcolor_rgb=textcolor_rgb2, **fontkw)
