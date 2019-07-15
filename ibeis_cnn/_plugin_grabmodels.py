@@ -57,6 +57,14 @@ MODEL_URLS = {
     'background_manta'                         : 'background.manta_ray_giant.pkl',
     'background_skunk_spotted'                 : 'background.skunk_spotted.pkl',
 
+    'background_seadragon_leafy_v1'            : 'background.seadragon_leafy.v1.pkl',
+    'background_seadragon_weedy_v1'            : 'background.seadragon_weedy.v1.pkl',
+    'background_seadragon_leafy_head_v1'       : 'background.seadragon_leafy+head.v1.pkl',
+    'background_seadragon_weedy_head_v1'       : 'background.seadragon_weedy+head.v1.pkl',
+
+    'background_skunk_spotted'                 : 'background.skunk_spotted.pkl',
+    'background_skunk_spotted'                 : 'background.skunk_spotted.pkl',
+
     'background_candidacy_giraffe_masai'       : 'background.candidacy.giraffe_masai.pkl',
     'background_candidacy_giraffe_reticulated' : 'background.candidacy.giraffe_reticulated.pkl',
     'background_candidacy_turtle_sea'          : 'background.candidacy.turtle_sea.pkl',
