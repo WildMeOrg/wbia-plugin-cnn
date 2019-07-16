@@ -734,6 +734,13 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_seadragon_weedy_head_v1', redownload=False)
         canvas_key = 1
+    elif species in ['turtle_green', 'turtle_green+head', 'turtle_hawksbill', 'turtle_hawksbill+head']:
+        LEGACY = False
+        species = 'turtle_sea'
+        confidence_thresh = 0.2
+        model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
+        weights_path = grabmodels.ensure_model('background_candidacy_turtle_sea', redownload=False)
+        canvas_key = 1
     else:
         raise ValueError('species %r key does not have a trained model' % (species, ))
 
