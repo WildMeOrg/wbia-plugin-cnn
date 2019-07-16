@@ -2565,6 +2565,7 @@ def get_cnn_labeler_training_images_pytorch(ibs, dest_path=None, image_size=224,
                                             purge=True, strict=True,
                                             skip_rate=0.0,
                                             valid_rate=0.2,
+                                            use_axis_aligned_chips=False,
                                             train_gid_set=None):
     from os.path import join, expanduser, exists
     import random
@@ -2726,6 +2727,7 @@ def get_cnn_labeler_training_images_pytorch(ibs, dest_path=None, image_size=224,
     config = {
         'dim_size': (image_size, image_size),
         'resize_dim': 'wh',
+        'axis_aligned': use_axis_aligned_chips,
     }
     chip_list_ = ibs.depc_annot.get_property('chips', aid_list_, 'img', config=config)
 
