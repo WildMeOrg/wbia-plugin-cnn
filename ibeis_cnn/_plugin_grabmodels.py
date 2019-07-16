@@ -56,14 +56,17 @@ MODEL_URLS = {
     'background_jaguar_v2'                     : 'background.jaguar.v2.pkl',
     'background_manta'                         : 'background.manta_ray_giant.pkl',
     'background_skunk_spotted'                 : 'background.skunk_spotted.pkl',
+    'background_right_whale_head_v0'           : 'background.right_whale_head.v0.pkl',
 
     'background_seadragon_leafy_v1'            : 'background.seadragon_leafy.v1.pkl',
     'background_seadragon_weedy_v1'            : 'background.seadragon_weedy.v1.pkl',
     'background_seadragon_leafy_head_v1'       : 'background.seadragon_leafy+head.v1.pkl',
     'background_seadragon_weedy_head_v1'       : 'background.seadragon_weedy+head.v1.pkl',
 
-    'background_skunk_spotted'                 : 'background.skunk_spotted.pkl',
-    'background_skunk_spotted'                 : 'background.skunk_spotted.pkl',
+    'backgorund_turtle_green_v1'               : 'background.turtle_green.v1.pkl',
+    'backgorund_turtle_hawksbill_v1'           : 'background.turtle_hawksbill.v1.pkl',
+    'backgorund_turtle_green_head_v1'          : 'background.turtle_green+head.v1.pkl',
+    'backgorund_turtle_hawksbill_head_v1'      : 'background.turtle_hawksbill+head.v1.pkl',
 
     'background_candidacy_giraffe_masai'       : 'background.candidacy.giraffe_masai.pkl',
     'background_candidacy_giraffe_reticulated' : 'background.candidacy.giraffe_reticulated.pkl',

@@ -706,6 +706,13 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_skunk_spotted', redownload=False)
         canvas_key = 1
+    elif species in ['right_whale_head']:
+        LEGACY = False
+        species = 'right_whale_head'
+        confidence_thresh = 0.2
+        model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
+        weights_path = grabmodels.ensure_model('background_right_whale_head_v0', redownload=False)
+        canvas_key = 1
     elif species in ['seadragon_leafy']:
         LEGACY = False
         species = 'seadragon_leafy'
@@ -740,6 +747,34 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_candidacy_turtle_sea', redownload=False)
+        canvas_key = 1
+    elif species in ['turtle_green']:
+        LEGACY = False
+        species = 'turtle_green'
+        confidence_thresh = 0.2
+        model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
+        weights_path = grabmodels.ensure_model('background_turtle_green_v1', redownload=False)
+        canvas_key = 1
+    elif species in ['turtle_hawksbill']:
+        LEGACY = False
+        species = 'turtle_hawksbill'
+        confidence_thresh = 0.2
+        model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
+        weights_path = grabmodels.ensure_model('background_turtle_hawksbill_v1', redownload=False)
+        canvas_key = 1
+    elif species in ['turtle_green+head']:
+        LEGACY = False
+        species = 'turtle_green+head'
+        confidence_thresh = 0.2
+        model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
+        weights_path = grabmodels.ensure_model('background_turtle_green_head_v1', redownload=False)
+        canvas_key = 1
+    elif species in ['turtle_hawksbill+head']:
+        LEGACY = False
+        species = 'turtle_hawksbill+head'
+        confidence_thresh = 0.2
+        model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
+        weights_path = grabmodels.ensure_model('background_turtle_hawksbill_head_v1', redownload=False)
         canvas_key = 1
     else:
         raise ValueError('species %r key does not have a trained model' % (species, ))
