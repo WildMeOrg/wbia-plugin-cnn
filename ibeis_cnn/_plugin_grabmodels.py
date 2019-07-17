@@ -63,10 +63,10 @@ MODEL_URLS = {
     'background_seadragon_leafy_head_v1'       : 'background.seadragon_leafy+head.v1.pkl',
     'background_seadragon_weedy_head_v1'       : 'background.seadragon_weedy+head.v1.pkl',
 
-    'backgorund_turtle_green_v1'               : 'background.turtle_green.v1.pkl',
-    'backgorund_turtle_hawksbill_v1'           : 'background.turtle_hawksbill.v1.pkl',
-    'backgorund_turtle_green_head_v1'          : 'background.turtle_green+head.v1.pkl',
-    'backgorund_turtle_hawksbill_head_v1'      : 'background.turtle_hawksbill+head.v1.pkl',
+    'background_turtle_green_v1'               : 'background.turtle_green.v1.pkl',
+    'background_turtle_hawksbill_v1'           : 'background.turtle_hawksbill.v1.pkl',
+    'background_turtle_green_head_v1'          : 'background.turtle_green+head.v1.pkl',
+    'background_turtle_hawksbill_head_v1'      : 'background.turtle_hawksbill+head.v1.pkl',
 
     'background_candidacy_giraffe_masai'       : 'background.candidacy.giraffe_masai.pkl',
     'background_candidacy_giraffe_reticulated' : 'background.candidacy.giraffe_reticulated.pkl',
