@@ -58,6 +58,9 @@ MODEL_URLS = {
     'background_skunk_spotted'                 : 'background.skunk_spotted.pkl',
     'background_right_whale_head_v0'           : 'background.right_whale_head.v0.pkl',
 
+    'background_dolphin_spotted'               : 'background.dolphin_spotted.pkl',
+    'background_dolphin_spotted_fin_dorsal'    : 'background.dolphin_spotted+fin_dorsal.pkl',
+
     'background_seadragon_leafy_v1'            : 'background.seadragon_leafy.v1.pkl',
     'background_seadragon_weedy_v1'            : 'background.seadragon_weedy.v1.pkl',
     'background_seadragon_leafy_head_v1'       : 'background.seadragon_leafy+head.v1.pkl',
