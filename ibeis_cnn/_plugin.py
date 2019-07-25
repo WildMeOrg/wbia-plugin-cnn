@@ -666,7 +666,7 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_giraffe_masai', redownload=False)
         canvas_key = species
-    elif species in ['whale_fluke', 'whale_humpback']:
+    elif species in ['whale_fluke', 'whale_humpback', 'megaptera_novaeangliae', 'physeter_macrocephalus']:
         species = 'whale_fluke'
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_whale_fluke', redownload=False)
@@ -706,7 +706,7 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_skunk_spotted', redownload=False)
         canvas_key = 1
-    elif species in ['right_whale_head']:
+    elif species in ['right_whale_head', 'eubalaena_australis']:
         LEGACY = False
         species = 'right_whale_head'
         confidence_thresh = 0.2
