@@ -776,14 +776,14 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_turtle_hawksbill_head_v1', redownload=False)
         canvas_key = 1
-    elif species in ['dolphin_spotted']:
+    elif species in ['dolphin_spotted', 'stenella_frontalis']:
         LEGACY = False
         species = 'dolphin_spotted'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_dolphin_spotted', redownload=False)
         canvas_key = 1
-    elif species in ['dolphin_spotted+fin_dorsal']:
+    elif species in ['dolphin_spotted+fin_dorsal', 'stenella_frontalis+dorsal']:
         LEGACY = False
         species = 'dolphin_spotted+fin_dorsal'
         confidence_thresh = 0.2
