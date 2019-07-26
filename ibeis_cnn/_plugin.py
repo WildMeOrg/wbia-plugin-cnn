@@ -667,10 +667,16 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         weights_path = grabmodels.ensure_model('background_giraffe_masai', redownload=False)
         canvas_key = species
     elif species in ['whale_fluke', 'whale_humpback', 'megaptera_novaeangliae', 'physeter_macrocephalus']:
+        LEGACY = False
         species = 'whale_fluke'
+        confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
-        weights_path = grabmodels.ensure_model('background_whale_fluke', redownload=False)
-        canvas_key = species
+        weights_path = grabmodels.ensure_model('background_candidacy_whale_fluke', redownload=False)
+        canvas_key = 1
+        # species = 'whale_fluke'
+        # model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
+        # weights_path = grabmodels.ensure_model('background_whale_fluke', redownload=False)
+        # canvas_key = species
     elif species in ['lynx', 'lynx_pardinus']:
         LEGACY = False
         species = 'lynx'
