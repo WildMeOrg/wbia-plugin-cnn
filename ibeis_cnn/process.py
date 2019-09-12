@@ -9,6 +9,8 @@ import utool as ut
 import cv2
 import numpy as np
 
+(print, rrr, profile) = ut.inject2(__name__)
+
 
 def process_image_directory(project_name, size, reset=True):
     # Raw folders

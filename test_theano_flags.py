@@ -1,4 +1,7 @@
+from __future__ import absolute_import, division, print_function, unicode_literals
 import utool as ut
+
+(print, rrr, profile) = ut.inject2(__name__)
 
 
 def parse_theano_flags():

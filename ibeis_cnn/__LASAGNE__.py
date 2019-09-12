@@ -1,5 +1,9 @@
-# flake8: noqa
+from __future__ import absolute_import, division, print_function, unicode_literals
+import utool as ut
 from ibeis_cnn import __THEANO__ as theano
+
+(print, rrr, profile) = ut.inject2(__name__)
+
 try:
     from lasagne import *  # NOQA
 except ImportError as ex:
@@ -8,8 +12,7 @@ except ImportError as ex:
     print('theano.__version__ = %r' % (theano.__version__,))
     print('theano.__file__ = %r' % (theano.__file__,))
     raise
+
 from lasagne import layers
 from lasagne import init
 from lasagne import nonlinearities
-import utool as ut
-ut.noinject(__name__, '[lasagne]]')

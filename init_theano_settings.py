@@ -5,9 +5,12 @@ References:
 Check Settings:
     python -c 'import theano; print theano.config' | less
 """
+from __future__ import absolute_import, division, print_function, unicode_literals
 import utool as ut
 import os
 from os.path import join
+
+(print, rrr, profile) = ut.inject2(__name__)
 
 """
 CommandLine:
