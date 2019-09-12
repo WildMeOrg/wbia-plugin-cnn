@@ -3,6 +3,8 @@ from six.moves import cPickle as pickle
 from ibeis_cnn import abstract_models
 from ibeis_cnn.abstract_models import *
 
+(print, rrr, profile) = ut.inject2(__name__)
+
 
 def check_external_training_paths():
     """

@@ -3,6 +3,9 @@ from __future__ import absolute_import, division, print_function
 import six
 from utool import util_setup
 from setuptools import setup
+import utool as ut
+
+(print, rrr, profile) = ut.inject2(__name__)
 
 
 CHMOD_PATTERNS = [

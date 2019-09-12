@@ -1,8 +1,10 @@
-# flake8: noqa
+from __future__ import absolute_import, division, print_function, unicode_literals
 import sys
 import os
 import utool as ut
-ut.noinject(__name__, '[theano]]')
+
+(print, rrr, profile) = ut.inject2(__name__)
+
 
 DEVICE = ut.get_argval('--device', type_=str, default=None)
 
@@ -17,6 +19,7 @@ def parse_theano_flags():
     theano_flags_itemstrs = theano_flags_str.split(',')
     theano_flags = ut.odict([itemstr.split('=') for itemstr in theano_flags_itemstrs if len(itemstr) > 0])
     return theano_flags
+
 
 def write_theano_flags(theano_flags):
     #print('theano_flags = %r' % (theano_flags,))

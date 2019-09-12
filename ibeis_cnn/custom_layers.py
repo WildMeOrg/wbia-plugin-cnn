@@ -8,7 +8,8 @@ from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
 from ibeis_cnn import __LASAGNE__ as lasagne
 from ibeis_cnn import utils
 import utool as ut
-ut.noinject('custom_layers')
+
+(print, rrr, profile) = ut.inject2(__name__)
 
 
 FORCE_CPU = False  # ut.get_argflag('--force-cpu')

@@ -11,6 +11,9 @@ import theano
 import theano.tensor as T
 import numpy
 import time
+import utool as ut
+
+(print, rrr, profile) = ut.inject2(__name__)
 
 
 def test_theano():

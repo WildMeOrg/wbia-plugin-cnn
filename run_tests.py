@@ -4,6 +4,8 @@ from __future__ import absolute_import, division, print_function
 import sys
 import utool as ut
 
+(print, rrr, profile) = ut.inject2(__name__)
+
 
 def run_tests():
     # Build module list and run tests

@@ -5,7 +5,8 @@ import utool as ut
 from ibeis_cnn.__LASAGNE__ import layers
 from ibeis_cnn.__THEANO__ import tensor as T
 from ibeis_cnn import __THEANO__ as theano
-ut.noinject('lasange_ext')
+
+(print, rrr, profile) = ut.inject2(__name__)
 
 
 def l1(layer, include_biases=False):
