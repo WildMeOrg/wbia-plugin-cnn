@@ -1244,7 +1244,7 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
 
     if shuffle:
         train_gid_set = list(train_gid_set)
-        train_gid_set = random.shuffle(train_gid_set)
+        random.shuffle(train_gid_set)
 
     aids_list = ibs.get_image_aids(train_gid_set)
     if tiles:
