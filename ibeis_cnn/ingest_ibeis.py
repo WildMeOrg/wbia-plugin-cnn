@@ -1184,6 +1184,7 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
                                      tiles=False,
                                      inside_boundary=True,
                                      purge=False,
+                                     shuffle=True,
                                      supercharge_negative_multiplier=2.0,
                                      undercharge_negative_multiplier=0.5):
     """
@@ -1241,6 +1242,10 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
     if train_gid_set is None:
         train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
 
+    if shuffle:
+        train_gid_set = list(train_gid_set)
+        train_gid_set = random.shuffle(train_gid_set)
+
     aids_list = ibs.get_image_aids(train_gid_set)
     if tiles:
         bboxes_list = [
@@ -1291,7 +1296,7 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
                     'turtle_oliveridley',
                     'turtle_oliveridley+head',
                     'turtle_sea',
-                    'turtle_sea+head'
+                    'turtle_sea+head',
                 ]
                 if species not in turtle_sea_species_list:
                     print('Skipping aid %r (bad species: %s)' % (aid, target_species, ))
