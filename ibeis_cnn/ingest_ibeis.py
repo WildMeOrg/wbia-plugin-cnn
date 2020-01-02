@@ -1299,10 +1299,10 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
                     'turtle_sea+head',
                 ]
                 if species not in turtle_sea_species_list:
-                    print('Skipping aid %r (bad species: %s)' % (aid, target_species, ))
+                    print('Skipping aid %r (bad species: %s)' % (aid, species, ))
                     continue
             elif species != target_species:
-                print('Skipping aid %r (bad species: %s)' % (aid, target_species, ))
+                print('Skipping aid %r (bad species: %s)' % (aid, species, ))
                 continue
 
             if aid is not None:
