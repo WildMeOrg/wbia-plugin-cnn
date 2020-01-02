@@ -1283,11 +1283,17 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
             negatives = 0
 
             if target_species == 'turtle_sea':
-                if species not in ['turtle_green', 'turtle_hawksbill', 'turtle_oliveridley', 'turtle_sea']:
-                    print('Skipping aid %r (bad species: %s)' % (aid, target_species, ))
-                    continue
-            elif target_species == 'turtle_sea+head':
-                if species not in ['turtle_green+head', 'turtle_hawksbill+head', 'turtle_oliveridley+head', 'turtle_sea+head']:
+                turtle_sea_species_list = [
+                    'turtle_green',
+                    'turtle_green+head',
+                    'turtle_hawksbill',
+                    'turtle_hawksbill+head',
+                    'turtle_oliveridley',
+                    'turtle_oliveridley+head',
+                    'turtle_sea',
+                    'turtle_sea+head'
+                ]
+                if species not in turtle_sea_species_list:
                     print('Skipping aid %r (bad species: %s)' % (aid, target_species, ))
                     continue
             elif species != target_species:
