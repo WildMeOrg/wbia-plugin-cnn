@@ -719,28 +719,28 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_right_whale_head_v0', redownload=False)
         canvas_key = 1
-    elif species in ['seadragon_leafy']:
+    elif species in ['seadragon_leafy', 'phycodurus_eques']:
         LEGACY = False
         species = 'seadragon_leafy'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_seadragon_leafy_v1', redownload=False)
         canvas_key = 1
-    elif species in ['seadragon_weedy']:
+    elif species in ['seadragon_weedy', 'phyllopteryx_taeniolatus']:
         LEGACY = False
         species = 'seadragon_weedy'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_seadragon_weedy_v1', redownload=False)
         canvas_key = 1
-    elif species in ['seadragon_leafy+head']:
+    elif species in ['seadragon_leafy+head', 'phycodurus_eques+head']:
         LEGACY = False
         species = 'seadragon_leafy+head'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_seadragon_leafy_head_v1', redownload=False)
         canvas_key = 1
-    elif species in ['seadragon_weedy+head']:
+    elif species in ['seadragon_weedy+head', 'phyllopteryx_taeniolatus+head']:
         LEGACY = False
         species = 'seadragon_weedy+head'
         confidence_thresh = 0.2
