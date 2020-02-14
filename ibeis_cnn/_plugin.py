@@ -710,7 +710,7 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         species = 'skunk_spotted'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
-        weights_path = grabmodels.ensure_model('background_skunk_spotted', redownload=False)
+        weights_path = grabmodels.ensure_model('background_skunk_spotted_v1', redownload=False)
         canvas_key = 1
     elif species in ['right_whale_head', 'eubalaena_australis', 'eubalaena_glacialis']:
         LEGACY = False
