@@ -55,8 +55,10 @@ MODEL_URLS = {
     'background_jaguar_v1'                     : 'background.jaguar.v1.pkl',
     'background_jaguar_v2'                     : 'background.jaguar.v2.pkl',
     'background_manta'                         : 'background.manta_ray_giant.pkl',
-    'background_skunk_spotted'                 : 'background.skunk_spotted.pkl',
     'background_right_whale_head_v0'           : 'background.right_whale_head.v0.pkl',
+
+    'background_skunk_spotted_v0'              : 'background.skunk_spotted.v0.pkl',
+    'background_skunk_spotted_v1'              : 'background.skunk_spotted.v1.pkl',
 
     'background_dolphin_spotted'               : 'background.dolphin_spotted.pkl',
     'background_dolphin_spotted_fin_dorsal'    : 'background.dolphin_spotted+fin_dorsal.pkl',
