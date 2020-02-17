@@ -7,7 +7,7 @@ import utool as ut
 
 #DEFAULT_CNNMODELS_DIR = ut.get_app_resource_dir('ibeis_cnn', 'pretrained')
 
-MODEL_DOMAIN = 'https://wildbookiarepository.blob.core.windows.net/models/'
+MODEL_DOMAIN = 'https://wildbookiarepository.azureedge.net/models/'
 MODEL_URLS = {
     'classifier_cameratrap_megan_v1'           : 'classifier.cameratrap.megan.v1.pkl',
     'classifier_cameratrap_megan_v2'           : 'classifier.cameratrap.megan.v2.pkl',
