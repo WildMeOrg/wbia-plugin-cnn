@@ -56,7 +56,7 @@ MODEL_URLS = {
     'background_jaguar_v2'                     : 'background.jaguar.v2.pkl',
     'background_manta'                         : 'background.manta_ray_giant.pkl',
     'background_right_whale_head_v0'           : 'background.right_whale_head.v0.pkl',
-    'background_orca'                          : 'background.whale_orca.v0.pkl',
+    'background_orca_v0'                       : 'background.whale_orca.v0.pkl',
 
     'background_skunk_spotted_v0'              : 'background.skunk_spotted.v0.pkl',
     'background_skunk_spotted_v1'              : 'background.skunk_spotted.v1.pkl',
