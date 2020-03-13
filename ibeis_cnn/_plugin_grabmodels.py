@@ -84,6 +84,7 @@ MODEL_URLS = {
     'background_candidacy_zebra_plains'        : 'background.candidacy.zebra_plains.pkl',
 
     'background_iot_v0'                        : 'background.iot.v0.pkl',
+    'background_leopard_v0'                    : 'background.leopard.v0.pkl',
 
     'aoi2_candidacy'                           : 'aoi2.candidacy.pkl',
     'aoi2_ggr2'                                : 'aoi2.ggr2.pkl',

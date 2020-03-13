@@ -637,6 +637,11 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         'whale_fluke',
         'zebra_grevys',
         'zebra_plains',
+        'giraffa_tippelskirchi',
+        'giraffa_camelopardalis_reticulata',
+        'megaptera_novaeangliae',
+        'equus_grevyi',
+        'equus_quagga',
     ]
 
     CANDIDACY = True
@@ -651,18 +656,18 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_candidacy_' + species, redownload=False)
         canvas_key = 1
-    elif species in ['zebra_plains', 'zebra_grevys']:
+    elif species in ['zebra_plains', 'equus_quagga', 'zebra_grevys', 'equus_grevyi']:
         if NEW:
-            assert species in ['zebra_plains', 'zebra_grevys']
+            assert species in ['zebra_plains', 'equus_quagga', 'zebra_grevys', 'equus_grevyi']
             model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape, num_output=3)
             weights_path = grabmodels.ensure_model('background_zebra_plains_grevys', redownload=False)
             canvas_key = species
         else:
-            assert species in ['zebra_plains']
+            assert species in ['zebra_plains', 'equus_quagga']
             model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
             weights_path = grabmodels.ensure_model('background_zebra_plains', redownload=False)
             canvas_key = 'positive'
-    elif species in ['giraffe_masai']:
+    elif species in ['giraffe_masai', 'giraffa_tippelskirchi']:
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_giraffe_masai', redownload=False)
         canvas_key = species
@@ -684,28 +689,28 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_lynx_v3', redownload=False)
         canvas_key = 1
-    elif species in ['cheetah']:
+    elif species in ['cheetah', 'acinonyx_jubatus']:
         LEGACY = False
         species = 'cheetah'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_cheetah', redownload=False)
         canvas_key = 1
-    elif species in ['jaguar']:
+    elif species in ['jaguar', 'panthera_onca']:
         LEGACY = False
         species = 'jaguar'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_jaguar_v2', redownload=False)
         canvas_key = 1
-    elif species in ['manta_ray_giant']:
+    elif species in ['manta_ray_giant', 'manta_birostris']:
         LEGACY = False
         species = 'manta'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_manta', redownload=False)
         canvas_key = 1
-    elif species in ['skunk_spotted']:
+    elif species in ['skunk_spotted', 'spilogale_gracilis']:
         LEGACY = False
         species = 'skunk_spotted'
         confidence_thresh = 0.2
@@ -810,6 +815,13 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_dolphin_spotted', redownload=False)
+        canvas_key = 1
+    elif species in ['leopard', 'panthera_pardus']:
+        LEGACY = False
+        species = 'leopard'
+        confidence_thresh = 0.2
+        model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
+        weights_path = grabmodels.ensure_model('background_leopard_v0', redownload=False)
         canvas_key = 1
     elif species in ['dolphin_spotted+dorsal', 'dolphin_spotted+fin_dorsal', 'stenella_frontalis+dorsal', 'stenella_frontalis+fin_dorsal']:
         LEGACY = False
