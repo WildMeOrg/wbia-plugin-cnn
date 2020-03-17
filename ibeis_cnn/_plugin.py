@@ -651,6 +651,17 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         species_list = candidacy_species_list
         assert species in species_list
 
+        if species in ['giraffa_tippelskirchi']:
+            species = 'giraffe_masai'
+        if species in ['giraffa_camelopardalis_reticulata']:
+            species = 'giraffe_reticulated'
+        if species in ['megaptera_novaeangliae']:
+            species = 'whale_fluke'
+        if species in ['equus_grevyi']:
+            species = 'zebra_grevys'
+        if species in ['equus_quagga']:
+            species = 'zebra_plains'
+
         LEGACY = False
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
