@@ -1301,7 +1301,7 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
                 if species not in turtle_sea_species_list:
                     print('Skipping aid %r (bad species: %s)' % (aid, species, ))
                     continue
-            elif target_species == 'wilddog':
+            elif target_species == 'wild_dog':
                 wild_dog_species_list = [
                     '____',
                     'wild_dog',
