@@ -834,6 +834,13 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_leopard_v0', redownload=False)
         canvas_key = 1
+    elif species in ['wild_dog', 'wild_dog_dark', 'wild_dog_light', 'wild_dog_puppy', 'wild_dog_standard', 'wild_dog_tan', 'lycaon_pictus']:
+        LEGACY = False
+        species = 'wild_dog'
+        confidence_thresh = 0.2
+        model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
+        weights_path = grabmodels.ensure_model('background_wilddog_v0', redownload=False)
+        canvas_key = 1
     elif species in ['dolphin_spotted+dorsal', 'dolphin_spotted+fin_dorsal', 'stenella_frontalis+dorsal', 'stenella_frontalis+fin_dorsal']:
         LEGACY = False
         species = 'dolphin_spotted+fin_dorsal'
