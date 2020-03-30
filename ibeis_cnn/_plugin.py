@@ -807,7 +807,9 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
     #     model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
     #     weights_path = grabmodels.ensure_model('background_turtle_hawksbill_head_v1', redownload=False)
     #     canvas_key = 1
-    elif species in ['turtle_green', 'chelonia_mydas',
+    elif species in ['turtle_sea', 'chelonioidea',
+                     'turtle_sea+head', 'chelonioidea+head',
+                     'turtle_green', 'chelonia_mydas',
                      'turtle_green+head', 'chelonia_mydas+head',
                      'turtle_hawksbill', 'eretmochelys_imbricata',
                      'turtle_hawksbill+head', 'eretmochelys_imbricata+head',
