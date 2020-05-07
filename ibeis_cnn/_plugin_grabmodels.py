@@ -35,7 +35,7 @@ MODEL_URLS = {
     'labeler_v1'                               : 'labeler.v1.pkl',
     'labeler_v3'                               : 'labeler.29.pkl',
     'labeler_candidacy'                        : 'labeler.candidacy.pkl',
-    'labeler_cheetah'                          : 'labeler.cheetah.pkl',
+    'labeler_cheetah_v0'                       : 'labeler.cheetah.v0.pkl',
     'labeler_lynx_v1'                          : 'labeler.lynx.v1.pkl',
     'labeler_lynx_v2'                          : 'labeler.lynx.v2.pkl',
     'labeler_jaguar_v1'                        : 'labeler.jaguar.v1.pkl',
@@ -51,7 +51,8 @@ MODEL_URLS = {
     'background_whale_fluke'                   : 'background.whale_fluke.npy',
     'background_lynx_v2'                       : 'background.lynx.v2.pkl',
     'background_lynx_v3'                       : 'background.lynx.v3.pkl',
-    'background_cheetah'                       : 'background.cheetah.pkl',
+    'background_cheetah_v0'                    : 'background.cheetah.v0.pkl',
+    'background_cheetah_v1'                    : 'background.cheetah.v1.pkl',
     'background_jaguar_v1'                     : 'background.jaguar.v1.pkl',
     'background_jaguar_v2'                     : 'background.jaguar.v2.pkl',
     'background_manta'                         : 'background.manta_ray_giant.pkl',
@@ -82,6 +83,8 @@ MODEL_URLS = {
     'background_candidacy_whale_fluke'         : 'background.candidacy.whale_fluke.pkl',
     'background_candidacy_zebra_grevys'        : 'background.candidacy.zebra_grevys.pkl',
     'background_candidacy_zebra_plains'        : 'background.candidacy.zebra_plains.pkl',
+
+    'background_zebra_mountain_v0'             : 'background.zebra_mountain.v0.pkl',
 
     'background_iot_v0'                        : 'background.iot.v0.pkl',
     'background_wilddog_v0'                    : 'background.wild_dog.v0.pkl',
