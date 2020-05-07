@@ -456,7 +456,7 @@ class _ModelFitter(object):
 
         try:
             model._validate_input(X_train, y_train)
-        except:
+        except Exception:
             print('[WARNING] Input validation failed...')
 
         X_learn, y_learn, X_valid, y_valid = model._ensure_learnval_split(
@@ -964,12 +964,12 @@ class _ModelFitter(object):
 
         try:
             model.dump_cases(X_learn, y_learn, 'learn')
-        except:
+        except Exception:
             print('WARNING: DUMP CASES HAS FAILED')
             pass
         try:
             model.dump_cases(X_valid, y_valid, 'valid')
-        except:
+        except Exception:
             print('WARNING: DUMP CASES HAS FAILED')
             pass
         if False:
