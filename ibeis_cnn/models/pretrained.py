@@ -75,7 +75,7 @@ class PretrainedNetwork(object):
         try:
             b = self.get_pretrained_layer(layer_index + 1)
             assert W.shape[0] == b.shape[0]
-        except:
+        except Exception:
             b = None
         print(W.shape)
         print(b.shape)
