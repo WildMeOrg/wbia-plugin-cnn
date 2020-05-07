@@ -377,7 +377,7 @@ def generate_chip_label_list(ibs, chip_list, nInput=None,
     elif labeler_weight_filepath in ['v1']:
         weights_path = grabmodels.ensure_model('labeler_v1', redownload=False)
     elif labeler_weight_filepath in ['cheetah']:
-        weights_path = grabmodels.ensure_model('labeler_cheetah', redownload=False)
+        weights_path = grabmodels.ensure_model('labeler_cheetah_v0', redownload=False)
     elif labeler_weight_filepath in ['lynx', 'lynx_pardinus']:
         weights_path = grabmodels.ensure_model('labeler_lynx_v2', redownload=False)
     elif labeler_weight_filepath in ['candidacy']:
@@ -678,10 +678,17 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
             model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
             weights_path = grabmodels.ensure_model('background_zebra_plains', redownload=False)
             canvas_key = 'positive'
+    elif species in ['zebra_mountain', 'equus_zebra']:
+        LEGACY = False
+        species = 'zebra_mountain'  # Misspelled from zebra_mountain during training
+        confidence_thresh = 0.2
+        model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
+        weights_path = grabmodels.ensure_model('background_zebra_mountain_v0', redownload=False)
+        canvas_key = 1
     elif species in ['giraffe_masai', 'giraffa_tippelskirchi']:
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_giraffe_masai', redownload=False)
-        canvas_key = species
+        canvas_key = 'giraffe_masai'
     elif species in ['whale_fluke', 'whale_humpback', 'megaptera_novaeangliae', 'physeter_macrocephalus']:
         LEGACY = False
         species = 'whale_fluke'
@@ -705,7 +712,7 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         species = 'cheetah'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
-        weights_path = grabmodels.ensure_model('background_cheetah', redownload=False)
+        weights_path = grabmodels.ensure_model('background_cheetah_v1', redownload=False)
         canvas_key = 1
     elif species in ['jaguar', 'panthera_onca']:
         LEGACY = False
