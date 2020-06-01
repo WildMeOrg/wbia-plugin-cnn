@@ -8,7 +8,7 @@ import cv2
 import itertools
 from six.moves import zip, map, range
 from functools import partial
-import dtool
+from ibeis import dtool
 from ibeis_cnn import draw_results  # NOQA
 print, rrr, profile = ut.inject2(__name__)
 
