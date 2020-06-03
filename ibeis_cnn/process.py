@@ -3,7 +3,7 @@
 
 """
 from __future__ import absolute_import, division, print_function
-from ibeis.detecttools.directory import Directory
+from wbia.detecttools.directory import Directory
 from os.path import join, abspath, exists, basename
 import utool as ut
 import cv2

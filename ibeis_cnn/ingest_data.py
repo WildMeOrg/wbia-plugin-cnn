@@ -55,7 +55,7 @@ def view_training_directories():
         >>> result = view_training_directories()
         >>> print(result)
     """
-    ut.vd(ingest_ibeis.get_juction_dpath())
+    ut.vd(ingest_wbia.get_juction_dpath())
 
 
 def merge_datasets(dataset_list):
@@ -429,7 +429,7 @@ def get_ibeis_patch_siam_dataset(**kwargs):
         >>> # ENABLE_DOCTEST
         >>> from ibeis_cnn.ingest_data import *  # NOQA
         >>> from ibeis_cnn import draw_results
-        >>> import ibeis
+        >>> import wbia
         >>> kwargs = {}  # ut.argparse_dict({'max_examples': None, 'num_top': 3})
         >>> dataset = get_ibeis_patch_siam_dataset(**kwargs)
         >>> ut.quit_if_noshow()
@@ -454,7 +454,7 @@ def get_ibeis_patch_siam_dataset(**kwargs):
 
     datakw.update(kwargs)
 
-    #ut.get_func_kwargs(ingest_ibeis.get_aidpairs_and_matches)
+    #ut.get_func_kwargs(ingest_wbia.get_aidpairs_and_matches)
 
     if datakw['acfg_name'] is not None:
         del datakw['controlled']
@@ -464,9 +464,9 @@ def get_ibeis_patch_siam_dataset(**kwargs):
         del datakw['num_top']
 
     with ut.Indenter('[LOAD IBEIS DB]'):
-        import ibeis
+        import wbia
         dbname = ut.get_argval('--db', default='PZ_MTEST')
-        ibs = ibeis.opendb(dbname=dbname, defaultdb='PZ_MTEST')
+        ibs = wbia.opendb(dbname=dbname, defaultdb='PZ_MTEST')
 
     # Nets dir is the root dir for all training on this data
     training_dpath = ibs.get_neuralnet_dir()
@@ -481,7 +481,7 @@ def get_ibeis_patch_siam_dataset(**kwargs):
             raise Exception('forced cache off')
         # Try and short circut cached loading
         dataset = DataSet.from_alias_key(alias_key)
-        dataset.setprop('ibs', lambda: ibeis.opendb(db=dbname))
+        dataset.setprop('ibs', lambda: wbia.opendb(db=dbname))
         return dataset
     except Exception as ex:
         ut.printex(ex, 'alias definitions have changed. alias_key=%r' %
@@ -490,7 +490,7 @@ def get_ibeis_patch_siam_dataset(**kwargs):
     with ut.Indenter('[BuildDS]'):
         # Get training data pairs
         colorspace = datakw.pop('colorspace')
-        patchmatch_tup = ingest_ibeis.get_aidpairs_and_matches(ibs, **datakw)
+        patchmatch_tup = ingest_wbia.get_aidpairs_and_matches(ibs, **datakw)
         aid1_list, aid2_list, kpts1_m_list, kpts2_m_list, fm_list, metadata_lists = patchmatch_tup
         # Extract and cache the data
         # TODO: metadata
@@ -498,7 +498,7 @@ def get_ibeis_patch_siam_dataset(**kwargs):
             print('exiting due to dry run')
             import sys
             sys.exit(0)
-        tup = ingest_ibeis.cached_patchmetric_training_data_fpaths(
+        tup = ingest_wbia.cached_patchmetric_training_data_fpaths(
             ibs, aid1_list, aid2_list, kpts1_m_list, kpts2_m_list, fm_list,
             metadata_lists, colorspace=colorspace)
         data_fpath, labels_fpath, metadata_fpath, training_dpath, data_shape = tup
@@ -536,14 +536,14 @@ def get_ibeis_part_siam_dataset(**kwargs):
         >>> # ENABLE_DOCTEST
         >>> from ibeis_cnn.ingest_data import *  # NOQA
         >>> from ibeis_cnn import draw_results
-        >>> import ibeis
+        >>> import wbia
         >>> kwargs = {}  # ut.argparse_dict({'max_examples': None, 'num_top': 3})
         >>> dataset = get_ibeis_part_siam_dataset(**kwargs)
         >>> ut.quit_if_noshow()
         >>> dataset.interact(ibs=dataset.getprop('ibs'))
         >>> ut.show_if_requested()
     """
-    import ibeis
+    import wbia
     datakw = ut.argparse_dict(
         {
             'colorspace': 'gray',
@@ -568,14 +568,14 @@ def get_ibeis_part_siam_dataset(**kwargs):
             raise Exception('forced cache off')
         # Try and short circut cached loading
         dataset = DataSet.from_alias_key(alias_key)
-        dataset.setprop('ibs', lambda: ibeis.opendb(db=dbname))
+        dataset.setprop('ibs', lambda: wbia.opendb(db=dbname))
         return dataset
     except Exception as ex:
         ut.printex(ex, 'alias definitions have changed. alias_key=%r' %
                    (alias_key,), iswarning=True)
 
     with ut.Indenter('[LOAD IBEIS DB]'):
-        ibs = ibeis.opendb(db=dbname)
+        ibs = wbia.opendb(db=dbname)
 
     # Nets dir is the root dir for all training on this data
     training_dpath = ibs.get_neuralnet_dir()
@@ -585,13 +585,13 @@ def get_ibeis_part_siam_dataset(**kwargs):
         # Get training data pairs
         colorspace = datakw.pop('colorspace')
         (aid_pairs, label_list,
-         flat_metadata) = ingest_ibeis.get_aidpairs_partmatch(ibs, **datakw)
+         flat_metadata) = ingest_wbia.get_aidpairs_partmatch(ibs, **datakw)
         # Extract and cache the data, labels, and metadata
         if ut.get_argflag('--dryrun'):
             print('exiting due to dry run')
             import sys
             sys.exit(0)
-        tup = ingest_ibeis.cached_part_match_training_data_fpaths(
+        tup = ingest_wbia.cached_part_match_training_data_fpaths(
             ibs, aid_pairs, label_list, flat_metadata, colorspace=colorspace)
         data_fpath, labels_fpath, metadata_fpath, training_dpath, data_shape = tup
         print('\n[get_ibeis_part_siam_dataset] FINISH\n\n')
