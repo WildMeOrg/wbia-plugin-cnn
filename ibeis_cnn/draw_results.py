@@ -82,7 +82,7 @@ def interact_patches(label_list, data_lists,
         >>> print(result)
     """
     import vtool as vt
-    #from ibeis.viz import viz_helpers as vh
+    #from wbia.viz import viz_helpers as vh
     print('Building patch interaction')
     num_datas = list(map(len, data_lists))
     num_data = num_datas[0]
@@ -283,7 +283,7 @@ def make_InteractSiamPatches(*args, **kwargs):
 
                     if 'aid_pairs' in self.flat_metadata:
                         aid1, aid2 = self.flat_metadata['aid_pairs'][label_index]
-                        from ibeis.gui import inspect_gui
+                        from wbia.gui import inspect_gui
 
                         print(ut.repr3(self.ibs.get_annot_info(
                             [aid1], reference_aid=[aid2], case_tags=True,
@@ -424,7 +424,7 @@ def make_InteractClasses(*args, **kwargs):
                 flat_metadata = inter.metadata_lists[px]
 
                 if 'aid' in flat_metadata:
-                    from ibeis.viz.interact import interact_chip
+                    from wbia.viz.interact import interact_chip
                     ibs = inter.ibs
                     aid = flat_metadata['aid'][col_index]
                     if ibs is not None:

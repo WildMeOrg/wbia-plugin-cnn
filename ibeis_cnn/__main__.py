@@ -14,7 +14,7 @@ def ibeis_cnn_main():
         print('[ibeis_cnn] Importing ibeis_cnn')
         import ibeis_cnn  # NOQA
         print('[ibeis_cnn] Importing ibeis')
-        import ibeis  # NOQA
+        import wbia  # NOQA
         print('[ibeis_cnn] Importing ibeis_cnn._plugin')
         import ibeis_cnn._plugin  # NOQA
         print('[ibeis_cnn] Done importing for __main__')

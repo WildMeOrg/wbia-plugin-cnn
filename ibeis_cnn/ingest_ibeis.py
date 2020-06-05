@@ -8,7 +8,7 @@ import cv2
 import itertools
 from six.moves import zip, map, range
 from functools import partial
-from ibeis import dtool
+from wbia import dtool
 from ibeis_cnn import draw_results  # NOQA
 print, rrr, profile = ut.inject2(__name__)
 
@@ -28,18 +28,18 @@ def get_aidpairs_partmatch(ibs, acfg_name):
     Example:
         >>> # DISABLE_DOCTEST
         >>> from ibeis_cnn.ingest_ibeis import *  # NOQA
-        >>> import ibeis
+        >>> import wbia
         >>> # build test data
-        >>> ibs = ibeis.opendb(defaultdb='PZ_Master1')
-        >>> #ibs = ibeis.opendb(defaultdb='PZ_MTEST')
-        >>> #ibs = ibeis.opendb(defaultdb='PZ_FlankHack')
+        >>> ibs = wbia.opendb(defaultdb='PZ_Master1')
+        >>> #ibs = wbia.opendb(defaultdb='PZ_MTEST')
+        >>> #ibs = wbia.opendb(defaultdb='PZ_FlankHack')
         >>> acfg_name = ut.get_argval(('--aidcfg', '--acfg', '-a'),
         ...                             type_=str,
         ...                             default='ctrl:pername=None,excluderef=False,contributor_contains=FlankHack')
         >>> aid_pairs, label_list, flat_metadata = get_aidpairs_partmatch(ibs, acfg_name)
     """
     print('NEW WAY OF FILTERING')
-    from ibeis.expt import experiment_helpers
+    from wbia.expt import experiment_helpers
     acfg_list, expanded_aids_list = experiment_helpers.get_annotcfg_list(
         ibs, [acfg_name])
     #acfg = acfg_list[0]
@@ -165,19 +165,19 @@ def extract_annotpair_training_chips(ibs, aid_pairs, **kwargs):
     Example:
         >>> # DISABLE_DOCTEST
         >>> from ibeis_cnn.ingest_ibeis import *  # NOQA
-        >>> import ibeis
+        >>> import wbia
         >>> # build test data
         >>> if False:
-        >>>     ibs = ibeis.opendb(defaultdb='PZ_Master1')
+        >>>     ibs = wbia.opendb(defaultdb='PZ_Master1')
         >>>     acfg_name = ut.get_argval(('--aidcfg', '--acfg', '-a'),
         >>>                                 type_=str,
         >>>                                 default='ctrl:pername=None,excluderef=False,contributor_contains=FlankHack')
         >>> else:
-        >>>     ibs = ibeis.opendb(defaultdb='PZ_MTEST')
+        >>>     ibs = wbia.opendb(defaultdb='PZ_MTEST')
         >>>     acfg_name = ut.get_argval(('--aidcfg', '--acfg', '-a'),
         >>>                                  type_=str,
         >>>                                  default='ctrl:pername=None,excluderef=False,index=0:20:2')
-        >>> #ibs = ibeis.opendb(defaultdb='PZ_FlankHack')
+        >>> #ibs = wbia.opendb(defaultdb='PZ_FlankHack')
         >>> aid_pairs, label_list, flat_metadata = get_aidpairs_partmatch(ibs, acfg_name)
         >>> s = slice(2, len(aid_pairs), len(aid_pairs) // ut.get_argval('--x', type_=int, default=8))
         >>> #aid_pairs = aid_pairs[s]
@@ -190,7 +190,7 @@ def extract_annotpair_training_chips(ibs, aid_pairs, **kwargs):
         >>> ut.show_if_requested()
     """
     # TODO extract chips in a sane manner
-    import ibeis.algo.hots.vsone_pipeline
+    import wbia.algo.hots.vsone_pipeline
     kwargs = kwargs.copy()
     part_chip_width  = kwargs.pop('part_chip_width', 256)
     part_chip_height = kwargs.pop('part_chip_height', 128)
@@ -200,11 +200,11 @@ def extract_annotpair_training_chips(ibs, aid_pairs, **kwargs):
     size = (part_chip_width, part_chip_height)
 
     #cfgdict = {}
-    import ibeis.control.IBEISControl
-    import ibeis.algo.hots.query_request
-    assert isinstance(ibs, ibeis.control.IBEISControl.IBEISController)
+    import wbia.control.IBEISControl
+    import wbia.algo.hots.query_request
+    assert isinstance(ibs, wbia.control.IBEISControl.IBEISController)
     qreq_ = ibs.new_query_request(aid_pairs.T[0][0:1], aid_pairs.T[1][0:1])
-    assert isinstance(qreq_, ibeis.algo.hots.query_request.QueryRequest)
+    assert isinstance(qreq_, wbia.algo.hots.query_request.QueryRequest)
     qconfig2_ = qreq_.extern_query_config2
     dconfig2_ = qreq_.extern_data_config2
 
@@ -213,7 +213,7 @@ def extract_annotpair_training_chips(ibs, aid_pairs, **kwargs):
         annot2 = pair_metadata['annot2']
         aid1, aid2 = annot1['aid'], annot2['aid']
         print('Computing alignment aidpair=(%r, %r)' % (aid1, aid2))
-        match = ibeis.algo.hots.vsone_pipeline.vsone_single(
+        match = wbia.algo.hots.vsone_pipeline.vsone_single(
             aid1, aid2, qreq_, verbose=False)
         fm = match.matches['RAT+SV'].fm
         match.match_metadata['fm'] = fm
@@ -329,9 +329,9 @@ def get_aidpair_patchmatch_training_data(ibs, aid1_list, aid2_list,
     Example:
         >>> # DISABLE_DOCTEST
         >>> from ibeis_cnn.ingest_ibeis import *  # NOQA
-        >>> import ibeis
+        >>> import wbia
         >>> # build test data
-        >>> ibs = ibeis.opendb(defaultdb='PZ_MTEST')
+        >>> ibs = wbia.opendb(defaultdb='PZ_MTEST')
         >>> tup = get_aidpairs_and_matches(ibs, 6)
         >>> (aid1_list, aid2_list, kpts1_m_list, kpts2_m_list, fm_list, metadata_lists) = tup
         >>> pmcfg = PatchMetricDataConfig()
@@ -483,9 +483,9 @@ def get_patchmetric_training_data_and_labels(ibs, aid1_list, aid2_list,
     Example:
         >>> # DISABLE_DOCTEST
         >>> from ibeis_cnn.ingest_ibeis import *  # NOQA
-        >>> import ibeis
+        >>> import wbia
         >>> # build test data
-        >>> ibs = ibeis.opendb(defaultdb='PZ_MTEST')
+        >>> ibs = wbia.opendb(defaultdb='PZ_MTEST')
         >>> (aid1_list, aid2_list, kpts1_m_list, kpts2_m_list, fm_list, metadata_lists) = get_aidpairs_and_matches(ibs, 10, 3)
         >>> pmcfg = PatchMetricDataConfig()
         >>> patch_size = pmcfg['patch_size']
@@ -510,7 +510,7 @@ def get_patchmetric_training_data_and_labels(ibs, aid1_list, aid2_list,
     del img_list
     #data_per_label = 2
     assert labels.shape[0] == data.shape[0] // 2
-    from ibeis import const
+    from wbia import const
     assert np.all(labels != const.REVIEW.UNKNOWN)
     return data, labels, flat_metadata
 
@@ -532,9 +532,9 @@ def get_aidpair_training_labels(ibs, aid1_list_, aid2_list_):
     Example:
         >>> # DISABLE_DOCTEST
         >>> from ibeis_cnn.ingest_ibeis import *  # NOQA
-        >>> import ibeis
+        >>> import wbia
         >>> # build test data
-        >>> ibs = ibeis.opendb(defaultdb='PZ_MTEST')
+        >>> ibs = wbia.opendb(defaultdb='PZ_MTEST')
         >>> tup = get_aidpairs_and_matches(ibs)
         >>> (aid1_list, aid2_list) = tup[0:2]
         >>> aid1_list = aid1_list[0:min(100, len(aid1_list))]
@@ -807,9 +807,9 @@ def get_aidpairs_and_matches(ibs, max_examples=None, num_top=3,
     Example:
         >>> # DISABLE_DOCTEST
         >>> from ibeis_cnn.ingest_ibeis import *  # NOQA
-        >>> import ibeis
+        >>> import wbia
         >>> # build test data
-        >>> ibs = ibeis.opendb(defaultdb='PZ_MTEST')
+        >>> ibs = wbia.opendb(defaultdb='PZ_MTEST')
         >>> acfg_name = ut.get_argval(('--aidcfg', '--acfg', '-a', '--acfg-name'),
         ...                             type_=str,
         ...                             default='ctrl:qindex=0:10')
@@ -837,34 +837,34 @@ def get_aidpairs_and_matches(ibs, max_examples=None, num_top=3,
         >>> _iter = list(zip(aid1_list, aid2_list, kpts1_m_list, kpts2_m_list, fm_list))
         >>> _iter = ut.InteractiveIter(_iter, display_item=False)
         >>> import plottool as pt
-        >>> import ibeis.viz
+        >>> import wbia.viz
         >>> for aid1, aid2, kpts1, kpts2, fm in _iter:
         >>>     pt.reset()
         >>>     print('aid2 = %r' % (aid2,))
         >>>     print('aid1 = %r' % (aid1,))
         >>>     print('len(fm) = %r' % (len(fm),))
-        >>>     ibeis.viz.viz_matches.show_matches2(ibs, aid1, aid2, fm=None, kpts1=kpts1, kpts2=kpts2)
+        >>>     wbia.viz.viz_matches.show_matches2(ibs, aid1, aid2, fm=None, kpts1=kpts1, kpts2=kpts2)
         >>>     pt.update()
         >>> ut.show_if_requested()
     """
     def get_query_results():
         if acfg_name is not None:
             print('NEW WAY OF FILTERING')
-            from ibeis.expt import experiment_helpers
+            from wbia.expt import experiment_helpers
             acfg_list, expanded_aids_list = experiment_helpers.get_annotcfg_list(ibs, [acfg_name])
             #acfg = acfg_list[0]
             expanded_aids = expanded_aids_list[0]
             qaid_list, daid_list = expanded_aids
         else:
             print('OLD WAY OF FILTERING')
-            from ibeis.other import ibsfuncs
+            from wbia.other import ibsfuncs
             if controlled:
                 # TODO: use acfg config
                 qaid_list = ibsfuncs.get_two_annots_per_name_and_singletons(ibs, onlygt=True)
                 daid_list = ibsfuncs.get_two_annots_per_name_and_singletons(ibs, onlygt=False)
             else:
                 qaid_list = ibs.get_valid_aids()
-                #from ibeis.algo.hots import chip_match
+                #from wbia.algo.hots import chip_match
                 qaid_list = ut.compress(qaid_list, ibs.get_annot_has_groundtruth(qaid_list))
                 daid_list = qaid_list
                 if max_examples is not None:
@@ -962,7 +962,7 @@ def get_aidpairs_and_matches(ibs, max_examples=None, num_top=3,
         return aid1_list_all, aid2_list_all, fm_list_all, metadata_all
 
     def get_badtag_flags(ibs, aid1_list, aid2_list):
-        from ibeis import tag_funcs
+        from wbia import tag_funcs
         tag_filter_kw = dict(has_none=['photobomb', 'scenerymatch', 'joincase', 'splitcase'])
         am_rowids1 = ibs.get_annotmatch_rowid_from_undirected_superkey(aid1_list, aid2_list)
         am_rowids2 = ibs.get_annotmatch_rowid_from_undirected_superkey(aid2_list, aid1_list)
@@ -2418,9 +2418,9 @@ def get_orientation_training_images(ibs, dest_path=None, **kwargs):
     Example:
         >>> # ENABLE_DOCTEST
         >>> from ibeis_cnn.ingest_ibeis import *  # NOQA
-        >>> import ibeis
+        >>> import wbia
         >>> # build test data
-        >>> ibs = ibeis.opendb(defaultdb='PZ_MTEST')
+        >>> ibs = wbia.opendb(defaultdb='PZ_MTEST')
         >>> get_orientation_training_images(ibs)
     """
     from os.path import join, expanduser

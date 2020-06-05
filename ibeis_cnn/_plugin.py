@@ -14,14 +14,14 @@ import six
 import numpy as np
 import random
 import os
-import ibeis.constants as const
+import wbia.constants as const
 from six.moves import zip, range
 print, rrr, profile = ut.inject2(__name__)
 
 
 try:
-    from ibeis.control.controller_inject import make_ibs_register_decorator
-    from ibeis.constants import VIEWTEXT_TO_YAW_RADIANS
+    from wbia.control.controller_inject import make_ibs_register_decorator
+    from wbia.constants import VIEWTEXT_TO_YAW_RADIANS
     CLASS_INJECT_KEY, register_ibs_method = make_ibs_register_decorator(__name__)
 except ImportError as ex:
     register_ibs_method = ut.identity
@@ -72,8 +72,8 @@ def get_verified_aid_pairs(ibs):
     Example:
         >>> # DISABLE_DOCTEST
         >>> from ibeis_cnn.train import *  # NOQA
-        >>> import ibeis
-        >>> ibs = ibeis.opendb('NNP_Master3')
+        >>> import wbia
+        >>> ibs = wbia.opendb('NNP_Master3')
         >>> verified_aid1_list, verified_aid2_list = get_verified_aid_pairs(ibs)
     """
     # Grab marked hard cases
@@ -517,9 +517,9 @@ def generate_species_background_mask(ibs, chip_fpath_list, species=None):
     Example:
         >>> # DISABLE_DOCTEST
         >>> import ibeis_cnn
-        >>> import ibeis
+        >>> import wbia
         >>> from ibeis_cnn._plugin import *  # NOQA
-        >>> ibs = ibeis.opendb(defaultdb='testdb1')
+        >>> ibs = wbia.opendb(defaultdb='testdb1')
         >>> aid_list = ut.get_argval(('--aids', '--aid'), type_=list, default=ibs.get_valid_aids()[0:2])
         >>> chip_fpath_list = ibs.get_annot_chip_fpath(aid_list)
         >>> species = ibs.const.TEST_SPECIES.ZEB_PLAIN
@@ -574,9 +574,9 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
     Example:
         >>> # ENABLE_DOCTEST
         >>> import ibeis_cnn
-        >>> import ibeis
+        >>> import wbia
         >>> from ibeis_cnn._plugin import *  # NOQA
-        >>> ibs = ibeis.opendb(defaultdb='testdb1')
+        >>> ibs = wbia.opendb(defaultdb='testdb1')
         >>> aid_list = ibs.get_valid_aids()[0:8]
         >>> species = ut.get_argval('--species', type_=str, default='zebra_plains')
         >>> config2_ = None
@@ -1199,8 +1199,8 @@ def detect_annot_species_viewpoint_cnn(ibs, aid_list):
     Example:
         >>> # DISABLE_DOCTEST
         >>> from ibeis_cnn._plugin import *  # NOQA
-        >>> import ibeis
-        >>> ibs = ibeis.opendb(defaultdb='testdb1')
+        >>> import wbia
+        >>> ibs = wbia.opendb(defaultdb='testdb1')
         >>> aid_list = ibs.get_valid_aids()
         >>> species_viewpoint_list = detect_annot_species_viewpoint_cnn(ibs, aid_list)
         >>> result = ('species_viewpoint_list = %s' % (str(species_viewpoint_list),))
@@ -1253,8 +1253,8 @@ def validate_annot_species_viewpoint_cnn(ibs, aid_list, verbose=False):
     Example:
         >>> # DISABLE_DOCTEST
         >>> from ibeis_cnn._plugin import *  # NOQA
-        >>> import ibeis
-        >>> ibs = ibeis.opendb(defaultdb='testdb1')
+        >>> import wbia
+        >>> ibs = wbia.opendb(defaultdb='testdb1')
         >>> aid_list = ibs.get_valid_aids()
         >>> verbose = False
         >>> (bad_species_list, bad_viewpoint_list) = validate_annot_species_viewpoint_cnn(ibs, aid_list, verbose)
@@ -1418,8 +1418,8 @@ def detect_image_cnn(ibs, gid, confidence=0.90, extraction='bing'):
         >>> # DISABLE_DOCTEST
         >>> from ibeis_cnn._plugin import *  # NOQA
         >>> from ibeis_cnn._plugin import _suggest_random_candidate_regions, _suggest_bing_candidate_regions  # NOQA
-        >>> import ibeis
-        >>> ibs = ibeis.opendb(defaultdb='testdb1')
+        >>> import wbia
+        >>> ibs = wbia.opendb(defaultdb='testdb1')
         >>> gid = 1
         >>> confidence = 0.9
         >>> extraction = 'bing'
@@ -1556,8 +1556,8 @@ def generate_siam_l2_128_feats(ibs, cid_list, config2_=None):
     Example:
         >>> # DISABLE_DOCTEST
         >>> from ibeis_cnn._plugin import *  # NOQA
-        >>> import ibeis
-        >>> ibs = ibeis.opendb(defaultdb='testdb1')
+        >>> import wbia
+        >>> ibs = wbia.opendb(defaultdb='testdb1')
         >>> cid_list = ibs.depc_annot.get_rowids('chips', ibs.get_valid_aids())
         >>> config2_ = None
         >>> # megahack
