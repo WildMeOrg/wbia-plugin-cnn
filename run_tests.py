@@ -23,7 +23,7 @@ def run_tests():
         #'_doc',
         #'notebook',
     ]
-    dpath_list = ['ibeis_cnn']
+    dpath_list = ['wbia_cnn']
     doctest_modname_list = ut.find_doctestable_modnames(
         dpath_list, exclude_doctests_fnames, exclude_dirs)
 

@@ -14,10 +14,10 @@ from os.path import join
 
 """
 CommandLine:
-    cd %CODE_DIR%/ibeis_cnn/code
-    cd $CODE_DIR/ibeis_cnn/code
+    cd %CODE_DIR%/wbia_cnn/code
+    cd $CODE_DIR/wbia_cnn/code
     code
-    cd ibeis_cnn/code
+    cd wbia_cnn/code
     python train.py
 
 Purge from system and environ:
