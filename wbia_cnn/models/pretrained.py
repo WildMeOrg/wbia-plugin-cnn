@@ -4,7 +4,7 @@ import functools
 import numpy as np
 import utool as ut
 from six.moves import cPickle as pickle  # NOQA
-from ibeis_cnn import net_strs
+from wbia_cnn import net_strs
 print, rrr, profile = ut.inject2(__name__)
 
 
@@ -18,23 +18,23 @@ class PretrainedNetwork(object):
         layer (int) : int
 
     CommandLine:
-        python -m ibeis_cnn --tf PretrainedNetwork:0
-        python -m ibeis_cnn --tf PretrainedNetwork:1
+        python -m wbia_cnn --tf PretrainedNetwork:0
+        python -m wbia_cnn --tf PretrainedNetwork:1
 
     Example0:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.models import *  # NOQA
+        >>> from wbia_cnn.models import *  # NOQA
         >>> self = PretrainedNetwork('caffenet', show_network=True)
         >>> print('done')
 
     Example1:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.models import *  # NOQA
+        >>> from wbia_cnn.models import *  # NOQA
         >>> self = PretrainedNetwork('vggnet', show_network=True)
         >>> print('done')
     """
     def __init__(self, model_key=None, show_network=False):
-        from ibeis_cnn._plugin_grabmodels import ensure_model
+        from wbia_cnn._plugin_grabmodels import ensure_model
         self.model_key = model_key
         weights_path = ensure_model(model_key)
         try:
@@ -82,7 +82,7 @@ class PretrainedNetwork(object):
         num_filters = self.get_layer_num_filters(layer_index)
         filter_size = self.get_layer_filter_size(layer_index)
 
-        from ibeis_cnn import custom_layers
+        from wbia_cnn import custom_layers
         Conv2DLayer = custom_layers.Conv2DLayer
         #MaxPool2DLayer = custom_layers.MaxPool2DLayer
 
@@ -92,7 +92,7 @@ class PretrainedNetwork(object):
         return Layer
 
     def get_pretrained_layer(self, layer_index, rand=False):
-        import ibeis_cnn.__LASAGNE__ as lasagne
+        import wbia_cnn.__LASAGNE__ as lasagne
         assert layer_index <= len(self.pretrained_weights), (
             'Trying to specify a layer that does not exist')
         pretrained_layer = self.pretrained_weights[layer_index]

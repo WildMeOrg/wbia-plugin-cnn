@@ -12,7 +12,7 @@ CHMOD_PATTERNS = [
     'run_tests.sh',
 ]
 
-PROJECT_DIRS = ['ibeis_cnn', ]
+PROJECT_DIRS = ['wbia_cnn', ]
 
 CLUTTER_PATTERNS = [
     '\'',
@@ -86,11 +86,11 @@ if __name__ == '__main__':
     print('[setup] Entering IBEIS setup')
     kwargs = util_setup.setuptools_setup(
         setup_fpath=__file__,
-        name='ibeis_cnn',
+        name='wbia_cnn',
         #author='Hendrik Weideman, Jason Parham, and Jon Crall',
         #author_email='erotemic@gmail.com',
         packages=util_setup.find_packages(),
-        version=util_setup.parse_package_for_version('ibeis_cnn'),
+        version=util_setup.parse_package_for_version('wbia_cnn'),
         license=util_setup.read_license('LICENSE'),
         long_description=util_setup.parse_readme('README.md'),
         ext_modules=util_setup.find_ext_modules(),

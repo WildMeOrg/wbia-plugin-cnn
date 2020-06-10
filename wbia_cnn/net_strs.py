@@ -56,7 +56,7 @@ def make_layers_json(layer_list, extra=True):
 
 def make_layer_json_dict(layer, layer_info, layer_to_id, extra=True):
     """
-    >>> from ibeis_cnn.net_strs import *  # NOQA
+    >>> from wbia_cnn.net_strs import *  # NOQA
     """
     #layer_type = layer_info['classname']
     #attr_key_list = layer_info['layer_attrs']
@@ -166,12 +166,12 @@ def get_layer_info(layer):
         ?: layer_info
 
     CommandLine:
-        python -m ibeis_cnn.net_strs get_layer_info --show
+        python -m wbia_cnn.net_strs get_layer_info --show
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.net_strs import *  # NOQA
-        >>> from ibeis_cnn import models
+        >>> from wbia_cnn.net_strs import *  # NOQA
+        >>> from wbia_cnn import models
         >>> model = models.mnist.MNISTModel(batch_size=8, data_shape=(24, 24, 1), output_dims=10)
         >>> model.init_arch()
         >>> nn_layers = model.get_all_layers()
@@ -180,7 +180,7 @@ def get_layer_info(layer):
         >>>     print(ut.repr3(layer_info, nl=1))
     """
     import operator
-    import ibeis_cnn.__LASAGNE__ as lasagne
+    import wbia_cnn.__LASAGNE__ as lasagne
     # Information that contributes to RAM usage
     import numpy as np
     # Get basic layer infos
@@ -387,13 +387,13 @@ def get_layer_info_str(output_layer, batch_size=128):
         output_layer (lasange.layers.Layer):
 
     CommandLine:
-        python -m ibeis_cnn.net_strs --test-get_layer_info_str:0
-        python -m ibeis_cnn.net_strs --test-get_layer_info_str:1
+        python -m wbia_cnn.net_strs --test-get_layer_info_str:0
+        python -m wbia_cnn.net_strs --test-get_layer_info_str:1
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.net_strs import *  # NOQA
-        >>> from ibeis_cnn import models
+        >>> from wbia_cnn.net_strs import *  # NOQA
+        >>> from wbia_cnn import models
         >>> model = models.DummyModel(data_shape=(24, 24, 3), autoinit=True)
         >>> output_layer = model.output_layer
         >>> result = get_layer_info_str(output_layer)
@@ -411,8 +411,8 @@ def get_layer_info_str(output_layer, batch_size=128):
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.net_strs import *  # NOQA
-        >>> from ibeis_cnn import models
+        >>> from wbia_cnn.net_strs import *  # NOQA
+        >>> from wbia_cnn import models
         >>> model = models.mnist.MNISTModel(batch_size=128, output_dims=10,
         >>>                                 data_shape=(24, 24, 3))
         >>> model.init_arch()
@@ -421,7 +421,7 @@ def get_layer_info_str(output_layer, batch_size=128):
         >>> result = '\n'.join([x.rstrip() for x in result.split('\n')])
         >>> print(result)
     """
-    import ibeis_cnn.__LASAGNE__ as lasagne
+    import wbia_cnn.__LASAGNE__ as lasagne
     info_lines = []
     _print = info_lines.append
     with warnings.catch_warnings():
@@ -523,9 +523,9 @@ def print_layer_info(output_layer):
 if __name__ == '__main__':
     """
     CommandLine:
-        python -m ibeis_cnn.net_strs
-        python -m ibeis_cnn.net_strs --allexamples
-        python -m ibeis_cnn.net_strs --allexamples --noface --nosrc
+        python -m wbia_cnn.net_strs
+        python -m wbia_cnn.net_strs --allexamples
+        python -m wbia_cnn.net_strs --allexamples --noface --nosrc
     """
     import multiprocessing
     multiprocessing.freeze_support()  # for win32

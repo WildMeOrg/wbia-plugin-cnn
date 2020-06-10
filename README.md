@@ -1,4 +1,4 @@
-# ibeis_cnn
+# wbia_cnn
 Convolutional Neural Network (CNN) plugin code for the IBEIS Project
 
 # Prerequisites

@@ -13,17 +13,17 @@ class DataSet(ut.NiceRepr):
     helper class for managing dataset paths and general metadata
 
     SeeAlso:
-        python -m ibeis_cnn.ingest_data --test-get_ibeis_part_siam_dataset --show
+        python -m wbia_cnn.ingest_data --test-get_wbia_part_siam_dataset --show
 
     CommandLine:
-        python -m ibeis_cnn.dataset DataSet
+        python -m wbia_cnn.dataset DataSet
 
     Example:
-        >>> from ibeis_cnn.ingest_data import *  # NOQA
+        >>> from wbia_cnn.ingest_data import *  # NOQA
         >>> dataset = grab_mnist_category_dataset()
         >>> dataset.print_dir_structure()
         >>> # ----
-        >>> from ibeis_cnn.models import MNISTModel
+        >>> from wbia_cnn.models import MNISTModel
         >>> model = MNISTModel(batch_size=128, data_shape=(24, 24, 1),
         >>>                    output_dims=10, dataset_dpath=dataset.dataset_dpath)
         >>> model.print_structure()
@@ -231,10 +231,10 @@ class DataSet(ut.NiceRepr):
 
     def interact(dataset, key='full', **kwargs):
         """
-        python -m ibeis_cnn --tf netrun --db mnist --ensuredata --show --datatype=category
-        python -m ibeis_cnn --tf netrun --db PZ_MTEST --acfg ctrl --ensuredata --show
+        python -m wbia_cnn --tf netrun --db mnist --ensuredata --show --datatype=category
+        python -m wbia_cnn --tf netrun --db PZ_MTEST --acfg ctrl --ensuredata --show
         """
-        from ibeis_cnn import draw_results
+        from wbia_cnn import draw_results
         #interact_func = draw_results.interact_siamsese_data_patches
         interact_func = draw_results.interact_dataset
         # Automatically infer which lazy properties are needed for the
@@ -417,18 +417,18 @@ def get_juction_dpath():
         str: junction_dpath
 
     CommandLine:
-        python -m ibeis_cnn --tf get_juction_dpath --show
+        python -m wbia_cnn --tf get_juction_dpath --show
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.dataset import *  # NOQA
+        >>> from wbia_cnn.dataset import *  # NOQA
         >>> junction_dpath = get_juction_dpath()
         >>> result = ('junction_dpath = %s' % (str(junction_dpath),))
         >>> print(result)
         >>> ut.quit_if_noshow()
         >>> ut.vd(junction_dpath)
     """
-    junction_dpath = ut.ensure_app_resource_dir('ibeis_cnn', 'training_junction')
+    junction_dpath = ut.ensure_app_resource_dir('wbia_cnn', 'training_junction')
     # Hacks to keep junction clean
     home_dlink = ut.truepath('~/training_junction')
     if not exists(home_dlink):
@@ -525,11 +525,11 @@ def stratified_label_shuffle_split(y, labels, fractions, y_idx=None, rng=None):
         ?: index_sets
 
     CommandLine:
-        python -m ibeis_cnn.dataset stratified_label_shuffle_split --show
+        python -m wbia_cnn.dataset stratified_label_shuffle_split --show
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.dataset import *  # NOQA
+        >>> from wbia_cnn.dataset import *  # NOQA
         >>> y      = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
         >>> labels = [0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 4, 4, 5, 5, 6, 0, 7, 7, 7, 7]
         >>> fractions = [.7, .3]
@@ -567,11 +567,11 @@ def stratified_kfold_label_split(y, labels, n_folds=2, y_idx=None, rng=None):
         ?: index_sets
 
     CommandLine:
-        python -m ibeis_cnn.dataset stratified_label_shuffle_split --show
+        python -m wbia_cnn.dataset stratified_label_shuffle_split --show
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.dataset import *  # NOQA
+        >>> from wbia_cnn.dataset import *  # NOQA
         >>> y      = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
         >>> labels = [0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 4, 4, 5, 5, 6, 0, 7, 7, 7, 7]
         >>> fractions = [.7, .3]
@@ -640,9 +640,9 @@ def expand_data_indicies(label_indices, data_per_label=1):
 if __name__ == '__main__':
     """
     CommandLine:
-        python -m ibeis_cnn.dataset
-        python -m ibeis_cnn.dataset --allexamples
-        python -m ibeis_cnn.dataset --allexamples --noface --nosrc
+        python -m wbia_cnn.dataset
+        python -m wbia_cnn.dataset --allexamples
+        python -m wbia_cnn.dataset --allexamples --noface --nosrc
     """
     import multiprocessing
     multiprocessing.freeze_support()  # for win32

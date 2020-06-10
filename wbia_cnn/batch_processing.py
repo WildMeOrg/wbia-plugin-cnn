@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function
-from ibeis_cnn import utils
+from wbia_cnn import utils
 import numpy as np
 import six
 import utool as ut
@@ -25,14 +25,14 @@ def process_batch(model, X, y, theano_fn, fix_output=False, buffered=False,
     the results are packaged up nicely before returning.
 
     CommandLine:
-        python -m ibeis_cnn --tf process_batch --verbose
-        python -m ibeis_cnn --tf process_batch:0 --verbose
-        python -m ibeis_cnn --tf process_batch:1 --verbose
+        python -m wbia_cnn --tf process_batch --verbose
+        python -m wbia_cnn --tf process_batch:0 --verbose
+        python -m wbia_cnn --tf process_batch:1 --verbose
 
     Example0:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.batch_processing import *  # NOQA
-        >>> from ibeis_cnn import models
+        >>> from wbia_cnn.batch_processing import *  # NOQA
+        >>> from wbia_cnn import models
         >>> model = models.DummyModel(batch_size=128)
         >>> X, y = model.make_random_testdata(num=2000, seed=None)
         >>> model.init_arch()
@@ -45,8 +45,8 @@ def process_batch(model, X, y, theano_fn, fix_output=False, buffered=False,
 
     Example0:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.batch_processing import *  # NOQA
-        >>> from ibeis_cnn import models
+        >>> from wbia_cnn.batch_processing import *  # NOQA
+        >>> from wbia_cnn import models
         >>> model = models.SiameseL2(batch_size=128, data_shape=(32, 32, 1),
         ...                          strict_batch_size=True)
         >>> X, y = model.make_random_testdata(num=2000, seed=None)
@@ -178,19 +178,19 @@ def batch_iterator(model, X, y, randomize_batch_order=False, augment_on=False,
     Breaks up data into to batches defined by model batch size
 
     CommandLine:
-        python -m ibeis_cnn --tf batch_iterator:0
-        python -m ibeis_cnn --tf batch_iterator:1
-        python -m ibeis_cnn --tf batch_iterator:2
-        python -m ibeis_cnn --tf batch_iterator:1 --DEBUG_AUGMENTATION
+        python -m wbia_cnn --tf batch_iterator:0
+        python -m wbia_cnn --tf batch_iterator:1
+        python -m wbia_cnn --tf batch_iterator:2
+        python -m wbia_cnn --tf batch_iterator:1 --DEBUG_AUGMENTATION
 
-        python -m ibeis_cnn --tf batch_iterator:1 --noaugment
+        python -m wbia_cnn --tf batch_iterator:1 --noaugment
         # Threaded buffering seems to help a lot
-        python -m ibeis_cnn --tf batch_iterator:1 --augment
+        python -m wbia_cnn --tf batch_iterator:1 --augment
 
     Example0:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.batch_processing import *  # NOQA
-        >>> from ibeis_cnn import models
+        >>> from wbia_cnn.batch_processing import *  # NOQA
+        >>> from wbia_cnn import models
         >>> model = models.DummyModel(batch_size=16)
         >>> X, y = model.make_random_testdata(num=99, seed=None, cv2_format=True)
         >>> model.ensure_data_params(X, y)
@@ -205,8 +205,8 @@ def batch_iterator(model, X, y, randomize_batch_order=False, augment_on=False,
 
     Example1:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.batch_processing import *  # NOQA
-        >>> from ibeis_cnn import models
+        >>> from wbia_cnn.batch_processing import *  # NOQA
+        >>> from wbia_cnn import models
         >>> import time
         >>> model = models.SiameseL2(batch_size=128, data_shape=(8, 8, 1))
         >>> X, y = model.make_random_testdata(num=1000, seed=None, cv2_format=True)
@@ -248,9 +248,9 @@ def batch_iterator(model, X, y, randomize_batch_order=False, augment_on=False,
 
     Example2:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.batch_processing import *  # NOQA
-        >>> from ibeis_cnn.models.mnist import MNISTModel
-        >>> from ibeis_cnn import ingest_data
+        >>> from wbia_cnn.batch_processing import *  # NOQA
+        >>> from wbia_cnn.models.mnist import MNISTModel
+        >>> from wbia_cnn import ingest_data
         >>> # should yield float32 regardlesss of original format
         >>> ut.exec_funckw(batch_iterator, globals())
         >>> randomize_batch_order = False
@@ -377,7 +377,7 @@ def augment_batch(model, Xb, yb, batch_index, verbose, num_batches):
     Make sure to augment data in 0-1 space.
     This means use a mean fill values not 0.
 
-    >>> from ibeis_cnn import augment
+    >>> from wbia_cnn import augment
     >>> import plottool as pt
     >>> pt.qt4ensure()
     >>> augment.show_augmented_patches(Xb_orig, Xb, yb_orig, yb)
@@ -389,7 +389,7 @@ def augment_batch(model, Xb, yb, batch_index, verbose, num_batches):
     Xb, yb = model.augment(Xb, yb)
     #if DEBUG_AUGMENTATION:
     #    #Xb, yb = augment.augment_siamese_patches2(Xb, yb)
-    #    from ibeis_cnn import augment
+    #    from wbia_cnn import augment
     #    import plottool as pt
     #    augment.show_augmented_patches(Xb_orig, Xb, yb_orig, yb)
     #    pt.show_if_requested()
@@ -435,9 +435,9 @@ def concatenate_hack(sequence, axis=0):
 if __name__ == '__main__':
     """
     CommandLine:
-        python -m ibeis_cnn.batch_processing
-        python -m ibeis_cnn.batch_processing --allexamples
-        python -m ibeis_cnn.batch_processing --allexamples --noface --nosrc
+        python -m wbia_cnn.batch_processing
+        python -m wbia_cnn.batch_processing --allexamples
+        python -m wbia_cnn.batch_processing --allexamples --noface --nosrc
     """
     import multiprocessing
     multiprocessing.freeze_support()  # for win32

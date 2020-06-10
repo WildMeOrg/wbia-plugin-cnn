@@ -13,12 +13,12 @@ def interact_siamsese_data_patches(labels, data, flat_metadata, **kwargs):
         flat_metadata (?):
 
     CommandLine:
-        python -m ibeis_cnn.draw_results --test-interact_siamsese_data_patches --show
+        python -m wbia_cnn.draw_results --test-interact_siamsese_data_patches --show
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.draw_results import *  # NOQA
-        >>> from ibeis_cnn import ingest_data
+        >>> from wbia_cnn.draw_results import *  # NOQA
+        >>> from wbia_cnn import ingest_data
         >>> data, labels = ingest_data.testdata_patchmatch2()
         >>> flat_metadata = {'fs': np.arange(len(labels))}
         >>> result = interact_siamsese_data_patches(labels, data, flat_metadata)
@@ -37,12 +37,12 @@ def interact_dataset(labels, data, flat_metadata, data_per_label, **kwargs):
         flat_metadata (?):
 
     CommandLine:
-        python -m ibeis_cnn.draw_results --test-interact_dataset --show
+        python -m wbia_cnn.draw_results --test-interact_dataset --show
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.draw_results import *  # NOQA
-        >>> from ibeis_cnn import ingest_data
+        >>> from wbia_cnn.draw_results import *  # NOQA
+        >>> from wbia_cnn import ingest_data
         >>> data, labels = ingest_data.testdata_patchmatch2()
         >>> flat_metadata = {'fs': np.arange(len(labels))}
         >>> result = interact_siamsese_data_patches(labels, data, flat_metadata)
@@ -66,15 +66,15 @@ def interact_patches(label_list, data_lists,
         chunck_sizes (None): (default = None)
 
     CommandLine:
-        python -m ibeis_cnn.draw_results --exec-interact_patches --show
+        python -m wbia_cnn.draw_results --exec-interact_patches --show
 
     SeeAlso:
-        python -m ibeis_cnn.ingest_ibeis --exec-extract_annotpair_training_chips --show
+        python -m wbia_cnn.ingest_wbia --exec-extract_annotpair_training_chips --show
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.draw_results import *  # NOQA
-        >>> from ibeis_cnn import ingest_data
+        >>> from wbia_cnn.draw_results import *  # NOQA
+        >>> from wbia_cnn import ingest_data
         >>> data, labels = ingest_data.testdata_patchmatch2()
         >>> flat_metadata = {'fs': np.arange(len(labels))}
         >>> result = interact_siamsese_data_patches(labels, data, flat_metadata)
@@ -334,7 +334,7 @@ def make_InteractClasses(*args, **kwargs):
             inter.data_lists = []
 
         def _show_page(inter):
-            from ibeis_cnn import draw_results
+            from wbia_cnn import draw_results
             inter._ensure_running()
             inter._init_lists()
 
@@ -483,12 +483,12 @@ def get_patch_multichunks(data_lists, label_list, flat_metadata, multiindicies):
     """
 
     CommandLine:
-        python -m ibeis_cnn.draw_results --test-get_patch_multichunks --show
+        python -m wbia_cnn.draw_results --test-get_patch_multichunks --show
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.draw_results import *  # NOQA
-        >>> from ibeis_cnn import ingest_data
+        >>> from wbia_cnn.draw_results import *  # NOQA
+        >>> from wbia_cnn import ingest_data
         >>> data, label_list = ingest_data.testdata_patchmatch2()
         >>> flat_metadata = {}
         >>> warped_patch1_list, warped_patch2_list = list(zip(*ut.ichunks(data, 2)))
@@ -551,13 +551,13 @@ def get_patch_chunk(data_lists, label_list,
         indicies (?):
 
     CommandLine:
-        python -m ibeis_cnn.draw_results --test-get_patch_chunk --show
-        python -m ibeis_cnn.draw_results --test-get_patch_chunk
+        python -m wbia_cnn.draw_results --test-get_patch_chunk --show
+        python -m wbia_cnn.draw_results --test-get_patch_chunk
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.draw_results import *  # NOQA
-        >>> from ibeis_cnn import ingest_data
+        >>> from wbia_cnn.draw_results import *  # NOQA
+        >>> from wbia_cnn import ingest_data
         >>> data, label_list = ingest_data.testdata_patchmatch2()
         >>> flat_metadata = {'fs': np.arange(len(label_list))}
         >>> data_lists =  list(zip(*ut.ichunks(data, 2)))
@@ -722,9 +722,9 @@ def visualize_score_separability(label_list, warped_patch1_list, warped_patch2_l
 if __name__ == '__main__':
     """
     CommandLine:
-        python -m ibeis_cnn.draw_results
-        python -m ibeis_cnn.draw_results --allexamples
-        python -m ibeis_cnn.draw_results --allexamples --noface --nosrc
+        python -m wbia_cnn.draw_results
+        python -m wbia_cnn.draw_results --allexamples
+        python -m wbia_cnn.draw_results --allexamples --noface --nosrc
     """
     import multiprocessing
     multiprocessing.freeze_support()  # for win32

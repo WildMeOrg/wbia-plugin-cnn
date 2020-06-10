@@ -4,7 +4,7 @@ Directory structure of training
 
 The network directory is the root of the structure and is typically in
 _ibeis_cache/nets for ibeis databases. Otherwise it it custom defined (like in
-.cache/ibeis_cnn/training for mnist tests)
+.cache/wbia_cnn/training for mnist tests)
 
 # era=(group of epochs)
 
@@ -77,9 +77,9 @@ from os.path import join, exists, dirname, basename, split, splitext
 from six.moves import cPickle as pickle  # NOQA
 import warnings
 import sklearn
-from ibeis_cnn import net_strs
-from ibeis_cnn import draw_net
-from ibeis_cnn.models import _model_legacy
+from wbia_cnn import net_strs
+from wbia_cnn import draw_net
+from wbia_cnn.models import _model_legacy
 print, rrr, profile = ut.inject2(__name__)
 
 
@@ -95,9 +95,9 @@ def delayed_import():
     global lasagne
     global theano
     global T
-    import ibeis_cnn.__LASAGNE__ as lasagne
-    import ibeis_cnn.__THEANO__ as theano
-    from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
+    import wbia_cnn.__LASAGNE__ as lasagne
+    import wbia_cnn.__THEANO__ as theano
+    from wbia_cnn.__THEANO__ import tensor as T  # NOQA
 
 
 def testdata_model_with_history():
@@ -192,11 +192,11 @@ class History(ut.NiceRepr):
     def hist_id(history):
         r"""
         CommandLine:
-            python -m ibeis_cnn.models.abstract_models --test-History.hist_id:0
+            python -m wbia_cnn.models.abstract_models --test-History.hist_id:0
 
         Example:
             >>> # ENABLE_DOCTEST
-            >>> from ibeis_cnn.models.abstract_models import *  # NOQA
+            >>> from wbia_cnn.models.abstract_models import *  # NOQA
             >>> model = testdata_model_with_history()
             >>> history = model.history
             >>> result = str(model.history.hist_id)
@@ -355,7 +355,7 @@ class LearnState(ut.DictLike):
 
     def setitem(self, key, value):
         if self._isinit:
-            import ibeis_cnn.__THEANO__ as theano
+            import wbia_cnn.__THEANO__ as theano
             print('[model] setting %s to %.9r' % (key, value))
             _shared = self._shared_state[key]
             if value is None and _shared is not None:
@@ -373,7 +373,7 @@ class LearnState(ut.DictLike):
 class _ModelFitter(object):
     """
     CommandLine:
-        python -m ibeis_cnn _ModelFitter.fit:0
+        python -m wbia_cnn _ModelFitter.fit:0
     """
     def _init_fit_vars(model, kwargs):
         model._rng = ut.ensure_rng(0)
@@ -465,12 +465,12 @@ class _ModelFitter(object):
         Trains the network with backprop.
 
         CommandLine:
-            python -m ibeis_cnn _ModelFitter.fit --name=bnorm --vd --monitor
-            python -m ibeis_cnn _ModelFitter.fit --name=dropout
-            python -m ibeis_cnn _ModelFitter.fit --name=incep
+            python -m wbia_cnn _ModelFitter.fit --name=bnorm --vd --monitor
+            python -m wbia_cnn _ModelFitter.fit --name=dropout
+            python -m wbia_cnn _ModelFitter.fit --name=incep
 
         Example1:
-            >>> from ibeis_cnn.models import mnist
+            >>> from wbia_cnn.models import mnist
             >>> model, dataset = mnist.testdata_mnist(defaultname='bnorm', dropout=.5)
             >>> model.init_arch()
             >>> model.print_layer_info()
@@ -478,7 +478,7 @@ class _ModelFitter(object):
             >>> X_train, y_train = dataset.subset('train')
             >>> model.fit(X_train, y_train)
         """
-        from ibeis_cnn import utils
+        from wbia_cnn import utils
 
         print('\n[train] --- TRAINING LOOP ---')
         ut.update_existing(model.hyperparams, kwargs)
@@ -815,7 +815,7 @@ class _ModelFitter(object):
         else:
             if valid_idx is None:
                 # Split training set into a learning / validation set
-                from ibeis_cnn.dataset import stratified_shuffle_split
+                from wbia_cnn.dataset import stratified_shuffle_split
                 train_idx, valid_idx = stratified_shuffle_split(
                     y_train, fractions=[.7, .3], rng=432321)
                 #import sklearn.cross_validation
@@ -1097,9 +1097,9 @@ class _ModelFitter(object):
         Backwards propogate -- Run learning set through the backwards pass
 
         Ignore:
-            >>> from ibeis_cnn.models.abstract_models import *  # NOQA
-            >>> from ibeis_cnn.models import mnist
-            >>> import ibeis_cnn.__THEANO__ as theano
+            >>> from wbia_cnn.models.abstract_models import *  # NOQA
+            >>> from wbia_cnn.models import mnist
+            >>> import wbia_cnn.__THEANO__ as theano
             >>> model, dataset = mnist.testdata_mnist(dropout=.5)
             >>> model.monitor_config['monitor'] = False
             >>> model.monitor_config['showprog'] = True
@@ -1174,7 +1174,7 @@ class _ModelFitter(object):
             print('learn_outputs = %r' % (learn_outputs,))
             print('\n[train] train loss is Nan. training diverged\n')
             """
-            from ibeis_cnn import draw_net
+            from wbia_cnn import draw_net
             draw_net.imwrite_theano_symbolic_graph(theano_backprop)
             """
             # imwrite_theano_symbolic_graph(thean_expr):
@@ -1525,8 +1525,8 @@ class _ModelBatch(_BatchUtility):
         """
         Example:
             >>> # ENABLE_DOCTEST
-            >>> from ibeis_cnn.models.abstract_models import *  # NOQA
-            >>> from ibeis_cnn import models
+            >>> from wbia_cnn.models.abstract_models import *  # NOQA
+            >>> from wbia_cnn import models
             >>> model = models.DummyModel(batch_size=16)
             >>> X, y = model.make_random_testdata(num=37, cv2_format=True)
             >>> model.ensure_data_params(X, y)
@@ -1539,8 +1539,8 @@ class _ModelBatch(_BatchUtility):
 
         Example:
             >>> # ENABLE_DOCTEST
-            >>> from ibeis_cnn.models.abstract_models import *  # NOQA
-            >>> from ibeis_cnn import models
+            >>> from wbia_cnn.models.abstract_models import *  # NOQA
+            >>> from wbia_cnn import models
             >>> model = models.DummyModel(batch_size=16)
             >>> X, y = model.make_random_testdata(num=37, cv2_format=False, asint=True)
             >>> model.X_is_cv2_native = False
@@ -1723,9 +1723,9 @@ class _ModelBackend(object):
         Returns diagnostic information.
 
         Ignore:
-            >>> from ibeis_cnn.models.abstract_models import *  # NOQA
-            >>> from ibeis_cnn.models import mnist
-            >>> import ibeis_cnn.__THEANO__ as theano
+            >>> from wbia_cnn.models.abstract_models import *  # NOQA
+            >>> from wbia_cnn.models import mnist
+            >>> import wbia_cnn.__THEANO__ as theano
             >>> model, dataset = mnist.testdata_mnist(dropout=.5)
             >>> model.init_arch()
             >>> batch_size = 16
@@ -1869,9 +1869,9 @@ class _ModelBackend(object):
         Requires that a custom loss function is defined in the inherited class
 
         Ignore:
-            >>> from ibeis_cnn.models.abstract_models import *  # NOQA
-            >>> from ibeis_cnn.models import mnist
-            >>> import ibeis_cnn.__THEANO__ as theano
+            >>> from wbia_cnn.models.abstract_models import *  # NOQA
+            >>> from wbia_cnn.models import mnist
+            >>> import wbia_cnn.__THEANO__ as theano
             >>> model, dataset = mnist.testdata_mnist(dropout=.5)
             >>> model._init_compile_vars({})  # reset state
             >>> model.init_arch()
@@ -2050,13 +2050,13 @@ class _ModelVisualization(object):
     """
 
     CommandLine:
-        python -m ibeis_cnn.models.abstract_models _ModelVisualization
-        python -m ibeis_cnn.models.abstract_models _ModelVisualization --show
+        python -m wbia_cnn.models.abstract_models _ModelVisualization
+        python -m wbia_cnn.models.abstract_models _ModelVisualization --show
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.models.abstract_models import *  # NOQA
-        >>> from ibeis_cnn.models import dummy
+        >>> from wbia_cnn.models.abstract_models import *  # NOQA
+        >>> from wbia_cnn.models import dummy
         >>> model = dummy.DummyModel(batch_size=16, autoinit=False)
         >>> #model._theano_mode = theano.compile.Mode(linker='py', optimizer='fast_compile')
         >>> #model._theano_mode = theano.compile.Mode(linker='py', optimizer='fast_compile')
@@ -2082,13 +2082,13 @@ class _ModelVisualization(object):
     def show_class_dream(model, fnum=None, **kwargs):
         """
         CommandLine:
-            python -m ibeis_cnn.models.abstract_models show_class_dream --show
+            python -m wbia_cnn.models.abstract_models show_class_dream --show
 
         Example:
             >>> # DISABLE_DOCTEST
             >>> # Assumes mnist is trained
-            >>> from ibeis_cnn.draw_net import *  # NOQA
-            >>> from ibeis_cnn.models import mnist
+            >>> from wbia_cnn.draw_net import *  # NOQA
+            >>> from wbia_cnn.models import mnist
             >>> model, dataset = mnist.testdata_mnist(dropout=.5)
             >>> model.init_arch()
             >>> model.load_model_state()
@@ -2123,8 +2123,8 @@ class _ModelVisualization(object):
         dataset = ut.search_stack_for_localvar('dataset')
         X_test, y_test = dataset.subset('valid')
 
-        import ibeis_cnn.__THEANO__ as theano
-        from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
+        import wbia_cnn.__THEANO__ as theano
+        from wbia_cnn.__THEANO__ import tensor as T  # NOQA
         import utool as ut
         num = 64
         Xb = model.prepare_data(X_test[0:num])
@@ -2162,11 +2162,11 @@ class _ModelVisualization(object):
     def show_update_mag_history(model, fnum=None):
         """
         CommandLine:
-            python -m ibeis_cnn --tf _ModelVisualization.show_update_mag_history --show
+            python -m wbia_cnn --tf _ModelVisualization.show_update_mag_history --show
 
         Example:
             >>> # DISABLE_DOCTEST
-            >>> from ibeis_cnn.models.abstract_models import *  # NOQA
+            >>> from wbia_cnn.models.abstract_models import *  # NOQA
             >>> model = testdata_model_with_history()
             >>> fnum = None
             >>> model.show_update_mag_history(fnum)
@@ -2204,11 +2204,11 @@ class _ModelVisualization(object):
     def show_pr_history(model, fnum=None):
         """
         CommandLine:
-            python -m ibeis_cnn --tf _ModelVisualization.show_pr_history --show
+            python -m wbia_cnn --tf _ModelVisualization.show_pr_history --show
 
         Example:
             >>> # DISABLE_DOCTEST
-            >>> from ibeis_cnn.models.abstract_models import *  # NOQA
+            >>> from wbia_cnn.models.abstract_models import *  # NOQA
             >>> model = testdata_model_with_history()
             >>> fnum = None
             >>> model.show_pr_history(fnum)
@@ -2235,11 +2235,11 @@ class _ModelVisualization(object):
             mpl.Figure: fig
 
         CommandLine:
-            python -m ibeis_cnn _ModelVisualization.show_loss_history --show
+            python -m wbia_cnn _ModelVisualization.show_loss_history --show
 
         Example:
             >>> # DISABLE_DOCTEST
-            >>> from ibeis_cnn.models.abstract_models import *  # NOQA
+            >>> from wbia_cnn.models.abstract_models import *  # NOQA
             >>> model = testdata_model_with_history()
             >>> fnum = None
             >>> model.show_loss_history(fnum)
@@ -2550,12 +2550,12 @@ class _ModelVisualization(object):
             fpath (str):  file path string(default = None)
 
         CommandLine:
-            python -m ibeis_cnn.models.abstract_models imwrite_arch --show
+            python -m wbia_cnn.models.abstract_models imwrite_arch --show
 
         Example:
             >>> # DISABLE_DOCTEST
-            >>> from ibeis_cnn.models.abstract_models import *  # NOQA
-            >>> from ibeis_cnn.models.mnist import MNISTModel
+            >>> from wbia_cnn.models.abstract_models import *  # NOQA
+            >>> from wbia_cnn.models.mnist import MNISTModel
             >>> model = MNISTModel(batch_size=128, data_shape=(24, 24, 1),
             >>>                    output_dims=10, batch_norm=False, name='mnist')
             >>> model.init_arch()
@@ -2603,12 +2603,12 @@ class _ModelStrings(object):
     def make_arch_json(model, with_noise=False):
         """
         CommandLine:
-            python -m ibeis_cnn.models.abstract_models make_arch_json --show
+            python -m wbia_cnn.models.abstract_models make_arch_json --show
 
         Example:
             >>> # ENABLE_DOCTEST
-            >>> from ibeis_cnn.models.abstract_models import *  # NOQA
-            >>> from ibeis_cnn.models import mnist
+            >>> from wbia_cnn.models.abstract_models import *  # NOQA
+            >>> from wbia_cnn.models import mnist
             >>> model, dataset = mnist.testdata_mnist(defaultname='resnet')
             >>> #model = mnist.MNISTModel(batch_size=128, data_shape=(28, 28, 1),
             >>> #                         output_dims=10, batch_norm=True)
@@ -2654,12 +2654,12 @@ class _ModelStrings(object):
         included. IE get rid of dropout.
 
         CommandLine:
-            python -m ibeis_cnn.models.abstract_models _ModelStrings.get_arch_str:0
+            python -m wbia_cnn.models.abstract_models _ModelStrings.get_arch_str:0
 
         Example:
             >>> # ENABLE_DOCTEST
-            >>> from ibeis_cnn.models.abstract_models import *  # NOQA
-            >>> from ibeis_cnn.models.mnist import MNISTModel
+            >>> from wbia_cnn.models.abstract_models import *  # NOQA
+            >>> from wbia_cnn.models.mnist import MNISTModel
             >>> model = MNISTModel(batch_size=128, data_shape=(28, 28, 1),
             >>>                    output_dims=10, batch_norm=True)
             >>> model.init_arch()
@@ -2684,12 +2684,12 @@ class _ModelStrings(object):
     def get_layer_info_str(model):
         """
         CommandLine:
-            python -m ibeis_cnn.models.abstract_models _ModelStrings.get_layer_info_str:0
+            python -m wbia_cnn.models.abstract_models _ModelStrings.get_layer_info_str:0
 
         Example:
             >>> # ENABLE_DOCTEST
-            >>> from ibeis_cnn.models.abstract_models import *  # NOQA
-            >>> from ibeis_cnn.models.mnist import MNISTModel
+            >>> from wbia_cnn.models.abstract_models import *  # NOQA
+            >>> from wbia_cnn.models.mnist import MNISTModel
             >>> model = MNISTModel(batch_size=128, data_shape=(24, 24, 1),
             >>>                    output_dims=10)
             >>> model.init_arch()
@@ -2760,12 +2760,12 @@ class _ModelIDs(object):
     def arch_id(model):
         """
         CommandLine:
-            python -m ibeis_cnn.models.abstract_models _ModelIDs.arch_id:0
+            python -m wbia_cnn.models.abstract_models _ModelIDs.arch_id:0
 
         Example:
             >>> # ENABLE_DOCTEST
-            >>> from ibeis_cnn.models.abstract_models import *  # NOQA
-            >>> from ibeis_cnn.models.mnist import MNISTModel
+            >>> from wbia_cnn.models.abstract_models import *  # NOQA
+            >>> from wbia_cnn.models.mnist import MNISTModel
             >>> model = MNISTModel(batch_size=128, data_shape=(24, 24, 1),
             >>>                    output_dims=10, name='bnorm')
             >>> model.init_arch()
@@ -2795,12 +2795,12 @@ class _ModelIDs(object):
         hidden units, parameters, and model depth.
 
         CommandLine:
-            python -m ibeis_cnn.models.abstract_models get_arch_nice --show
+            python -m wbia_cnn.models.abstract_models get_arch_nice --show
 
         Example:
             >>> # ENABLE_DOCTEST
-            >>> from ibeis_cnn.models.abstract_models import *  # NOQA
-            >>> from ibeis_cnn.models.mnist import MNISTModel
+            >>> from wbia_cnn.models.abstract_models import *  # NOQA
+            >>> from wbia_cnn.models.mnist import MNISTModel
             >>> model = MNISTModel(batch_size=128, data_shape=(24, 24, 1),
             >>>                    output_dims=10)
             >>> model.init_arch()
@@ -2850,14 +2850,14 @@ class _ModelIO(object):
         """
 
         CommandLine:
-            python -m ibeis_cnn.models.abstract_models print_structure --show
+            python -m wbia_cnn.models.abstract_models print_structure --show
 
         Example:
-            >>> from ibeis_cnn.ingest_data import *  # NOQA
+            >>> from wbia_cnn.ingest_data import *  # NOQA
             >>> dataset = grab_mnist_category_dataset()
             >>> dataset.print_dir_structure()
             >>> # ----
-            >>> from ibeis_cnn.models.mnist import MNISTModel
+            >>> from wbia_cnn.models.mnist import MNISTModel
             >>> model = MNISTModel(batch_size=128, data_shape=(24, 24, 1),
             >>>                    output_dims=10, dataset_dpath=dataset.dataset_dpath)
             >>> model.print_structure()
@@ -3059,8 +3059,8 @@ class _ModelIO(object):
 
         Example:
             >>> # Assumes mnist is trained
-            >>> from ibeis_cnn.models.abstract_models import  *  # NOQA
-            >>> from ibeis_cnn.models import mnist
+            >>> from wbia_cnn.models.abstract_models import  *  # NOQA
+            >>> from wbia_cnn.models import mnist
             >>> model, dataset = mnist.testdata_mnist()
             >>> model.init_arch()
             >>> model.load_model_state()
@@ -3131,19 +3131,19 @@ class _ModelIO(object):
 class _ModelUtility(object):
 
     def set_all_param_values(model, weights_list):
-        import ibeis_cnn.__LASAGNE__ as lasagne
+        import wbia_cnn.__LASAGNE__ as lasagne
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', '.*topo.*')
             lasagne.layers.set_all_param_values(
                 model.output_layer, weights_list)
 
     def get_all_param_values(model):
-        import ibeis_cnn.__LASAGNE__ as lasagne
+        import wbia_cnn.__LASAGNE__ as lasagne
         weights_list = lasagne.layers.get_all_param_values(model.output_layer)
         return weights_list
 
     def get_all_params(model, **tags):
-        import ibeis_cnn.__LASAGNE__ as lasagne
+        import wbia_cnn.__LASAGNE__ as lasagne
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', '.*topo.*')
             parameters = lasagne.layers.get_all_params(
@@ -3154,7 +3154,7 @@ class _ModelUtility(object):
         return [net_strs.get_layer_info(layer) for layer in model.get_all_layers()]
 
     def get_all_layers(model, with_noise=True, with_weightless=True):
-        import ibeis_cnn.__LASAGNE__ as lasagne
+        import wbia_cnn.__LASAGNE__ as lasagne
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', '.*topo.*')
             warnings.filterwarnings('ignore', '.*layer.get_all_layers.*')
@@ -3308,9 +3308,9 @@ class BaseModel(_model_legacy._ModelLegacy, _ModelVisualization, _ModelIO,
         """
         fpath = ut.truepath('~/Desktop/manually_saved/arch_injur-shark-resnet_o2_d27_c2942_jzuddodd/model_state_arch_jzuddodd.pkl')
         """
-        #import ibeis_cnn.__LASAGNE__ as lasagne
+        #import wbia_cnn.__LASAGNE__ as lasagne
         #arch_dpath = dirname(fpath)
-        from ibeis_cnn import custom_layers
+        from wbia_cnn import custom_layers
         arch_json_fpath = '/home/joncrall/Desktop/manually_saved/arch_injur-shark-lenet_o2_d11_c688_acioqbst/arch_info.json'
         state_fpath = '/home/joncrall/Desktop/manually_saved/arch_injur-shark-lenet_o2_d11_c688_acioqbst/model_state_arch_acioqbst.pkl'
         output_layer = custom_layers.load_json_arch_def(arch_json_fpath)
@@ -3339,7 +3339,7 @@ class BaseModel(_model_legacy._ModelLegacy, _ModelVisualization, _ModelIO,
         """
         initailizes weights after the architecture has been defined.
         """
-        import ibeis_cnn.__LASAGNE__ as lasagne
+        import wbia_cnn.__LASAGNE__ as lasagne
         if W is None:
             W = 'orthogonal'
         if isinstance(W, six.string_types):
@@ -3396,13 +3396,13 @@ class AbstractCategoricalModel(BaseModel):
 
     def loss_function(model, network_output, truth):
         # https://en.wikipedia.org/wiki/Loss_functions_for_classification
-        from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
+        from wbia_cnn.__THEANO__ import tensor as T  # NOQA
         # categorical cross-entropy between predictions and targets
         # L_i = -\sum_{j} t_{i,j} \log{p_{i, j}}
         return T.nnet.categorical_crossentropy(network_output, truth)
 
     def custom_unlabeled_outputs(model, network_output):
-        from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
+        from wbia_cnn.__THEANO__ import tensor as T  # NOQA
         # Network outputs define category probabilities
         probs = network_output
         preds = T.argmax(probs, axis=1)
@@ -3413,7 +3413,7 @@ class AbstractCategoricalModel(BaseModel):
         return unlabeled_outputs
 
     def custom_labeled_outputs(model, network_output, y_batch):
-        from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
+        from wbia_cnn.__THEANO__ import tensor as T  # NOQA
         probs = network_output
         preds = T.argmax(probs, axis=1)
         preds.name = 'predictions'
@@ -3449,15 +3449,15 @@ class AbstractVectorModel(BaseModel):
         print('[model] model.output_dims = %r' % (model.output_dims,))
 
     # def loss_function(model, network_output, truth):
-    #     from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
+    #     from wbia_cnn.__THEANO__ import tensor as T  # NOQA
     #     return T.nnet.binary_crossentropy(network_output, truth)
 
     def loss_function(model, network_output, truth):
-        from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
+        from wbia_cnn.__THEANO__ import tensor as T  # NOQA
         return T.nnet.binary_crossentropy(network_output, truth)
 
     def custom_unlabeled_outputs(model, network_output):
-        from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
+        from wbia_cnn.__THEANO__ import tensor as T  # NOQA
         # Network outputs define category probabilities
         probs = network_output
         preds = probs.round()
@@ -3468,7 +3468,7 @@ class AbstractVectorModel(BaseModel):
         return unlabeled_outputs
 
     def custom_labeled_outputs(model, network_output, y_batch):
-        from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
+        from wbia_cnn.__THEANO__ import tensor as T  # NOQA
         probs = network_output
         preds = probs.clip(0.0, 1.0).round()
         preds.name = 'predictions'
@@ -3496,7 +3496,7 @@ class AbstractVectorVectorModel(AbstractVectorModel):
         super(this_class_now, model).__init__(**kwargs)
 
     def custom_labeled_outputs(model, network_output, y_batch):
-        from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
+        from wbia_cnn.__THEANO__ import tensor as T  # NOQA
         probs = network_output
         preds = probs.round()
         preds.name = 'predictions'
@@ -3616,9 +3616,9 @@ def testdata_model_with_history():
 if __name__ == '__main__':
     """
     CommandLine:
-        python -m ibeis_cnn.abstract_models
-        python -m ibeis_cnn.abstract_models --allexamples
-        python -m ibeis_cnn.abstract_models --allexamples --noface --nosrc
+        python -m wbia_cnn.abstract_models
+        python -m wbia_cnn.abstract_models --allexamples
+        python -m wbia_cnn.abstract_models --allexamples --noface --nosrc
     """
     import multiprocessing
     multiprocessing.freeze_support()  # for win32

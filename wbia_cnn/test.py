@@ -4,7 +4,7 @@
 tests a test set of data using a specified, pre0trained model and weights
 """
 from __future__ import absolute_import, division, print_function
-from ibeis_cnn import utils
+from wbia_cnn import utils
 import utool as ut
 import six  # NOQA
 print, rrr, profile = ut.inject2(__name__)
@@ -37,15 +37,15 @@ def test(data_fpath, model, weights_fpath, results_dpath=None, labels_fpath=None
 if __name__ == '__main__':
     """
     CommandLine:
-        python -m ibeis_cnn.test
-        python -m ibeis_cnn.test --allexamples
-        python -m ibeis_cnn.test --allexamples --noface --nosrc
+        python -m wbia_cnn.test
+        python -m wbia_cnn.test --allexamples
+        python -m wbia_cnn.test --allexamples --noface --nosrc
 
     CommandLine:
-        cd %CODE_DIR%/ibeis_cnn/code
-        cd $CODE_DIR/ibeis_cnn/code
+        cd %CODE_DIR%/wbia_cnn/code
+        cd $CODE_DIR/wbia_cnn/code
         code
-        cd ibeis_cnn/code
+        cd wbia_cnn/code
         python test.py
 
     PythonPrereqs:

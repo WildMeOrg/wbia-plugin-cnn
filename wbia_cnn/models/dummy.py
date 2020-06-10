@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function, unicode_literals
 import utool as ut
-from ibeis_cnn.models import abstract_models
+from wbia_cnn.models import abstract_models
 print, rrr, profile = ut.inject2(__name__)
 
 
@@ -17,11 +17,11 @@ class DummyModel(abstract_models.AbstractCategoricalModel):
     def init_arch(model, verbose=True):
         """
         CommandLine:
-            python -m ibeis_cnn DummyModel.init_arch --verbcnn --show
+            python -m wbia_cnn DummyModel.init_arch --verbcnn --show
 
         Example:
             >>> # ENABLE_DOCTEST
-            >>> from ibeis_cnn.models.dummy import *  # NOQA
+            >>> from wbia_cnn.models.dummy import *  # NOQA
             >>> model = DummyModel(autoinit=True)
             >>> model.print_model_info_str()
             >>> print(model)
@@ -29,8 +29,8 @@ class DummyModel(abstract_models.AbstractCategoricalModel):
             >>> model.show_arch()
             >>> ut.show_if_requested()
         """
-        import ibeis_cnn.__LASAGNE__ as lasange
-        from ibeis_cnn import custom_layers
+        import wbia_cnn.__LASAGNE__ as lasange
+        from wbia_cnn import custom_layers
         if verbose:
             print('init arch')
 
@@ -47,7 +47,7 @@ class DummyModel(abstract_models.AbstractCategoricalModel):
             b.SoftmaxBundle(num_units=model.output_dims),
         ]
 
-        from ibeis_cnn import custom_layers
+        from wbia_cnn import custom_layers
         network_layers = custom_layers.evaluate_layer_list(network_layers_def)
         #model.network_layers = network_layers
         model.output_layer = network_layers[-1]
@@ -60,9 +60,9 @@ class DummyModel(abstract_models.AbstractCategoricalModel):
 if __name__ == '__main__':
     """
     CommandLine:
-        python -m ibeis_cnn.models.dummy
-        python -m ibeis_cnn.models.dummy --allexamples
-        python -m ibeis_cnn.models.dummy --allexamples --noface --nosrc
+        python -m wbia_cnn.models.dummy
+        python -m wbia_cnn.models.dummy --allexamples
+        python -m wbia_cnn.models.dummy --allexamples --noface --nosrc
     """
     import multiprocessing
     multiprocessing.freeze_support()  # for win32

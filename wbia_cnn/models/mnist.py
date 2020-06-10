@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function, unicode_literals
-from ibeis_cnn.models import abstract_models
+from wbia_cnn.models import abstract_models
 import utool as ut
 print, rrr, profile = ut.inject2(__name__)
 
@@ -10,16 +10,16 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
     Toy model for testing and playing with mnist
 
     CommandLine:
-        python -m ibeis_cnn.models.mnist MNISTModel:0
-        python -m ibeis_cnn.models.mnist MNISTModel:1
+        python -m wbia_cnn.models.mnist MNISTModel:0
+        python -m wbia_cnn.models.mnist MNISTModel:1
 
-        python -m ibeis_cnn _ModelFitting.fit:0 --vd --monitor
-        python -m ibeis_cnn _ModelFitting.fit:1 --vd
+        python -m wbia_cnn _ModelFitting.fit:0 --vd --monitor
+        python -m wbia_cnn _ModelFitting.fit:1 --vd
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.models.mnist import *  # NOQA
-        >>> from ibeis_cnn import ingest_data
+        >>> from wbia_cnn.models.mnist import *  # NOQA
+        >>> from wbia_cnn import ingest_data
         >>> dataset = ingest_data.grab_mnist_category_dataset_float()
         >>> model = MNISTModel(batch_size=128, data_shape=dataset.data_shape,
         >>>                    output_dims=dataset.output_dims,
@@ -31,8 +31,8 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.models.mnist import *  # NOQA
-        >>> from ibeis_cnn.models import mnist
+        >>> from wbia_cnn.models.mnist import *  # NOQA
+        >>> from wbia_cnn.models import mnist
         >>> model, dataset = mnist.testdata_mnist()
         >>> model.init_arch()
         >>> model.print_layer_info()
@@ -60,12 +60,12 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
     def fit(model, *args, **kwargs):
         """
         CommandLine:
-            python -m ibeis_cnn.models.mnist MNISTModel.fit --show
+            python -m wbia_cnn.models.mnist MNISTModel.fit --show
 
         Example:
             >>> # ENABLE_DOCTEST
-            >>> from ibeis_cnn.models.mnist import *  # NOQA
-            >>> from ibeis_cnn.models import mnist
+            >>> from wbia_cnn.models.mnist import *  # NOQA
+            >>> from wbia_cnn.models import mnist
             >>> model, dataset = mnist.testdata_mnist()
             >>> model.init_arch()
             >>> # parse training arguments
@@ -82,11 +82,11 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
     def augment(model, Xb, yb=None):
         r"""
         CommandLine:
-            python -m ibeis_cnn.models.mnist MNISTModel.augment --show
+            python -m wbia_cnn.models.mnist MNISTModel.augment --show
 
         Example:
-            >>> from ibeis_cnn.models.mnist import *  # NOQA
-            >>> from ibeis_cnn.models import mnist
+            >>> from wbia_cnn.models.mnist import *  # NOQA
+            >>> from wbia_cnn.models import mnist
             >>> import numpy as np
             >>> model, dataset = mnist.testdata_mnist()
             >>> model._rng = ut.ensure_rng(model.hyperparams['random_seed'])
@@ -103,11 +103,11 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
             >>> ut.quit_if_noshow()
             >>> import plottool as pt
             >>> pt.qt4ensure()
-            >>> from ibeis_cnn import augment
+            >>> from wbia_cnn import augment
             >>> augment.show_augmented_patches(Xb, Xb_, yb, yb_, data_per_label=1)
             >>> ut.show_if_requested()
         """
-        from ibeis_cnn import augment
+        from wbia_cnn import augment
         rng = model._rng
         affperterb_ranges = dict(
             #zoom_range=(1.1, 0.9),
@@ -130,15 +130,15 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         """
 
         CommandLine:
-            python -m ibeis_cnn  MNISTModel.init_arch --verbcnn
-            python -m ibeis_cnn  MNISTModel.init_arch --verbcnn --show
+            python -m wbia_cnn  MNISTModel.init_arch --verbcnn
+            python -m wbia_cnn  MNISTModel.init_arch --verbcnn --show
 
-            python -m ibeis_cnn  MNISTModel.init_arch --verbcnn --name=bnorm --show
-            python -m ibeis_cnn  MNISTModel.init_arch --verbcnn --name=incep --show
+            python -m wbia_cnn  MNISTModel.init_arch --verbcnn --name=bnorm --show
+            python -m wbia_cnn  MNISTModel.init_arch --verbcnn --name=incep --show
 
         Example:
             >>> # ENABLE_DOCTEST
-            >>> from ibeis_cnn.models.mnist import *  # NOQA
+            >>> from wbia_cnn.models.mnist import *  # NOQA
             >>> verbose = True
             >>> name = ut.get_argval('--name', default='bnorm')
             >>> model = MNISTModel(batch_size=128, data_shape=(28, 28, 1),
@@ -171,7 +171,7 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
             network_layers_def = model.get_mnist_def()
         else:
             network_layers_def = model.get_lenet_def()
-        from ibeis_cnn import custom_layers
+        from wbia_cnn import custom_layers
         network_layers = custom_layers.evaluate_layer_list(network_layers_def)
         model.output_layer = network_layers[-1]
         return model.output_layer
@@ -180,11 +180,11 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         """
         Follows https://github.com/Lasagne/Lasagne/blob/master/examples/mnist.py
 
-        python -m ibeis_cnn MNISTModel.init_arch --verbcnn --name=mnist --show
-        python -m ibeis_cnn.models.mnist MNISTModel.fit:0 --name=mnist --vd --monitor
+        python -m wbia_cnn MNISTModel.init_arch --verbcnn --name=mnist --show
+        python -m wbia_cnn.models.mnist MNISTModel.fit:0 --name=mnist --vd --monitor
         """
-        import ibeis_cnn.__LASAGNE__ as lasagne
-        from ibeis_cnn import custom_layers
+        import wbia_cnn.__LASAGNE__ as lasagne
+        from wbia_cnn import custom_layers
         batch_norm = False
 
         bundles = custom_layers.make_bundles(
@@ -207,11 +207,11 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
 
     def get_lenet_def(model):
         """
-        python -m ibeis_cnn MNISTModel.init_arch --verbcnn --name=lenet --show
-        python -m ibeis_cnn.models.mnist MNISTModel.fit:0 --name=lenet --vd --monitor
+        python -m wbia_cnn MNISTModel.init_arch --verbcnn --name=lenet --show
+        python -m wbia_cnn.models.mnist MNISTModel.fit:0 --name=lenet --vd --monitor
         """
-        import ibeis_cnn.__LASAGNE__ as lasagne
-        from ibeis_cnn import custom_layers
+        import wbia_cnn.__LASAGNE__ as lasagne
+        from wbia_cnn import custom_layers
         batch_norm = model.batch_norm
         dropout = model.dropout
 
@@ -246,11 +246,11 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         """
         A residual network with pre-activations
 
-        python -m ibeis_cnn MNISTModel.init_arch --verbcnn --name=resnet --show
-        python -m ibeis_cnn.models.mnist MNISTModel.fit:0 --name=resnet --vd --monitor
+        python -m wbia_cnn MNISTModel.init_arch --verbcnn --name=resnet --show
+        python -m wbia_cnn.models.mnist MNISTModel.fit:0 --name=resnet --vd --monitor
         """
-        import ibeis_cnn.__LASAGNE__ as lasagne
-        from ibeis_cnn import custom_layers
+        import wbia_cnn.__LASAGNE__ as lasagne
+        from wbia_cnn import custom_layers
         batch_norm = model.batch_norm
 
         W = lasagne.init.HeNormal(gain='relu')
@@ -279,12 +279,12 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
 
     def get_inception_def(model):
         """
-        python -m ibeis_cnn MNISTModel.init_arch --verbcnn --name=resnet --show
-        python -m ibeis_cnn.models.mnist MNISTModel.fit:0 --name=resnet --vd --monitor
+        python -m wbia_cnn MNISTModel.init_arch --verbcnn --name=resnet --show
+        python -m wbia_cnn.models.mnist MNISTModel.fit:0 --name=resnet --vd --monitor
 
         """
-        import ibeis_cnn.__LASAGNE__ as lasagne
-        from ibeis_cnn import custom_layers
+        import wbia_cnn.__LASAGNE__ as lasagne
+        from wbia_cnn import custom_layers
         batch_norm = model.batch_norm
         if model.dropout is None:
             dropout = 0 if batch_norm else .5
@@ -329,8 +329,8 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
 
 
 def testdata_mnist(defaultname='lenet', batch_size=128, dropout=None):
-    from ibeis_cnn import ingest_data
-    from ibeis_cnn.models import mnist
+    from wbia_cnn import ingest_data
+    from wbia_cnn.models import mnist
     dataset = ingest_data.grab_mnist_category_dataset()
     name = ut.get_argval('--name', default=defaultname)
     if name.startswith('lenet'):
@@ -387,9 +387,9 @@ def testdata_mnist(defaultname='lenet', batch_size=128, dropout=None):
 if __name__ == '__main__':
     """
     CommandLine:
-        python -m ibeis_cnn.models.mnist
-        python -m ibeis_cnn.models.mnist --allexamples
-        python -m ibeis_cnn.models.mnist --allexamples --noface --nosrc
+        python -m wbia_cnn.models.mnist
+        python -m wbia_cnn.models.mnist --allexamples
+        python -m wbia_cnn.models.mnist --allexamples --noface --nosrc
     """
     import multiprocessing
     multiprocessing.freeze_support()  # for win32

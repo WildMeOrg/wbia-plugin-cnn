@@ -4,12 +4,12 @@ import functools
 import six
 import numpy as np
 import utool as ut
-import ibeis_cnn.__LASAGNE__ as lasagne
-from ibeis_cnn import ingest_data
-from ibeis_cnn.__LASAGNE__ import layers
-from ibeis_cnn.__LASAGNE__ import nonlinearities
-from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
-from ibeis_cnn.models import abstract_models
+import wbia_cnn.__LASAGNE__ as lasagne
+from wbia_cnn import ingest_data
+from wbia_cnn.__LASAGNE__ import layers
+from wbia_cnn.__LASAGNE__ import nonlinearities
+from wbia_cnn.__THEANO__ import tensor as T  # NOQA
+from wbia_cnn.models import abstract_models
 
 print, rrr, profile = ut.inject2(__name__)
 
@@ -79,7 +79,7 @@ class BackgroundModel(abstract_models.AbstractCategoricalModel):
             'nonlinearity' : nonlinearities.LeakyRectify(leakiness=(1. / 10.))
         }
 
-        from ibeis_cnn import custom_layers
+        from wbia_cnn import custom_layers
 
         Conv2DLayer = custom_layers.Conv2DLayer
         MaxPool2DLayer = custom_layers.MaxPool2DLayer
@@ -125,7 +125,7 @@ class BackgroundModel(abstract_models.AbstractCategoricalModel):
 
         network_layers_def = model.get_background_def(verbose=verbose, **kwargs)
         # connect and record layers
-        from ibeis_cnn import custom_layers
+        from wbia_cnn import custom_layers
         network_layers = custom_layers.evaluate_layer_list(network_layers_def, verbose=verbose)
         #model.network_layers = network_layers
         output_layer = network_layers[-1]
@@ -136,11 +136,11 @@ class BackgroundModel(abstract_models.AbstractCategoricalModel):
 def train_background(output_path, data_fpath, labels_fpath):
     r"""
     CommandLine:
-        python -m ibeis_cnn.train --test-train_background
+        python -m wbia_cnn.train --test-train_background
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.train import *  # NOQA
+        >>> from wbia_cnn.train import *  # NOQA
         >>> result = train_background()
         >>> print(result)
     """
@@ -212,9 +212,9 @@ def train_background(output_path, data_fpath, labels_fpath):
 if __name__ == '__main__':
     """
     CommandLine:
-        python -m ibeis_cnn.models.background
-        python -m ibeis_cnn.models.background --allexamples
-        python -m ibeis_cnn.models.background --allexamples --noface --nosrc
+        python -m wbia_cnn.models.background
+        python -m wbia_cnn.models.background --allexamples
+        python -m wbia_cnn.models.background --allexamples --noface --nosrc
     """
     import multiprocessing
     multiprocessing.freeze_support()  # for win32

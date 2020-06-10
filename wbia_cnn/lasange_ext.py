@@ -2,9 +2,9 @@
 from __future__ import absolute_import, division, print_function
 import warnings
 import utool as ut
-from ibeis_cnn.__LASAGNE__ import layers
-from ibeis_cnn.__THEANO__ import tensor as T
-from ibeis_cnn import __THEANO__ as theano
+from wbia_cnn.__LASAGNE__ import layers
+from wbia_cnn.__THEANO__ import tensor as T
+from wbia_cnn import __THEANO__ as theano
 
 (print, rrr, profile) = ut.inject2(__name__)
 
@@ -58,16 +58,16 @@ def siamese_loss(G, Y_padded, data_per_label=2, T=T):
         https://github.com/Lasagne/Lasagne/issues/168
 
     CommandLine:
-        python -m ibeis_cnn.lasange_ext --test-siamese_loss
+        python -m wbia_cnn.lasange_ext --test-siamese_loss
         # Train Network
-        python -m ibeis_cnn.train --test-pz_patchmatch --vtd --max-examples=16 --batch_size=128 --learning_rate .0000001
+        python -m wbia_cnn.train --test-pz_patchmatch --vtd --max-examples=16 --batch_size=128 --learning_rate .0000001
 
     CommandLine:
-        python -m ibeis_cnn.lasange_ext --test-siamese_loss
+        python -m wbia_cnn.lasange_ext --test-siamese_loss
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.lasange_ext import *  # NOQA
+        >>> from wbia_cnn.lasange_ext import *  # NOQA
         >>> # numpy testing but in reality these are theano functions
         >>> verbose = True
         >>> G, Y_padded = testdata_contrastive_loss()

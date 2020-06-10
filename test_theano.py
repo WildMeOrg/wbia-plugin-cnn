@@ -38,7 +38,7 @@ def test_theano():
 
 if __name__ == '__main__':
     """
-    python $CODE_DIR/ibeis_cnn/test_theano.py
+    python $CODE_DIR/wbia_cnn/test_theano.py
     """
     test_theano()
     #theano.test()

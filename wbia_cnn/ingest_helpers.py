@@ -110,7 +110,7 @@ def open_mnist_files(data_fpath, labels_fpath):
 def extract_liberty_style_patches(ds_path, pairs):
     """
     CommandLine:
-        python -m ibeis_cnn.ingest_data --test-grab_cached_liberty_data --show
+        python -m wbia_cnn.ingest_data --test-grab_cached_liberty_data --show
 
     """
     from itertools import product
@@ -367,9 +367,9 @@ def convert_category_to_siam_data(category_data, category_labels):
 if __name__ == '__main__':
     """
     CommandLine:
-        python -m ibeis_cnn.ingest_helpers
-        python -m ibeis_cnn.ingest_helpers --allexamples
-        python -m ibeis_cnn.ingest_helpers --allexamples --noface --nosrc
+        python -m wbia_cnn.ingest_helpers
+        python -m wbia_cnn.ingest_helpers --allexamples
+        python -m wbia_cnn.ingest_helpers --allexamples --noface --nosrc
     """
     import multiprocessing
     multiprocessing.freeze_support()  # for win32

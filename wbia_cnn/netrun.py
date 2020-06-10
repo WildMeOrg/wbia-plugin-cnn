@@ -7,7 +7,7 @@ FIXME:
     first time after roboot, otherwise you get errors
 
 CommandLineHelp:
-    python -m ibeis_cnn --tf netrun <networkmodel>
+    python -m wbia_cnn --tf netrun <networkmodel>
 
     --dataset, --ds = <dstag>:<subtag>
         dstag is the main dataset name (eg PZ_MTEST), subtag are parameters to
@@ -26,9 +26,9 @@ CommandLineHelp:
        sets theano device flag to a processor like gpu0, gpu1, or cpu0
 """
 from __future__ import absolute_import, division, print_function
-from ibeis_cnn import models
-from ibeis_cnn import ingest_data
-from ibeis_cnn import experiments
+from wbia_cnn import models
+from wbia_cnn import ingest_data
+from wbia_cnn import experiments
 import utool as ut
 import sys
 print, rrr, profile = ut.inject2(__name__)
@@ -64,54 +64,54 @@ def netrun():
     r"""
     CommandLine:
         # --- UTILITY
-        python -m ibeis_cnn --tf get_juction_dpath --show
+        python -m wbia_cnn --tf get_juction_dpath --show
 
         # --- DATASET BUILDING ---
         # Build Dataset Aliases
-        python -m ibeis_cnn --tf netrun --db PZ_MTEST --acfg ctrl --ensuredata --show
-        python -m ibeis_cnn --tf netrun --db PZ_Master1 --acfg timectrl --ensuredata
-        python -m ibeis_cnn --tf netrun --db PZ_Master1 --acfg timectrl:pername=None --ensuredata
-        python -m ibeis_cnn --tf netrun --db PZ_Master1 --acfg timectrl:pername=None --ensuredata
-        python -m ibeis_cnn --tf netrun --db mnist --ensuredata --show
-        python -m ibeis_cnn --tf netrun --db mnist --ensuredata --show --datatype=category
-        python -m ibeis_cnn --tf netrun --db mnist --ensuredata --show --datatype=siam-patch
+        python -m wbia_cnn --tf netrun --db PZ_MTEST --acfg ctrl --ensuredata --show
+        python -m wbia_cnn --tf netrun --db PZ_Master1 --acfg timectrl --ensuredata
+        python -m wbia_cnn --tf netrun --db PZ_Master1 --acfg timectrl:pername=None --ensuredata
+        python -m wbia_cnn --tf netrun --db PZ_Master1 --acfg timectrl:pername=None --ensuredata
+        python -m wbia_cnn --tf netrun --db mnist --ensuredata --show
+        python -m wbia_cnn --tf netrun --db mnist --ensuredata --show --datatype=category
+        python -m wbia_cnn --tf netrun --db mnist --ensuredata --show --datatype=siam-patch
 
-        python -m ibeis_cnn --tf netrun --db PZ_Master1 --acfg ctrl:pername=None,excluderef=False,contributor_contains=FlankHack --ensuredata --show --datatype=siam-part
+        python -m wbia_cnn --tf netrun --db PZ_Master1 --acfg ctrl:pername=None,excluderef=False,contributor_contains=FlankHack --ensuredata --show --datatype=siam-part
 
         # Parts based datasets
-        python -m ibeis_cnn --tf netrun --db PZ_MTEST --acfg ctrl --datatype=siam-part --ensuredata --show
+        python -m wbia_cnn --tf netrun --db PZ_MTEST --acfg ctrl --datatype=siam-part --ensuredata --show
 
         % Patch based dataset (big one)
-        python -m ibeis_cnn --tf netrun --db PZ_Master1 --acfg default:is_known=True,qmin_pername=2,view=primary,species=primary,minqual=ok --ensuredata --show --vtd
-        python -m ibeis_cnn --tf netrun --ds pzm4 --weights=new --arch=siaml2_128 --train --monitor
-        python -m ibeis_cnn --tf netrun --ds pzm4 --arch=siaml2_128 --test
-        python -m ibeis_cnn --tf netrun --ds pzm4 --arch=siaml2_128 --veryverbose --no-flask
+        python -m wbia_cnn --tf netrun --db PZ_Master1 --acfg default:is_known=True,qmin_pername=2,view=primary,species=primary,minqual=ok --ensuredata --show --vtd
+        python -m wbia_cnn --tf netrun --ds pzm4 --weights=new --arch=siaml2_128 --train --monitor
+        python -m wbia_cnn --tf netrun --ds pzm4 --arch=siaml2_128 --test
+        python -m wbia_cnn --tf netrun --ds pzm4 --arch=siaml2_128 --veryverbose --no-flask
 
         # --- TRAINING ---
-        python -m ibeis_cnn --tf netrun --db PZ_Master1 --acfg default:is_known=True,qmin_pername=2,view=primary,species=primary,minqual=ok --weights=new --arch=siaml2_128 --train --monitor
+        python -m wbia_cnn --tf netrun --db PZ_Master1 --acfg default:is_known=True,qmin_pername=2,view=primary,species=primary,minqual=ok --weights=new --arch=siaml2_128 --train --monitor
 
-        python -m ibeis_cnn --tf netrun --ds timectrl_pzmaster1 --acfg ctrl:pername=None,excluderef=False,contributor_contains=FlankHack --train --weights=new --arch=siaml2_128  --monitor  # NOQA
-        python -m ibeis_cnn --tf netrun --ds timectrl_pzmaster1 --acfg ctrl:pername=None,excluderef=False --train --weights=new --arch=siaml2_128  --monitor  # NOQA
-        python -m ibeis_cnn --tf netrun --ds pzmtest --weights=new --arch=siaml2_128 --train --monitor --DEBUG_AUGMENTATION
-        python -m ibeis_cnn --tf netrun --ds pzmtest --weights=new --arch=siaml2_128 --train --monitor
+        python -m wbia_cnn --tf netrun --ds timectrl_pzmaster1 --acfg ctrl:pername=None,excluderef=False,contributor_contains=FlankHack --train --weights=new --arch=siaml2_128  --monitor  # NOQA
+        python -m wbia_cnn --tf netrun --ds timectrl_pzmaster1 --acfg ctrl:pername=None,excluderef=False --train --weights=new --arch=siaml2_128  --monitor  # NOQA
+        python -m wbia_cnn --tf netrun --ds pzmtest --weights=new --arch=siaml2_128 --train --monitor --DEBUG_AUGMENTATION
+        python -m wbia_cnn --tf netrun --ds pzmtest --weights=new --arch=siaml2_128 --train --monitor
 
-        python -m ibeis_cnn --tf netrun --ds flankhack --weights=new --arch=siaml2_partmatch --train --monitor --learning_rate=.00001
-        python -m ibeis_cnn --tf netrun --ds flankhack --weights=new --arch=siam_deepfaceish --train --monitor --learning_rate=.00001
+        python -m wbia_cnn --tf netrun --ds flankhack --weights=new --arch=siaml2_partmatch --train --monitor --learning_rate=.00001
+        python -m wbia_cnn --tf netrun --ds flankhack --weights=new --arch=siam_deepfaceish --train --monitor --learning_rate=.00001
 
         # Different ways to train mnist
-        python -m ibeis_cnn --tf netrun --db mnist --weights=new --arch=mnist_siaml2 --train --monitor --datatype=siam-patch
-        python -m ibeis_cnn --tf netrun --db mnist --weights=new --arch=mnist-category --train --monitor --datatype=category
+        python -m wbia_cnn --tf netrun --db mnist --weights=new --arch=mnist_siaml2 --train --monitor --datatype=siam-patch
+        python -m wbia_cnn --tf netrun --db mnist --weights=new --arch=mnist-category --train --monitor --datatype=category
 
         # --- INITIALIZED-TRAINING ---
-        python -m ibeis_cnn --tf netrun --ds pzmtest --arch=siaml2_128 --weights=gz-gray:current --train --monitor
+        python -m wbia_cnn --tf netrun --ds pzmtest --arch=siaml2_128 --weights=gz-gray:current --train --monitor
 
         # --- TESTING ---
-        python -m ibeis_cnn --tf netrun --db liberty --weights=liberty:current --arch=siaml2_128 --test
-        python -m ibeis_cnn --tf netrun --db PZ_Master0 --weights=combo:current --arch=siaml2_128 --testall
+        python -m wbia_cnn --tf netrun --db liberty --weights=liberty:current --arch=siaml2_128 --test
+        python -m wbia_cnn --tf netrun --db PZ_Master0 --weights=combo:current --arch=siaml2_128 --testall
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.netrun import *  # NOQA
+        >>> from wbia_cnn.netrun import *  # NOQA
         >>> netrun()
         >>> ut.show_if_requested()
     """
@@ -345,14 +345,14 @@ def parse_args():
 def merge_ds_tags(ds_alias_list):
     r"""
     CommandLine:
-        python -m ibeis_cnn --tf merge_ds_tags --alias-list gz-gray girm pzmtest nnp
+        python -m wbia_cnn --tf merge_ds_tags --alias-list gz-gray girm pzmtest nnp
 
     TODO:
         http://stackoverflow.com/questions/18492273/combining-hdf5-files
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.train import *  # NOQA
+        >>> from wbia_cnn.train import *  # NOQA
         >>> ds_alias_list = ut.get_argval('--alias-list', type_=list, default=[])
         >>> result = merge_ds_tags(ds_alias_list)
         >>> print(result)
@@ -367,9 +367,9 @@ def merge_ds_tags(ds_alias_list):
 if __name__ == '__main__':
     """
     CommandLine:
-        python -m ibeis_cnn.train
-        python -m ibeis_cnn.train --allexamples
-        python -m ibeis_cnn.train --allexamples --noface --nosrc
+        python -m wbia_cnn.train
+        python -m wbia_cnn.train --allexamples
+        python -m wbia_cnn.train --allexamples --noface --nosrc
     """
     #train_pz()
     import multiprocessing

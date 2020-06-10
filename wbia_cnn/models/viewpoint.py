@@ -2,10 +2,10 @@
 from __future__ import absolute_import, division, print_function
 import six
 import random
-from ibeis_cnn.__LASAGNE__ import layers
-from ibeis_cnn.__LASAGNE__ import nonlinearities
-# from ibeis_cnn.__LASAGNE__ import init
-from ibeis_cnn.models import abstract_models
+from wbia_cnn.__LASAGNE__ import layers
+from wbia_cnn.__LASAGNE__ import nonlinearities
+# from wbia_cnn.__LASAGNE__ import init
+from wbia_cnn.models import abstract_models
 import utool as ut
 print, rrr, profile = ut.inject2(__name__)
 
@@ -43,11 +43,11 @@ class ViewpointModel(abstract_models.AbstractCategoricalModel):
             ?: category_mapping
 
         CommandLine:
-            python -m ibeis_cnn.models.viewpoint --exec-label_order_mapping
+            python -m wbia_cnn.models.viewpoint --exec-label_order_mapping
 
         Example:
             >>> # DISABLE_DOCTEST
-            >>> from ibeis_cnn.models.viewpoint import *  # NOQA
+            >>> from wbia_cnn.models.viewpoint import *  # NOQA
             >>> model = ViewpointModel()
             >>> category_list = ['LEFT', 'FRONT_LEFT', 'FRONT', 'FRONT_RIGHT', 'RIGHT', 'BACK_RIGHT', 'BACK', 'BACK_LEFT']
             >>> category_mapping = model.label_order_mapping(category_list)
@@ -96,7 +96,7 @@ class ViewpointModel(abstract_models.AbstractCategoricalModel):
     #def build_model(model, batch_size, input_width, input_height, input_channels, output_dims):
     def init_arch(model):
 
-        from ibeis_cnn import custom_layers
+        from wbia_cnn import custom_layers
         Conv2DLayer = custom_layers.Conv2DLayer
         MaxPool2DLayer = custom_layers.MaxPool2DLayer
 
@@ -236,9 +236,9 @@ class ViewpointModel(abstract_models.AbstractCategoricalModel):
 if __name__ == '__main__':
     """
     CommandLine:
-        python -m ibeis_cnn.models.dummy
-        python -m ibeis_cnn.models.dummy --allexamples
-        python -m ibeis_cnn.models.dummy --allexamples --noface --nosrc
+        python -m wbia_cnn.models.dummy
+        python -m wbia_cnn.models.dummy --allexamples
+        python -m wbia_cnn.models.dummy --allexamples --noface --nosrc
     """
     import multiprocessing
     multiprocessing.freeze_support()  # for win32

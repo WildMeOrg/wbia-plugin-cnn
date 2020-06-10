@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function
 import utool as ut
-from ibeis_cnn.__LASAGNE__ import layers
-from ibeis_cnn.__LASAGNE__ import nonlinearities
-# from ibeis_cnn.__LASAGNE__ import init
-from ibeis_cnn.models import abstract_models
+from wbia_cnn.__LASAGNE__ import layers
+from wbia_cnn.__LASAGNE__ import nonlinearities
+# from wbia_cnn.__LASAGNE__ import init
+from wbia_cnn.models import abstract_models
 print, rrr, profile = ut.inject2(__name__)
 
 
@@ -31,7 +31,7 @@ class QualityModel(abstract_models.AbstractCategoricalModel):
 
     def build_model(self, batch_size, input_width, input_height, input_channels, output_dims):
 
-        from ibeis_cnn import custom_layers
+        from wbia_cnn import custom_layers
         Conv2DLayer = custom_layers.Conv2DLayer
         MaxPool2DLayer = custom_layers.MaxPool2DLayer
 
@@ -166,9 +166,9 @@ class QualityModel(abstract_models.AbstractCategoricalModel):
 if __name__ == '__main__':
     """
     CommandLine:
-        python -m ibeis_cnn.models.quality
-        python -m ibeis_cnn.models.quality --allexamples
-        python -m ibeis_cnn.models.quality --allexamples --noface --nosrc
+        python -m wbia_cnn.models.quality
+        python -m wbia_cnn.models.quality --allexamples
+        python -m wbia_cnn.models.quality --allexamples --noface --nosrc
     """
     import multiprocessing
     multiprocessing.freeze_support()  # for win32

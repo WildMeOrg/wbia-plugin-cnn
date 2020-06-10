@@ -3,11 +3,11 @@
 """
 tests a test set of data using a specified, pre-trained model and weights
 
-python -c "import ibeis_cnn"
+python -c "import wbia_cnn"
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
-from ibeis_cnn import models
-from ibeis_cnn import _plugin_grabmodels as grabmodels
+from wbia_cnn import models
+from wbia_cnn import _plugin_grabmodels as grabmodels
 import utool as ut
 import cv2
 import six
@@ -71,7 +71,7 @@ def get_verified_aid_pairs(ibs):
     """
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.train import *  # NOQA
+        >>> from wbia_cnn.train import *  # NOQA
         >>> import wbia
         >>> ibs = wbia.opendb('NNP_Master3')
         >>> verified_aid1_list, verified_aid2_list = get_verified_aid_pairs(ibs)
@@ -95,7 +95,7 @@ def generate_thumbnail_class_list(ibs, thumbnail_list, nInput=None,
     data_shape = (192, 192, 3)
     batch_size = None
     # Define model and load weights
-    print('\n[ibeis_cnn] Loading model...')
+    print('\n[wbia_cnn] Loading model...')
     if nInput is None:
         try:
             nInput = len(thumbnail_list)
@@ -136,8 +136,8 @@ def generate_thumbnail_class_list(ibs, thumbnail_list, nInput=None,
         weights_path = grabmodels.ensure_model('classifier_cameratrap_megan2_v5', redownload=False)
     elif classifier_weight_filepath in ['megan2.6']:
         weights_path = grabmodels.ensure_model('classifier_cameratrap_megan2_v6', redownload=False)
-    elif classifier_weight_filepath in ['ryan.ibeis_cnn.v1']:
-        weights_path = grabmodels.ensure_model('classifier_cameratrap_ryan_ibeis_cnn_v1', redownload=False)
+    elif classifier_weight_filepath in ['ryan.wbia_cnn.v1']:
+        weights_path = grabmodels.ensure_model('classifier_cameratrap_ryan_wbia_cnn_v1', redownload=False)
     elif os.path.exists(classifier_weight_filepath):
         weights_path = classifier_weight_filepath
     else:
@@ -160,11 +160,11 @@ def generate_thumbnail_class_list(ibs, thumbnail_list, nInput=None,
 
     # Create the Theano primitives
     # create theano symbolic expressions that define the network
-    print('\n[ibeis_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---')
+    print('\n[wbia_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---')
     print('[model] creating Theano primitives...')
     theano_predict = model.build_predict_func()
 
-    print('[ibeis_cnn] Performing inference...')
+    print('[wbia_cnn] Performing inference...')
     test_results = model.process_batch(theano_predict, np.array(thumbnail_list))
 
     prediction_list = model.encoder.inverse_transform(test_results['predictions'])
@@ -183,7 +183,7 @@ def generate_thumbnail_class2_list(ibs, thumbnail_list, nInput=None,
     data_shape = (192, 192, 3)
     batch_size = None
     # Define model and load weights
-    print('\n[ibeis_cnn] Loading model...')
+    print('\n[wbia_cnn] Loading model...')
     if nInput is None:
         try:
             nInput = len(thumbnail_list)
@@ -225,11 +225,11 @@ def generate_thumbnail_class2_list(ibs, thumbnail_list, nInput=None,
 
     # Create the Theano primitives
     # create theano symbolic expressions that define the network
-    print('\n[ibeis_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---')
+    print('\n[wbia_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---')
     print('[model] creating Theano primitives...')
     theano_predict = model.build_predict_func()
 
-    print('[ibeis_cnn] Performing inference...')
+    print('[wbia_cnn] Performing inference...')
     test_results = model.process_batch(theano_predict, np.array(thumbnail_list))
 
     confidences_list = test_results['confidences']
@@ -272,7 +272,7 @@ def generate_thumbnail_aoi2_list(ibs, thumbnail_list, bbox_list, size_list,
     data_shape = (192, 192, 4)
     batch_size = None
     # Define model and load weights
-    print('\n[ibeis_cnn] Loading model...')
+    print('\n[wbia_cnn] Loading model...')
     if nInput is None:
         try:
             nInput = len(thumbnail_list)
@@ -315,7 +315,7 @@ def generate_thumbnail_aoi2_list(ibs, thumbnail_list, bbox_list, size_list,
 
     # Create the Theano primitives
     # create theano symbolic expressions that define the network
-    print('\n[ibeis_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---')
+    print('\n[wbia_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---')
     print('[model] creating Theano primitives...')
     theano_predict = model.build_predict_func()
 
@@ -337,7 +337,7 @@ def generate_thumbnail_aoi2_list(ibs, thumbnail_list, bbox_list, size_list,
         data = np.dstack((thumbnail, mask_))
         data_list.append(data)
 
-    print('[ibeis_cnn] Performing inference...')
+    print('[wbia_cnn] Performing inference...')
     test_results = model.process_batch(theano_predict, np.array(data_list))
 
     confidence_list = test_results['confidences']
@@ -359,7 +359,7 @@ def generate_chip_label_list(ibs, chip_list, nInput=None,
     data_shape = (128, 128, 3)
     batch_size = None
     # Define model and load weights
-    print('\n[ibeis_cnn] Loading model...')
+    print('\n[wbia_cnn] Loading model...')
     if nInput is None:
         try:
             nInput = len(chip_list)
@@ -413,11 +413,11 @@ def generate_chip_label_list(ibs, chip_list, nInput=None,
 
     # Create the Theano primitives
     # create theano symbolic expressions that define the network
-    print('\n[ibeis_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---')
+    print('\n[wbia_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---')
     print('[model] creating Theano primitives...')
     theano_predict = model.build_predict_func()
 
-    print('[ibeis_cnn] Performing inference...')
+    print('[wbia_cnn] Performing inference...')
     test_results = model.process_batch(theano_predict, np.array(chip_list))
 
     class_list = list(model.encoder.classes_)
@@ -477,7 +477,7 @@ def detect_annot_zebra_background_mask(ibs, aid_list, species=None, config2_=Non
         list: mask_list
     """
     # Read the data
-    print('\n[ibeis_cnn] Loading chips...')
+    print('\n[wbia_cnn] Loading chips...')
     chip_list = ibs.get_annot_chips(aid_list, verbose=True, config2_=config2_)
     mask_list = list(generate_species_background(ibs, chip_list, species=species))
     return mask_list
@@ -494,7 +494,7 @@ def detect_annot_whale_fluke_background_mask(ibs, aid_list, species='whale_fluke
         list: mask_list
     """
     # Read the data
-    print('\n[ibeis_cnn] Loading chips...')
+    print('\n[wbia_cnn] Loading chips...')
     chip_list = ibs.get_annot_chips(aid_list, verbose=True, config2_=config2_)
     mask_list = list(generate_species_background(ibs, chip_list, species=species))
     return mask_list
@@ -511,14 +511,14 @@ def generate_species_background_mask(ibs, chip_fpath_list, species=None):
         list: species_viewpoint_list
 
     CommandLine:
-        python -m ibeis_cnn._plugin --exec-generate_species_background_mask --show --db PZ_Master1
-        python -m ibeis_cnn --tf generate_species_background_mask --show --db PZ_Master1 --aid 9970
+        python -m wbia_cnn._plugin --exec-generate_species_background_mask --show --db PZ_Master1
+        python -m wbia_cnn --tf generate_species_background_mask --show --db PZ_Master1 --aid 9970
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> import ibeis_cnn
+        >>> import wbia_cnn
         >>> import wbia
-        >>> from ibeis_cnn._plugin import *  # NOQA
+        >>> from wbia_cnn._plugin import *  # NOQA
         >>> ibs = wbia.opendb(defaultdb='testdb1')
         >>> aid_list = ut.get_argval(('--aids', '--aid'), type_=list, default=ibs.get_valid_aids()[0:2])
         >>> chip_fpath_list = ibs.get_annot_chip_fpath(aid_list)
@@ -531,15 +531,15 @@ def generate_species_background_mask(ibs, chip_fpath_list, species=None):
         >>> #pt.imshow(mask_list[0])
         >>> ut.show_if_requested()
 
-        #>>> from ibeis_cnn.draw_results import *  # NOQA
-        #>>> from ibeis_cnn import ingest_data
+        #>>> from wbia_cnn.draw_results import *  # NOQA
+        #>>> from wbia_cnn import ingest_data
         #>>> data, labels = ingest_data.testdata_patchmatch2()
         #>>> flat_metadata = {'fs': np.arange(len(labels))}
         #>>> result = interact_siamsese_data_patches(labels, data, flat_metadata)
         #>>> ut.show_if_requested()
     """
     # Read the data
-    print('\n[ibeis_cnn] Loading chips...')
+    print('\n[wbia_cnn] Loading chips...')
     import vtool as vt
     nInput = len(chip_fpath_list)
 
@@ -564,18 +564,18 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
     TODO: Use this as the primary function
 
     CommandLine:
-        python -m ibeis_cnn._plugin --exec-generate_species_background --db PZ_MTEST --species=zebra_plains --show
-        python -m ibeis_cnn._plugin --exec-generate_species_background --db GZ_Master1 --species=zebra_grevys --save cnn_detect_results_gz.png --diskshow --clipwhite
-        python -m ibeis_cnn._plugin --exec-generate_species_background --db PZ_Master1 --species=zebra_plains --save cnn_detect_results_pz.png --diskshow --clipwhite
-        python -m ibeis_cnn._plugin --exec-generate_species_background --db PZ_Master1 --show
-        python -m ibeis_cnn._plugin --exec-generate_species_background --db GZ_Master1 --show
-        python -m ibeis_cnn._plugin --exec-generate_species_background --db GIRM_Master1 --show --species=giraffe_masai
+        python -m wbia_cnn._plugin --exec-generate_species_background --db PZ_MTEST --species=zebra_plains --show
+        python -m wbia_cnn._plugin --exec-generate_species_background --db GZ_Master1 --species=zebra_grevys --save cnn_detect_results_gz.png --diskshow --clipwhite
+        python -m wbia_cnn._plugin --exec-generate_species_background --db PZ_Master1 --species=zebra_plains --save cnn_detect_results_pz.png --diskshow --clipwhite
+        python -m wbia_cnn._plugin --exec-generate_species_background --db PZ_Master1 --show
+        python -m wbia_cnn._plugin --exec-generate_species_background --db GZ_Master1 --show
+        python -m wbia_cnn._plugin --exec-generate_species_background --db GIRM_Master1 --show --species=giraffe_masai
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> import ibeis_cnn
+        >>> import wbia_cnn
         >>> import wbia
-        >>> from ibeis_cnn._plugin import *  # NOQA
+        >>> from wbia_cnn._plugin import *  # NOQA
         >>> ibs = wbia.opendb(defaultdb='testdb1')
         >>> aid_list = ibs.get_valid_aids()[0:8]
         >>> species = ut.get_argval('--species', type_=str, default='zebra_plains')
@@ -597,8 +597,8 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         >>> ut.show_if_requested()
 
     Ignore:
-        #>>> from ibeis_cnn.draw_results import *  # NOQA
-        #>>> from ibeis_cnn import ingest_data
+        #>>> from wbia_cnn.draw_results import *  # NOQA
+        #>>> from wbia_cnn import ingest_data
         #>>> data, labels = ingest_data.testdata_patchmatch2()
         #>>> flat_metadata = {'fs': np.arange(len(labels))}
         #>>> result = interact_siamsese_data_patches(labels, data, flat_metadata)
@@ -611,7 +611,7 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
     # Load chips and resize to the target
     data_shape = (256, 256, 3)
     # Define model and load weights
-    print('\n[ibeis_cnn] Loading model...')
+    print('\n[wbia_cnn] Loading model...')
     if nInput is None:
         try:
             nInput = len(chip_list)
@@ -890,11 +890,11 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
 
     # Create the Theano primitives
     # create theano symbolic expressions that define the network
-    print('\n[ibeis_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---')
+    print('\n[wbia_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---')
     print('[model] creating Theano primitives...')
     model.build_predict_func()
 
-    print('[ibeis_cnn] Performing inference...')
+    print('[wbia_cnn] Performing inference...')
 
     _iter = ut.ProgressIter(chip_list, nTotal=nInput, lbl=species + ' fgdetect', adjust=True, freq=10, time_thresh=30.0)
     for chip in _iter:
@@ -956,7 +956,7 @@ def test_convolutional(model, image, patch_size='auto', stride='auto',
             maps themselves as a dictionary.  The dictionary uses the class
             labels as the strings and the numpy array image as the values.
     """
-    from ibeis_cnn import utils
+    from wbia_cnn import utils
 
     def _add_pad(data_):
         if len(data_.shape) == 2:
@@ -1194,11 +1194,11 @@ def detect_annot_species_viewpoint_cnn(ibs, aid_list):
         list: species_viewpoint_list
 
     CommandLine:
-        python -m ibeis_cnn._plugin --exec-detect_annot_species_viewpoint_cnn
+        python -m wbia_cnn._plugin --exec-detect_annot_species_viewpoint_cnn
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn._plugin import *  # NOQA
+        >>> from wbia_cnn._plugin import *  # NOQA
         >>> import wbia
         >>> ibs = wbia.opendb(defaultdb='testdb1')
         >>> aid_list = ibs.get_valid_aids()
@@ -1247,12 +1247,12 @@ def validate_annot_species_viewpoint_cnn(ibs, aid_list, verbose=False):
         tuple: (bad_species_list, bad_viewpoint_list)
 
     CommandLine:
-        python -m ibeis_cnn._plugin --exec-validate_annot_species_viewpoint_cnn --db PZ_FlankHack
-        python -m ibeis_cnn._plugin --exec-validate_annot_species_viewpoint_cnn --db GZ_Master1
+        python -m wbia_cnn._plugin --exec-validate_annot_species_viewpoint_cnn --db PZ_FlankHack
+        python -m wbia_cnn._plugin --exec-validate_annot_species_viewpoint_cnn --db GZ_Master1
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn._plugin import *  # NOQA
+        >>> from wbia_cnn._plugin import *  # NOQA
         >>> import wbia
         >>> ibs = wbia.opendb(defaultdb='testdb1')
         >>> aid_list = ibs.get_valid_aids()
@@ -1412,12 +1412,12 @@ def detect_image_cnn(ibs, gid, confidence=0.90, extraction='bing'):
         extraction (str): (default = 'bing')
 
     CommandLine:
-        python -m ibeis_cnn._plugin --exec-detect_image_cnn
+        python -m wbia_cnn._plugin --exec-detect_image_cnn
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn._plugin import *  # NOQA
-        >>> from ibeis_cnn._plugin import _suggest_random_candidate_regions, _suggest_bing_candidate_regions  # NOQA
+        >>> from wbia_cnn._plugin import *  # NOQA
+        >>> from wbia_cnn._plugin import _suggest_random_candidate_regions, _suggest_bing_candidate_regions  # NOQA
         >>> import wbia
         >>> ibs = wbia.opendb(defaultdb='testdb1')
         >>> gid = 1
@@ -1527,11 +1527,11 @@ def get_siam_l2_model():
     model.show_weights_image()
     """
     model_url = 'https://wildbookiarepository.azureedge.net/models/siaml2_128_model_state.pkl'
-    model_dpath = ut.ensure_app_resource_dir('ibeis_cnn', 'models')
+    model_dpath = ut.ensure_app_resource_dir('wbia_cnn', 'models')
     model_fpath = ut.grab_file_url(model_url, download_dir=model_dpath)
     model_state = ut.load_cPkl(model_fpath)
-    import ibeis_cnn
-    ibeis_cnn.models
+    import wbia_cnn
+    wbia_cnn.models
     model = models.SiameseL2(
         input_shape=model_state['input_shape'],
         arch_tag=model_state['arch_tag'], autoinit=True)
@@ -1547,15 +1547,15 @@ def generate_siam_l2_128_feats(ibs, cid_list, config2_=None):
         config2_ (dict): (default = None)
 
     CommandLine:
-        python -m ibeis_cnn._plugin --test-generate_siam_l2_128_feats
-        python -m ibeis_cnn._plugin --test-generate_siam_l2_128_feats --db PZ_Master0
+        python -m wbia_cnn._plugin --test-generate_siam_l2_128_feats
+        python -m wbia_cnn._plugin --test-generate_siam_l2_128_feats --db PZ_Master0
 
     SeeAlso:
         ~/code/ibeis/ibeis/algo/preproc/preproc_feat.py
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn._plugin import *  # NOQA
+        >>> from wbia_cnn._plugin import *  # NOQA
         >>> import wbia
         >>> ibs = wbia.opendb(defaultdb='testdb1')
         >>> cid_list = ibs.depc_annot.get_rowids('chips', ibs.get_valid_aids())
@@ -1660,9 +1660,9 @@ def extract_siam128_vecs(chip_list, kpts_list):
 if __name__ == '__main__':
     """
     CommandLine:
-        python -m ibeis_cnn._plugin
-        python -m ibeis_cnn._plugin --allexamples
-        python -m ibeis_cnn._plugin --allexamples --noface --nosrc
+        python -m wbia_cnn._plugin
+        python -m wbia_cnn._plugin --allexamples
+        python -m wbia_cnn._plugin --allexamples --noface --nosrc
     """
     import multiprocessing
     multiprocessing.freeze_support()  # for win32

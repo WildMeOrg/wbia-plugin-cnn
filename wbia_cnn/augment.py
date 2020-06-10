@@ -51,11 +51,11 @@ def random_affine_args(zoom_range=(1 / 1.1, 1.1),
                        rng=np.random):
     r"""
     CommandLine:
-        python -m ibeis_cnn.augment --test-random_affine_args
+        python -m wbia_cnn.augment --test-random_affine_args
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.augment import *  # NOQA
+        >>> from wbia_cnn.augment import *  # NOQA
         >>> import vtool as vt
         >>> zoom_range = (0.9090909090909091, 1.1)
         >>> max_tx = 4
@@ -121,11 +121,11 @@ def affine_perterb(img, rng=np.random):
         ndarray: img_warped
 
     CommandLine:
-        python -m ibeis_cnn.augment --test-affine_perterb --show
+        python -m wbia_cnn.augment --test-affine_perterb --show
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.augment import *  # NOQA
+        >>> from wbia_cnn.augment import *  # NOQA
         >>> import vtool as vt
         >>> img_fpath = ut.grab_test_imgpath('carl.jpg')
         >>> img = vt.imread(img_fpath)
@@ -151,14 +151,14 @@ def affine_perterb(img, rng=np.random):
 def test_transforms():
     r"""
     CommandLine:
-        python -m ibeis_cnn.augment --test-test_transforms --show
+        python -m wbia_cnn.augment --test-test_transforms --show
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.augment import *  # NOQA
+        >>> from wbia_cnn.augment import *  # NOQA
         >>> test_transforms()
     """
-    from ibeis_cnn import ingest_data, utils, draw_results
+    from wbia_cnn import ingest_data, utils, draw_results
     data, labels = ingest_data.testdata_patchmatch()
     cv2_data = utils.convert_theano_images_to_cv2_images(data)
     patches_ = cv2_data[::2]
@@ -201,12 +201,12 @@ def test_transforms():
 def augment_siamese_patches(Xb, yb=None, rng=np.random):
     """
     CommandLine:
-        python -m ibeis_cnn.augment --test-augment_siamese_patches --show
+        python -m wbia_cnn.augment --test-augment_siamese_patches --show
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.augment import *  # NOQA
-        >>> from ibeis_cnn import ingest_data, utils, draw_results
+        >>> from wbia_cnn.augment import *  # NOQA
+        >>> from wbia_cnn import ingest_data, utils, draw_results
         >>> data, labels = ingest_data.testdata_patchmatch()
         >>> cv2_data = utils.convert_theano_images_to_cv2_images(data)
         >>> batch_size = 128
@@ -250,7 +250,7 @@ def augment_siamese_patches(Xb, yb=None, rng=np.random):
 
 
 def stacked_img_pairs(Xb, modified_indexes, label_list=None, num=None):
-    from ibeis_cnn import draw_results
+    from wbia_cnn import draw_results
     if num is None:
         num = len(modified_indexes)
     #np.random.shuffle(modified_indexes)
@@ -272,7 +272,7 @@ def stacked_img_pairs(Xb, modified_indexes, label_list=None, num=None):
 
 def show_augmented_patches(Xb, Xb_, yb, yb_, data_per_label=1, shadows=None):
     """
-    from ibeis_cnn.augment import *  # NOQA
+    from wbia_cnn.augment import *  # NOQA
     std_ = center_std
     mean_ = center_mean
     """
@@ -308,7 +308,7 @@ def show_augmented_patches(Xb, Xb_, yb, yb_, data_per_label=1, shadows=None):
         _iter = ut.iter_multichunks(modified_indexes, chunk_sizes)
         multiindices = six.next(_iter)
 
-        from ibeis_cnn import draw_results
+        from wbia_cnn import draw_results
         tup = draw_results.get_patch_multichunks(data_lists_old, yb, {},
                                                  multiindices)
         orig_stack = tup[0]
@@ -338,7 +338,7 @@ def show_augmented_patches(Xb, Xb_, yb, yb_, data_per_label=1, shadows=None):
 
 
 def testdata_augment():
-    from ibeis_cnn import ingest_data, utils
+    from wbia_cnn import ingest_data, utils
     import vtool as vt
     dataset = ingest_data.grab_siam_dataset()
     cv2_data, labels = dataset.subset('valid')
@@ -355,13 +355,13 @@ def augment_affine(Xb, yb=None, rng=np.random, data_per_label=1,
                    inplace=False, affperterb_ranges=None, aug_prop=.5):
     """
     CommandLine:
-        python -m ibeis_cnn.augment --test-augment_affine --show
-        utprof.py -m ibeis_cnn.augment --test-augment_affine
+        python -m wbia_cnn.augment --test-augment_affine --show
+        utprof.py -m wbia_cnn.augment --test-augment_affine
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.augment import *  # NOQA
-        >>> from ibeis_cnn.models import mnist
+        >>> from wbia_cnn.augment import *  # NOQA
+        >>> from wbia_cnn.models import mnist
         >>> model, dataset = mnist.testdata_mnist()
         >>> X, y = dataset.subset('test')
         >>> batch_size = 1000
@@ -463,12 +463,12 @@ def augment_affine(Xb, yb=None, rng=np.random, data_per_label=1,
 def augment_affine_siam(Xb, yb=None, rng=np.random):
     """
     CommandLine:
-        python -m ibeis_cnn.augment --test-augment_affine --show --db PZ_MTEST
+        python -m wbia_cnn.augment --test-augment_affine --show --db PZ_MTEST
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.augment import *  # NOQA
-        >>> from ibeis_cnn.models import mnist
+        >>> from wbia_cnn.augment import *  # NOQA
+        >>> from wbia_cnn.models import mnist
         >>> model, dataset = mnist.testdata_mnist()
         >>> X, y = dataset.subset('test')
         >>> Xb = (X[0:8] / 255).astype(np.float32)
@@ -483,8 +483,8 @@ def augment_affine_siam(Xb, yb=None, rng=np.random):
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.augment import *  # NOQA
-        >>> from ibeis_cnn import ingest_data, utils, draw_results
+        >>> from wbia_cnn.augment import *  # NOQA
+        >>> from wbia_cnn import ingest_data, utils, draw_results
         >>> Xb_orig, yb_orig, Xb, yb = testdata_augment()
         >>> rng = np.random.RandomState(0)
         >>> Xb, yb = augment_affine(Xb, yb, rng=rng)
@@ -565,12 +565,12 @@ def augment_affine_siam(Xb, yb=None, rng=np.random):
 def augment_shadow(Xb, yb=None, rng=np.random, return_shadowmaps=False):
     """
     CommandLine:
-        python -m ibeis_cnn.augment --test-augment_shadow --show --db PZ_MTEST
+        python -m wbia_cnn.augment --test-augment_shadow --show --db PZ_MTEST
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.augment import *  # NOQA
-        >>> from ibeis_cnn import ingest_data, utils, draw_results
+        >>> from wbia_cnn.augment import *  # NOQA
+        >>> from wbia_cnn import ingest_data, utils, draw_results
         >>> Xb_orig, yb_orig, Xb, yb = testdata_augment()
         >>> rng = np.random.RandomState(0)
         >>> Xb, yb, shadows = augment_shadow(Xb, yb, rng=rng, return_shadowmaps=True)
@@ -653,12 +653,12 @@ def augment_shadow(Xb, yb=None, rng=np.random, return_shadowmaps=False):
 def augment_gamma(Xb, yb=None, rng=np.random):
     """
     CommandLine:
-        python -m ibeis_cnn.augment --test-augment_gamma --show --db PZ_MTEST
+        python -m wbia_cnn.augment --test-augment_gamma --show --db PZ_MTEST
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.augment import *  # NOQA
-        >>> from ibeis_cnn import ingest_data, utils, draw_results
+        >>> from wbia_cnn.augment import *  # NOQA
+        >>> from wbia_cnn import ingest_data, utils, draw_results
         >>> Xb_orig, yb_orig, Xb, yb = testdata_augment()
         >>> rng = np.random.RandomState(0)
         >>> Xb, yb = augment_gamma(Xb, yb, rng=rng)
@@ -699,11 +699,11 @@ def augment_gamma(Xb, yb=None, rng=np.random):
 def augment_siamese_patches2(Xb, yb=None, rng=np.random):
     """
     CommandLine:
-        python -m ibeis_cnn.augment --test-augment_siamese_patches2 --show --db=PZ_MTEST
-        python -m ibeis_cnn.augment --test-augment_siamese_patches2 --show --colorspace='bgr'
+        python -m wbia_cnn.augment --test-augment_siamese_patches2 --show --db=PZ_MTEST
+        python -m wbia_cnn.augment --test-augment_siamese_patches2 --show --colorspace='bgr'
 
         # Shows what augumentation looks like durring trainging
-        python -m ibeis_cnn.train --test-pz_patchmatch --ds pzmtest --weights=new --arch=siaml2 --train --monitor --DEBUG_AUGMENTATION
+        python -m wbia_cnn.train --test-pz_patchmatch --ds pzmtest --weights=new --arch=siaml2 --train --monitor --DEBUG_AUGMENTATION
 
     TODO:
         zoom in only if a true positive
@@ -711,8 +711,8 @@ def augment_siamese_patches2(Xb, yb=None, rng=np.random):
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.augment import *  # NOQA
-        >>> from ibeis_cnn import ingest_data, utils, draw_results
+        >>> from wbia_cnn.augment import *  # NOQA
+        >>> from wbia_cnn import ingest_data, utils, draw_results
         >>> Xb_orig, yb_orig, Xb, yb = testdata_augment()
         >>> rng = np.random.RandomState(0)
         >>> Xb, yb = augment_siamese_patches2(Xb, yb, rng=rng)
@@ -729,9 +729,9 @@ def augment_siamese_patches2(Xb, yb=None, rng=np.random):
 if __name__ == '__main__':
     """
     CommandLine:
-        python -m ibeis_cnn.augment
-        python -m ibeis_cnn.augment --allexamples
-        python -m ibeis_cnn.augment --allexamples --noface --nosrc
+        python -m wbia_cnn.augment
+        python -m wbia_cnn.augment --allexamples
+        python -m wbia_cnn.augment --allexamples --noface --nosrc
     """
     import multiprocessing
     multiprocessing.freeze_support()  # for win32

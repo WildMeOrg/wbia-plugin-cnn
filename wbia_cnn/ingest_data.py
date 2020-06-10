@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function
-from ibeis_cnn import utils
-from ibeis_cnn import ingest_helpers
-from ibeis_cnn import ingest_ibeis
-from ibeis_cnn.dataset import DataSet
+from wbia_cnn import utils
+from wbia_cnn import ingest_helpers
+from wbia_cnn import ingest_wbia
+from wbia_cnn.dataset import DataSet
 from os.path import join, basename, splitext
 import utool as ut
 print, rrr, profile = ut.inject2(__name__)
@@ -13,15 +13,15 @@ NOCACHE_DATASET = ut.get_argflag(('--nocache-cnn', '--nocache-dataset'))
 
 
 def testdata_dataset():
-    dataset = get_ibeis_patch_siam_dataset(max_examples=5)
+    dataset = get_wbia_patch_siam_dataset(max_examples=5)
     return dataset
 
 
 def testdata_patchmatch():
     """
-        >>> from ibeis_cnn.ingest_data import *  # NOQA
+        >>> from wbia_cnn.ingest_data import *  # NOQA
     """
-    dataset = get_ibeis_patch_siam_dataset(max_examples=5)
+    dataset = get_wbia_patch_siam_dataset(max_examples=5)
     data_fpath = dataset.data_fpath
     labels_fpath = dataset.labels_fpath
     data_cv2, labels = utils.load(data_fpath, labels_fpath)
@@ -31,9 +31,9 @@ def testdata_patchmatch():
 
 def testdata_patchmatch2():
     """
-        >>> from ibeis_cnn.ingest_data import *  # NOQA
+        >>> from wbia_cnn.ingest_data import *  # NOQA
     """
-    dataset = get_ibeis_patch_siam_dataset(max_examples=5)
+    dataset = get_wbia_patch_siam_dataset(max_examples=5)
     data_fpath = dataset.data_fpath
     labels_fpath = dataset.labels_fpath
     data, labels = utils.load(data_fpath, labels_fpath)
@@ -47,11 +47,11 @@ def get_extern_training_dpath(alias_key):
 def view_training_directories():
     r"""
     CommandLine:
-        python -m ibeis_cnn.ingest_data --test-view_training_directories
+        python -m wbia_cnn.ingest_data --test-view_training_directories
 
     Example:
         >>> # UTILITY_SCRIPT
-        >>> from ibeis_cnn.ingest_data import *  # NOQA
+        >>> from wbia_cnn.ingest_data import *  # NOQA
         >>> result = view_training_directories()
         >>> print(result)
     """
@@ -84,7 +84,7 @@ def merge_datasets(dataset_list):
     input_alias_list = [dataset.alias_key for dataset in dataset_list]
 
     alias_key = 'combo_' + ut.hashstr27(repr(input_alias_list), hashlen=8)
-    training_dpath = ut.ensure_app_resource_dir('ibeis_cnn', 'training', alias_key)
+    training_dpath = ut.ensure_app_resource_dir('wbia_cnn', 'training', alias_key)
     data_fpath = ut.unixjoin(training_dpath, alias_key + '_data.hdf5')
     labels_fpath = ut.unixjoin(training_dpath, alias_key + '_labels.hdf5')
 
@@ -156,7 +156,7 @@ def grab_dataset(ds_tag=None, datatype='siam-patch'):
     if datatype == 'siam-patch':
         return grab_siam_dataset(ds_tag=ds_tag)
     elif datatype == 'siam-part':
-        return get_ibeis_part_siam_dataset()
+        return get_wbia_part_siam_dataset()
     elif datatype == 'category':
         return grab_mnist_category_dataset()
 
@@ -166,20 +166,20 @@ def grab_siam_dataset(ds_tag=None):
     Will build the dataset using the command line if it doesn't exist
 
     CommandLine:
-        python -m ibeis_cnn.ingest_data --test-grab_siam_dataset --db mnist --show
-        python -m ibeis_cnn.ingest_data --test-grab_siam_dataset --db liberty --show
-        python -m ibeis_cnn.ingest_data --test-grab_siam_dataset --db PZ_MTEST --show
+        python -m wbia_cnn.ingest_data --test-grab_siam_dataset --db mnist --show
+        python -m wbia_cnn.ingest_data --test-grab_siam_dataset --db liberty --show
+        python -m wbia_cnn.ingest_data --test-grab_siam_dataset --db PZ_MTEST --show
 
-        python -m ibeis_cnn.ingest_data --test-grab_siam_dataset --db PZ_MTEST --show --nohud --nometa
-        python -m ibeis_cnn.ingest_data --test-grab_siam_dataset --db liberty --show --nohud --nometa
+        python -m wbia_cnn.ingest_data --test-grab_siam_dataset --db PZ_MTEST --show --nohud --nometa
+        python -m wbia_cnn.ingest_data --test-grab_siam_dataset --db liberty --show --nohud --nometa
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.ingest_data import *  # NOQA
+        >>> from wbia_cnn.ingest_data import *  # NOQA
         >>> ds_tag = None
         >>> dataset = grab_siam_dataset(ds_tag=ds_tag)
         >>> ut.quit_if_noshow()
-        >>> from ibeis_cnn import draw_results
+        >>> from wbia_cnn import draw_results
         >>> dataset.interact(ibs=dataset.getprop('ibs', None), key='test', chunck_sizes=(8, 4))
         >>> ut.show_if_requested()
 
@@ -198,19 +198,19 @@ def grab_siam_dataset(ds_tag=None):
     elif dbname == 'mnist':
         dataset = grab_mnist_siam_dataset()
     else:
-        dataset = get_ibeis_patch_siam_dataset()
+        dataset = get_wbia_patch_siam_dataset()
     return dataset
 
 
 def grab_mnist_category_dataset_float():
     r"""
     CommandLine:
-        python -m ibeis_cnn grab_mnist_category_dataset_float
-        python -m ibeis_cnn grab_mnist_category_dataset_float --show
+        python -m wbia_cnn grab_mnist_category_dataset_float
+        python -m wbia_cnn grab_mnist_category_dataset_float --show
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.ingest_data import *  # NOQA
+        >>> from wbia_cnn.ingest_data import *  # NOQA
         >>> dataset = grab_mnist_category_dataset_float()
         >>> dataset.print_subset_info()
         >>> dataset.print_dir_tree()
@@ -219,7 +219,7 @@ def grab_mnist_category_dataset_float():
         >>> ut.show_if_requested()
     """
     import numpy as np
-    training_dpath = ut.ensure_app_resource_dir('ibeis_cnn', 'training')
+    training_dpath = ut.ensure_app_resource_dir('wbia_cnn', 'training')
     dataset = DataSet(
         name='mnist_float32',
         training_dpath=training_dpath,
@@ -246,13 +246,13 @@ def grab_mnist_category_dataset_float():
 def grab_mnist_category_dataset():
     r"""
     CommandLine:
-        python -m ibeis_cnn grab_mnist_category_dataset
-        python -m ibeis_cnn grab_mnist_category_dataset_float
-        python -m ibeis_cnn grab_mnist_category_dataset --show
+        python -m wbia_cnn grab_mnist_category_dataset
+        python -m wbia_cnn grab_mnist_category_dataset_float
+        python -m wbia_cnn grab_mnist_category_dataset --show
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.ingest_data import *  # NOQA
+        >>> from wbia_cnn.ingest_data import *  # NOQA
         >>> dataset = grab_mnist_category_dataset()
         >>> dataset.print_subset_info()
         >>> dataset.print_dir_tree()
@@ -261,7 +261,7 @@ def grab_mnist_category_dataset():
         >>> ut.show_if_requested()
     """
     import numpy as np
-    training_dpath = ut.ensure_app_resource_dir('ibeis_cnn', 'training')
+    training_dpath = ut.ensure_app_resource_dir('wbia_cnn', 'training')
     dataset = DataSet(
         name='mnist_uint8',
         training_dpath=training_dpath,
@@ -288,14 +288,14 @@ def grab_mnist_siam_dataset():
     r"""
 
     CommandLine:
-        python -m ibeis_cnn.ingest_data --test-grab_mnist_siam_dataset --show
+        python -m wbia_cnn.ingest_data --test-grab_mnist_siam_dataset --show
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.ingest_data import *  # NOQA
+        >>> from wbia_cnn.ingest_data import *  # NOQA
         >>> dataset = grab_mnist_siam_dataset()
         >>> ut.quit_if_noshow()
-        >>> from ibeis_cnn import draw_results
+        >>> from wbia_cnn import draw_results
         >>> #ibsplugin.rrr()
         >>> flat_metadata = {}
         >>> data, labels = dataset.subset('full')
@@ -303,7 +303,7 @@ def grab_mnist_siam_dataset():
         >>> dataset.interact()
         >>> ut.show_if_requested()
     """
-    training_dpath = ut.ensure_app_resource_dir('ibeis_cnn', 'training')
+    training_dpath = ut.ensure_app_resource_dir('wbia_cnn', 'training')
     dataset = DataSet(
         name='mnist_pairs',
         training_dpath=training_dpath,
@@ -347,15 +347,15 @@ def grab_liberty_siam_dataset(pairs=250000):
              patchID1  3DpointID1  unused1  patchID2  3DpointID2  unused2
 
     CommandLine:
-        python -m ibeis_cnn.ingest_data --test-grab_liberty_siam_dataset --show
+        python -m wbia_cnn.ingest_data --test-grab_liberty_siam_dataset --show
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.ingest_data import *  # NOQA
+        >>> from wbia_cnn.ingest_data import *  # NOQA
         >>> pairs = 500
         >>> dataset = grab_liberty_siam_dataset(pairs)
         >>> ut.quit_if_noshow()
-        >>> from ibeis_cnn import draw_results
+        >>> from wbia_cnn import draw_results
         >>> #ibsplugin.rrr()
         >>> flat_metadata = {}
         >>> data, labels = dataset.subset('full')
@@ -386,7 +386,7 @@ def grab_liberty_siam_dataset(pairs=250000):
 
     # TODO: allow a move of the base data prefix
 
-    training_dpath = ut.ensure_app_resource_dir('ibeis_cnn', 'training', ds_name)
+    training_dpath = ut.ensure_app_resource_dir('wbia_cnn', 'training', ds_name)
     if ut.get_argflag('--vtd'):
         ut.vd(training_dpath)
     ut.ensuredir(training_dpath)
@@ -417,21 +417,21 @@ def grab_liberty_siam_dataset(pairs=250000):
     return dataset
 
 
-def get_ibeis_patch_siam_dataset(**kwargs):
+def get_wbia_patch_siam_dataset(**kwargs):
     """
     CommandLine:
-        python -m ibeis_cnn.ingest_data --test-get_ibeis_patch_siam_dataset --show
-        python -m ibeis_cnn.ingest_data --test-get_ibeis_patch_siam_dataset --show --db PZ_Master1 --acfg_name default
-        python -m ibeis_cnn.ingest_data --test-get_ibeis_patch_siam_dataset --show --db PZ_Master1 --acfg_name timectrl
-        python -m ibeis_cnn.ingest_data --test-get_ibeis_patch_siam_dataset --show --db PZ_MTEST --acfg_name unctrl --dryrun
+        python -m wbia_cnn.ingest_data --test-get_wbia_patch_siam_dataset --show
+        python -m wbia_cnn.ingest_data --test-get_wbia_patch_siam_dataset --show --db PZ_Master1 --acfg_name default
+        python -m wbia_cnn.ingest_data --test-get_wbia_patch_siam_dataset --show --db PZ_Master1 --acfg_name timectrl
+        python -m wbia_cnn.ingest_data --test-get_wbia_patch_siam_dataset --show --db PZ_MTEST --acfg_name unctrl --dryrun
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.ingest_data import *  # NOQA
-        >>> from ibeis_cnn import draw_results
+        >>> from wbia_cnn.ingest_data import *  # NOQA
+        >>> from wbia_cnn import draw_results
         >>> import wbia
         >>> kwargs = {}  # ut.argparse_dict({'max_examples': None, 'num_top': 3})
-        >>> dataset = get_ibeis_patch_siam_dataset(**kwargs)
+        >>> dataset = get_wbia_patch_siam_dataset(**kwargs)
         >>> ut.quit_if_noshow()
         >>> dataset.interact()
         >>> ut.show_if_requested()
@@ -471,7 +471,7 @@ def get_ibeis_patch_siam_dataset(**kwargs):
     # Nets dir is the root dir for all training on this data
     training_dpath = ibs.get_neuralnet_dir()
     ut.ensuredir(training_dpath)
-    print('\n\n[get_ibeis_patch_siam_dataset] START')
+    print('\n\n[get_wbia_patch_siam_dataset] START')
     #log_dir = join(training_dpath, 'logs')
     #ut.start_logging(log_dir=log_dir)
 
@@ -502,7 +502,7 @@ def get_ibeis_patch_siam_dataset(**kwargs):
             ibs, aid1_list, aid2_list, kpts1_m_list, kpts2_m_list, fm_list,
             metadata_lists, colorspace=colorspace)
         data_fpath, labels_fpath, metadata_fpath, training_dpath, data_shape = tup
-        print('\n[get_ibeis_patch_siam_dataset] FINISH\n\n')
+        print('\n[get_wbia_patch_siam_dataset] FINISH\n\n')
 
     # hack for caching num_labels
     labels = ut.load_data(labels_fpath)
@@ -523,22 +523,22 @@ def get_ibeis_patch_siam_dataset(**kwargs):
     return dataset
 
 
-def get_ibeis_part_siam_dataset(**kwargs):
+def get_wbia_part_siam_dataset(**kwargs):
     """
     PARTS based network data
 
     CommandLine:
-        python -m ibeis_cnn.ingest_data --test-get_ibeis_part_siam_dataset --show
-        python -m ibeis_cnn.ingest_data --test-get_ibeis_part_siam_dataset --show --db PZ_Master1 --acfg_name timectrl
-        python -m ibeis_cnn.ingest_data --test-get_ibeis_part_siam_dataset --show --db PZ_MTEST --acfg_name unctrl --dryrun
+        python -m wbia_cnn.ingest_data --test-get_wbia_part_siam_dataset --show
+        python -m wbia_cnn.ingest_data --test-get_wbia_part_siam_dataset --show --db PZ_Master1 --acfg_name timectrl
+        python -m wbia_cnn.ingest_data --test-get_wbia_part_siam_dataset --show --db PZ_MTEST --acfg_name unctrl --dryrun
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.ingest_data import *  # NOQA
-        >>> from ibeis_cnn import draw_results
+        >>> from wbia_cnn.ingest_data import *  # NOQA
+        >>> from wbia_cnn import draw_results
         >>> import wbia
         >>> kwargs = {}  # ut.argparse_dict({'max_examples': None, 'num_top': 3})
-        >>> dataset = get_ibeis_part_siam_dataset(**kwargs)
+        >>> dataset = get_wbia_part_siam_dataset(**kwargs)
         >>> ut.quit_if_noshow()
         >>> dataset.interact(ibs=dataset.getprop('ibs'))
         >>> ut.show_if_requested()
@@ -557,7 +557,7 @@ def get_ibeis_part_siam_dataset(**kwargs):
         verbose=True)
 
     datakw.update(kwargs)
-    print('\n\n[get_ibeis_part_siam_dataset] START')
+    print('\n\n[get_wbia_part_siam_dataset] START')
 
     alias_key = ut.dict_str(datakw, nl=False, explicit=True)
 
@@ -594,7 +594,7 @@ def get_ibeis_part_siam_dataset(**kwargs):
         tup = ingest_wbia.cached_part_match_training_data_fpaths(
             ibs, aid_pairs, label_list, flat_metadata, colorspace=colorspace)
         data_fpath, labels_fpath, metadata_fpath, training_dpath, data_shape = tup
-        print('\n[get_ibeis_part_siam_dataset] FINISH\n\n')
+        print('\n[get_wbia_part_siam_dataset] FINISH\n\n')
 
     # hack for caching num_labels
     labels = ut.load_data(labels_fpath)
@@ -688,9 +688,9 @@ def get_numpy_dataset2(name, data_fpath, labels_fpath, training_dpath, cache=Tru
 if __name__ == '__main__':
     """
     CommandLine:
-        python -m ibeis_cnn.ingest_data
-        python -m ibeis_cnn.ingest_data --allexamples
-        python -m ibeis_cnn.ingest_data --allexamples --noface --nosrc
+        python -m wbia_cnn.ingest_data
+        python -m wbia_cnn.ingest_data --allexamples
+        python -m wbia_cnn.ingest_data --allexamples --noface --nosrc
     """
     import multiprocessing
     multiprocessing.freeze_support()  # for win32

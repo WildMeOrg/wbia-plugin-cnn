@@ -2,7 +2,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import numpy as np
 import functools
-from ibeis_cnn import draw_results
+from wbia_cnn import draw_results
 import utool as ut
 print, rrr, profile = ut.inject2(__name__)
 
@@ -15,12 +15,12 @@ def sift_dataset_separability(dataset):
         dataset (?):
 
     CommandLine:
-        python -m ibeis_cnn.experiments --exec-sift_dataset_separability --show
+        python -m wbia_cnn.experiments --exec-sift_dataset_separability --show
 
     Example:
         >>> # SCRIPT
-        >>> from ibeis_cnn.experiments import *  # NOQA
-        >>> from ibeis_cnn import ingest_data
+        >>> from wbia_cnn.experiments import *  # NOQA
+        >>> from wbia_cnn import ingest_data
         >>> dataset = ingest_data.grab_liberty_siam_dataset(250000)
         >>> ut.quit_if_noshow()
         >>> sift_dataset_separability(dataset)
@@ -120,12 +120,12 @@ def test_sift_patchmatch_scores(data, labels):
 def test_siamese_performance(model, data, labels, flat_metadata, dataname=''):
     r"""
     CommandLine:
-        utprof.py -m ibeis_cnn --tf pz_patchmatch --db liberty --test --weights=liberty:current --arch=siaml2_128 --test
-        python -m ibeis_cnn --tf netrun --db liberty --arch=siaml2_128 --test  --ensure
-        python -m ibeis_cnn --tf netrun --db liberty --arch=siaml2_128 --test  --ensure --weights=new
-        python -m ibeis_cnn --tf netrun --db liberty --arch=siaml2_128 --train --weights=new
-        python -m ibeis_cnn --tf netrun --db pzmtest --weights=liberty:current --arch=siaml2_128 --test  # NOQA
-        python -m ibeis_cnn --tf netrun --db pzmtest --weights=liberty:current --arch=siaml2_128
+        utprof.py -m wbia_cnn --tf pz_patchmatch --db liberty --test --weights=liberty:current --arch=siaml2_128 --test
+        python -m wbia_cnn --tf netrun --db liberty --arch=siaml2_128 --test  --ensure
+        python -m wbia_cnn --tf netrun --db liberty --arch=siaml2_128 --test  --ensure --weights=new
+        python -m wbia_cnn --tf netrun --db liberty --arch=siaml2_128 --train --weights=new
+        python -m wbia_cnn --tf netrun --db pzmtest --weights=liberty:current --arch=siaml2_128 --test  # NOQA
+        python -m wbia_cnn --tf netrun --db pzmtest --weights=liberty:current --arch=siaml2_128
     """
     import vtool as vt
     import plottool as pt
@@ -148,7 +148,7 @@ def test_siamese_performance(model, data, labels, flat_metadata, dataname=''):
 
     #data   = data[::50]
     #labels = labels[::50]
-    #from ibeis_cnn import utils
+    #from wbia_cnn import utils
     #data, labels = utils.random_xy_sample(data, labels, 10000, model.data_per_label_input)
 
     FULL = not ut.get_argflag('--quick')
@@ -314,7 +314,7 @@ def test_siamese_performance(model, data, labels, flat_metadata, dataname=''):
 
 
 def show_hard_cases(model, data, labels, scores):
-    from ibeis_cnn import utils
+    from wbia_cnn import utils
     encoder = model.learn_encoder(labels, scores)
     encoder.visualize()
 
@@ -337,7 +337,7 @@ def show_hard_cases(model, data, labels, scores):
     fp_labels = labels.take(fp_label_indicies, axis=0)
     fp_scores = scores.take(fp_label_indicies, axis=0)
 
-    from ibeis_cnn import draw_results
+    from wbia_cnn import draw_results
     draw_results.rrr()
     draw_results.interact_siamsese_data_patches(
         fn_labels, fn_data, {'fs': fn_scores}, figtitle='FN')
@@ -391,9 +391,9 @@ def test_siamese_thresholds(network_output, y_test, **kwargs):
 if __name__ == '__main__':
     """
     CommandLine:
-        python -m ibeis_cnn.experiments
-        python -m ibeis_cnn.experiments --allexamples
-        python -m ibeis_cnn.experiments --allexamples --noface --nosrc
+        python -m wbia_cnn.experiments
+        python -m wbia_cnn.experiments --allexamples
+        python -m wbia_cnn.experiments --allexamples --noface --nosrc
     """
     import multiprocessing
     multiprocessing.freeze_support()  # for win32

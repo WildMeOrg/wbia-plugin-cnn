@@ -27,11 +27,11 @@ from lasagne import nonlinearities
 from lasagne import init
 import functools
 import six
-from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
+from wbia_cnn.__THEANO__ import tensor as T  # NOQA
 import numpy as np
-from ibeis_cnn.models import abstract_models
+from wbia_cnn.models import abstract_models
 import utool as ut
-from ibeis_cnn import augment
+from wbia_cnn import augment
 print, rrr, profile = ut.inject2(__name__)
 
 
@@ -94,7 +94,7 @@ class SiameseL2(AbstractSiameseModel):
 
         #ReshapeLayer = layers.ReshapeLayer
 
-        from ibeis_cnn import custom_layers
+        from wbia_cnn import custom_layers
         Conv2DLayer = custom_layers.Conv2DLayer
         MaxPool2DLayer = custom_layers.MaxPool2DLayer
 
@@ -137,7 +137,7 @@ class SiameseL2(AbstractSiameseModel):
 
         #ReshapeLayer = layers.ReshapeLayer
 
-        from ibeis_cnn import custom_layers
+        from wbia_cnn import custom_layers
         Conv2DLayer = custom_layers.Conv2DLayer
         MaxPool2DLayer = custom_layers.MaxPool2DLayer
 
@@ -166,8 +166,8 @@ class SiameseL2(AbstractSiameseModel):
     def get_siam_deepfaceish_def(model, verbose=True, **kwargs):
         """
         CommandLine:
-            python -m ibeis_cnn --tf  SiameseL2.init_arch --archtag siam_deepfaceish --datashape=128,256,1 --verbose  --show
-            python -m ibeis_cnn --tf  SiameseL2.init_arch --archtag siam_deepface --datashape=152,152,3 --verbose  --show
+            python -m wbia_cnn --tf  SiameseL2.init_arch --archtag siam_deepfaceish --datashape=128,256,1 --verbose  --show
+            python -m wbia_cnn --tf  SiameseL2.init_arch --archtag siam_deepface --datashape=152,152,3 --verbose  --show
         """
         _P = functools.partial
 
@@ -180,7 +180,7 @@ class SiameseL2(AbstractSiameseModel):
 
         _tmp = [1]
 
-        from ibeis_cnn import custom_layers
+        from wbia_cnn import custom_layers
         Conv2DLayer = custom_layers.Conv2DLayer
         MaxPool2DLayer = custom_layers.MaxPool2DLayer
 
@@ -242,7 +242,7 @@ class SiameseL2(AbstractSiameseModel):
     def get_siaml2_partmatch_def(model, verbose=True, **kwargs):
         """
         CommandLine:
-            python -m ibeis_cnn --tf  SiameseL2.init_arch --archtag siaml2_partmatch --datashape=128,256,1 --verbose  --show
+            python -m wbia_cnn --tf  SiameseL2.init_arch --archtag siaml2_partmatch --datashape=128,256,1 --verbose  --show
         """
         _P = functools.partial
 
@@ -255,7 +255,7 @@ class SiameseL2(AbstractSiameseModel):
 
         _tmp = [1]
 
-        from ibeis_cnn import custom_layers
+        from wbia_cnn import custom_layers
         Conv2DLayer = custom_layers.Conv2DLayer
         MaxPool2DLayer = custom_layers.MaxPool2DLayer
 
@@ -314,7 +314,7 @@ class SiameseL2(AbstractSiameseModel):
                 C0(96, 7, 3) - ReLU - P0(2, 2) - C1(192, 5, 1) - ReLU - P1(2, 2) - C2(256, 3, 1)
 
         CommandLine:
-            python -m ibeis_cnn --tf  SiameseL2.init_arch --archtag siam2streaml2 --datashape=64,64,1 --verbose  --show
+            python -m wbia_cnn --tf  SiameseL2.init_arch --archtag siam2streaml2 --datashape=64,64,1 --verbose  --show
         """
         _P = functools.partial
 
@@ -325,7 +325,7 @@ class SiameseL2(AbstractSiameseModel):
 
         #ReshapeLayer = layers.ReshapeLayer
 
-        from ibeis_cnn import custom_layers
+        from wbia_cnn import custom_layers
         Conv2DLayer = custom_layers.Conv2DLayer
         MaxPool2DLayer = custom_layers.MaxPool2DLayer
 
@@ -357,7 +357,7 @@ class SiameseL2(AbstractSiameseModel):
 
     def get_mnist_siaml2_def(model, verbose=True, **kwargs):
         """
-        python -m ibeis_cnn --tf  SiameseL2.init_arch --archtag mnist_siaml2 --datashape=28,28,1 --verbose  --show
+        python -m wbia_cnn --tf  SiameseL2.init_arch --archtag mnist_siaml2 --datashape=28,28,1 --verbose  --show
 
         """
         _P = functools.partial
@@ -367,7 +367,7 @@ class SiameseL2(AbstractSiameseModel):
         #hidden_initkw = ut.merge_dicts(orthog_kw, leaky_kw)
         hidden_initkw = leaky_kw
 
-        from ibeis_cnn import custom_layers
+        from wbia_cnn import custom_layers
         Conv2DLayer = custom_layers.Conv2DLayer
         MaxPool2DLayer = custom_layers.MaxPool2DLayer
 
@@ -401,12 +401,12 @@ class SiameseL2(AbstractSiameseModel):
             http://arxiv.org/pdf/1504.03641.pdf
 
         CommandLine:
-            python -m ibeis_cnn.models.siam --test-SiameseL2.init_arch --verbcnn --show
-            python -m ibeis_cnn --tf  SiameseL2.init_arch --verbcnn --show
+            python -m wbia_cnn.models.siam --test-SiameseL2.init_arch --verbcnn --show
+            python -m wbia_cnn --tf  SiameseL2.init_arch --verbcnn --show
 
         Example:
             >>> # ENABLE_DOCTEST
-            >>> from ibeis_cnn.models.siam import *  # NOQA
+            >>> from wbia_cnn.models.siam import *  # NOQA
             >>> verbose = True
             >>> arch_tag = ut.get_argval('--archtag', default='siaml2')
             >>> data_shape = tuple(ut.get_argval('--datashape', type_=list, default=(64, 64, 3)))
@@ -441,7 +441,7 @@ class SiameseL2(AbstractSiameseModel):
         #elif model.arch_tag == 'mnist_siaml2':
         #    network_layers_def = model.get_mnist_siaml2_def(verbose=verbose, **kwargs)
         # connect and record layers
-        from ibeis_cnn import custom_layers
+        from wbia_cnn import custom_layers
         network_layers = custom_layers.evaluate_layer_list(network_layers_def, verbose=verbose)
         #model.network_layers = network_layers
         output_layer = network_layers[-1]
@@ -453,11 +453,11 @@ class SiameseL2(AbstractSiameseModel):
         Implements the contrastive loss term from (Hasdel, Chopra, LeCun 06)
 
         CommandLine:
-            python -m ibeis_cnn.models.siam --test-SiameseL2.loss_function --show
+            python -m wbia_cnn.models.siam --test-SiameseL2.loss_function --show
 
         Example1:
             >>> # ENABLE_DOCTEST
-            >>> from ibeis_cnn.models import *  # NOQA
+            >>> from wbia_cnn.models import *  # NOQA
             >>> network_output, labels = testdata_siam_desc()
             >>> verbose = False
             >>> T = np
@@ -507,14 +507,14 @@ def ignore_hardest_cases(loss, labels, num_ignore=3, T=T):
         theano.Tensor: loss
 
     CommandLine:
-        python -m ibeis_cnn.models.siam --test-ignore_hardest_cases:0
-        python -m ibeis_cnn.models.siam --test-ignore_hardest_cases:1
-        python -m ibeis_cnn.models.siam --test-ignore_hardest_cases:2
+        python -m wbia_cnn.models.siam --test-ignore_hardest_cases:0
+        python -m wbia_cnn.models.siam --test-ignore_hardest_cases:1
+        python -m wbia_cnn.models.siam --test-ignore_hardest_cases:2
 
     Example0:
         >>> # ENABLE_DOCTEST
         >>> # Test numpy version
-        >>> from ibeis_cnn.models.siam import *  # NOQA
+        >>> from wbia_cnn.models.siam import *  # NOQA
         >>> loss_arr   = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8], dtype=np.int32)
         >>> labels_arr = np.array([1, 0, 0, 1, 1, 1, 1, 1, 0], dtype=np.int32)
         >>> loss   = loss_arr
@@ -529,7 +529,7 @@ def ignore_hardest_cases(loss, labels, num_ignore=3, T=T):
      Example1:
         >>> # ENABLE_DOCTEST
         >>> # Test theano version
-        >>> from ibeis_cnn.models.siam import *  # NOQA
+        >>> from wbia_cnn.models.siam import *  # NOQA
         >>> import theano.tensor
         >>> loss_arr   = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8], dtype=np.int32)
         >>> labels_arr = np.array([1, 0, 0, 1, 1, 1, 1, 1, 0], dtype=np.int32)
@@ -546,8 +546,8 @@ def ignore_hardest_cases(loss, labels, num_ignore=3, T=T):
     Example2:
         >>> # ENABLE_DOCTEST
         >>> # Test version compatiblity
-        >>> from ibeis_cnn.models.siam import *  # NOQA
-        >>> import ibeis_cnn.theano_ext as theano_ext
+        >>> from wbia_cnn.models.siam import *  # NOQA
+        >>> import wbia_cnn.theano_ext as theano_ext
         >>> import theano.tensor
         >>> loss_arr   = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8], dtype=np.int32)
         >>> labels_arr = np.array([1, 0, 0, 1, 1, 1, 1, 1, 0], dtype=np.int32)
@@ -663,11 +663,11 @@ def constrastive_loss(dist_l2, labels, margin, T=T):
         which still requires the square root operation
 
     CommandLine:
-        python -m ibeis_cnn.models.siam --test-constrastive_loss --show
+        python -m wbia_cnn.models.siam --test-constrastive_loss --show
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.models.siam import *  # NOQA
+        >>> from wbia_cnn.models.siam import *  # NOQA
         >>> dist_l2 = np.linspace(0, 2.5, 200)
         >>> labels = np.tile([True, False], 100)
         >>> # margin, T = 1.25, np
@@ -728,15 +728,15 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
             http://arxiv.org/pdf/1504.03641.pdf
 
         CommandLine:
-            python -m ibeis_cnn.models.siam --test-SiameseCenterSurroundModel.init_arch
-            python -m ibeis_cnn.models.siam --test-SiameseCenterSurroundModel.init_arch --verbcnn
-            python -m ibeis_cnn.models.siam --test-SiameseCenterSurroundModel.init_arch --verbcnn --show
-            python -m ibeis_cnn.train --test-pz_patchmatch --vtd --max-examples=5 --batch_size=128 --learning_rate .0000001 --verbcnn
-            python -m ibeis_cnn.train --test-pz_patchmatch --vtd
+            python -m wbia_cnn.models.siam --test-SiameseCenterSurroundModel.init_arch
+            python -m wbia_cnn.models.siam --test-SiameseCenterSurroundModel.init_arch --verbcnn
+            python -m wbia_cnn.models.siam --test-SiameseCenterSurroundModel.init_arch --verbcnn --show
+            python -m wbia_cnn.train --test-pz_patchmatch --vtd --max-examples=5 --batch_size=128 --learning_rate .0000001 --verbcnn
+            python -m wbia_cnn.train --test-pz_patchmatch --vtd
 
         Example:
             >>> # ENABLE_DOCTEST
-            >>> from ibeis_cnn.models import *  # NOQA
+            >>> from wbia_cnn.models import *  # NOQA
             >>> # build test data
             >>> batch_size = 128
             >>> input_shape = (batch_size, 3, 64, 64)
@@ -763,7 +763,7 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
             print('[model]   * output_dims    = %r' % (model.output_dims,))
         network_layers_def = model.get_siam2stream_def(verbose=verbose, **kwargs)
         # connect and record layers
-        from ibeis_cnn import custom_layers
+        from wbia_cnn import custom_layers
         network_layers = custom_layers.evaluate_layer_list(network_layers_def)
         #model.network_layers = network_layers
         output_layer = network_layers[-1]
@@ -774,14 +774,14 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
         """
 
         CommandLine:
-            python -m ibeis_cnn.models.siam --test-loss_function
-            python -m ibeis_cnn.models.siam --test-loss_function:1 --show
+            python -m wbia_cnn.models.siam --test-loss_function
+            python -m wbia_cnn.models.siam --test-loss_function:1 --show
 
         Example:
             >>> # ENABLE_DOCTEST
-            >>> from ibeis_cnn.models import *  # NOQA
-            >>> from ibeis_cnn import ingest_data
-            >>> from ibeis_cnn import batch_processing as batch
+            >>> from wbia_cnn.models import *  # NOQA
+            >>> from wbia_cnn import ingest_data
+            >>> from wbia_cnn import batch_processing as batch
             >>> data, labels = ingest_data.testdata_patchmatch()
             >>> model = SiameseCenterSurroundModel(autoinit=True, input_shape=(128,) + (data.shape[1:]))
             >>> theano_forward = batch.create_unbuffered_network_output_func(model)
@@ -799,7 +799,7 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
 
         Example1:
             >>> # ENABLE_DOCTEST
-            >>> from ibeis_cnn.models import *  # NOQA
+            >>> from wbia_cnn.models import *  # NOQA
             >>> network_output = np.linspace(-2, 2, 128)
             >>> Y0 = np.zeros(len(network_output), np.float32)
             >>> Y1 = np.ones(len(network_output), np.float32)
@@ -855,7 +855,7 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
         orthog_kw = dict(W=init.Orthogonal())
         hidden_initkw = ut.merge_dicts(orthog_kw, leaky_kw)
 
-        from ibeis_cnn import custom_layers
+        from wbia_cnn import custom_layers
         Conv2DLayer = custom_layers.Conv2DLayer
         MaxPool2DLayer = custom_layers.MaxPool2DLayer
 
@@ -895,7 +895,7 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
         """
         _P = functools.partial
 
-        from ibeis_cnn import custom_layers
+        from wbia_cnn import custom_layers
         Conv2DLayer = custom_layers.Conv2DLayer
         MaxPool2DLayer = custom_layers.MaxPool2DLayer
 
@@ -942,7 +942,7 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
         raise NotImplementedError('Need to implement L2 distance layer')
         _P = functools.partial
 
-        from ibeis_cnn import custom_layers
+        from wbia_cnn import custom_layers
         Conv2DLayer = custom_layers.Conv2DLayer
         MaxPool2DLayer = custom_layers.MaxPool2DLayer
 
@@ -1012,9 +1012,9 @@ def testdata_siam_desc(num_data=128, desc_dim=8):
 if __name__ == '__main__':
     """
     CommandLine:
-        python -m ibeis_cnn.models.siam
-        python -m ibeis_cnn.models.siam --allexamples
-        python -m ibeis_cnn.models.siam --allexamples --noface --nosrc
+        python -m wbia_cnn.models.siam
+        python -m wbia_cnn.models.siam --allexamples
+        python -m wbia_cnn.models.siam --allexamples --noface --nosrc
     """
     import multiprocessing
     multiprocessing.freeze_support()  # for win32

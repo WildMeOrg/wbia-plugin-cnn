@@ -4,9 +4,9 @@ import warnings
 import six
 import theano
 import functools
-from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
-from ibeis_cnn import __LASAGNE__ as lasagne
-from ibeis_cnn import utils
+from wbia_cnn.__THEANO__ import tensor as T  # NOQA
+from wbia_cnn import __LASAGNE__ as lasagne
+from wbia_cnn import utils
 import utool as ut
 
 (print, rrr, profile) = ut.inject2(__name__)
@@ -103,11 +103,11 @@ class LocallyConnected2DLayer(lasagne.layers.Layer):
         convolution (function): (default = <function conv2d at 0x7f55330148c0>)
 
     CommandLine:
-        python -m ibeis_cnn.custom_layers --exec-__init__
+        python -m wbia_cnn.custom_layers --exec-__init__
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.custom_layers import *  # NOQA
+        >>> from wbia_cnn.custom_layers import *  # NOQA
         >>> incoming = testdata_input_layer(item_shape=(3,8,8), batch_size=4)
         >>> num_filters = 64
         >>> filter_size = (3, 3)
@@ -266,11 +266,11 @@ class L2NormalizeLayer(lasagne.layers.Layer):
     def get_output_for(self, input_, axis=None, T=T, **kwargs):
         """
         CommandLine:
-            python -m ibeis_cnn.custom_layers --test-L2NormalizeLayer.get_output_for
+            python -m wbia_cnn.custom_layers --test-L2NormalizeLayer.get_output_for
 
         Example0:
             >>> # ENABLE_DOCTEST
-            >>> from ibeis_cnn.custom_layers import *  # NOQA
+            >>> from wbia_cnn.custom_layers import *  # NOQA
             >>> # l2 normalization on batches of vector encodings
             >>> input_layer = testdata_input_layer(item_shape=(8,), batch_size=4)
             >>> inputdata_ = np.random.rand(*input_layer.shape).astype(np.float32)
@@ -291,7 +291,7 @@ class L2NormalizeLayer(lasagne.layers.Layer):
 
         Example1:
             >>> # ENABLE_DOCTEST
-            >>> from ibeis_cnn.custom_layers import *  # NOQA
+            >>> from wbia_cnn.custom_layers import *  # NOQA
             >>> # l2 normalization on batches of image filters
             >>> input_layer = testdata_input_layer(item_shape=(3, 2, 2), batch_size=4)
             >>> inputdata_ = np.random.rand(*input_layer.shape).astype(np.float32)
@@ -399,11 +399,11 @@ class SiameseConcatLayer(lasagne.layers.Layer):
             axis: overrideable for tests
 
         CommandLine:
-            python -m ibeis_cnn.custom_layers --test-get_output_shape_for
+            python -m wbia_cnn.custom_layers --test-get_output_shape_for
 
         Example0:
             >>> # ENABLE_DOCTEST
-            >>> from ibeis_cnn.custom_layers import *  # NOQA
+            >>> from wbia_cnn.custom_layers import *  # NOQA
             >>> input_layer = testdata_input_layer(item_shape=(3, 8, 16))
             >>> self = SiameseConcatLayer(input_layer)
             >>> input_shape = input_layer.shape
@@ -415,7 +415,7 @@ class SiameseConcatLayer(lasagne.layers.Layer):
 
         Example1:
             >>> # ENABLE_DOCTEST
-            >>> from ibeis_cnn.custom_layers import *  # NOQA
+            >>> from wbia_cnn.custom_layers import *  # NOQA
             >>> input_layer = testdata_input_layer(item_shape=(1024,))
             >>> self = SiameseConcatLayer(input_layer)
             >>> input_shape = input_layer.shape
@@ -442,11 +442,11 @@ class SiameseConcatLayer(lasagne.layers.Layer):
     def get_output_for(self, input_, T=T, **kwargs):
         """
         CommandLine:
-            python -m ibeis_cnn.custom_layers --test-SiameseConcatLayer.get_output_for:1 --show
+            python -m wbia_cnn.custom_layers --test-SiameseConcatLayer.get_output_for:1 --show
 
         Example0:
             >>> # ENABLE_DOCTEST
-            >>> from ibeis_cnn.custom_layers import *  # NOQA
+            >>> from wbia_cnn.custom_layers import *  # NOQA
             >>> input_shape = (128, 1024)
             >>> input_layer = lasagne.layers.InputLayer(shape=input_shape)
             >>> self = SiameseConcatLayer(input_layer)
@@ -462,9 +462,9 @@ class SiameseConcatLayer(lasagne.layers.Layer):
 
         Example1:
             >>> # DISABLE_DOCTEST
-            >>> from ibeis_cnn.custom_layers import *  # NOQA
-            >>> from ibeis_cnn import utils
-            >>> from ibeis_cnn import draw_net
+            >>> from wbia_cnn.custom_layers import *  # NOQA
+            >>> from wbia_cnn import utils
+            >>> from wbia_cnn import draw_net
             >>> import theano
             >>> import numpy as np
             >>> input_layer = lasagne.layers.InputLayer(shape=(4, 3, 32, 32))
@@ -529,12 +529,12 @@ class CenterSurroundLayer(lasagne.layers.Layer):
     def get_output_for(self, input_expr, T=T, **kwargs):
         r"""
         CommandLine:
-            python -m ibeis_cnn.custom_layers --test-CenterSurroundLayer.get_output_for:0 --show
-            python -m ibeis_cnn.custom_layers --test-CenterSurroundLayer.get_output_for:1 --show
+            python -m wbia_cnn.custom_layers --test-CenterSurroundLayer.get_output_for:0 --show
+            python -m wbia_cnn.custom_layers --test-CenterSurroundLayer.get_output_for:1 --show
 
         Example0:
             >>> # DISABLE_DOCTEST
-            >>> from ibeis_cnn.custom_layers import *  # NOQA
+            >>> from wbia_cnn.custom_layers import *  # NOQA
             >>> import theano
             >>> #item_shape = (32, 32, 3)
             >>> item_shape = (41, 41, 3)
@@ -548,7 +548,7 @@ class CenterSurroundLayer(lasagne.layers.Layer):
 
         Example1:
             >>> # DISABLE_DOCTEST
-            >>> from ibeis_cnn.custom_layers import *  # NOQA
+            >>> from wbia_cnn.custom_layers import *  # NOQA
             >>> import numpy as np
             >>> #item_shape = (32, 32, 3)
             >>> item_shape = (41, 41, 3)
@@ -561,7 +561,7 @@ class CenterSurroundLayer(lasagne.layers.Layer):
             >>> interact_image_list(img_list, num_per_page=8)
 
         Ignore:
-            from ibeis_cnn import draw_net
+            from wbia_cnn import draw_net
             #draw_net.draw_theano_symbolic_expression(result)
             assert np.all(output_np == output_T)
             np.stack = np.vstack
@@ -596,7 +596,7 @@ class CenterSurroundLayer(lasagne.layers.Layer):
             output_expr = set_subtensor(output_expr[::2], center)
             output_expr = set_subtensor(output_expr[1::2], surround)
             output_expr.name = 'center_surround_output'
-            #from ibeis_cnn import draw_net
+            #from wbia_cnn import draw_net
             #draw_net.draw_theano_symbolic_expression(output_expr)
         else:
             # debugging numpy version
@@ -732,13 +732,13 @@ def load_json_arch_def(arch_json_fpath):
     """
     layer_list = lasagne.layers.get_all_layers(output_layer)
 
-    from ibeis_cnn import net_strs
+    from wbia_cnn import net_strs
     layer_json_list = [net_strs.make_layer_json_dict(layer)
                        for layer in layer_list]
 
     arch_json_fpath = '/media/raid/work/WS_ALL/_ibsdb/_ibeis_cache/nets/injur-shark_10056_224x224x3_auqbfhle/models/arch_injur-shark_o2_d11_c688_acioqbst/saved_sessions/fit_session_2016-08-26T173854+5/fit_arch_info.json'
     """
-    from ibeis_cnn import custom_layers
+    from wbia_cnn import custom_layers
     import lasagne.layers.dnn
 
     # FIXME: Need to redo the saved arch json file.
@@ -846,7 +846,7 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
                  ):
 
     # FIXME; dropout is a pre-operation
-    import ibeis_cnn.__LASAGNE__ as lasagne
+    import wbia_cnn.__LASAGNE__ as lasagne
     import itertools
     import six
 
@@ -1327,9 +1327,9 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
 if __name__ == '__main__':
     """
     CommandLine:
-        python -m ibeis_cnn.custom_layers
-        python -m ibeis_cnn.custom_layers --allexamples
-        python -m ibeis_cnn.custom_layers --allexamples --noface --nosrc
+        python -m wbia_cnn.custom_layers
+        python -m wbia_cnn.custom_layers --allexamples
+        python -m wbia_cnn.custom_layers --allexamples --noface --nosrc
     """
     import multiprocessing
     multiprocessing.freeze_support()  # for win32

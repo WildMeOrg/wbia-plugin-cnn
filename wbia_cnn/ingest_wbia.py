@@ -9,7 +9,7 @@ import itertools
 from six.moves import zip, map, range
 from functools import partial
 from wbia import dtool
-from ibeis_cnn import draw_results  # NOQA
+from wbia_cnn import draw_results  # NOQA
 print, rrr, profile = ut.inject2(__name__)
 
 
@@ -20,14 +20,14 @@ def get_aidpairs_partmatch(ibs, acfg_name):
     """
 
     CommandLine:
-        python -m ibeis_cnn.ingest_ibeis --exec-get_aidpairs_partmatch
+        python -m wbia_cnn.ingest_wbia --exec-get_aidpairs_partmatch
 
     SeeAlso:
         extract_annotpair_training_chips
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.ingest_ibeis import *  # NOQA
+        >>> from wbia_cnn.ingest_wbia import *  # NOQA
         >>> import wbia
         >>> # build test data
         >>> ibs = wbia.opendb(defaultdb='PZ_Master1')
@@ -160,11 +160,11 @@ def extract_annotpair_training_chips(ibs, aid_pairs, **kwargs):
     """
 
     CommandLine:
-        python -m ibeis_cnn.ingest_ibeis extract_annotpair_training_chips --show
+        python -m wbia_cnn.ingest_wbia extract_annotpair_training_chips --show
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.ingest_ibeis import *  # NOQA
+        >>> from wbia_cnn.ingest_wbia import *  # NOQA
         >>> import wbia
         >>> # build test data
         >>> if False:
@@ -185,7 +185,7 @@ def extract_annotpair_training_chips(ibs, aid_pairs, **kwargs):
         >>> #flat_metadata = dict([(key, val[s]) for key, val in flat_metadata.items()])
         >>> rchip1_list, rchip2_list = extract_annotpair_training_chips(ibs, aid_pairs)
         >>> ut.quit_if_noshow()
-        >>> from ibeis_cnn import draw_results  # NOQA
+        >>> from wbia_cnn import draw_results  # NOQA
         >>> interact = draw_results.interact_patches(label_list, (rchip1_list, rchip2_list), flat_metadata, chunck_sizes=(2, 2), ibs=ibs)
         >>> ut.show_if_requested()
     """
@@ -324,11 +324,11 @@ def get_aidpair_patchmatch_training_data(ibs, aid1_list, aid2_list,
     FIXME: errors on get_aidpairs_and_matches(ibs, 1)
 
     CommandLine:
-        python -m ibeis_cnn.ingest_ibeis --test-get_aidpair_patchmatch_training_data --show
+        python -m wbia_cnn.ingest_wbia --test-get_aidpair_patchmatch_training_data --show
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.ingest_ibeis import *  # NOQA
+        >>> from wbia_cnn.ingest_wbia import *  # NOQA
         >>> import wbia
         >>> # build test data
         >>> ibs = wbia.opendb(defaultdb='PZ_MTEST')
@@ -478,11 +478,11 @@ def get_patchmetric_training_data_and_labels(ibs, aid1_list, aid2_list,
         # SEGMENTATION MASKS
 
     CommandLine:
-        python -m ibeis_cnn.ingest_ibeis --test-get_patchmetric_training_data_and_labels --show
+        python -m wbia_cnn.ingest_wbia --test-get_patchmetric_training_data_and_labels --show
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.ingest_ibeis import *  # NOQA
+        >>> from wbia_cnn.ingest_wbia import *  # NOQA
         >>> import wbia
         >>> # build test data
         >>> ibs = wbia.opendb(defaultdb='PZ_MTEST')
@@ -531,7 +531,7 @@ def get_aidpair_training_labels(ibs, aid1_list_, aid2_list_):
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.ingest_ibeis import *  # NOQA
+        >>> from wbia_cnn.ingest_wbia import *  # NOQA
         >>> import wbia
         >>> # build test data
         >>> ibs = wbia.opendb(defaultdb='PZ_MTEST')
@@ -630,7 +630,7 @@ def cached_part_match_training_data_fpaths(ibs, aid_pairs, label_list,
                                             flat_metadata, **kwargs):
     r"""
     CommandLine:
-        python -m ibeis_cnn --tf netrun --db PZ_MTEST \
+        python -m wbia_cnn --tf netrun --db PZ_MTEST \
                 --acfg ctrl:pername=None,excluderef=False --ensuredata \
                 --show --datatype=siam-part \
                 --nocache-train --nocache-cnn
@@ -712,7 +712,7 @@ def cached_patchmetric_training_data_fpaths(ibs, aid1_list, aid2_list,
     todo use size in cfgstrings
     kwargs is used for PatchMetricDataConfig
 
-    from ibeis_cnn.ingest_ibeis import *
+    from wbia_cnn.ingest_wbia import *
     """
     import utool as ut
     pmcfg = PatchMetricDataConfig(**kwargs)
@@ -792,21 +792,21 @@ def get_aidpairs_and_matches(ibs, max_examples=None, num_top=3,
             of the feature matches
 
     CommandLine:
-        python -m ibeis_cnn.ingest_ibeis get_aidpairs_and_matches --show
-        python -m ibeis_cnn.ingest_ibeis --test-get_aidpairs_and_matches --db PZ_Master0
-        python -m ibeis_cnn.ingest_ibeis --test-get_aidpairs_and_matches --db PZ_Master1 --acfg default --show
-        python -m ibeis_cnn.ingest_ibeis --test-get_aidpairs_and_matches --db PZ_MTEST --acfg ctrl:qindex=0:10 --show
-        python -m ibeis_cnn.ingest_ibeis --test-get_aidpairs_and_matches --db NNP_Master3
+        python -m wbia_cnn.ingest_wbia get_aidpairs_and_matches --show
+        python -m wbia_cnn.ingest_wbia --test-get_aidpairs_and_matches --db PZ_Master0
+        python -m wbia_cnn.ingest_wbia --test-get_aidpairs_and_matches --db PZ_Master1 --acfg default --show
+        python -m wbia_cnn.ingest_wbia --test-get_aidpairs_and_matches --db PZ_MTEST --acfg ctrl:qindex=0:10 --show
+        python -m wbia_cnn.ingest_wbia --test-get_aidpairs_and_matches --db NNP_Master3
 
-        python -m ibeis_cnn.ingest_ibeis --test-get_aidpairs_and_matches --db PZ_MTEST \
+        python -m wbia_cnn.ingest_wbia --test-get_aidpairs_and_matches --db PZ_MTEST \
                 --acfg default:is_known=True,qmin_pername=2,view=primary,species=primary,minqual=ok --show
 
-        python -m ibeis_cnn.ingest_ibeis --test-get_aidpairs_and_matches --db PZ_Master1 \
+        python -m wbia_cnn.ingest_wbia --test-get_aidpairs_and_matches --db PZ_Master1 \
                 --acfg default:is_known=True,qmin_pername=2,view=primary,species=primary,minqual=ok --show
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.ingest_ibeis import *  # NOQA
+        >>> from wbia_cnn.ingest_wbia import *  # NOQA
         >>> import wbia
         >>> # build test data
         >>> ibs = wbia.opendb(defaultdb='PZ_MTEST')
@@ -1039,8 +1039,8 @@ def get_aidpairs_and_matches(ibs, max_examples=None, num_top=3,
     def equalize_flat_flags(flat_labels, flat_scores):
         labelhist = ut.dict_hist(flat_labels)
         # Print input distribution of labels
-        print('[ingest_ibeis] original label histogram = \n' + ut.dict_str(labelhist))
-        print('[ingest_ibeis] total = %r' % (sum(list(labelhist.values()))))
+        print('[ingest_wbia] original label histogram = \n' + ut.dict_str(labelhist))
+        print('[ingest_wbia] total = %r' % (sum(list(labelhist.values()))))
 
         pref_method = 'rand'
         #pref_method = 'scores'
@@ -1132,8 +1132,8 @@ def get_aidpairs_and_matches(ibs, max_examples=None, num_top=3,
         labelhist_eq = {
             key: len(val)
             for key, val in six.iteritems(ut.group_items(flat_labels_eq, flat_labels_eq))}
-        print('[ingest_ibeis] equalized label histogram = \n' + ut.dict_str(labelhist_eq))
-        print('[ingest_ibeis] total = %r' % (sum(list(labelhist_eq.values()))))
+        print('[ingest_wbia] equalized label histogram = \n' + ut.dict_str(labelhist_eq))
+        print('[ingest_wbia] total = %r' % (sum(list(labelhist_eq.values()))))
         # --
         return aid1_list_eq, aid2_list_eq, fm_list_eq, labels_eq, metadata_eq
 
@@ -2413,11 +2413,11 @@ def get_orientation_training_images(ibs, dest_path=None, **kwargs):
             of the feature matches
 
     CommandLine:
-        python -m ibeis_cnn.ingest_ibeis --test-get_orientation_training_images --dbdir /Datasets/BACKGROUND/PZ_Master1
+        python -m wbia_cnn.ingest_wbia --test-get_orientation_training_images --dbdir /Datasets/BACKGROUND/PZ_Master1
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.ingest_ibeis import *  # NOQA
+        >>> from wbia_cnn.ingest_wbia import *  # NOQA
         >>> import wbia
         >>> # build test data
         >>> ibs = wbia.opendb(defaultdb='PZ_MTEST')
@@ -2471,9 +2471,9 @@ def get_orientation_training_images(ibs, dest_path=None, **kwargs):
 if __name__ == '__main__':
     """
     CommandLine:
-        python -m ibeis_cnn.ingest_ibeis
-        python -m ibeis_cnn.ingest_ibeis --allexamples
-        python -m ibeis_cnn.ingest_ibeis --allexamples --noface --nosrc
+        python -m wbia_cnn.ingest_wbia
+        python -m wbia_cnn.ingest_wbia --allexamples
+        python -m wbia_cnn.ingest_wbia --allexamples --noface --nosrc
     """
     import multiprocessing
     multiprocessing.freeze_support()  # for win32

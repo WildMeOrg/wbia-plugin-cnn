@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import utool as ut
-from ibeis_cnn import __THEANO__ as theano
+from wbia_cnn import __THEANO__ as theano
 
 (print, rrr, profile) = ut.inject2(__name__)
 

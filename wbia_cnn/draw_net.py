@@ -15,7 +15,7 @@ from os.path import join, exists
 import numpy as np
 import cv2
 import utool as ut
-from ibeis_cnn import utils
+from wbia_cnn import utils
 print, rrr, profile = ut.inject2(__name__)
 
 
@@ -84,13 +84,13 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
     r"""
 
     CommandLine:
-        python -m ibeis_cnn.draw_net show_arch_nx_graph:0 --show
-        python -m ibeis_cnn.draw_net show_arch_nx_graph:1 --show
+        python -m wbia_cnn.draw_net show_arch_nx_graph:0 --show
+        python -m wbia_cnn.draw_net show_arch_nx_graph:1 --show
 
     Example0:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.draw_net import *  # NOQA
-        >>> from ibeis_cnn import models
+        >>> from wbia_cnn.draw_net import *  # NOQA
+        >>> from wbia_cnn import models
         >>> model = models.mnist.MNISTModel(batch_size=128, output_dims=10,
         >>>                                 data_shape=(24, 24, 3))
         >>> model.init_arch()
@@ -102,8 +102,8 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
 
     Example1:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.draw_net import *  # NOQA
-        >>> from ibeis_cnn import models
+        >>> from wbia_cnn.draw_net import *  # NOQA
+        >>> from wbia_cnn import models
         >>> model = models.SiameseCenterSurroundModel(autoinit=True)
         >>> layers = model.get_all_layers()
         >>> show_arch_nx_graph(layers)
@@ -114,12 +114,12 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
     """
     import networkx as nx
     import plottool as pt
-    import ibeis_cnn.__LASAGNE__ as lasange
+    import wbia_cnn.__LASAGNE__ as lasange
     #from matplotlib import offsetbox
     #import matplotlib as mpl
 
     REMOVE_BATCH_SIZE = True
-    from ibeis_cnn import net_strs
+    from wbia_cnn import net_strs
 
     def get_hex_color(layer_type):
         if 'Input' in layer_type:
@@ -446,12 +446,12 @@ def pydot_to_image(pydot_graph):
 #        http://stackoverflow.com/questions/4596962/display-graph-without-saving-using-pydot
 
 #    CommandLine:
-#        python -m ibeis_cnn.draw_net --test-make_architecture_image --show
+#        python -m wbia_cnn.draw_net --test-make_architecture_image --show
 
 #    Example:
 #        >>> # ENABLE_DOCTEST
-#        >>> from ibeis_cnn.draw_net import *  # NOQA
-#        >>> from ibeis_cnn import models
+#        >>> from wbia_cnn.draw_net import *  # NOQA
+#        >>> from wbia_cnn import models
 #        >>> model = models.SiameseCenterSurroundModel(autoinit=True)
 #        >>> #model = models.DummyModel(autoinit=True)
 #        >>> layers = model.get_all_layers()
@@ -482,16 +482,16 @@ def pydot_to_image(pydot_graph):
 #            see docstring of make_architecture_pydot_graph for other options
 
 #    CommandLine:
-#        python -m ibeis_cnn.draw_net --test-imwrite_arch --show
+#        python -m wbia_cnn.draw_net --test-imwrite_arch --show
 
 #    Example:
 #        >>> # ENABLE_DOCTEST
-#        >>> from ibeis_cnn.draw_net import *  # NOQA
-#        >>> from ibeis_cnn import models
+#        >>> from wbia_cnn.draw_net import *  # NOQA
+#        >>> from wbia_cnn import models
 #        >>> #model = models.DummyModel(autoinit=True)
 #        >>> model = models.SiameseCenterSurroundModel(autoinit=True)
 #        >>> layers = model.get_all_layers()
-#        >>> fpath = ut.unixjoin(ut.ensure_app_resource_dir('ibeis_cnn'), 'tmp.png')
+#        >>> fpath = ut.unixjoin(ut.ensure_app_resource_dir('wbia_cnn'), 'tmp.png')
 #        >>> # execute function
 #        >>> imwrite_arch(layers, fpath)
 #        >>> ut.quit_if_noshow()
@@ -670,13 +670,13 @@ class Dream(object):
     Class model visualization. Sort of like a deep-dream
 
     CommandLine:
-        python -m ibeis_cnn.draw_net Dream --show
+        python -m wbia_cnn.draw_net Dream --show
 
     Example:
         >>> # DISABLE_DOCTEST
         >>> # Assumes mnist is trained
-        >>> from ibeis_cnn.draw_net import *  # NOQA
-        >>> from ibeis_cnn.models import mnist
+        >>> from wbia_cnn.draw_net import *  # NOQA
+        >>> from wbia_cnn.models import mnist
         >>> model, dataset = mnist.testdata_mnist(dropout=.5)
         >>> model.init_arch()
         >>> model.load_model_state()
@@ -758,8 +758,8 @@ class Dream(object):
         dream.step_fn = None
 
     def make_class_images(dream, target_labels):
-        import ibeis_cnn.__THEANO__ as theano
-        from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
+        import wbia_cnn.__THEANO__ as theano
+        from wbia_cnn.__THEANO__ import tensor as T  # NOQA
         import utool as ut
 
         was_scalar = not ut.isiterable(target_labels)
@@ -798,13 +798,13 @@ class Dream(object):
         r"""
 
         CommandLine:
-            python -m ibeis_cnn.draw_net _make_init_state --show
+            python -m wbia_cnn.draw_net _make_init_state --show
 
         Example:
             >>> # DISABLE_DOCTEST
             >>> # Assumes mnist is trained
-            >>> from ibeis_cnn.draw_net import *  # NOQA
-            >>> from ibeis_cnn.models import mnist
+            >>> from wbia_cnn.draw_net import *  # NOQA
+            >>> from wbia_cnn.models import mnist
             >>> model, dataset = mnist.testdata_mnist(dropout=.5)
             >>> model.init_arch()
             >>> dream = Dream(model, init='rgauss', niters=200)
@@ -861,10 +861,10 @@ class Dream(object):
         argmax_{I} S_c(I) - \lambda \elltwo{I}
         max(S_c(I) - lambda * norm(I, 2))
         """
-        import ibeis_cnn.__LASAGNE__ as lasagne
+        import wbia_cnn.__LASAGNE__ as lasagne
         import copy
-        import ibeis_cnn.__THEANO__ as theano
-        from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
+        import wbia_cnn.__THEANO__ as theano
+        from wbia_cnn.__THEANO__ import tensor as T  # NOQA
         print('Making dream objective')
         # Get the final layer and remove the softmax nonlinearity to access the
         # pre-activation. (Softmax encourages minimization of other classes)
@@ -945,8 +945,8 @@ class Dream(object):
         ut.startfile('dynamic_images.mp4')
         plt.show()
         """
-        import ibeis_cnn.__THEANO__ as theano
-        from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
+        import wbia_cnn.__THEANO__ as theano
+        from wbia_cnn.__THEANO__ import tensor as T  # NOQA
         import utool as ut
         input_shape = dream.model.input_shape
         b, c, w, h = input_shape
@@ -976,9 +976,9 @@ def show_saliency_heatmap(model, dataset):
     Example:
         >>> # DISABLE_DOCTEST
         >>> # Assumes mnist is trained
-        >>> from ibeis_cnn.draw_net import *  # NOQA
-        >>> from ibeis_cnn import ingest_data
-        >>> from ibeis_cnn.models import MNISTModel
+        >>> from wbia_cnn.draw_net import *  # NOQA
+        >>> from wbia_cnn import ingest_data
+        >>> from wbia_cnn.models import MNISTModel
         >>> dataset = ingest_data.grab_mnist_category_dataset()
         >>> model = MNISTModel(batch_size=128, data_shape=dataset.data_shape,
         >>>                    name='bnorm',
@@ -1016,19 +1016,19 @@ def show_convolutional_weights(all_weights, use_color=None, limit=144, fnum=None
         limit (int):
 
     CommandLine:
-        python -m ibeis_cnn.draw_net --test-show_convolutional_weights --show
-        python -m ibeis_cnn.draw_net --test-show_convolutional_weights --show --index=1
+        python -m wbia_cnn.draw_net --test-show_convolutional_weights --show
+        python -m wbia_cnn.draw_net --test-show_convolutional_weights --show --index=1
 
         # Need to fit mnist first
-        python -m ibeis_cnn _ModelFitting.fit:1 --vd
+        python -m wbia_cnn _ModelFitting.fit:1 --vd
 
 
     Example:
         >>> # DISABLE_DOCTEST
         >>> # Assumes mnist is trained
-        >>> from ibeis_cnn.draw_net import *  # NOQA
-        >>> from ibeis_cnn import ingest_data
-        >>> from ibeis_cnn.models import MNISTModel
+        >>> from wbia_cnn.draw_net import *  # NOQA
+        >>> from wbia_cnn import ingest_data
+        >>> from wbia_cnn.models import MNISTModel
         >>> dataset = ingest_data.grab_mnist_category_dataset()
         >>> model = MNISTModel(batch_size=128, data_shape=dataset.data_shape,
         >>>                    name='bnorm',
@@ -1053,8 +1053,8 @@ def show_convolutional_weights(all_weights, use_color=None, limit=144, fnum=None
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.draw_net import *  # NOQA
-        >>> from ibeis_cnn import models
+        >>> from wbia_cnn.draw_net import *  # NOQA
+        >>> from wbia_cnn import models
         >>> from lasagne import layers
         >>> model = models.SiameseCenterSurroundModel(autoinit=True)
         >>> output_layer = model.get_output_layer()
@@ -1277,9 +1277,9 @@ def show_confusion_matrix(correct_y, predict_y, category_list, results_path,
 if __name__ == '__main__':
     """
     CommandLine:
-        python -m ibeis_cnn.draw_net
-        python -m ibeis_cnn.draw_net --allexamples
-        python -m ibeis_cnn.draw_net --allexamples --noface --nosrc
+        python -m wbia_cnn.draw_net
+        python -m wbia_cnn.draw_net --allexamples
+        python -m wbia_cnn.draw_net --allexamples --noface --nosrc
     """
     import multiprocessing
     multiprocessing.freeze_support()  # for win32

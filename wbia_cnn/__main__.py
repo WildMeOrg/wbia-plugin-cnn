@@ -6,26 +6,26 @@ import utool as ut
 (print, rrr, profile) = ut.inject2(__name__)
 
 
-def ibeis_cnn_main():
+def wbia_cnn_main():
     ignore_prefix = []
     ignore_suffix = []
     import utool as ut
     try:
-        print('[ibeis_cnn] Importing ibeis_cnn')
-        import ibeis_cnn  # NOQA
-        print('[ibeis_cnn] Importing ibeis')
+        print('[wbia_cnn] Importing wbia_cnn')
+        import wbia_cnn  # NOQA
+        print('[wbia_cnn] Importing ibeis')
         import wbia  # NOQA
-        print('[ibeis_cnn] Importing ibeis_cnn._plugin')
-        import ibeis_cnn._plugin  # NOQA
-        print('[ibeis_cnn] Done importing for __main__')
+        print('[wbia_cnn] Importing wbia_cnn._plugin')
+        import wbia_cnn._plugin  # NOQA
+        print('[wbia_cnn] Done importing for __main__')
     except ImportError:
         raise
         pass
     # allow for --tf flags
-    ut.main_function_tester('ibeis_cnn', ignore_prefix, ignore_suffix)
+    ut.main_function_tester('wbia_cnn', ignore_prefix, ignore_suffix)
 
 if __name__ == '__main__':
     import multiprocessing
     multiprocessing.freeze_support()  # for win32
-    print('Checking ibeis_cnn main')
-    ibeis_cnn_main()
+    print('Checking wbia_cnn main')
+    wbia_cnn_main()

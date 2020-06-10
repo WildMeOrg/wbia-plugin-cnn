@@ -2,10 +2,10 @@
 from __future__ import absolute_import, division, print_function
 import utool as ut
 (print, rrr, profile) = ut.inject2(
-    __name__, '[ibeis_cnn._plugin_grabmodels]')
+    __name__, '[wbia_cnn._plugin_grabmodels]')
 
 
-#DEFAULT_CNNMODELS_DIR = ut.get_app_resource_dir('ibeis_cnn', 'pretrained')
+#DEFAULT_CNNMODELS_DIR = ut.get_app_resource_dir('wbia_cnn', 'pretrained')
 
 MODEL_DOMAIN = 'https://wildbookiarepository.azureedge.net/models/'
 MODEL_URLS = {
@@ -23,7 +23,7 @@ MODEL_URLS = {
     'classifier_cameratrap_megan2_v5'          : 'classifier.cameratrap.megan2.v5.pkl',
     'classifier_cameratrap_megan2_v6'          : 'classifier.cameratrap.megan2.v6.pkl',
 
-    'classifier_cameratrap_ryan_ibeis_cnn_v1'  : 'classifier.cameratrap.ryan.ibeis_cnn.v1.pkl',
+    'classifier_cameratrap_ryan_wbia_cnn_v1'  : 'classifier.cameratrap.ryan.wbia_cnn.v1.pkl',
 
     'classifier_coco_zebra'                    : 'classifier.coco.zebra.pkl',
     'classifier_v3_zebra'                      : 'classifier.29.zebra.pkl',
@@ -110,12 +110,12 @@ MODEL_URLS = {
 def ensure_model(model, redownload=False):
     try:
         url = MODEL_DOMAIN + MODEL_URLS[model]
-        extracted_fpath = ut.grab_file_url(url, appname='ibeis_cnn',
+        extracted_fpath = ut.grab_file_url(url, appname='wbia_cnn',
                                            redownload=redownload,
                                            check_hash=True)
     except KeyError as ex:
         ut.printex(ex, 'model is not uploaded', iswarning=True)
-        extracted_fpath = ut.unixjoin(ut.get_app_resource_dir('ibeis_cnn'), model)
+        extracted_fpath = ut.unixjoin(ut.get_app_resource_dir('wbia_cnn'), model)
         ut.assert_exists(extracted_fpath)
     return extracted_fpath
 
@@ -124,7 +124,7 @@ if __name__ == '__main__':
     """
 
     CommandLine:
-        python -m ibeis_cnn._plugin_grabmodels.ensure_models
+        python -m wbia_cnn._plugin_grabmodels.ensure_models
     """
     import multiprocessing
     multiprocessing.freeze_support()  # for win32

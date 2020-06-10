@@ -19,7 +19,7 @@ print, rrr, profile = ut.inject2(__name__)
 
 
 def _clean(model, theano_forward, X_list, y_list, min_conf=0.95):
-    from ibeis_cnn import batch_processing as batch
+    from wbia_cnn import batch_processing as batch
     import random
     # Perform testing
     clean_outputs = batch.process_batch(

@@ -11,7 +11,7 @@ import numpy as np
 from six.moves import cPickle as pickle
 import utool as ut
 import six
-from ibeis_cnn import net_strs
+from wbia_cnn import net_strs
 import cv2
 print, rrr, profile = ut.inject2(__name__)
 
@@ -39,15 +39,15 @@ def get_gpu_memory():
         https://gist.github.com/matpalm/9c0c7c6a6f3681a0d39d
 
     CommandLine:
-        python -m ibeis_cnn.utils --test-get_gpu_memory
+        python -m wbia_cnn.utils --test-get_gpu_memory
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.utils import *  # NOQA
+        >>> from wbia_cnn.utils import *  # NOQA
         >>> result = get_gpu_memory()
         >>> print(result)
     """
-    import ibeis_cnn.__THEANO__ as theano
+    import wbia_cnn.__THEANO__ as theano
     return theano.sandbox.cuda.cuda_ndarray.cuda_ndarray.mem_info()
 
 
@@ -63,11 +63,11 @@ def testdata_imglist(shape=(32, 32, 3)):
     an images with lines of a cartoon face, and two complex images of people.
 
     CommandLine:
-        python -m ibeis_cnn.utils --test-testdata_imglist --show
+        python -m wbia_cnn.utils --test-testdata_imglist --show
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.utils import *  # NOQA
+        >>> from wbia_cnn.utils import *  # NOQA
         >>> (img_list, width, height, channels) = testdata_imglist()
         >>> ut.quit_if_noshow()
         >>> import plottool as pt
@@ -105,11 +105,11 @@ def convert_cv2_images_to_theano_images(img_list):
         data: in the shape [b, (c x h x w)]
 
     CommandLine:
-        python -m ibeis_cnn.utils --test-convert_cv2_images_to_theano_images
+        python -m wbia_cnn.utils --test-convert_cv2_images_to_theano_images
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.utils import *  # NOQA
+        >>> from wbia_cnn.utils import *  # NOQA
         >>> import vtool as vt
         >>> # build test data
         >>> # execute function
@@ -147,11 +147,11 @@ def convert_theano_images_to_cv2_images(data, *args):
         img_list (list of ndarrays): a list of numpy arrays with shape [h, w, c]
 
     CommandLine:
-        python -m ibeis_cnn.utils --test-convert_data_to_imglist
+        python -m wbia_cnn.utils --test-convert_data_to_imglist
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.utils import *  # NOQA
+        >>> from wbia_cnn.utils import *  # NOQA
         >>> # build test data
         >>> img_list, width, height, channels = testdata_imglist()
         >>> data = convert_cv2_images_to_theano_images(np.array(img_list))
@@ -167,8 +167,8 @@ def convert_theano_images_to_cv2_images(data, *args):
 
 def evaluate_symbolic_layer(get_output_for, inputdata_, input_type=None, **kwargs):
     """ helper for testing lasagne layers """
-    import ibeis_cnn.__THEANO__ as theano
-    from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
+    import wbia_cnn.__THEANO__ as theano
+    from wbia_cnn.__THEANO__ import tensor as T  # NOQA
     if input_type is None:
         input_type = T.tensor4
     input_expr = input_type(name='test_input_expr')  # T.tensor4()
@@ -214,11 +214,11 @@ def train_test_split(X, y, eval_size, data_per_label=1, shuffle=True):
         tuple: (X_train, y_train, X_valid, y_valid)
 
     CommandLine:
-        python -m ibeis_cnn.utils --test-train_test_split
+        python -m wbia_cnn.utils --test-train_test_split
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.utils import *  # NOQA
+        >>> from wbia_cnn.utils import *  # NOQA
         >>> # build test data
         >>> data, labels, data_per_label = testdata_xy()
         >>> X = data
@@ -286,7 +286,7 @@ def get_printcolinfo(requested_headers_):
     r"""
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.utils import *  # NOQA
+        >>> from wbia_cnn.utils import *  # NOQA
         >>> requested_headers_ = None
         >>> printcol_info = get_printcolinfo(requested_headers)
     """
@@ -428,11 +428,11 @@ def make_random_indicies(num, seed=RANDOM_SEED):
         ndarray: random_indicies
 
     CommandLine:
-        python -m ibeis_cnn.utils --test-make_random_indicies
+        python -m wbia_cnn.utils --test-make_random_indicies
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.utils import *  # NOQA
+        >>> from wbia_cnn.utils import *  # NOQA
         >>> num = 10
         >>> seed = 42
         >>> random_indicies = make_random_indicies(num, seed)
@@ -456,11 +456,11 @@ def make_random_indicies(num, seed=RANDOM_SEED):
 def data_label_shuffle(X, y, data_per_label=1, seed=RANDOM_SEED):
     r"""
     CommandLine:
-        python -m ibeis_cnn.utils --test-data_label_shuffle
+        python -m wbia_cnn.utils --test-data_label_shuffle
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_cnn.utils import *  # NOQA
+        >>> from wbia_cnn.utils import *  # NOQA
         >>> X, y, data_per_label = testdata_xy()
         >>> data_per_label = 2
         >>> seed = 42
@@ -483,11 +483,11 @@ def data_label_shuffle(X, y, data_per_label=1, seed=RANDOM_SEED):
 def slice_data_labels(X, y, batch_size, batch_index, data_per_label, wraparound=False, verbose=False):
     r"""
     CommandLine:
-        python -m ibeis_cnn.utils --test-slice_data_labels
+        python -m wbia_cnn.utils --test-slice_data_labels
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.utils import *  # NOQA
+        >>> from wbia_cnn.utils import *  # NOQA
         >>> X = np.random.rand(67, 3, 5, 4)
         >>> y = (np.random.rand(67) * 4).astype(np.int32)
         >>> batch_size = 32
@@ -530,7 +530,7 @@ def slice_data_labels(X, y, batch_size, batch_index, data_per_label, wraparound=
 
 
 def multinomial_nll(x, t):
-    from ibeis_cnn.__THEANO__ import tensor as T  # NOQA
+    from wbia_cnn.__THEANO__ import tensor as T  # NOQA
     #coding_dist=x, true_dist=t
     return T.nnet.categorical_crossentropy(x, t)
 
@@ -626,7 +626,7 @@ def save_model(kwargs, weights_file):
 
 def shock_network(output_layer, voltage=0.10):
     print('[model] shocking the network with voltage: %0.2f%%' % (voltage, ))
-    from ibeis_cnn.__LASAGNE__ import layers
+    from wbia_cnn.__LASAGNE__ import layers
     current_weights = layers.get_all_param_values(output_layer)
     for index in range(len(current_weights)):
         temp = current_weights[index] * voltage
@@ -643,16 +643,16 @@ def save_pretrained_weights_slice(pretrained_weights, weights_path, slice_=slice
     Used to save a slice of pretrained weights. The doctest will publish a new set of weights
 
     CommandLine:
-        python -m ibeis_cnn.utils --test-save_pretrained_weights_slice --net='vggnet_full' --slice='slice(0,6)'
-        python -m ibeis_cnn.utils --test-save_pretrained_weights_slice --net='vggnet_full' --slice='slice(0,30)'
-        python -m ibeis_cnn.utils --test-save_pretrained_weights_slice --net='caffenet_full' --slice='slice(0,6)'
-        python -m ibeis_cnn.utils --test-save_pretrained_weights_slice --net='caffenet_full' --slice='slice(0,?)'
+        python -m wbia_cnn.utils --test-save_pretrained_weights_slice --net='vggnet_full' --slice='slice(0,6)'
+        python -m wbia_cnn.utils --test-save_pretrained_weights_slice --net='vggnet_full' --slice='slice(0,30)'
+        python -m wbia_cnn.utils --test-save_pretrained_weights_slice --net='caffenet_full' --slice='slice(0,6)'
+        python -m wbia_cnn.utils --test-save_pretrained_weights_slice --net='caffenet_full' --slice='slice(0,?)'
 
     Example:
         >>> # DISABLE_DOCTEST
         >>> # Build a new subset of an existing model
-        >>> from ibeis_cnn.models import *  # NOQA
-        >>> from ibeis_cnn._plugin_grabmodels import ensure_model
+        >>> from wbia_cnn.models import *  # NOQA
+        >>> from wbia_cnn._plugin_grabmodels import ensure_model
         >>> # Get base model weights
         >>> modelname = ut.get_argval('--net', type_=str, default='vggnet_full')
         >>> weights_path = ensure_model(modelname)
@@ -725,9 +725,9 @@ def extract_patches_stride(image, patch_size, stride):
 if __name__ == '__main__':
     """
     CommandLine:
-        python -m ibeis_cnn.utils
-        python -m ibeis_cnn.utils --allexamples
-        python -m ibeis_cnn.utils --allexamples --noface --nosrc
+        python -m wbia_cnn.utils
+        python -m wbia_cnn.utils --allexamples
+        python -m wbia_cnn.utils --allexamples --noface --nosrc
     """
     import multiprocessing
     multiprocessing.freeze_support()  # for win32
