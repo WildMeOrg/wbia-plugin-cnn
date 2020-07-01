@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 OLD COMMAND LINE:
     TrainingCommandLine:
         python -m wbia_cnn.train --test-pz_patchmatch --train
