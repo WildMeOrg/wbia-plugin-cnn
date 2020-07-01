@@ -1351,8 +1351,8 @@ def non_max_suppression_fast(box_list, conf_list, overlapThresh=0.5):
 
     # if the bounding boxes integers, convert them to floats --
     # this is important since we'll be doing a bunch of divisions
-    if box_list.dtype.kind == "i":
-        box_list = box_list.astype("float")
+    if box_list.dtype.kind == 'i':
+        box_list = box_list.astype('float')
 
     # initialize the list of picked indexes
     pick = []

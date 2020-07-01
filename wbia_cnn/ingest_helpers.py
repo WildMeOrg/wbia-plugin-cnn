@@ -87,12 +87,12 @@ def open_mnist_files(data_fpath, labels_fpath):
     import numpy as np
     from array import array as pyarray
     with open(labels_fpath, 'rb') as flbl:
-        magic_nr, size = struct.unpack(">II", flbl.read(8))
-        lbl = pyarray("b", flbl.read())
+        magic_nr, size = struct.unpack('>II', flbl.read(8))
+        lbl = pyarray('b', flbl.read())
 
     with open(data_fpath, 'rb') as fimg:
-        magic_nr, size, rows, cols = struct.unpack(">IIII", fimg.read(16))
-        img = pyarray("B", fimg.read())
+        magic_nr, size, rows, cols = struct.unpack('>IIII', fimg.read(16))
+        img = pyarray('B', fimg.read())
     digits = np.arange(10)
 
     ind = [k for k in range(size) if lbl[k] in digits]
@@ -133,7 +133,7 @@ def extract_liberty_style_patches(ds_path, pairs):
         _path_ is supposed to be a path to
         a directory with bmp patchsets.
         """
-        fname = join(ds_path, "info.txt")
+        fname = join(ds_path, 'info.txt')
         p = subprocess.Popen(['wc', '-l', fname],
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         result, err = p.communicate()
@@ -167,7 +167,7 @@ def extract_liberty_style_patches(ds_path, pairs):
         """
         #pairs = 500
         match_fname = ''.join(
-            ["m50_", str(2 * pairs), "_", str(2 * pairs), "_0.txt"])
+            ['m50_', str(2 * pairs), '_', str(2 * pairs), '_0.txt'])
         match_fpath = join(ds_path, match_fname)
 
         #print(pairs, "pairs each (matching/non_matching) from", match_fpath)
@@ -191,7 +191,7 @@ def extract_liberty_style_patches(ds_path, pairs):
             patch_ids.sort()
 
             assert len(match) == len(
-                non_match), "Different number of matches and non-matches."
+                non_match), 'Different number of matches and non-matches.'
 
         return match, non_match, patch_ids
 

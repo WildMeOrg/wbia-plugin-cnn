@@ -3080,7 +3080,7 @@ class _ModelIO(object):
                 model.data_params = model_state['data_params']
         else:
             # HACK TO LOAD ABSTRACT MODEL FOR DIAGNOSITIC REASONS
-            print("WARNING LOADING ABSTRACT MODEL")
+            print('WARNING LOADING ABSTRACT MODEL')
         model.best_results = model_state['best_results']
         model.input_shape  = model_state['input_shape']
         model.output_dims  = model_state['output_dims']

@@ -456,10 +456,10 @@ def stratified_shuffle_split(y, fractions, rng=None, class_weights=None):
     set_sizes = n_samples * fractions
 
     if np.min(class_counts) < 2:
-        raise ValueError("The least populated class in y has only 1"
-                         " member, which is too few. The minimum"
-                         " number of labels for any class cannot"
-                         " be less than 2.")
+        raise ValueError('The least populated class in y has only 1'
+                         ' member, which is too few. The minimum'
+                         ' number of labels for any class cannot'
+                         ' be less than 2.')
     for size in set_sizes:
         if size < n_classes:
             raise ValueError('The size = %d of all splits should be greater or '

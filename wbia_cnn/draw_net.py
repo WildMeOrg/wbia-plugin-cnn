@@ -541,11 +541,11 @@ def occlusion_heatmap(net, x, target, square_length=7):
     from lasagne.layers import get_output_shape
 
     if (x.ndim != 4) or x.shape[0] != 1:
-        raise ValueError("This function requires the input data to be of "
-                         "shape (1, c, x, y), instead got {}".format(x.shape))
+        raise ValueError('This function requires the input data to be of '
+                         'shape (1, c, x, y), instead got {}'.format(x.shape))
     if square_length % 2 == 0:
-        raise ValueError("Square length has to be an odd number, instead "
-                         "got {}.".format(square_length))
+        raise ValueError('Square length has to be an odd number, instead '
+                         'got {}.'.format(square_length))
 
     num_classes = get_output_shape(net.layers_[-1])[1]
     img = x[0].copy()
@@ -576,8 +576,8 @@ def occlusion_heatmap(net, x, target, square_length=7):
 def _plot_heat_map(net, Xb, figsize, get_heat_image):
     import plottool as pt
     if (Xb.ndim != 4):
-        raise ValueError("This function requires the input data to be of "
-                         "shape (b, c, x, y), instead got {}".format(Xb.shape))
+        raise ValueError('This function requires the input data to be of '
+                         'shape (b, c, x, y), instead got {}'.format(Xb.shape))
 
     num_images = Xb.shape[0]
     if figsize[1] is None:

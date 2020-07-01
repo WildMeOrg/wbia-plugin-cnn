@@ -155,7 +155,7 @@ class LocallyConnected2DLayer(lasagne.layers.Layer):
         else:
             self.pad = lasagne.utils.as_tuple(pad, 2, int)
 
-        self.W = self.add_param(W, self.get_W_shape(), name="W")
+        self.W = self.add_param(W, self.get_W_shape(), name='W')
         if b is None:
             self.b = None
         else:
@@ -164,7 +164,7 @@ class LocallyConnected2DLayer(lasagne.layers.Layer):
                                 output_shape[3])
             else:
                 biases_shape = (num_filters,)
-            self.b = self.add_param(b, biases_shape, name="b",
+            self.b = self.add_param(b, biases_shape, name='b',
                                     regularizable=False)
 
     def get_W_shape(self):
@@ -522,7 +522,7 @@ class CenterSurroundLayer(lasagne.layers.Layer):
     def get_output_shape_for(self, input_shape):
         batch_size, channels, height, width = input_shape
         if height % 2 == 1 or width % 2 == 1:
-            warnings.warn("input layer to CenterSurroundLayer should ideally have an even width and height.")
+            warnings.warn('input layer to CenterSurroundLayer should ideally have an even width and height.')
         output_shape = (batch_size * 2, channels, height // 2, width // 2)
         return output_shape
 
