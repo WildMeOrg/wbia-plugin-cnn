@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 from ibeis_cnn import lasange_ext
 

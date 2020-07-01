@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 References:
     http://deeplearning.net/software/theano/tutorial/using_gpu.html#testing-theano-with-gpu

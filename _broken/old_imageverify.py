@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 def get_identify_training_fpaths(ibs, **kwargs):
     """
     Notes:

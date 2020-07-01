@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Build Dataset Aliases
 python -m ibeis_cnn --tf pz_patchmatch --db PZ_Master0 --colorspace='gray' --num-top=None --controlled=True --aliasexit
 python -m ibeis_cnn --tf pz_patchmatch --db liberty --colorspace='gray' --aliasexit

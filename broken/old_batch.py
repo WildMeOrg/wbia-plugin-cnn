@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #def create_sliced_iter_funcs_train2(model, X_unshared, y_unshared):
 #    """
 #    WIP: NEW IMPLEMENTATION WITH PRELOADING GPU DATA

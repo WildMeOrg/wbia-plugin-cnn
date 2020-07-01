@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # flake8: noqa
 from six.moves import cPickle as pickle
 from wbia_cnn import abstract_models

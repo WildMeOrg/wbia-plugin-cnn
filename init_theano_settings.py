@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 References:
     http://deeplearning.net/software/theano/library/config.html
