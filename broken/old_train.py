@@ -79,4 +79,3 @@ python -m ibeis_cnn --tf pz_patchmatch --ds pzmtest --weights=nnp3-2:epochs0011 
 # Now can use the alias
 python -m ibeis_cnn --tf pz_patchmatch --ds pzmtest --weights=nnp3-2:epochs0021 --arch=siaml2 --test
 python -m ibeis_cnn --tf pz_patchmatch --ds pzmaster --weights=nnp3-2:epochs0021 --arch=siaml2 --test
-

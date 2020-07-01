@@ -268,4 +268,3 @@ def test_display_vgg():
     config = {}
 
     display_caffe_model(weights_model_fpath, results_dpath, **config)
-

@@ -42,4 +42,3 @@ OLD COMMAND LINE:
 
         python -m wbia_cnn.train --test-pz_patchmatch --db nnp3-2 --arch=siaml2 --weights=new  --train
         python -m wbia_cnn.train --test-pz_patchmatch --db NNP_Master3 --num_top=None --arch=siaml2 --weights=current  --test
-

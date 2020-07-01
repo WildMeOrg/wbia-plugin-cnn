@@ -487,4 +487,3 @@ class SiameseModel(BaseModel):
             print('[model] Build center surround siamese loss function')
         avg_loss = lasange_ext.siamese_loss(G, Y_padded, data_per_label=2)
         return avg_loss
-
