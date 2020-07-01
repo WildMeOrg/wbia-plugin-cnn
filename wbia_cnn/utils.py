@@ -13,10 +13,11 @@ import utool as ut
 import six
 from wbia_cnn import net_strs
 import cv2
+
 print, rrr, profile = ut.inject2(__name__)
 
 
-#VERBOSE_CNN = ut.get_argflag(('--verbose-cnn', '--verbcnn')) or ut.VERBOSE
+# VERBOSE_CNN = ut.get_argflag(('--verbose-cnn', '--verbcnn')) or ut.VERBOSE
 VERBOSE_CNN = ut.get_module_verbosity_flags('cnn')[0] or ut.VERBOSE
 
 RANDOM_SEED = None
@@ -27,7 +28,7 @@ def checkfreq(freqlike_, count):
     # checks frequency of param, also handles the case where it is specified
     # as a bool. does not trigger on 0
     if ut.is_int(freqlike_):
-        return (count % freqlike_) == (freqlike_  - 1)
+        return (count % freqlike_) == (freqlike_ - 1)
     else:
         return freqlike_ is True
 
@@ -48,11 +49,12 @@ def get_gpu_memory():
         >>> print(result)
     """
     import wbia_cnn.__THEANO__ as theano
+
     return theano.sandbox.cuda.cuda_ndarray.cuda_ndarray.mem_info()
 
 
 def _update(kwargs, key, value):
-    #if key not in kwargs.keys():
+    # if key not in kwargs.keys():
     if key not in kwargs:
         kwargs[key] = value
 
@@ -79,13 +81,16 @@ def testdata_imglist(shape=(32, 32, 3)):
 
     """
     import vtool as vt
+
     x = 32
     height, width, channels = shape
     img0 = np.arange(x ** 2 * 3, dtype=np.uint8).reshape(x, x, 3)
     img1 = vt.imread(ut.grab_test_imgpath('jeff.png'))
     img2 = vt.imread(ut.grab_test_imgpath('carl.jpg'))
     img3 = vt.imread(ut.grab_test_imgpath('lena.png'))
-    img_list = [vt.padded_resize(img, (width, height)) for img in [img0, img1, img2, img3]]
+    img_list = [
+        vt.padded_resize(img, (width, height)) for img in [img0, img1, img2, img3]
+    ]
     return img_list, width, height, channels
 
 
@@ -122,7 +127,7 @@ def convert_cv2_images_to_theano_images(img_list):
         >>> print(result)
         [[[  0   3]  [ 96  99]] [[  1   4]  [ 97 100]] [[  2   5]  [ 98 101]]]
     """
-    #[img.shape for img in img_list]
+    # [img.shape for img in img_list]
     # format to [b, c, h, w]
     if len(img_list.shape) == 3:
         # ensure 4 dimensions
@@ -131,12 +136,12 @@ def convert_cv2_images_to_theano_images(img_list):
     assert ut.allsame(shape_list)
     theano_style_imgs = [np.transpose(img, (2, 0, 1))[None, :] for img in img_list]
     data = np.vstack(theano_style_imgs)
-    #data = np.vstack([img[None, :] for img in img_list])
+    # data = np.vstack([img[None, :] for img in img_list])
     return data
 
 
 def convert_theano_images_to_cv2_images(data, *args):
-    #width, height, channels):
+    # width, height, channels):
     r"""
     Converts bc01 to b01c
 
@@ -158,9 +163,9 @@ def convert_theano_images_to_cv2_images(data, *args):
         >>> img_list2 = convert_theano_images_to_cv2_images(data)
         >>> assert np.all(img_list == img_list2)
     """
-    #num_imgs = data.shape[0]
-    #newshape = (num_imgs, channels, width, height)
-    #data_ = data.reshape(newshape)
+    # num_imgs = data.shape[0]
+    # newshape = (num_imgs, channels, width, height)
+    # data_ = data.reshape(newshape)
     img_list = np.transpose(data, (0, 2, 3, 1))
     return img_list
 
@@ -169,6 +174,7 @@ def evaluate_symbolic_layer(get_output_for, inputdata_, input_type=None, **kwarg
     """ helper for testing lasagne layers """
     import wbia_cnn.__THEANO__ as theano
     from wbia_cnn.__THEANO__ import tensor as T  # NOQA
+
     if input_type is None:
         input_type = T.tensor4
     input_expr = input_type(name='test_input_expr')  # T.tensor4()
@@ -193,8 +199,8 @@ def testdata_xy(data_per_label=2, factor=20, seed=0):
         rng = seed
     else:
         assert False
-    labels = rng.rand(len(data) / data_per_label) > .5
-    #data_per_label = 2
+    labels = rng.rand(len(data) / data_per_label) > 0.5
+    # data_per_label = 2
     return data, labels, data_per_label
 
 
@@ -231,13 +237,16 @@ def train_test_split(X, y, eval_size, data_per_label=1, shuffle=True):
         >>> print(result)
     """
     # take the data and label arrays, split them preserving the class distributions
-    assert len(X) == len(y) * data_per_label, 'len(X)=%r, len(y)=%r, data_per_label=%r' % (len(X), len(y), data_per_label)
-    nfolds = round(1. / eval_size)
+    assert (
+        len(X) == len(y) * data_per_label
+    ), 'len(X)=%r, len(y)=%r, data_per_label=%r' % (len(X), len(y), data_per_label)
+    nfolds = round(1.0 / eval_size)
     # TODO: use sklearn.model_selection instead
-    #import sklearn.model_selection
+    # import sklearn.model_selection
     # kf_ = sklearn.model_selection.StratifiedKFold(nfolds, shuffle=shuffle)
     # kf  = kf_.split(np.empty(len(y)), y)
     import sklearn.cross_validation
+
     kf = sklearn.cross_validation.StratifiedKFold(y, nfolds, shuffle=shuffle)
     train_indices, valid_indices = six.next(iter(kf))
     data_train_indicies = expand_data_indicies(train_indices, data_per_label)
@@ -250,7 +259,7 @@ def train_test_split(X, y, eval_size, data_per_label=1, shuffle=True):
 
 
 def random_xy_sample(X, y, size_, data_per_label, seed=0):
-    label_indicies =  ut.random_indexes(len(y), seed=seed)[0:size_]
+    label_indicies = ut.random_indexes(len(y), seed=seed)[0:size_]
     data_indicies = expand_data_indicies(label_indicies, data_per_label)
     X_subset = X.take(data_indicies, axis=0)
     y_sbuset = y.take(label_indicies, axis=0)
@@ -262,13 +271,13 @@ def load(data_fpath, labels_fpath=None):
     data = ut.load_data(data_fpath)
     labels = ut.load_data(labels_fpath) if labels_fpath is not None else None
 
-    #if splitext(data_fpath)[1] == '.hdf5':
+    # if splitext(data_fpath)[1] == '.hdf5':
     #    data = ut.load_hdf5(data_fpath)
-    #else:
+    # else:
     #    data = np.load(data_fpath, mmap_mode='r')
     ## Load y vector (labels)
-    #labels = None
-    #if labels_fpath is not None:
+    # labels = None
+    # if labels_fpath is not None:
     #    if splitext(labels_fpath)[1] == '.hdf5':
     #        labels = ut.load_hdf5(labels_fpath)
     #    else:
@@ -291,19 +300,25 @@ def get_printcolinfo(requested_headers_):
         >>> printcol_info = get_printcolinfo(requested_headers)
     """
     if requested_headers_ is None:
-        requested_headers_ = ['learn_loss', 'valid_loss', 'learnval_rat', 'valid_acc', 'test_acc']
+        requested_headers_ = [
+            'learn_loss',
+            'valid_loss',
+            'learnval_rat',
+            'valid_acc',
+            'test_acc',
+        ]
     requested_headers = ['epoch_num'] + requested_headers_ + ['duration']
     header_dict = {
-        'epoch_num'     : '   Epoch ',
+        'epoch_num': '   Epoch ',
         #'learn_loss'   : '  Learn Loss (determ)  ',
         # We always use determenistic reporting, so dont be redundant
-        'learn_loss'   : '  Learn Loss  ',
-        'valid_loss'   : '  Valid Loss  ',
-        'learnval_rat' : '  Learn / Val  ',
+        'learn_loss': '  Learn Loss  ',
+        'valid_loss': '  Valid Loss  ',
+        'learnval_rat': '  Learn / Val  ',
         #'learnval_rat' : '  Learn / Val (determ)  ',
-        'valid_acc'    : '  Valid Acc ',
-        'test_acc'     : '  Test Acc  ',
-        'duration'     : '  Dur ',
+        'valid_acc': '  Valid Acc ',
+        'test_acc': '  Test Acc  ',
+        'duration': '  Dur ',
     }
 
     def datafmt(str_, align='>', precision=None, type_='', colored=False, lbl=''):
@@ -312,19 +327,19 @@ def get_printcolinfo(requested_headers_):
         num_lspace = len(str_.rstrip()) - num_nonspace
         num_rspace = len(str_.lstrip()) - num_nonspace
         middle_fmt = '{:%s%d%s%s}%s' % (align, num_nonspace, precision_str, type_, lbl)
-        lspace = (' ' * num_lspace)
-        rspace = (' ' * num_rspace)
+        lspace = ' ' * num_lspace
+        rspace = ' ' * num_rspace
         sep = '{}' if colored else ''
         return sep.join((lspace, middle_fmt, rspace))
 
     format_dict = {
-        'epoch_num'    : datafmt(header_dict['epoch_num'], '>'),
-        'learn_loss'   : datafmt(header_dict['learn_loss'], '<', colored=True),
-        'valid_loss'   : datafmt(header_dict['valid_loss'], '>', 6, 'f', colored=True),
-        'learnval_rat' : datafmt(header_dict['learnval_rat'], '<', colored=True),
-        'valid_acc'    : datafmt(header_dict['valid_acc'], '>', colored=True),
-        'test_acc'     : datafmt(header_dict['test_acc'], '>', colored=True),
-        'duration'     : datafmt(header_dict['duration'], '>', 1, 'f', lbl='s'),
+        'epoch_num': datafmt(header_dict['epoch_num'], '>'),
+        'learn_loss': datafmt(header_dict['learn_loss'], '<', colored=True),
+        'valid_loss': datafmt(header_dict['valid_loss'], '>', 6, 'f', colored=True),
+        'learnval_rat': datafmt(header_dict['learnval_rat'], '<', colored=True),
+        'valid_acc': datafmt(header_dict['valid_acc'], '>', colored=True),
+        'test_acc': datafmt(header_dict['test_acc'], '>', colored=True),
+        'duration': datafmt(header_dict['duration'], '>', 1, 'f', lbl='s'),
     }
     data_fmt_list = ut.dict_take(format_dict, requested_headers)
     header_nice_list = ut.dict_take(header_dict, requested_headers)
@@ -341,7 +356,7 @@ def print_header_columns(printcol_info):
     header_line_list = ['-' * len(nice) for nice in header_nice_list]
     header_line1 = '[info] ' + '|'.join(header_nice_list)
     header_line2 = '[info] ' + '|'.join(header_line_list)
-    header_str = ('\n' + header_line1 + '\n' + header_line2)
+    header_str = '\n' + header_line1 + '\n' + header_line2
     print(header_str)
 
 
@@ -349,8 +364,9 @@ def print_epoch_info(model, printcol_info, epoch_info):
     requested_headers = printcol_info['requested_headers']
     keys = ut.setdiff_ordered(requested_headers, ['epoch_num', 'duration'])
     data_fmt_list = printcol_info['data_fmt_list']
-    data_fmtstr = '[info] ' +  '|'.join(data_fmt_list)
+    data_fmtstr = '[info] ' + '|'.join(data_fmt_list)
     import colorama
+
     ANSI = colorama.Fore
 
     def epoch_num_str():
@@ -379,16 +395,18 @@ def print_epoch_info(model, printcol_info, epoch_info):
         unhealthy_ratio = ratio <= 0.5 or 2.0 <= ratio
         return (
             ANSI.RED if unhealthy_ratio else '',
-            '%0.6f' % (ratio, ),
+            '%0.6f' % (ratio,),
             ANSI.RESET if unhealthy_ratio else '',
         )
 
     def valid_acc_str():
         key = 'valid_acc'
         isbest = epoch_info[key] == model.best_results[key]
-        return (ANSI.MAGENTA if isbest else '',
-                '{:.2f}%'.format(model.best_results[key] * 100),
-                ANSI.RESET if isbest else '',)
+        return (
+            ANSI.MAGENTA if isbest else '',
+            '{:.2f}%'.format(model.best_results[key] * 100),
+            ANSI.RESET if isbest else '',
+        )
 
     def duration_str():
         return (epoch_info['duration'],)
@@ -412,8 +430,9 @@ def expand_data_indicies(label_indices, data_per_label=1):
     when data_per_label > 1, gives the corresponding data indicies for the data
     indicies
     """
-    expanded_indicies = [label_indices * data_per_label + count
-                         for count in range(data_per_label)]
+    expanded_indicies = [
+        label_indices * data_per_label + count for count in range(data_per_label)
+    ]
     data_indices = np.vstack(expanded_indicies).T.flatten()
     return data_indices
 
@@ -475,12 +494,14 @@ def data_label_shuffle(X, y, data_per_label=1, seed=RANDOM_SEED):
     X = X.take(data_random_indicies, axis=0)
     X = np.ascontiguousarray(X)
     if y is not None:
-        y =  y.take(random_indicies, axis=0)
-        y =  np.ascontiguousarray(y)
+        y = y.take(random_indicies, axis=0)
+        y = np.ascontiguousarray(y)
     return X, y
 
 
-def slice_data_labels(X, y, batch_size, batch_index, data_per_label, wraparound=False, verbose=False):
+def slice_data_labels(
+    X, y, batch_size, batch_index, data_per_label, wraparound=False, verbose=False
+):
     r"""
     CommandLine:
         python -m wbia_cnn.utils --test-slice_data_labels
@@ -502,8 +523,8 @@ def slice_data_labels(X, y, batch_size, batch_index, data_per_label, wraparound=
     """
     start_x = batch_index * batch_size
     end_x = (batch_index + 1) * batch_size
-    #x_sl = slice(start_y * data_per_label, end_y * data_per_label)
-    #y_sl = slice(start_y, end_y)
+    # x_sl = slice(start_y * data_per_label, end_y * data_per_label)
+    # y_sl = slice(start_y, end_y)
     # Take full batch of images and take the fraction of labels if data_per_label > 1
     x_sl = slice(start_x, end_x)
     y_sl = slice(start_x // data_per_label, end_x // data_per_label)
@@ -520,9 +541,9 @@ def slice_data_labels(X, y, batch_size, batch_index, data_per_label, wraparound=
             if yb is not None:
                 yb_extra = y[slice(0, extra // data_per_label)]
                 yb = np.concatenate([yb, yb_extra], axis=0)
-            #print('WRAP')
+            # print('WRAP')
     # Get corret dtype for X
-    #Xb = Xb.astype(np.float32)
+    # Xb = Xb.astype(np.float32)
     if verbose:
         print('[batchiter]   * x_sl = %r' % (x_sl,))
         print('[batchiter]   * y_sl = %r' % (y_sl,))
@@ -531,7 +552,8 @@ def slice_data_labels(X, y, batch_size, batch_index, data_per_label, wraparound=
 
 def multinomial_nll(x, t):
     from wbia_cnn.__THEANO__ import tensor as T  # NOQA
-    #coding_dist=x, true_dist=t
+
+    # coding_dist=x, true_dist=t
     return T.nnet.categorical_crossentropy(x, t)
 
 
@@ -542,25 +564,25 @@ def add_channels(data):
     data_channels = np.empty((points, channels + add, height, width), dtype=dtype)
     data_channels[:, :channels, :, :] = data
     for index in range(points):
-        image     = cv2.merge(data[index])
-        hsv       = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-        lab       = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
+        image = cv2.merge(data[index])
+        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
         grayscale = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        sobelx    = cv2.Sobel(grayscale, -1, 1, 0)
-        sobely    = cv2.Sobel(grayscale, -1, 0, 1)
-        sobelxx   = cv2.Sobel(sobelx, -1, 1, 0)
-        sobelyy   = cv2.Sobel(sobely, -1, 0, 1)
-        sobelxy   = cv2.Sobel(sobelx, -1, 0, 1)
+        sobelx = cv2.Sobel(grayscale, -1, 1, 0)
+        sobely = cv2.Sobel(grayscale, -1, 0, 1)
+        sobelxx = cv2.Sobel(sobelx, -1, 1, 0)
+        sobelyy = cv2.Sobel(sobely, -1, 0, 1)
+        sobelxy = cv2.Sobel(sobelx, -1, 0, 1)
         data_channels[index, 3:6, :, :] = np.array(cv2.split(hsv))
         data_channels[index, 6:9, :, :] = np.array(cv2.split(lab))
         data_channels[index, 6:9, :, :] = np.array(cv2.split(lab))
-        data_channels[index, 9, :, :]   = grayscale
-        data_channels[index, 10, :, :]  = 255.0 - grayscale
-        data_channels[index, 11, :, :]  = sobelx
-        data_channels[index, 12, :, :]  = sobely
-        data_channels[index, 13, :, :]  = sobelxx
-        data_channels[index, 14, :, :]  = sobelyy
-        data_channels[index, 15, :, :]  = sobelxy
+        data_channels[index, 9, :, :] = grayscale
+        data_channels[index, 10, :, :] = 255.0 - grayscale
+        data_channels[index, 11, :, :] = sobelx
+        data_channels[index, 12, :, :] = sobely
+        data_channels[index, 13, :, :] = sobelxx
+        data_channels[index, 14, :, :] = sobelyy
+        data_channels[index, 15, :, :] = sobelxy
     return data_channels
 
 
@@ -583,9 +605,9 @@ def show_image_from_data(data):
     c, h, w = image.shape
 
     # Create temporary copies for displaying
-    bgr_   = cv2.merge(image[0:3])
-    hsv_   = cv2.merge(image[3:6])
-    lab_   = cv2.merge(image[6:9])
+    bgr_ = cv2.merge(image[0:3])
+    hsv_ = cv2.merge(image[3:6])
+    lab_ = cv2.merge(image[6:9])
 
     template = np.zeros((template_h * h, template_w * w, 3), dtype=np.uint8)
     add_to_template(template, 0, 0, replicate(image[0]))
@@ -625,8 +647,9 @@ def save_model(kwargs, weights_file):
 
 
 def shock_network(output_layer, voltage=0.10):
-    print('[model] shocking the network with voltage: %0.2f%%' % (voltage, ))
+    print('[model] shocking the network with voltage: %0.2f%%' % (voltage,))
     from wbia_cnn.__LASAGNE__ import layers
+
     current_weights = layers.get_all_param_values(output_layer)
     for index in range(len(current_weights)):
         temp = current_weights[index] * voltage
@@ -715,7 +738,7 @@ def extract_patches_stride(image, patch_size, stride):
         y_ = y + ph
         for x in list(range(0, w - pw, sx)) + extrax:
             x_ = x + pw
-            patch = image[y: y_, x: x_]
+            patch = image[y:y_, x:x_]
             patch_list.append(patch)
             coord_list.append((x, y, x_, y_))
 
@@ -730,6 +753,8 @@ if __name__ == '__main__':
         python -m wbia_cnn.utils --allexamples --noface --nosrc
     """
     import multiprocessing
+
     multiprocessing.freeze_support()  # for win32
     import utool as ut  # NOQA
+
     ut.doctest_funcs()

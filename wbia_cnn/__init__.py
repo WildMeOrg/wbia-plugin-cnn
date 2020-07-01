@@ -3,6 +3,7 @@
 # flake8: noqa
 from __future__ import absolute_import, division, print_function
 import utool as ut
+
 ut.noinject(__name__, '[wbia_cnn.__init__]')
 from wbia_cnn import __THEANO__
 from wbia_cnn import __LASAGNE__
@@ -11,7 +12,8 @@ from wbia_cnn import process
 from wbia_cnn import netrun
 from wbia_cnn import utils
 from wbia_cnn import theano_ext
-#from wbia_cnn import _plugin
+
+# from wbia_cnn import _plugin
 print, print_, profile = ut.inject2(__name__, '[wbia_cnn]')
 
 __version__ = '1.0.0.dev1'
@@ -22,10 +24,12 @@ def reassign_submodule_attributes(verbose=True):
     why reloading all the modules doesnt do this I don't know
     """
     import sys
+
     if verbose and '--quiet' not in sys.argv:
         print('dev reimport')
     # Self import
     import wbia_cnn
+
     # Implicit reassignment.
     seen_ = set([])
     for tup in IMPORT_TUPLES:
@@ -48,9 +52,11 @@ def reassign_submodule_attributes(verbose=True):
 def reload_subs(verbose=True):
     """ Reloads wbia_cnn and submodules """
     rrr(verbose=verbose)
+
     def fbrrr(*args, **kwargs):
         """ fallback reload """
         pass
+
     getattr(models, 'rrr', fbrrr)(verbose=verbose)
     getattr(process, 'rrr', fbrrr)(verbose=verbose)
     getattr(netrun, 'rrr', fbrrr)(verbose=verbose)
@@ -61,6 +67,8 @@ def reload_subs(verbose=True):
         reassign_submodule_attributes(verbose=verbose)
     except Exception as ex:
         print(ex)
+
+
 rrrr = reload_subs
 
 IMPORT_TUPLES = [

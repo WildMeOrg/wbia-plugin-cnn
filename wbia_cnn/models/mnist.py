@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 from wbia_cnn.models import abstract_models
 import utool as ut
+
 print, rrr, profile = ut.inject2(__name__)
 
 
@@ -52,9 +53,10 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         >>> model.fit(X_train, y_train)
 
     """
+
     def __init__(model, **kwargs):
         model.batch_norm = kwargs.pop('batch_norm', True)
-        model.dropout = kwargs.pop('dropout', .5)
+        model.dropout = kwargs.pop('dropout', 0.5)
         super(MNISTModel, model).__init__(**kwargs)
 
     def fit(model, *args, **kwargs):
@@ -108,9 +110,10 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
             >>> ut.show_if_requested()
         """
         from wbia_cnn import augment
+
         rng = model._rng
         affperterb_ranges = dict(
-            #zoom_range=(1.1, 0.9),
+            # zoom_range=(1.1, 0.9),
             zoom_range=(1.0, 1.0),
             max_tx=0,
             max_ty=0,
@@ -120,9 +123,13 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
             enable_flip=False,
         )
         Xb_, yb_ = augment.augment_affine(
-            Xb, yb, rng=rng, inplace=True, data_per_label=1,
+            Xb,
+            yb,
+            rng=rng,
+            inplace=True,
+            data_per_label=1,
             affperterb_ranges=affperterb_ranges,
-            aug_prop=.5,
+            aug_prop=0.5,
         )
         return Xb_, yb_
 
@@ -172,6 +179,7 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         else:
             network_layers_def = model.get_lenet_def()
         from wbia_cnn import custom_layers
+
         network_layers = custom_layers.evaluate_layer_list(network_layers_def)
         model.output_layer = network_layers[-1]
         return model.output_layer
@@ -185,6 +193,7 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         """
         import wbia_cnn.__LASAGNE__ as lasagne
         from wbia_cnn import custom_layers
+
         batch_norm = False
 
         bundles = custom_layers.make_bundles(
@@ -199,9 +208,9 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
             b.ConvBundle(num_filters=32, filter_size=(5, 5), pool=True),
             b.ConvBundle(num_filters=32, filter_size=(5, 5), pool=True),
             # A fully-connected layer and 50% dropout of its inputs
-            b.DenseBundle(num_units=256, dropout=.5),
+            b.DenseBundle(num_units=256, dropout=0.5),
             # And, finally, the 10-unit output layer with 50% dropout on its inputs
-            b.SoftmaxBundle(num_units=model.output_dims, dropout=.5),
+            b.SoftmaxBundle(num_units=model.output_dims, dropout=0.5),
         ]
         return network_layers_def
 
@@ -212,15 +221,14 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         """
         import wbia_cnn.__LASAGNE__ as lasagne
         from wbia_cnn import custom_layers
+
         batch_norm = model.batch_norm
         dropout = model.dropout
 
         W = lasagne.init.Orthogonal('relu')
 
         bundles = custom_layers.make_bundles(
-            nonlinearity=lasagne.nonlinearities.rectify,
-            batch_norm=batch_norm,
-            W=W,
+            nonlinearity=lasagne.nonlinearities.rectify, batch_norm=batch_norm, W=W,
         )
         b = ut.DynStruct(copy_dict=bundles)
 
@@ -251,13 +259,15 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         """
         import wbia_cnn.__LASAGNE__ as lasagne
         from wbia_cnn import custom_layers
+
         batch_norm = model.batch_norm
 
         W = lasagne.init.HeNormal(gain='relu')
         bundles = custom_layers.make_bundles(
             filter_size=(3, 3),
             nonlinearity=lasagne.nonlinearities.rectify,
-            batch_norm=batch_norm, W=W,
+            batch_norm=batch_norm,
+            W=W,
         )
         b = ut.DynStruct(copy_dict=bundles)
 
@@ -269,11 +279,13 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
             b.ResidualBundle(num_filters=N, stride=(2, 2), preactivate=False),
             b.ResidualBundle(num_filters=N),
             b.ResidualBundle(num_filters=N, stride=(2, 2)),
-            #b.ResidualBundle(num_filters=N),
-            b.ResidualBundle(num_filters=N, stride=(2, 2), dropout=.2),
-            b.ResidualBundle(num_filters=N, stride=(2, 2), dropout=.5, postactivate=True),
+            # b.ResidualBundle(num_filters=N),
+            b.ResidualBundle(num_filters=N, stride=(2, 2), dropout=0.2),
+            b.ResidualBundle(
+                num_filters=N, stride=(2, 2), dropout=0.5, postactivate=True
+            ),
             b.AveragePool(),
-            b.SoftmaxBundle(num_units=model.output_dims, dropout=.5),
+            b.SoftmaxBundle(num_units=model.output_dims, dropout=0.5),
         ]
         return network_layers_def
 
@@ -285,15 +297,15 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         """
         import wbia_cnn.__LASAGNE__ as lasagne
         from wbia_cnn import custom_layers
+
         batch_norm = model.batch_norm
         if model.dropout is None:
-            dropout = 0 if batch_norm else .5
+            dropout = 0 if batch_norm else 0.5
         else:
             dropout = model.dropout
 
         bundles = custom_layers.make_bundles(
-            nonlinearity=lasagne.nonlinearities.rectify,
-            batch_norm=batch_norm,
+            nonlinearity=lasagne.nonlinearities.rectify, batch_norm=batch_norm,
         )
         b = ut.DynStruct(copy_dict=bundles)
 
@@ -304,26 +316,30 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
             b.ConvBundle(num_filters=N, filter_size=(3, 3), pool=False),
             b.ConvBundle(num_filters=N, filter_size=(3, 3), pool=True),
             b.InceptionBundle(
-                branches=[dict(t='c', s=(1, 1), r=00, n=N),
-                          dict(t='c', s=(3, 3), r=N // 2, n=N),
-                          dict(t='c', s=(3, 3), r=N // 4, n=N // 2, d=2),
-                          dict(t='p', s=(3, 3), n=N // 2)],
+                branches=[
+                    dict(t='c', s=(1, 1), r=00, n=N),
+                    dict(t='c', s=(3, 3), r=N // 2, n=N),
+                    dict(t='c', s=(3, 3), r=N // 4, n=N // 2, d=2),
+                    dict(t='p', s=(3, 3), n=N // 2),
+                ],
             ),
             b.InceptionBundle(
-                branches=[dict(t='c', s=(1, 1), r=00, n=N),
-                          dict(t='c', s=(3, 3), r=N // 2, n=N),
-                          dict(t='c', s=(3, 3), r=N // 4, n=N // 2, d=2),
-                          dict(t='p', s=(3, 3), n=N // 2)],
+                branches=[
+                    dict(t='c', s=(1, 1), r=00, n=N),
+                    dict(t='c', s=(3, 3), r=N // 2, n=N),
+                    dict(t='c', s=(3, 3), r=N // 4, n=N // 2, d=2),
+                    dict(t='p', s=(3, 3), n=N // 2),
+                ],
                 dropout=dropout,
-                pool=True
+                pool=True,
             ),
             # ---
             b.DenseBundle(num_units=N, dropout=dropout),
             b.DenseBundle(num_units=N, dropout=dropout),
             # And, finally, the 10-unit output layer with 50% dropout on its inputs
             b.SoftmaxBundle(num_units=model.output_dims, dropout=dropout),
-            #b.GlobalPool
-            #b.NonlinearitySoftmax(),
+            # b.GlobalPool
+            # b.NonlinearitySoftmax(),
         ]
         return network_layers_def
 
@@ -331,17 +347,18 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
 def testdata_mnist(defaultname='lenet', batch_size=128, dropout=None):
     from wbia_cnn import ingest_data
     from wbia_cnn.models import mnist
+
     dataset = ingest_data.grab_mnist_category_dataset()
     name = ut.get_argval('--name', default=defaultname)
     if name.startswith('lenet'):
         batch_norm = True
-        dropout = .5
+        dropout = 0.5
     elif name == 'bnorm':
         batch_norm = True
         dropout = dropout
     elif name == 'dropout':
         batch_norm = False
-        dropout = .5
+        dropout = 0.5
     else:
         batch_norm = True
         dropout = dropout
@@ -353,32 +370,32 @@ def testdata_mnist(defaultname='lenet', batch_size=128, dropout=None):
         output_dims=output_dims,
         batch_norm=batch_norm,
         dropout=dropout,
-        dataset_dpath=dataset.dataset_dpath
+        dataset_dpath=dataset.dataset_dpath,
     )
     model.monitor_config['monitor'] = True
     model.monitor_config['showprog'] = False
     model.monitor_config['slowdump_freq'] = 10
 
-    model.learn_state['learning_rate'] = .01
-    model.hyperparams['weight_decay'] = .001
+    model.learn_state['learning_rate'] = 0.01
+    model.hyperparams['weight_decay'] = 0.001
     model.hyperparams['era_size'] = 20
-    model.hyperparams['rate_schedule'] = [.9]
+    model.hyperparams['rate_schedule'] = [0.9]
 
     if model.name is None:
         pass
     elif model.name == 'bnorm':
         model.hyperparams['era_size'] = 4
-        model.hyperparams['rate_schedule'] = [.9]
+        model.hyperparams['rate_schedule'] = [0.9]
     elif name.startswith('mnist'):
         model.hyperparams['rate_schedule'] = [1.0]
-        model.learn_state['learning_rate'] = .01
+        model.learn_state['learning_rate'] = 0.01
         model.hyperparams['weight_decay'] = 0
         model.hyperparams['augment_on'] = False
         model.hyperparams['whiten_on'] = False
     elif name.startswith('resnet'):
         model.hyperparams['era_size'] = 10
-        model.hyperparams['rate_schedule'] = [.5]
-        model.learn_state['learning_rate'] = .01
+        model.hyperparams['rate_schedule'] = [0.5]
+        model.learn_state['learning_rate'] = 0.01
         model.hyperparams['weight_decay'] = 0
         model.hyperparams['augment_on'] = True
     return model, dataset
@@ -392,6 +409,8 @@ if __name__ == '__main__':
         python -m wbia_cnn.models.mnist --allexamples --noface --nosrc
     """
     import multiprocessing
+
     multiprocessing.freeze_support()  # for win32
     import utool as ut  # NOQA
+
     ut.doctest_funcs()

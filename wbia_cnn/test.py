@@ -7,10 +7,13 @@ from __future__ import absolute_import, division, print_function
 from wbia_cnn import utils
 import utool as ut
 import six  # NOQA
+
 print, rrr, profile = ut.inject2(__name__)
 
 
-def test(data_fpath, model, weights_fpath, results_dpath=None, labels_fpath=None, **kwargs):
+def test(
+    data_fpath, model, weights_fpath, results_dpath=None, labels_fpath=None, **kwargs
+):
     """
     Driver function
 
@@ -31,7 +34,7 @@ def test(data_fpath, model, weights_fpath, results_dpath=None, labels_fpath=None
         # add channel dimension for implicit grayscale
         X_test.shape = X_test.shape + (1,)
 
-    #return test_data(X_test, y_test, model, weights_fpath, results_dpath, **kwargs)
+    # return test_data(X_test, y_test, model, weights_fpath, results_dpath, **kwargs)
 
 
 if __name__ == '__main__':
@@ -64,6 +67,8 @@ if __name__ == '__main__':
         python setup.py develop
     """
     import multiprocessing
+
     multiprocessing.freeze_support()  # for win32
     import utool as ut  # NOQA
+
     ut.doctest_funcs()

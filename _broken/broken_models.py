@@ -8,6 +8,7 @@ class SiameseCenterSurroundModel(BaseModel):
     TODO:
         RBM / EBM  - http://deeplearning.net/tutorial/rbm.html
     """
+
     def __init__(model, autoinit=False, batch_size=128, input_shape=(None, 3, 64, 64)):
         super(SiameseCenterSurroundModel, model).__init__()
         model.network_layers = None
@@ -48,24 +49,29 @@ class SiameseCenterSurroundModel(BaseModel):
             >>> ut.show_if_requested()
         """
         import functools
-        #Xb = Xb.copy()
-        #if yb is not None:
+
+        # Xb = Xb.copy()
+        # if yb is not None:
         #    yb = yb.copy()
         Xb1, Xb2 = Xb[::2], Xb[1::2]
-        rot_transforms  = [functools.partial(np.rot90, k=k) for k in range(1, 4)]
+        rot_transforms = [functools.partial(np.rot90, k=k) for k in range(1, 4)]
         flip_transforms = [np.fliplr, np.flipud]
-        prob_rotate = .3
-        prob_flip   = .3
+        prob_rotate = 0.3
+        prob_flip = 0.3
 
         num = len(Xb1)
 
         # Determine which examples will be augmented
         rotate_flags = [random.uniform(0.0, 1.0) <= prob_rotate for _ in range(num)]
-        flip_flags   = [random.uniform(0.0, 1.0) <= prob_flip for _ in range(num)]
+        flip_flags = [random.uniform(0.0, 1.0) <= prob_flip for _ in range(num)]
 
         # Determine which functions to use
-        rot_fn_list  = [random.choice(rot_transforms) if flag else None for flag in rotate_flags]
-        flip_fn_list = [random.choice(flip_transforms) if flag else None for flag in flip_flags]
+        rot_fn_list = [
+            random.choice(rot_transforms) if flag else None for flag in rotate_flags
+        ]
+        flip_fn_list = [
+            random.choice(flip_transforms) if flag else None for flag in flip_flags
+        ]
 
         for index, func_list in enumerate(zip(rot_fn_list, flip_fn_list)):
             for func in func_list:
@@ -75,8 +81,15 @@ class SiameseCenterSurroundModel(BaseModel):
                     Xb2[index] = func(Xb2[index])
         return Xb, yb
 
-    def build_model(model, batch_size, input_width, input_height,
-                    input_channels, output_dims, verbose=True):
+    def build_model(
+        model,
+        batch_size,
+        input_width,
+        input_height,
+        input_channels,
+        output_dims,
+        verbose=True,
+    ):
         r"""
         CommandLine:
             python -m ibeis_cnn.models --test-SiameseCenterSurroundModel.build_model
@@ -106,7 +119,7 @@ class SiameseCenterSurroundModel(BaseModel):
             >>> result = str(output_layer)
             >>> print(result)
         """
-        #print('build model may override settings')
+        # print('build model may override settings')
         input_shape = (batch_size, input_channels, input_width, input_height)
         model.input_shape = input_shape
         model.batch_size = batch_size
@@ -133,32 +146,52 @@ class SiameseCenterSurroundModel(BaseModel):
         """
         raise NotImplementedError('The 2-channel part is not yet implemented')
         _P = functools.partial
-        leaky = dict(nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)))
+        leaky = dict(nonlinearity=nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)))
         leaky_orthog = dict(W=init.Orthogonal(), **leaky)
 
-        network_layers_def = (
-            [
-                _P(layers.InputLayer, shape=model.input_shape),
-                # TODO: Stack Inputs by making a 2 Channel Layer
-                _P(custom_layers.CenterSurroundLayer),
-
-                #layers.GaussianNoiseLayer,
-                #caffenet.get_conv2d_layer(0, trainable=False, **leaky),
-                #lasange_ext.freeze_params,
-                _P(Conv2DLayer, num_filters=96, filter_size=(5, 5), stride=(1, 1), name='C0', **leaky_orthog),
-                _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P0'),
-                _P(Conv2DLayer, num_filters=96, filter_size=(3, 3), name='C1', **leaky_orthog),
-                _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P1'),
-                _P(Conv2DLayer, num_filters=192, filter_size=(3, 3), name='C2', **leaky_orthog),
-                _P(Conv2DLayer, num_filters=192, filter_size=(3, 3), name='C3', **leaky_orthog),
-                #_P(custom_layers.L2NormalizeLayer, axis=2),
-                _P(custom_layers.SiameseConcatLayer, axis=1, data_per_label=4),  # 4 when CenterSurroundIsOn
-                #_P(custom_layers.SiameseConcatLayer, data_per_label=2),
-                _P(layers.DenseLayer, num_units=768, name='F1',  **leaky_orthog),
-                _P(layers.DropoutLayer, p=0.5),
-                _P(layers.DenseLayer, num_units=1, name='F2', **leaky_orthog),
-            ]
-        )
+        network_layers_def = [
+            _P(layers.InputLayer, shape=model.input_shape),
+            # TODO: Stack Inputs by making a 2 Channel Layer
+            _P(custom_layers.CenterSurroundLayer),
+            # layers.GaussianNoiseLayer,
+            # caffenet.get_conv2d_layer(0, trainable=False, **leaky),
+            # lasange_ext.freeze_params,
+            _P(
+                Conv2DLayer,
+                num_filters=96,
+                filter_size=(5, 5),
+                stride=(1, 1),
+                name='C0',
+                **leaky_orthog
+            ),
+            _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P0'),
+            _P(
+                Conv2DLayer, num_filters=96, filter_size=(3, 3), name='C1', **leaky_orthog
+            ),
+            _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P1'),
+            _P(
+                Conv2DLayer,
+                num_filters=192,
+                filter_size=(3, 3),
+                name='C2',
+                **leaky_orthog
+            ),
+            _P(
+                Conv2DLayer,
+                num_filters=192,
+                filter_size=(3, 3),
+                name='C3',
+                **leaky_orthog
+            ),
+            # _P(custom_layers.L2NormalizeLayer, axis=2),
+            _P(
+                custom_layers.SiameseConcatLayer, axis=1, data_per_label=4
+            ),  # 4 when CenterSurroundIsOn
+            # _P(custom_layers.SiameseConcatLayer, data_per_label=2),
+            _P(layers.DenseLayer, num_units=768, name='F1', **leaky_orthog),
+            _P(layers.DropoutLayer, p=0.5),
+            _P(layers.DenseLayer, num_units=1, name='F2', **leaky_orthog),
+        ]
         return network_layers_def
 
     def get_siam2stream_def(model, verbose=True):
@@ -179,31 +212,50 @@ class SiameseCenterSurroundModel(BaseModel):
         """
         _P = functools.partial
 
-        leaky = dict(nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)))
+        leaky = dict(nonlinearity=nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)))
         leaky_orthog = dict(W=init.Orthogonal(), **leaky)
 
-        network_layers_def = (
-            [
-                _P(layers.InputLayer, shape=model.input_shape),
-                # TODO: Stack Inputs by making a 2 Channel Layer
-                _P(custom_layers.CenterSurroundLayer),
-
-                layers.GaussianNoiseLayer,
-                #caffenet.get_conv2d_layer(0, trainable=False, **leaky),
-                _P(Conv2DLayer, num_filters=96, filter_size=(4, 4), name='C0', **leaky_orthog),
-                _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P0'),
-                _P(Conv2DLayer, num_filters=192, filter_size=(3, 3), name='C2', **leaky_orthog),
-                _P(Conv2DLayer, num_filters=256, filter_size=(3, 3), name='C3', **leaky_orthog),
-                _P(Conv2DLayer, num_filters=256, filter_size=(3, 3), name='C3', **leaky_orthog),
-                #_P(custom_layers.L2NormalizeLayer, axis=2),
-                _P(custom_layers.SiameseConcatLayer, axis=1, data_per_label=4),  # 4 when CenterSurroundIsOn
-                #_P(custom_layers.SiameseConcatLayer, data_per_label=2),
-                _P(layers.DenseLayer, num_units=512, name='F1',  **leaky_orthog),
-                _P(layers.DropoutLayer, p=0.5),
-                _P(layers.DenseLayer, num_units=1, name='F2', **leaky_orthog),
-            ]
-        )
-        #raise NotImplementedError('The 2-channel part is not yet implemented')
+        network_layers_def = [
+            _P(layers.InputLayer, shape=model.input_shape),
+            # TODO: Stack Inputs by making a 2 Channel Layer
+            _P(custom_layers.CenterSurroundLayer),
+            layers.GaussianNoiseLayer,
+            # caffenet.get_conv2d_layer(0, trainable=False, **leaky),
+            _P(
+                Conv2DLayer, num_filters=96, filter_size=(4, 4), name='C0', **leaky_orthog
+            ),
+            _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P0'),
+            _P(
+                Conv2DLayer,
+                num_filters=192,
+                filter_size=(3, 3),
+                name='C2',
+                **leaky_orthog
+            ),
+            _P(
+                Conv2DLayer,
+                num_filters=256,
+                filter_size=(3, 3),
+                name='C3',
+                **leaky_orthog
+            ),
+            _P(
+                Conv2DLayer,
+                num_filters=256,
+                filter_size=(3, 3),
+                name='C3',
+                **leaky_orthog
+            ),
+            # _P(custom_layers.L2NormalizeLayer, axis=2),
+            _P(
+                custom_layers.SiameseConcatLayer, axis=1, data_per_label=4
+            ),  # 4 when CenterSurroundIsOn
+            # _P(custom_layers.SiameseConcatLayer, data_per_label=2),
+            _P(layers.DenseLayer, num_units=512, name='F1', **leaky_orthog),
+            _P(layers.DropoutLayer, p=0.5),
+            _P(layers.DenseLayer, num_units=1, name='F2', **leaky_orthog),
+        ]
+        # raise NotImplementedError('The 2-channel part is not yet implemented')
         return network_layers_def
 
     def init_arch(model, verbose=True):
@@ -268,7 +320,7 @@ class SiameseCenterSurroundModel(BaseModel):
                 branch of siam-2stream.
         """
         # TODO: remove output dims
-        #_P = functools.partial
+        # _P = functools.partial
         (_, input_channels, input_width, input_height) = model.input_shape
         if verbose:
             print('[model] Initialize siamese model architecture')
@@ -278,22 +330,22 @@ class SiameseCenterSurroundModel(BaseModel):
             print('[model]   * input_channels = %r' % (input_channels,))
             print('[model]   * output_dims    = %r' % (model.output_dims,))
 
-        #leaky = dict(nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)))
-        #leaky_orthog = dict(W=init.Orthogonal(), **leaky)
+        # leaky = dict(nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)))
+        # leaky_orthog = dict(W=init.Orthogonal(), **leaky)
 
-        #vggnet = PretrainedNetwork('vggnet')
-        #caffenet = PretrainedNetwork('caffenet')
+        # vggnet = PretrainedNetwork('vggnet')
+        # caffenet = PretrainedNetwork('caffenet')
 
-        #def conv_pool(num_filters, filter_size, pool_size, stride):
+        # def conv_pool(num_filters, filter_size, pool_size, stride):
         #    conv_ = _P(Conv2DLayer, num_filters=num_filters, filter_size=filter_size, **leaky_orthog)
         #    maxpool_ =  _P(MaxPool2DLayer, pool_size=pool_size, stride=stride)
         #    return [conv_, maxpool_]
-        #] +
+        # ] +
         ##conv_pool(num_filters=16, filter_size=(6, 6), pool_size=(2, 2), stride=(2, 2)) +
         ##conv_pool(num_filters=32, filter_size=(3, 3), pool_size=(2, 2), stride=(2, 2)) +
-        #[
+        # [
 
-        #network_layers_def = (
+        # network_layers_def = (
         #    [
         #        _P(layers.InputLayer, shape=model.input_shape),
         #        _P(custom_layers.CenterSurroundLayer),
@@ -316,7 +368,7 @@ class SiameseCenterSurroundModel(BaseModel):
         #        #_P(layers.DropoutLayer, p=0.5),
         #        _P(layers.DenseLayer, num_units=1, name='D3', **leaky_orthog),
         #    ]
-        #)
+        # )
         network_layers_def = model.get_siam2stream_def()
 
         # connect and record layers
@@ -354,28 +406,29 @@ class SiameseCenterSurroundModel(BaseModel):
         if verbose:
             print('[model] Build SiameseCenterSurroundModel loss function')
         # Hinge-loss objective from Zagoruyko and Komodakis
-        Y_ = (1 - (2 * Y))
+        Y_ = 1 - (2 * Y)
         loss = T.maximum(0, 1 - (Y_ * E.T))
 
         # Contrastive loss function from LeCunn 2005
-        #Q = 2
-        #E = E.flatten()
-        #genuine_loss = (1 - Y) * (2 / Q) * (E ** 2)
-        #imposter_loss = (Y) * 2 * Q * T.exp((-2.77 * E) / Q)
-        #loss = genuine_loss + imposter_loss
+        # Q = 2
+        # E = E.flatten()
+        # genuine_loss = (1 - Y) * (2 / Q) * (E ** 2)
+        # imposter_loss = (Y) * 2 * Q * T.exp((-2.77 * E) / Q)
+        # loss = genuine_loss + imposter_loss
         avg_loss = T.mean(loss)
         loss.name = 'loss'
         avg_loss.name = 'avg_loss'
         return avg_loss
 
-        #avg_loss = lasange_ext.siamese_loss(G, Y_padded, data_per_label=2)
-        #return avg_loss
+        # avg_loss = lasange_ext.siamese_loss(G, Y_padded, data_per_label=2)
+        # return avg_loss
 
 
 class SiameseModel(BaseModel):
     """
     Model for individual identification
     """
+
     def __init__(model):
         super(SiameseModel, model).__init__()
         model.network_layers = None
@@ -385,8 +438,15 @@ class SiameseModel(BaseModel):
         model.data_per_label = 2
         model.needs_padding = True
 
-    def build_model(model, batch_size, input_width, input_height,
-                    input_channels, output_dims, verbose=True):
+    def build_model(
+        model,
+        batch_size,
+        input_width,
+        input_height,
+        input_channels,
+        output_dims,
+        verbose=True,
+    ):
         r"""
         CommandLine:
             python -m ibeis_cnn.models --test-SiameseModel.build_model
@@ -429,49 +489,41 @@ class SiameseModel(BaseModel):
             print('[model]   * input_channels = %r' % (input_channels,))
             print('[model]   * output_dims    = %r' % (model.output_dims,))
 
-        #num_filters=32,
-        #filter_size=(3, 3),
+        # num_filters=32,
+        # filter_size=(3, 3),
         ## nonlinearity=nonlinearities.rectify,
-        #nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)),
+        # nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)),
 
-        #rlu_glorot = dict(nonlinearity=nonlinearities.rectify, W=init.GlorotUniform())
-        #rlu_orthog = dict(nonlinearity=nonlinearities.rectify, W=init.Orthogonal())
-        leaky = dict(nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)))
+        # rlu_glorot = dict(nonlinearity=nonlinearities.rectify, W=init.GlorotUniform())
+        # rlu_orthog = dict(nonlinearity=nonlinearities.rectify, W=init.Orthogonal())
+        leaky = dict(nonlinearity=nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)))
         leaky_orthog = dict(W=init.Orthogonal(), **leaky)
         # variable batch size (None), channel, width, height
-        #input_shape = (batch_size * model.data_per_label, input_channels, input_width, input_height)
+        # input_shape = (batch_size * model.data_per_label, input_channels, input_width, input_height)
 
         vggnet = PretrainedNetwork('vggnet')
-        #caffenet = PretrainedNetwork('caffenet')
+        # caffenet = PretrainedNetwork('caffenet')
 
         network_layers_def = [
             _P(layers.InputLayer, shape=model.input_shape),
-
-            #layers.GaussianNoiseLayer,
+            # layers.GaussianNoiseLayer,
             vggnet.get_conv2d_layer(0, **leaky),
-
             _P(Conv2DLayer, num_filters=16, filter_size=(3, 3), **leaky_orthog),
-
             _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2)),
             _P(Conv2DLayer, num_filters=16, filter_size=(3, 3), **leaky_orthog),
-
             _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2)),
-
-            #_P(layers.DenseLayer, num_units=512, **leaky_orthog),
-            #_P(layers.DropoutLayer, p=0.5),
+            # _P(layers.DenseLayer, num_units=512, **leaky_orthog),
+            # _P(layers.DropoutLayer, p=0.5),
             _P(layers.DenseLayer, num_units=256, **leaky_orthog),
             _P(layers.DropoutLayer, p=0.5),
-            #_P(lasange_ext.l1),  # TODO: make a layer
-
-            #_P(layers.DenseLayer, num_units=256, **leaky_orthog),
-            #_P(layers.DropoutLayer, p=0.5),
-            #_P(layers.FeaturePoolLayer, pool_size=2),
-
-            #_P(layers.DenseLayer, num_units=1024, **leaky_orthog),
-            #_P(layers.FeaturePoolLayer, pool_size=2,),
-            #_P(layers.DropoutLayer, p=0.5),
-
-            #_P(layers.DenseLayer, num_units=output_dims,
+            # _P(lasange_ext.l1),  # TODO: make a layer
+            # _P(layers.DenseLayer, num_units=256, **leaky_orthog),
+            # _P(layers.DropoutLayer, p=0.5),
+            # _P(layers.FeaturePoolLayer, pool_size=2),
+            # _P(layers.DenseLayer, num_units=1024, **leaky_orthog),
+            # _P(layers.FeaturePoolLayer, pool_size=2,),
+            # _P(layers.DropoutLayer, p=0.5),
+            # _P(layers.DenseLayer, num_units=output_dims,
             #   nonlinearity=nonlinearities.softmax,
             #   W=init.Orthogonal(),),
         ]

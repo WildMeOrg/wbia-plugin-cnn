@@ -10,6 +10,7 @@ from six.moves import zip, map, range
 from functools import partial
 from wbia import dtool
 from wbia_cnn import draw_results  # NOQA
+
 print, rrr, profile = ut.inject2(__name__)
 
 
@@ -40,23 +41,24 @@ def get_aidpairs_partmatch(ibs, acfg_name):
     """
     print('NEW WAY OF FILTERING')
     from wbia.expt import experiment_helpers
-    acfg_list, expanded_aids_list = experiment_helpers.get_annotcfg_list(
-        ibs, [acfg_name])
-    #acfg = acfg_list[0]
+
+    acfg_list, expanded_aids_list = experiment_helpers.get_annotcfg_list(ibs, [acfg_name])
+    # acfg = acfg_list[0]
     expanded_aids = expanded_aids_list[0]
     qaid_list, daid_list = expanded_aids
     available_aids = np.unique(ut.flatten([qaid_list, daid_list]))
     tup = ibs.partition_annots_into_corresponding_groups(qaid_list, daid_list)
     aids1_list, aids2_list, other_aids1, other_aids2 = tup
     multiton_aids = np.unique(ut.flatten(aids1_list + aids2_list))
-    #singletons = ut.flatten(other_aids2 + other_aids1)
+    # singletons = ut.flatten(other_aids2 + other_aids1)
 
     ibs.print_annotconfig_stats(qaid_list, daid_list, bigstr=True)
 
     # Positive Examples
     print('Sampling positive examples')
     nested_pairs = list(
-        map(list, itertools.starmap(ut.iprod, zip(aids1_list, aids2_list))))
+        map(list, itertools.starmap(ut.iprod, zip(aids1_list, aids2_list)))
+    )
     pos_aid_pairs = np.vstack(nested_pairs)
     # Filter Self
     flag_list = pos_aid_pairs.T[0] != pos_aid_pairs.T[1]
@@ -66,9 +68,9 @@ def get_aidpairs_partmatch(ibs, acfg_name):
     _np_get_annot_yaws = ut.accepts_numpy(ibs.get_annot_yaws_asfloat.im_func)
     yaw_pairs = _np_get_annot_yaws(ibs, pos_aid_pairs)
     yawdist = vt.ori_distance(yaw_pairs.T[0], yaw_pairs.T[1])
-    flag_list = np.logical_or(np.isnan(yawdist), yawdist < TAU / 8.)
+    flag_list = np.logical_or(np.isnan(yawdist), yawdist < TAU / 8.0)
     pos_aid_pairs = pos_aid_pairs.compress(flag_list, axis=0)
-    #pos_aid_pairs = vt.unique_rows(pos_aid_pairs)  # should be unncessary
+    # pos_aid_pairs = vt.unique_rows(pos_aid_pairs)  # should be unncessary
     assert len(vt.unique_rows(pos_aid_pairs)) == len(pos_aid_pairs)
     print('pos_aid_pairs.shape = %r' % (pos_aid_pairs.shape,))
 
@@ -82,10 +84,10 @@ def get_aidpairs_partmatch(ibs, acfg_name):
     qreq_ = ibs.new_query_request(qaid_list, daid_list, cfgdict=cfgdict)
     cm_list = qreq_.execute()
     hardneg_aids1 = [[cm.qaid] for cm in (cm_list)]
-    hardneg_aids2 = [cm.get_top_gf_aids(ibs, ntop=num_hard_neg_per_aid)
-                     for cm in cm_list]
-    hardneg_aid_pairs = np.array(ut.flatten(
-        itertools.starmap(ut.iprod, zip(hardneg_aids1, hardneg_aids2))))
+    hardneg_aids2 = [cm.get_top_gf_aids(ibs, ntop=num_hard_neg_per_aid) for cm in cm_list]
+    hardneg_aid_pairs = np.array(
+        ut.flatten(itertools.starmap(ut.iprod, zip(hardneg_aids1, hardneg_aids2)))
+    )
 
     # Random Negative Examples
     # TODO: may be able to say not a match from viewpoint?
@@ -98,16 +100,15 @@ def get_aidpairs_partmatch(ibs, acfg_name):
     for aid, nid in zip(neg_aid_pool, neg_nid_pool):
         is_valid = np.not_equal(neg_nid_pool, nid)
         p = is_valid / (is_valid.sum())
-        chosen = rng.choice(neg_aid_pool, size=num_rand_neg_per_aid,
-                            replace=False, p=p)
+        chosen = rng.choice(neg_aid_pool, size=num_rand_neg_per_aid, replace=False, p=p)
         chosen_pairs = list(ut.iprod([aid], chosen))
         randneg_aid_pairs.extend(chosen_pairs)
     randneg_aid_pairs = np.array(randneg_aid_pairs)
 
     # Concatenate both types of negative examples
-    #print('Building negative examples')
-    #_neg_aid_pairs = np.vstack((hardneg_aid_pairs, randneg_aid_pairs))
-    #neg_aid_pairs = vt.unique_rows(_neg_aid_pairs)
+    # print('Building negative examples')
+    # _neg_aid_pairs = np.vstack((hardneg_aid_pairs, randneg_aid_pairs))
+    # neg_aid_pairs = vt.unique_rows(_neg_aid_pairs)
 
     # Unsure Examples
     # TODO: use quality and viewoint labelings to determine this
@@ -119,20 +120,16 @@ def get_aidpairs_partmatch(ibs, acfg_name):
     print('Building labels')
     const = ibs.const
     unflat_pairs = (pos_aid_pairs, hardneg_aid_pairs, randneg_aid_pairs)
-    type_labels = (const.REVIEW.MATCH, const.REVIEW.NON_MATCH,
-                   const.REVIEW.NON_MATCH)
+    type_labels = (const.REVIEW.MATCH, const.REVIEW.NON_MATCH, const.REVIEW.NON_MATCH)
     type_meta_labels = ('pos', 'hardneg', 'randneg')
 
     def _expand(type_list):
-        return [[item] * len(pairs)
-                for pairs, item in zip(unflat_pairs, type_list)]
+        return [[item] * len(pairs) for pairs, item in zip(unflat_pairs, type_list)]
 
     _aid_pairs = np.vstack(unflat_pairs)
     _labels = np.hstack(_expand(type_labels))
 
-    flat_metadata = {
-        'meta_label': ut.flatten(_expand(type_meta_labels))
-    }
+    flat_metadata = {'meta_label': ut.flatten(_expand(type_meta_labels))}
 
     print('Filtering Duplicates')
     nonunique_flags = vt.nonunique_row_flags(_aid_pairs)
@@ -191,17 +188,19 @@ def extract_annotpair_training_chips(ibs, aid_pairs, **kwargs):
     """
     # TODO extract chips in a sane manner
     import wbia.algo.hots.vsone_pipeline
+
     kwargs = kwargs.copy()
-    part_chip_width  = kwargs.pop('part_chip_width', 256)
+    part_chip_width = kwargs.pop('part_chip_width', 256)
     part_chip_height = kwargs.pop('part_chip_height', 128)
     colorspace = kwargs.pop('colorspace', 'gray')
     assert len(kwargs) == 0, 'unhandled arguments %r' % (kwargs,)
 
     size = (part_chip_width, part_chip_height)
 
-    #cfgdict = {}
+    # cfgdict = {}
     import wbia.control.IBEISControl
     import wbia.algo.hots.query_request
+
     assert isinstance(ibs, wbia.control.IBEISControl.IBEISController)
     qreq_ = ibs.new_query_request(aid_pairs.T[0][0:1], aid_pairs.T[1][0:1])
     assert isinstance(qreq_, wbia.algo.hots.query_request.QueryRequest)
@@ -214,7 +213,8 @@ def extract_annotpair_training_chips(ibs, aid_pairs, **kwargs):
         aid1, aid2 = annot1['aid'], annot2['aid']
         print('Computing alignment aidpair=(%r, %r)' % (aid1, aid2))
         match = wbia.algo.hots.vsone_pipeline.vsone_single(
-            aid1, aid2, qreq_, verbose=False)
+            aid1, aid2, qreq_, verbose=False
+        )
         fm = match.matches['RAT+SV'].fm
         match.match_metadata['fm'] = fm
         match.match_metadata['annot1'].clear_stored(['vecs', 'kpts'])
@@ -232,11 +232,11 @@ def extract_annotpair_training_chips(ibs, aid_pairs, **kwargs):
         if warped:
             H1 = match_metadata['H_RAT']
             fm = match_metadata['fm']
-            #print('WARPING')
+            # print('WARPING')
             # Initial Warping
             kpts1_m = annot1['kpts'].take(fm.T[0], axis=0)
             kpts2_m = annot2['kpts'].take(fm.T[1], axis=0)
-            #kpts1_mt = vt.transform_kpts_xys(H1, kpts1_m)
+            # kpts1_mt = vt.transform_kpts_xys(H1, kpts1_m)
 
             wh2 = vt.get_size(rchip2)
             try:
@@ -259,11 +259,15 @@ def extract_annotpair_training_chips(ibs, aid_pairs, **kwargs):
                 isfill = vt.get_pixel_dist(rchip1_t, np.array([0, 0, 0])) == 0
                 rowslice, colslice = vt.get_crop_slices(isfill)
                 # crop just based on blackness
-                #rchip1_crop = rchip1_t[rowslice, colslice]
-                #rchip2_crop = rchip2[rowslice, colslice]
+                # rchip1_crop = rchip1_t[rowslice, colslice]
+                # rchip2_crop = rchip2[rowslice, colslice]
                 # crop based on keypoint match locations
-                rowslice_ = slice(max(rowslice.start, tl_xy[1]), min(rowslice.stop, br_xy[1]))
-                colslice_ = slice(max(colslice.start, tl_xy[0]), min(colslice.stop, br_xy[0]))
+                rowslice_ = slice(
+                    max(rowslice.start, tl_xy[1]), min(rowslice.stop, br_xy[1])
+                )
+                colslice_ = slice(
+                    max(colslice.start, tl_xy[0]), min(colslice.stop, br_xy[0])
+                )
                 rchip1_crop = rchip1_t[rowslice_, colslice_]
                 rchip2_crop = rchip2[rowslice_, colslice_]
             else:
@@ -284,10 +288,13 @@ def extract_annotpair_training_chips(ibs, aid_pairs, **kwargs):
     def make_lazy_resize_funcs(pair_metadata):
         tmp_meta = ut.LazyDict(verbose=False)
         tmp_meta['warped_chips'] = partial(make_warped_chips, pair_metadata)
+
         def lazy_rchip1_sz(tmp_meta=tmp_meta):
             return tmp_meta['warped_chips'][0]
+
         def lazy_rchip2_sz(tmp_meta=tmp_meta):
             return tmp_meta['warped_chips'][1]
+
         return lazy_rchip1_sz, lazy_rchip2_sz
 
     # Compute alignments
@@ -302,8 +309,10 @@ def extract_annotpair_training_chips(ibs, aid_pairs, **kwargs):
 
     rchip1_list = ut.LazyList(verbose=False)
     rchip2_list = ut.LazyList(verbose=False)
-    for pair_metadata in ut.ProgIter(pairmetadata_list, lbl='Building Warped Chips', adjust=True):
-        #rchip1_sz, rchip2_sz = make_warped_chips(pair_metadata)
+    for pair_metadata in ut.ProgIter(
+        pairmetadata_list, lbl='Building Warped Chips', adjust=True
+    ):
+        # rchip1_sz, rchip2_sz = make_warped_chips(pair_metadata)
         rchip1_sz, rchip2_sz = make_lazy_resize_funcs(pair_metadata)
         rchip1_list.append(rchip1_sz)
         rchip2_list.append(rchip2_sz)
@@ -316,10 +325,17 @@ def extract_annotpair_training_chips(ibs, aid_pairs, **kwargs):
     """
 
 
-def get_aidpair_patchmatch_training_data(ibs, aid1_list, aid2_list,
-                                         kpts1_m_list, kpts2_m_list, fm_list,
-                                         metadata_lists, patch_size,
-                                         colorspace):
+def get_aidpair_patchmatch_training_data(
+    ibs,
+    aid1_list,
+    aid2_list,
+    kpts1_m_list,
+    kpts2_m_list,
+    fm_list,
+    metadata_lists,
+    patch_size,
+    colorspace,
+):
     """
     FIXME: errors on get_aidpairs_and_matches(ibs, 1)
 
@@ -364,7 +380,6 @@ def get_aidpair_patchmatch_training_data(ibs, aid1_list, aid2_list,
     print('warping')
 
     class PatchExtractCache(object):
-
         def __init__(self, patch_size):
             self.patch_size = patch_size
             self.cache_ = {}
@@ -378,7 +393,7 @@ def get_aidpair_patchmatch_training_data(ibs, aid1_list, aid2_list,
         def idcache_save(self, ismiss_list, miss_vals, id_list, val_list, cache_):
             # Generalize?
             miss_indices = ut.list_where(ismiss_list)
-            miss_ids  = ut.compress(id_list, ismiss_list)
+            miss_ids = ut.compress(id_list, ismiss_list)
             # overwrite missed output
             for index, val in zip(miss_indices, miss_vals):
                 val_list[index] = val
@@ -394,33 +409,43 @@ def get_aidpair_patchmatch_training_data(ibs, aid1_list, aid2_list,
             if any(ismiss_list):
                 # +-- Custom evaluate misses
                 kpts_miss = kpts.compress(ismiss_list, axis=0)
-                miss_vals = vt.get_warped_patches(chip, kpts_miss, patch_size=self.patch_size)[0]
+                miss_vals = vt.get_warped_patches(
+                    chip, kpts_miss, patch_size=self.patch_size
+                )[0]
                 # L__
                 self.idcache_save(ismiss_list, miss_vals, id_list, val_list, self.cache_)
             return val_list
 
     fx1_list = [fm.T[0] for fm in fm_list]
     fx2_list = [fm.T[1] for fm in fm_list]
-    warp_iter1 = ut.ProgIter(zip(aid1_list, fx1_list, chip1_list,
-                                     kpts1_m_list),
-                                 nTotal=len(kpts1_m_list), lbl='warp1',
-                                 adjust=True)
-    warp_iter2 = ut.ProgIter(zip(aid2_list, fx2_list, chip2_list,
-                                     kpts2_m_list),
-                                 nTotal=len(kpts2_m_list), lbl='warp2',
-                                 adjust=True)
+    warp_iter1 = ut.ProgIter(
+        zip(aid1_list, fx1_list, chip1_list, kpts1_m_list),
+        nTotal=len(kpts1_m_list),
+        lbl='warp1',
+        adjust=True,
+    )
+    warp_iter2 = ut.ProgIter(
+        zip(aid2_list, fx2_list, chip2_list, kpts2_m_list),
+        nTotal=len(kpts2_m_list),
+        lbl='warp2',
+        adjust=True,
+    )
     pec = PatchExtractCache(patch_size=patch_size)
-    warped_patches1_list = list(itertools.starmap(pec.cacheget_wraped_patches, warp_iter1))
-    warped_patches2_list = list(itertools.starmap(pec.cacheget_wraped_patches, warp_iter2))
-    #warp_iter1 = ut.ProgIter(zip(chip1_list, kpts1_m_list),
+    warped_patches1_list = list(
+        itertools.starmap(pec.cacheget_wraped_patches, warp_iter1)
+    )
+    warped_patches2_list = list(
+        itertools.starmap(pec.cacheget_wraped_patches, warp_iter2)
+    )
+    # warp_iter1 = ut.ProgIter(zip(chip1_list, kpts1_m_list),
     #                             nTotal=len(kpts1_m_list), lbl='warp1',
     #                             adjust=True)
-    #warp_iter2 = ut.ProgIter(zip(chip2_list, kpts2_m_list),
+    # warp_iter2 = ut.ProgIter(zip(chip2_list, kpts2_m_list),
     #                             nTotal=len(kpts2_m_list), lbl='warp2',
     #                             adjust=True)
-    #warped_patches1_list = [vt.get_warped_patches(chip1, kpts1, patch_size=patch_size)[0]
+    # warped_patches1_list = [vt.get_warped_patches(chip1, kpts1, patch_size=patch_size)[0]
     #                        for chip1, kpts1 in warp_iter1]
-    #warped_patches2_list = [vt.get_warped_patches(chip2, kpts2, patch_size=patch_size)[0]
+    # warped_patches2_list = [vt.get_warped_patches(chip2, kpts2, patch_size=patch_size)[0]
     #                        for chip2, kpts2 in warp_iter2]
     ut.print_object_size(warped_patches1_list, 'warped_patches1_list')
     ut.print_object_size(warped_patches2_list, 'warped_patches2_list')
@@ -428,37 +453,51 @@ def get_aidpair_patchmatch_training_data(ibs, aid1_list, aid2_list,
     assert ut.lmap(len, warped_patches1_list) == ut.lmap(len, warped_patches2_list), 'bug'
     assert ut.lmap(len, warped_patches1_list) == len1_list, 'bug'
     print('flattening')
-    aid1_list_ = np.array(ut.flatten([[aid1] * len1 for len1, aid1 in zip(len1_list, aid1_list)]))
-    aid2_list_ = np.array(ut.flatten([[aid2] * len1 for len1, aid2 in zip(len1_list, aid2_list)]))
+    aid1_list_ = np.array(
+        ut.flatten([[aid1] * len1 for len1, aid1 in zip(len1_list, aid1_list)])
+    )
+    aid2_list_ = np.array(
+        ut.flatten([[aid2] * len1 for len1, aid2 in zip(len1_list, aid2_list)])
+    )
     # Flatten metadata
-    flat_metadata = {key: np.array(ut.flatten(val)) for key, val in metadata_lists.items()}
+    flat_metadata = {
+        key: np.array(ut.flatten(val)) for key, val in metadata_lists.items()
+    }
     flat_metadata['aid_pairs'] = np.hstack(
-        (np.array(aid1_list_)[:, None],
-         np.array(aid2_list_)[:, None]))
+        (np.array(aid1_list_)[:, None], np.array(aid2_list_)[:, None])
+    )
     flat_metadata['fm'] = np.vstack(fm_list)
     flat_metadata['kpts1_m'] = np.vstack(kpts1_m_list)
     flat_metadata['kpts2_m'] = np.vstack(kpts2_m_list)
 
-    #flat_metadata = ut.map_dict_vals(np.array, flat_metadata)
+    # flat_metadata = ut.map_dict_vals(np.array, flat_metadata)
 
     warped_patch1_list = ut.flatten(warped_patches1_list)
     warped_patch2_list = ut.flatten(warped_patches2_list)
-    #del warped_patches1_list
-    #del warped_patches2_list
+    # del warped_patches1_list
+    # del warped_patches2_list
     return aid1_list_, aid2_list_, warped_patch1_list, warped_patch2_list, flat_metadata
 
 
-def flatten_patch_data(ibs, aid1_list, aid2_list, kpts1_m_list, kpts2_m_list, fm_list, metadata_lists):
+def flatten_patch_data(
+    ibs, aid1_list, aid2_list, kpts1_m_list, kpts2_m_list, fm_list, metadata_lists
+):
     # TODO; rectify
     len1_list = list(map(len, fm_list))
     print('flattening')
-    aid1_list_ = np.array(ut.flatten([[aid1] * len1 for len1, aid1 in zip(len1_list, aid1_list)]))
-    aid2_list_ = np.array(ut.flatten([[aid2] * len1 for len1, aid2 in zip(len1_list, aid2_list)]))
+    aid1_list_ = np.array(
+        ut.flatten([[aid1] * len1 for len1, aid1 in zip(len1_list, aid1_list)])
+    )
+    aid2_list_ = np.array(
+        ut.flatten([[aid2] * len1 for len1, aid2 in zip(len1_list, aid2_list)])
+    )
     # Flatten metadata
-    flat_metadata = {key: np.array(ut.flatten(val)) for key, val in metadata_lists.items()}
+    flat_metadata = {
+        key: np.array(ut.flatten(val)) for key, val in metadata_lists.items()
+    }
     flat_metadata['aid_pairs'] = np.hstack(
-        (np.array(aid1_list_)[:, None],
-         np.array(aid2_list_)[:, None]))
+        (np.array(aid1_list_)[:, None], np.array(aid2_list_)[:, None])
+    )
     flat_metadata['fm'] = np.vstack(fm_list)
     flat_metadata['kpts1_m'] = np.vstack(kpts1_m_list)
     flat_metadata['kpts2_m'] = np.vstack(kpts2_m_list)
@@ -467,10 +506,17 @@ def flatten_patch_data(ibs, aid1_list, aid2_list, kpts1_m_list, kpts2_m_list, fm
     # TEMP
 
 
-def get_patchmetric_training_data_and_labels(ibs, aid1_list, aid2_list,
-                                             kpts1_m_list, kpts2_m_list,
-                                             fm_list, metadata_lists,
-                                             patch_size, colorspace):
+def get_patchmetric_training_data_and_labels(
+    ibs,
+    aid1_list,
+    aid2_list,
+    kpts1_m_list,
+    kpts2_m_list,
+    fm_list,
+    metadata_lists,
+    patch_size,
+    colorspace,
+):
     """
     Notes:
         # FIXME: THERE ARE INCORRECT CORRESPONDENCES LABELED AS CORRECT THAT
@@ -500,17 +546,25 @@ def get_patchmetric_training_data_and_labels(ibs, aid1_list, aid2_list,
     # To the removal of unknown pairs before computing the data
 
     tup = get_aidpair_patchmatch_training_data(
-        ibs, aid1_list, aid2_list, kpts1_m_list, kpts2_m_list, fm_list,
-        metadata_lists, patch_size, colorspace)
-    (aid1_list_, aid2_list_, warped_patch1_list, warped_patch2_list,
-     flat_metadata) = tup
+        ibs,
+        aid1_list,
+        aid2_list,
+        kpts1_m_list,
+        kpts2_m_list,
+        fm_list,
+        metadata_lists,
+        patch_size,
+        colorspace,
+    )
+    (aid1_list_, aid2_list_, warped_patch1_list, warped_patch2_list, flat_metadata) = tup
     labels = get_aidpair_training_labels(ibs, aid1_list_, aid2_list_)
     img_list = ut.flatten(list(zip(warped_patch1_list, warped_patch2_list)))
     data = np.array(img_list)
     del img_list
-    #data_per_label = 2
+    # data_per_label = 2
     assert labels.shape[0] == data.shape[0] // 2
     from wbia import const
+
     assert np.all(labels != const.REVIEW.UNKNOWN)
     return data, labels, flat_metadata
 
@@ -557,13 +611,11 @@ def get_aidpair_training_labels(ibs, aid1_list_, aid2_list_):
 def estimate_data_bytes(num_data, item_shape):
     data_per_label = 2
     dtype_bytes = 1
-    estimated_bytes = (
-        np.prod(item_shape) * num_data * data_per_label *
-        dtype_bytes)
+    estimated_bytes = np.prod(item_shape) * num_data * data_per_label * dtype_bytes
     print('Estimated data size: ' + ut.byte_str2(estimated_bytes))
 
 
-#class NewConfigBase(object):
+# class NewConfigBase(object):
 #    def __init__(self, **kwargs):
 #        self.update(**kwargs)
 
@@ -585,13 +637,13 @@ class PartMatchDataConfig(dtool.Config):
         ut.ParamInfo('part_chip_height', 128),
         ut.ParamInfo('colorspace', 'gray', valid_values=['gray', 'bgr', 'lab']),
     ]
-    #def __init__(pmcfg, **kwargs):
+    # def __init__(pmcfg, **kwargs):
     #    #pmcfg.part_chip_width = 256
     #    #pmcfg.part_chip_height = 128
     #    #pmcfg.colorspace = 'gray'
     #    super(PartMatchDataConfig, pmcfg).__init__(**kwargs)
 
-    #def get_cfgstr(pmcfg):
+    # def get_cfgstr(pmcfg):
     #    cfgstr_list = [
     #        'sz=(%d,%d)' % (pmcfg.part_chip_width, pmcfg.part_chip_height),
     #    ]
@@ -608,12 +660,12 @@ class PatchMetricDataConfig(dtool.Config):
         ut.ParamInfo('patch_size', 64),
         ut.ParamInfo('colorspace', 'gray', valid_values=['gray', 'bgr', 'lab']),
     ]
-    #def __init__(pmcfg, **kwargs):
+    # def __init__(pmcfg, **kwargs):
     #    #pmcfg.patch_size = 64
     #    #pmcfg.colorspace = 'bgr'
     #    #pmcfg.colorspace = 'gray'
     #    super(PatchMetricDataConfig, pmcfg).__init__(**kwargs)
-    #def get_cfgstr(pmcfg):
+    # def get_cfgstr(pmcfg):
     #    cfgstr_list = [
     #        'patch_size=%d' % (pmcfg.patch_size,),
     #    ]
@@ -626,8 +678,9 @@ class PatchMetricDataConfig(dtool.Config):
         return (pmcfg['patch_size'], pmcfg['patch_size'], channels)
 
 
-def cached_part_match_training_data_fpaths(ibs, aid_pairs, label_list,
-                                            flat_metadata, **kwargs):
+def cached_part_match_training_data_fpaths(
+    ibs, aid_pairs, label_list, flat_metadata, **kwargs
+):
     r"""
     CommandLine:
         python -m wbia_cnn --tf netrun --db PZ_MTEST \
@@ -645,7 +698,8 @@ def cached_part_match_training_data_fpaths(ibs, aid_pairs, label_list,
     semantic_uuids2 = ibs.get_annot_semantic_uuids(aid_pairs.T[1])
     aidpair_hashstr_list = list(map(ut.hashstr27, zip(semantic_uuids1, semantic_uuids2)))
     training_dname = ut.hashstr_arr27(
-        aidpair_hashstr_list, pathsafe=True, lbl='part_match')
+        aidpair_hashstr_list, pathsafe=True, lbl='part_match'
+    )
 
     nets_dir = ibs.get_neuralnet_dir()
     training_dpath = ut.unixjoin(nets_dir, training_dname)
@@ -658,35 +712,36 @@ def cached_part_match_training_data_fpaths(ibs, aid_pairs, label_list,
 
     cfgstr = pmcfg.get_cfgstr()
     data_fpath = ut.unixjoin(training_dpath, 'data_' + cfgstr + '.hdf5')
-    labels_fpath = ut.unixjoin(training_dpath, 'labels_'  + cfgstr + '.hdf5')
-    metadata_fpath = ut.unixjoin(training_dpath, 'metadata_'  + cfgstr + '.hdf5')
+    labels_fpath = ut.unixjoin(training_dpath, 'labels_' + cfgstr + '.hdf5')
+    metadata_fpath = ut.unixjoin(training_dpath, 'metadata_' + cfgstr + '.hdf5')
 
     if NOCACHE_TRAIN or not (
-            ut.checkpath(data_fpath, verbose=True) and
-            ut.checkpath(labels_fpath, verbose=True) and
-            ut.checkpath(metadata_fpath, verbose=True)
+        ut.checkpath(data_fpath, verbose=True)
+        and ut.checkpath(labels_fpath, verbose=True)
+        and ut.checkpath(metadata_fpath, verbose=True)
     ):
         estimate_data_bytes(len(aid_pairs), pmcfg.get_data_shape())
         # Extract the data and labels
         rchip1_list, rchip2_list = extract_annotpair_training_chips(
-            ibs, aid_pairs, **pmcfg)
+            ibs, aid_pairs, **pmcfg
+        )
 
         datagen_ = zip(rchip1_list, rchip2_list)
-        datagen = ut.ProgIter(datagen_,
-                              nTotal=len(rchip1_list),
-                              lbl='Evaluating', adjust=False)
+        datagen = ut.ProgIter(
+            datagen_, nTotal=len(rchip1_list), lbl='Evaluating', adjust=False
+        )
         data = np.array(list(ut.flatten(datagen)))
 
         flat_metadata = ut.map_dict_vals(np.array, flat_metadata)
 
-        #img_list = ut.flatten(list(zip(rchip1_list,
+        # img_list = ut.flatten(list(zip(rchip1_list,
         #                               rchip2_list)))
-        #data = np.array(img_list)
-        #del img_list
+        # data = np.array(img_list)
+        # del img_list
         labels = label_list
-        #data_per_label = 2
+        # data_per_label = 2
         assert labels.shape[0] == data.shape[0] // 2
-        #data, labels, flat_metadata
+        # data, labels, flat_metadata
         # Save the data to cache
         ut.assert_eq(data.shape[1], pmcfg['part_chip_height'])
         ut.assert_eq(data.shape[2], pmcfg['part_chip_width'])
@@ -697,17 +752,24 @@ def cached_part_match_training_data_fpaths(ibs, aid_pairs, label_list,
         ut.save_hdf5(data_fpath, data)
         ut.save_hdf5(labels_fpath, labels)
         ut.save_hdf5(metadata_fpath, flat_metadata)
-        #ut.save_cPkl(data_fpath, data)
-        #ut.save_cPkl(labels_fpath, labels)
-        #ut.save_cPkl(metadata_fpath, flat_metadata)
+        # ut.save_cPkl(data_fpath, data)
+        # ut.save_cPkl(labels_fpath, labels)
+        # ut.save_cPkl(metadata_fpath, flat_metadata)
     else:
         print('data and labels cache hit')
     return data_fpath, labels_fpath, metadata_fpath, training_dpath, data_shape
 
 
-def cached_patchmetric_training_data_fpaths(ibs, aid1_list, aid2_list,
-                                            kpts1_m_list, kpts2_m_list,
-                                            fm_list, metadata_lists, **kwargs):
+def cached_patchmetric_training_data_fpaths(
+    ibs,
+    aid1_list,
+    aid2_list,
+    kpts1_m_list,
+    kpts2_m_list,
+    fm_list,
+    metadata_lists,
+    **kwargs
+):
     """
     todo use size in cfgstrings
     kwargs is used for PatchMetricDataConfig
@@ -715,6 +777,7 @@ def cached_patchmetric_training_data_fpaths(ibs, aid1_list, aid2_list,
     from wbia_cnn.ingest_wbia import *
     """
     import utool as ut
+
     pmcfg = PatchMetricDataConfig(**kwargs)
     data_shape = pmcfg.get_data_shape()
 
@@ -723,7 +786,9 @@ def cached_patchmetric_training_data_fpaths(ibs, aid1_list, aid2_list,
     semantic_uuids1 = ibs.get_annot_semantic_uuids(aid1_list)
     semantic_uuids2 = ibs.get_annot_semantic_uuids(aid2_list)
     aidpair_hashstr_list = list(map(ut.hashstr27, zip(semantic_uuids1, semantic_uuids2)))
-    training_dname = ut.hashstr_arr27(aidpair_hashstr_list, pathsafe=True, lbl='patchmatch')
+    training_dname = ut.hashstr_arr27(
+        aidpair_hashstr_list, pathsafe=True, lbl='patchmatch'
+    )
 
     nets_dir = ibs.get_neuralnet_dir()
     training_dpath = ut.unixjoin(nets_dir, training_dname)
@@ -741,16 +806,22 @@ def cached_patchmetric_training_data_fpaths(ibs, aid1_list, aid2_list,
     metadata_fpath = ut.unixjoin(training_dpath, 'metadata_%s.hdf5' % (cfgstr,))
 
     if NOCACHE_TRAIN or not (
-            ut.checkpath(data_fpath, verbose=True) and
-            ut.checkpath(labels_fpath, verbose=True) and
-            ut.checkpath(metadata_fpath, verbose=True)
+        ut.checkpath(data_fpath, verbose=True)
+        and ut.checkpath(labels_fpath, verbose=True)
+        and ut.checkpath(metadata_fpath, verbose=True)
     ):
-        estimate_data_bytes(sum(list(map(len, fm_list))),
-                            pmcfg.get_data_shape())
+        estimate_data_bytes(sum(list(map(len, fm_list))), pmcfg.get_data_shape())
         # Extract the data and labels
         data, labels, flat_metadata = get_patchmetric_training_data_and_labels(
-            ibs, aid1_list, aid2_list, kpts1_m_list, kpts2_m_list, fm_list,
-            metadata_lists, **pmcfg)
+            ibs,
+            aid1_list,
+            aid2_list,
+            kpts1_m_list,
+            kpts2_m_list,
+            fm_list,
+            metadata_lists,
+            **pmcfg
+        )
         # Save the data to cache
         ut.assert_eq(data.shape[1], pmcfg['patch_size'])
         ut.assert_eq(data.shape[2], pmcfg['patch_size'])
@@ -761,9 +832,9 @@ def cached_patchmetric_training_data_fpaths(ibs, aid1_list, aid2_list,
         ut.save_hdf5(data_fpath, data)
         ut.save_hdf5(labels_fpath, labels)
         ut.save_hdf5(metadata_fpath, flat_metadata)
-        #ut.save_cPkl(data_fpath, data)
-        #ut.save_cPkl(labels_fpath, labels)
-        #ut.save_cPkl(metadata_fpath, flat_metadata)
+        # ut.save_cPkl(data_fpath, data)
+        # ut.save_cPkl(labels_fpath, labels)
+        # ut.save_cPkl(metadata_fpath, flat_metadata)
     else:
         print('data and labels cache hit')
     return data_fpath, labels_fpath, metadata_fpath, training_dpath, data_shape
@@ -773,9 +844,14 @@ def remove_unknown_training_pairs(ibs, aid1_list, aid2_list):
     return aid1_list, aid2_list
 
 
-def get_aidpairs_and_matches(ibs, max_examples=None, num_top=3,
-                             controlled=True, min_featweight=None,
-                             acfg_name=None):
+def get_aidpairs_and_matches(
+    ibs,
+    max_examples=None,
+    num_top=3,
+    controlled=True,
+    min_featweight=None,
+    acfg_name=None,
+):
     r"""
     Gets data for training a patch match network.
 
@@ -847,31 +923,42 @@ def get_aidpairs_and_matches(ibs, max_examples=None, num_top=3,
         >>>     pt.update()
         >>> ut.show_if_requested()
     """
+
     def get_query_results():
         if acfg_name is not None:
             print('NEW WAY OF FILTERING')
             from wbia.expt import experiment_helpers
-            acfg_list, expanded_aids_list = experiment_helpers.get_annotcfg_list(ibs, [acfg_name])
-            #acfg = acfg_list[0]
+
+            acfg_list, expanded_aids_list = experiment_helpers.get_annotcfg_list(
+                ibs, [acfg_name]
+            )
+            # acfg = acfg_list[0]
             expanded_aids = expanded_aids_list[0]
             qaid_list, daid_list = expanded_aids
         else:
             print('OLD WAY OF FILTERING')
             from wbia.other import ibsfuncs
+
             if controlled:
                 # TODO: use acfg config
-                qaid_list = ibsfuncs.get_two_annots_per_name_and_singletons(ibs, onlygt=True)
-                daid_list = ibsfuncs.get_two_annots_per_name_and_singletons(ibs, onlygt=False)
+                qaid_list = ibsfuncs.get_two_annots_per_name_and_singletons(
+                    ibs, onlygt=True
+                )
+                daid_list = ibsfuncs.get_two_annots_per_name_and_singletons(
+                    ibs, onlygt=False
+                )
             else:
                 qaid_list = ibs.get_valid_aids()
-                #from wbia.algo.hots import chip_match
-                qaid_list = ut.compress(qaid_list, ibs.get_annot_has_groundtruth(qaid_list))
+                # from wbia.algo.hots import chip_match
+                qaid_list = ut.compress(
+                    qaid_list, ibs.get_annot_has_groundtruth(qaid_list)
+                )
                 daid_list = qaid_list
                 if max_examples is not None:
-                    daid_list = daid_list[0:min(max_examples, len(daid_list))]
+                    daid_list = daid_list[0 : min(max_examples, len(daid_list))]
 
         if max_examples is not None:
-            qaid_list = qaid_list[0:min(max_examples, len(qaid_list))]
+            qaid_list = qaid_list[0 : min(max_examples, len(qaid_list))]
 
         cfgdict = {
             'affine_invariance': False,
@@ -881,6 +968,7 @@ def get_aidpairs_and_matches(ibs, max_examples=None, num_top=3,
         qreq_ = ibs.new_query_request(qaid_list, daid_list, cfgdict=cfgdict)
         cm_list = qreq_.execute()
         return cm_list, qreq_
+
     cm_list, qreq_ = get_query_results()
 
     def get_matchdata1():
@@ -890,16 +978,18 @@ def get_aidpairs_and_matches(ibs, max_examples=None, num_top=3,
             aids2_list = [cm.get_top_aids() for cm in cm_list]
         else:
             aids2_list = [cm.get_top_aids()[0:num_top] for cm in cm_list]
-        aids1_list = [[cm.qaid] * len(aids2)
-                      for cm, aids2 in zip(cm_list, aids2_list)]
+        aids1_list = [[cm.qaid] * len(aids2) for cm, aids2 in zip(cm_list, aids2_list)]
         aid1_list_all = np.array(ut.flatten(aids1_list))
         aid2_list_all = np.array(ut.flatten(aids2_list))
 
         def take_qres_list_attr(attr):
-            attrs_list = [ut.dict_take(getattr(cm, attr), aids2)
-                          for cm, aids2 in zip(cm_list, aids2_list)]
+            attrs_list = [
+                ut.dict_take(getattr(cm, attr), aids2)
+                for cm, aids2 in zip(cm_list, aids2_list)
+            ]
             attr_list = ut.flatten(attrs_list)
             return attr_list
+
         fm_list_all = take_qres_list_attr(attr='aid2_fm')
         metadata_all = {}
         filtkey_lists = ut.unique_unordered([tuple(cm.filtkey_list) for cm in cm_list])
@@ -920,19 +1010,26 @@ def get_aidpairs_and_matches(ibs, max_examples=None, num_top=3,
             rng = np.random.RandomState(0)
             num_rand_neg_per_aid = 3
             num_rand_fm = 30
-            for aid, nid in ut.ProgIter(list(zip(neg_aid_pool, neg_nid_pool)), 'sample aid rand'):
-                #is_valid = get_badtag_flags(ibs, [aid] * len(neg_aid_pool), neg_aid_pool)
+            for aid, nid in ut.ProgIter(
+                list(zip(neg_aid_pool, neg_nid_pool)), 'sample aid rand'
+            ):
+                # is_valid = get_badtag_flags(ibs, [aid] * len(neg_aid_pool), neg_aid_pool)
                 is_valid = np.not_equal(neg_nid_pool, nid)
-                #is_valid = np.logical_and(, is_valid)
+                # is_valid = np.logical_and(, is_valid)
                 p = is_valid / (is_valid.sum())
-                chosen = rng.choice(neg_aid_pool, size=num_rand_neg_per_aid,
-                                    replace=False, p=p)
-                #chosen_pairs = list(ut.iprod([aid], chosen))
+                chosen = rng.choice(
+                    neg_aid_pool, size=num_rand_neg_per_aid, replace=False, p=p
+                )
+                # chosen_pairs = list(ut.iprod([aid], chosen))
                 randneg_aid1.extend([aid] * len(chosen))
                 randneg_aid2.extend(chosen)
 
-            neg_fws1 = ibs.get_annot_fgweights(randneg_aid1, config2_=qreq_.get_internal_query_config2())
-            neg_fws2 = ibs.get_annot_fgweights(randneg_aid2, config2_=qreq_.get_internal_data_config2())
+            neg_fws1 = ibs.get_annot_fgweights(
+                randneg_aid1, config2_=qreq_.get_internal_query_config2()
+            )
+            neg_fws2 = ibs.get_annot_fgweights(
+                randneg_aid2, config2_=qreq_.get_internal_data_config2()
+            )
 
             for fw1, fw2 in ut.ProgIter(list(zip(neg_fws1, neg_fws2)), 'sample fm rand'):
                 valid_fx1s = np.where(fw1 > min_featweight)[0]
@@ -963,9 +1060,16 @@ def get_aidpairs_and_matches(ibs, max_examples=None, num_top=3,
 
     def get_badtag_flags(ibs, aid1_list, aid2_list):
         from wbia import tag_funcs
-        tag_filter_kw = dict(has_none=['photobomb', 'scenerymatch', 'joincase', 'splitcase'])
-        am_rowids1 = ibs.get_annotmatch_rowid_from_undirected_superkey(aid1_list, aid2_list)
-        am_rowids2 = ibs.get_annotmatch_rowid_from_undirected_superkey(aid2_list, aid1_list)
+
+        tag_filter_kw = dict(
+            has_none=['photobomb', 'scenerymatch', 'joincase', 'splitcase']
+        )
+        am_rowids1 = ibs.get_annotmatch_rowid_from_undirected_superkey(
+            aid1_list, aid2_list
+        )
+        am_rowids2 = ibs.get_annotmatch_rowid_from_undirected_superkey(
+            aid2_list, aid1_list
+        )
         case_tags1 = ibs.get_annotmatch_case_tags(am_rowids1)
         case_tags2 = ibs.get_annotmatch_case_tags(am_rowids2)
         flags1 = tag_funcs.filterflags_general_tags(case_tags1, **tag_filter_kw)
@@ -978,7 +1082,7 @@ def get_aidpairs_and_matches(ibs, max_examples=None, num_top=3,
         # Filter out bad training examples
         # (we are currently in annot-vs-annot format, not yet in patch-vs-patch)
         labels_all = get_aidpair_training_labels(ibs, aid1_list_all, aid2_list_all)
-        has_gt = (labels_all != ibs.const.REVIEW.UNKNOWN)
+        has_gt = labels_all != ibs.const.REVIEW.UNKNOWN
         nonempty = [len(fm) > 0 for fm in fm_list_all]
         # Filter pairs bad pairs of aids
         # using case tags
@@ -989,8 +1093,10 @@ def get_aidpairs_and_matches(ibs, max_examples=None, num_top=3,
         #
         MIN_TD = 5 * 60  # 5 minutes at least
         timedelta_list = np.abs(ibs.get_annot_pair_timdelta(aid1_list_all, aid2_list_all))
-        #isnan = np.isnan(timedelta_list)
-        gf_tdflags = np.logical_or(labels_all == ibs.const.REVIEW.MATCH, timedelta_list > MIN_TD)
+        # isnan = np.isnan(timedelta_list)
+        gf_tdflags = np.logical_or(
+            labels_all == ibs.const.REVIEW.MATCH, timedelta_list > MIN_TD
+        )
         print(ut.filtered_infostr(gf_tdflags, 'gf annots', 'timestamp'))
         flags = ut.and_lists(flags, gf_tdflags)
         # Remove small time deltas
@@ -999,17 +1105,24 @@ def get_aidpairs_and_matches(ibs, max_examples=None, num_top=3,
         isvalid = np.logical_and(np.logical_and(has_gt, nonempty), flags)
         aid1_list_uneq = ut.compress(aid1_list_all, isvalid)
         aid2_list_uneq = ut.compress(aid2_list_all, isvalid)
-        labels_uneq    = ut.compress(labels_all, isvalid)
-        fm_list_uneq   = ut.compress(fm_list_all, isvalid)
-        metadata_uneq  = {key: ut.compress(vals, isvalid)
-                          for key, vals in metadata_all.items()}
+        labels_uneq = ut.compress(labels_all, isvalid)
+        fm_list_uneq = ut.compress(fm_list_all, isvalid)
+        metadata_uneq = {
+            key: ut.compress(vals, isvalid) for key, vals in metadata_all.items()
+        }
         return aid1_list_uneq, aid2_list_uneq, labels_uneq, fm_list_uneq, metadata_uneq
 
     def get_matchdata3():
         # Filters in place
-        aid1_list_uneq, aid2_list_uneq, labels_uneq, fm_list_uneq, metadata_uneq = get_matchdata2()
+        (
+            aid1_list_uneq,
+            aid2_list_uneq,
+            labels_uneq,
+            fm_list_uneq,
+            metadata_uneq,
+        ) = get_matchdata2()
 
-        #min_featweight = None
+        # min_featweight = None
         if min_featweight is not None:
             print('filter by featweight')
             # Remove feature matches where the foreground weight is under a threshold
@@ -1019,17 +1132,24 @@ def get_aidpairs_and_matches(ibs, max_examples=None, num_top=3,
                 aid2 = aid2_list_uneq[index]
                 fm = fm_list_uneq[index]
                 fgweight1 = ibs.get_annot_fgweights(
-                    [aid1], config2_=qreq_.get_internal_query_config2())[0][fm.T[0]]
+                    [aid1], config2_=qreq_.get_internal_query_config2()
+                )[0][fm.T[0]]
                 fgweight2 = ibs.get_annot_fgweights(
-                    [aid2], config2_=qreq_.get_internal_data_config2())[0][fm.T[1]]
-                flags = np.logical_and(fgweight1 > min_featweight,
-                                       fgweight2 > min_featweight)
+                    [aid2], config2_=qreq_.get_internal_data_config2()
+                )[0][fm.T[1]]
+                flags = np.logical_and(
+                    fgweight1 > min_featweight, fgweight2 > min_featweight
+                )
                 flags_list.append(flags)
 
-            print(ut.filtered_infostr(ut.flatten(flags_list), 'feat matches', 'featweight'))
+            print(
+                ut.filtered_infostr(ut.flatten(flags_list), 'feat matches', 'featweight')
+            )
             fm_list_uneq2 = vt.zipcompress_safe(fm_list_uneq, flags_list, axis=0)
-            metadata_uneq2  = {key: vt.zipcompress_safe(vals, flags_list, axis=0)
-                               for key, vals in metadata_uneq.items()}
+            metadata_uneq2 = {
+                key: vt.zipcompress_safe(vals, flags_list, axis=0)
+                for key, vals in metadata_uneq.items()
+            }
         else:
             fm_list_uneq2 = fm_list_uneq
             metadata_uneq2 = metadata_uneq
@@ -1043,7 +1163,7 @@ def get_aidpairs_and_matches(ibs, max_examples=None, num_top=3,
         print('[ingest_wbia] total = %r' % (sum(list(labelhist.values()))))
 
         pref_method = 'rand'
-        #pref_method = 'scores'
+        # pref_method = 'scores'
         seed = 0
         rng = np.random.RandomState(seed)
 
@@ -1057,16 +1177,14 @@ def get_aidpairs_and_matches(ibs, max_examples=None, num_top=3,
             sortx = flat_scores.take(type_indicies).argsort()[::-1]
             return type_indicies.take(sortx[:min_])
 
-        sample_func = {
-            'rand': pref_rand,
-            'scores': pref_scores,
-            'first': pref_first,
-        }[pref_method]
+        sample_func = {'rand': pref_rand, 'scores': pref_scores, 'first': pref_first,}[
+            pref_method
+        ]
 
         # Figure out how much of each label needs to be removed
         # record the indicies that will not be filtered in keep_indicies_list
-        allowed_ratio = ut.PHI * .8
-        #allowed_ratio = 1.0
+        allowed_ratio = ut.PHI * 0.8
+        # allowed_ratio = 1.0
         # Find the maximum and minimum number of labels over all types
         true_max_ = max(labelhist.values())
         true_min_ = min(labelhist.values())
@@ -1075,7 +1193,7 @@ def get_aidpairs_and_matches(ibs, max_examples=None, num_top=3,
         print('Equalizing label distribution with method=%r' % (pref_method,))
         print('Allowing at most %d labels of a type' % (min_,))
         key_list, type_indicies_list = vt.group_indices(flat_labels)
-        #type_indicies_list = [np.where(flat_labels == key)[0]
+        # type_indicies_list = [np.where(flat_labels == key)[0]
         #                      for key in six.iterkeys(labelhist)]
         keep_indicies_list = []
         for type_indicies in type_indicies_list:
@@ -1090,16 +1208,20 @@ def get_aidpairs_and_matches(ibs, max_examples=None, num_top=3,
         return flat_flag_list
 
     def equalize_labels():
-        (aid1_list_uneq, aid2_list_uneq, labels_uneq, fm_list_uneq2,
-         metadata_uneq2) = get_matchdata3()
+        (
+            aid1_list_uneq,
+            aid2_list_uneq,
+            labels_uneq,
+            fm_list_uneq2,
+            metadata_uneq2,
+        ) = get_matchdata3()
         print('flattening')
         # Find out how many examples each source holds
         len1_list = list(map(len, fm_list_uneq2))
         # Expand source labels so one exists for each datapoint
-        flat_labels = ut.flatten([
-            [label] * len1
-            for len1, label in zip(len1_list, labels_uneq)
-        ])
+        flat_labels = ut.flatten(
+            [[label] * len1 for len1, label in zip(len1_list, labels_uneq)]
+        )
         flat_labels = np.array(flat_labels)
         flat_scores = np.hstack(metadata_uneq2['fs'])
         flat_flag_list = equalize_flat_flags(flat_labels, flat_scores)
@@ -1110,35 +1232,39 @@ def get_aidpairs_and_matches(ibs, max_examples=None, num_top=3,
         assert ut.depth_profile(flags_list) == ut.depth_profile(metadata_uneq2['fs'])
 
         fm_list_ = vt.zipcompress_safe(fm_list_uneq2, flags_list, axis=0)
-        metadata_ = dict([
-            (key, vt.zipcompress_safe(vals, flags_list))
-            for key, vals in metadata_uneq2.items()
-        ])
+        metadata_ = dict(
+            [
+                (key, vt.zipcompress_safe(vals, flags_list))
+                for key, vals in metadata_uneq2.items()
+            ]
+        )
 
         # remove empty aids
         isnonempty_list = [len(fm) > 0 for fm in fm_list_]
         fm_list_eq = ut.compress(fm_list_, isnonempty_list)
         aid1_list_eq = ut.compress(aid1_list_uneq, isnonempty_list)
         aid2_list_eq = ut.compress(aid2_list_uneq, isnonempty_list)
-        labels_eq    = ut.compress(labels_uneq, isnonempty_list)
-        metadata_eq = dict([
-            (key, ut.compress(vals, isnonempty_list))
-            for key, vals in metadata_.items()
-        ])
+        labels_eq = ut.compress(labels_uneq, isnonempty_list)
+        metadata_eq = dict(
+            [(key, ut.compress(vals, isnonempty_list)) for key, vals in metadata_.items()]
+        )
 
         # PRINT NEW LABEL STATS
         len1_list = list(map(len, fm_list_eq))
-        flat_labels_eq = ut.flatten([[label] * len1 for len1, label in zip(len1_list, labels_eq)])
+        flat_labels_eq = ut.flatten(
+            [[label] * len1 for len1, label in zip(len1_list, labels_eq)]
+        )
         labelhist_eq = {
             key: len(val)
-            for key, val in six.iteritems(ut.group_items(flat_labels_eq, flat_labels_eq))}
+            for key, val in six.iteritems(ut.group_items(flat_labels_eq, flat_labels_eq))
+        }
         print('[ingest_wbia] equalized label histogram = \n' + ut.dict_str(labelhist_eq))
         print('[ingest_wbia] total = %r' % (sum(list(labelhist_eq.values()))))
         # --
         return aid1_list_eq, aid2_list_eq, fm_list_eq, labels_eq, metadata_eq
 
-    #EQUALIZE_LABELS = True
-    #if EQUALIZE_LABELS:
+    # EQUALIZE_LABELS = True
+    # if EQUALIZE_LABELS:
     aid1_list_eq, aid2_list_eq, fm_list_eq, labels_eq, metadata_eq = equalize_labels()
 
     # Convert annot-vs-annot pairs into raw feature-vs-feature pairs
@@ -1148,14 +1274,16 @@ def get_aidpairs_and_matches(ibs, max_examples=None, num_top=3,
     fx1_list = [fm.T[0] for fm in fm_list_eq]
     fx2_list = [fm.T[1] for fm in fm_list_eq]
     # Hack: use the ibeis cache to make quick lookups
-    #with ut.Timer('Reading keypoint sets (caching unique keypoints)'):
+    # with ut.Timer('Reading keypoint sets (caching unique keypoints)'):
     #    ibs.get_annot_kpts(list(set(aid1_list_eq + aid2_list_eq)),
     #                       config2_=qreq_.get_internal_query_config2())
     with ut.Timer('Reading keypoint sets from cache'):
-        kpts1_list = ibs.get_annot_kpts(aid1_list_eq,
-                                        config2_=qreq_.get_internal_query_config2())
-        kpts2_list = ibs.get_annot_kpts(aid2_list_eq,
-                                        config2_=qreq_.get_internal_query_config2())
+        kpts1_list = ibs.get_annot_kpts(
+            aid1_list_eq, config2_=qreq_.get_internal_query_config2()
+        )
+        kpts2_list = ibs.get_annot_kpts(
+            aid2_list_eq, config2_=qreq_.get_internal_query_config2()
+        )
 
     # Save some memory
     ibs.print_cachestats_str()
@@ -1165,28 +1293,45 @@ def get_aidpairs_and_matches(ibs, max_examples=None, num_top=3,
     kpts2_m_list = [kpts2.take(fx2, axis=0) for kpts2, fx2 in zip(kpts2_list, fx2_list)]
 
     (aid1_list, aid2_list, fm_list, metadata_lists) = (
-        aid1_list_eq, aid2_list_eq, fm_list_eq, metadata_eq
+        aid1_list_eq,
+        aid2_list_eq,
+        fm_list_eq,
+        metadata_eq,
     )
-    #assert ut.get_list_column(ut.depth_profile(kpts1_m_list), 0) ==
-    #ut.depth_profile(metadata_lists['fs'])
-    patchmatch_tup = aid1_list, aid2_list, kpts1_m_list, kpts2_m_list, fm_list, metadata_lists
+    # assert ut.get_list_column(ut.depth_profile(kpts1_m_list), 0) ==
+    # ut.depth_profile(metadata_lists['fs'])
+    patchmatch_tup = (
+        aid1_list,
+        aid2_list,
+        kpts1_m_list,
+        kpts2_m_list,
+        fm_list,
+        metadata_lists,
+    )
     return patchmatch_tup
 
 
-def get_background_training_patches2(ibs, target_species, dest_path=None, patch_size=48,
-                                     patch_size_min=0.80, patch_size_max=1.25,
-                                     annot_size=300, patience=20,
-                                     patches_per_annotation=30,
-                                     global_limit=None,
-                                     train_gid_set=None,
-                                     visualize=False,
-                                     visualize_path=None,
-                                     tiles=False,
-                                     inside_boundary=True,
-                                     purge=False,
-                                     shuffle=True,
-                                     supercharge_negative_multiplier=2.0,
-                                     undercharge_negative_multiplier=0.5):
+def get_background_training_patches2(
+    ibs,
+    target_species,
+    dest_path=None,
+    patch_size=48,
+    patch_size_min=0.80,
+    patch_size_max=1.25,
+    annot_size=300,
+    patience=20,
+    patches_per_annotation=30,
+    global_limit=None,
+    train_gid_set=None,
+    visualize=False,
+    visualize_path=None,
+    tiles=False,
+    inside_boundary=True,
+    purge=False,
+    shuffle=True,
+    supercharge_negative_multiplier=2.0,
+    undercharge_negative_multiplier=0.5,
+):
     """
     Get data for bg
     """
@@ -1240,7 +1385,9 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
     ut.ensuredir(labels_path)
 
     if train_gid_set is None:
-        train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
+        train_gid_set = set(
+            ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET'))
+        )
 
     if shuffle:
         train_gid_set = list(train_gid_set)
@@ -1253,8 +1400,8 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
             for gid, aid_list in zip(train_gid_set, aids_list)
         ]
     else:
-        bboxes_list = [ ibs.get_annot_bboxes(aid_list) for aid_list in aids_list ]
-    species_list_list = [ ibs.get_annot_species_texts(aid_list) for aid_list in aids_list ]
+        bboxes_list = [ibs.get_annot_bboxes(aid_list) for aid_list in aids_list]
+    species_list_list = [ibs.get_annot_species_texts(aid_list) for aid_list in aids_list]
 
     zipped = zip(train_gid_set, aids_list, bboxes_list, species_list_list)
     label_list = []
@@ -1269,10 +1416,15 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
         else:
             canvas = None
 
-        args = (gid, global_positives, global_negatives, len(label_list), )
+        args = (
+            gid,
+            global_positives,
+            global_negatives,
+            len(label_list),
+        )
         print('Processing GID: %r [ %r / %r = %r]' % args)
-        print('\tAIDS  : %r' % (aid_list, ))
-        print('\tBBOXES: %r' % (bbox_list, ))
+        print('\tAIDS  : %r' % (aid_list,))
+        print('\tBBOXES: %r' % (bbox_list,))
 
         if global_limit is not None:
             if global_negatives + global_positives >= global_limit:
@@ -1299,7 +1451,7 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
                     'turtle_sea+head',
                 ]
                 if species not in turtle_sea_species_list:
-                    print('Skipping aid %r (bad species: %s)' % (aid, species, ))
+                    print('Skipping aid %r (bad species: %s)' % (aid, species,))
                     continue
             elif target_species == 'wild_dog':
                 wild_dog_species_list = [
@@ -1312,10 +1464,10 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
                     'wild_dog_tan',
                 ]
                 if species not in wild_dog_species_list:
-                    print('Skipping aid %r (bad species: %s)' % (aid, species, ))
+                    print('Skipping aid %r (bad species: %s)' % (aid, species,))
                     continue
             elif species != target_species:
-                print('Skipping aid %r (bad species: %s)' % (aid, species, ))
+                print('Skipping aid %r (bad species: %s)' % (aid, species,))
                 continue
 
             if aid is not None:
@@ -1326,7 +1478,7 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
                     cv2.rectangle(canvas, (xtl, ytl), (xbr, ybr), (255, 0, 0))
 
                 if min(w_, h_) / max(w_, h_) <= 0.25:
-                    print('Skipping aid %r (aspect ratio)' % (aid, ))
+                    print('Skipping aid %r (aspect ratio)' % (aid,))
                     continue
 
                 modifier = w_ / annot_size
@@ -1339,14 +1491,18 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
                     found = False
                     while not found and counter < patience:
                         counter += 1
-                        patch_size_random = random.uniform(patch_size_min_, patch_size_max_)
+                        patch_size_random = random.uniform(
+                            patch_size_min_, patch_size_max_
+                        )
                         patch_size_final = int(round(patch_size_random))
 
                         radius = patch_size_final // 2
 
                         if inside_boundary:
                             if patch_size_final > w_ or patch_size_final > h_:
-                                print('Skipping aid %r (patch_size_final too big)' % (aid, ))
+                                print(
+                                    'Skipping aid %r (patch_size_final too big)' % (aid,)
+                                )
                                 continue
 
                             centerx = random.randint(xtl + radius, xbr - radius)
@@ -1361,10 +1517,10 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
                         y1 = centery + radius
 
                         if x0 < 0 or x0 >= w or x1 < 0 or x1 >= w:
-                            print('Skipping aid %r (bounds check, width)' % (aid, ))
+                            print('Skipping aid %r (bounds check, width)' % (aid,))
                             continue
                         if y0 < 0 or y0 >= w or y1 < 0 or y1 >= w:
-                            print('Skipping aid %r (bounds check, height)' % (aid, ))
+                            print('Skipping aid %r (bounds check, height)' % (aid,))
                             continue
 
                         found = True
@@ -1379,27 +1535,40 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
                         assert x0 >= 0 and x0 < w and x1 >= 0 and x1 < w
                         assert y0 >= 0 and y0 < h and y1 >= 0 and y1 < h
                     except AssertionError:
-                        print('Skipping aid %r (sanity check)' % (aid, ))
+                        print('Skipping aid %r (sanity check)' % (aid,))
                         found = False
 
                     if found:
                         positives += 1
                         if canvas is not None:
                             cv2.rectangle(canvas, (x0, y0), (x1, y1), (0, 255, 0))
-                        chip = image[y0: y1, x0: x1]
-                        chip = cv2.resize(chip, (patch_size, patch_size),
-                                          interpolation=cv2.INTER_LANCZOS4)
+                        chip = image[y0:y1, x0:x1]
+                        chip = cv2.resize(
+                            chip,
+                            (patch_size, patch_size),
+                            interpolation=cv2.INTER_LANCZOS4,
+                        )
 
                         # positive_category = '%s' % (species, )
                         positive_category = 'positive'
-                        values = (dbname, gid, positive_category, x0, y0, x1, y1, )
-                        patch_filename = '%s_patch_gid_%s_%s_bbox_%d_%d_%d_%d.png' % values
+                        values = (
+                            dbname,
+                            gid,
+                            positive_category,
+                            x0,
+                            y0,
+                            x1,
+                            y1,
+                        )
+                        patch_filename = (
+                            '%s_patch_gid_%s_%s_bbox_%d_%d_%d_%d.png' % values
+                        )
                         patch_filepath = join(raw_path, patch_filename)
                         cv2.imwrite(patch_filepath, chip)
                         label = '%s,%s' % (patch_filename, positive_category)
                         label_list.append(label)
                     else:
-                        print('Skipping aid %r (not found)' % (aid, ))
+                        print('Skipping aid %r (not found)' % (aid,))
 
                 positives_ = positives
             else:
@@ -1471,11 +1640,20 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
                     negatives += 1
                     if canvas is not None:
                         cv2.rectangle(canvas, (x0, y0), (x1, y1), (0, 0, 255))
-                    chip = image[y0: y1, x0: x1]
-                    chip = cv2.resize(chip, (patch_size, patch_size),
-                                      interpolation=cv2.INTER_LANCZOS4)
+                    chip = image[y0:y1, x0:x1]
+                    chip = cv2.resize(
+                        chip, (patch_size, patch_size), interpolation=cv2.INTER_LANCZOS4
+                    )
 
-                    values = (dbname, gid, 'negative', x0, y0, x1, y1, )
+                    values = (
+                        dbname,
+                        gid,
+                        'negative',
+                        x0,
+                        y0,
+                        x1,
+                        y1,
+                    )
                     patch_filename = '%s_patch_gid_%s_%s_bbox_%d_%d_%d_%d.png' % values
                     patch_filepath = join(raw_path, patch_filename)
                     cv2.imwrite(patch_filepath, chip)
@@ -1486,12 +1664,16 @@ def get_background_training_patches2(ibs, target_species, dest_path=None, patch_
             global_negatives += negatives
 
         if canvas is not None:
-            canvas_filename = 'background_gid_%s_species_%s.png' % (gid, target_species, )
+            canvas_filename = 'background_gid_%s_species_%s.png' % (gid, target_species,)
             canvas_filepath = join(visualize_path, canvas_filename)
             image = resize_target(canvas, target_width=1000)
             cv2.imwrite(canvas_filepath, canvas)
 
-    args = (global_positives, global_negatives, len(label_list), )
+    args = (
+        global_positives,
+        global_negatives,
+        len(label_list),
+    )
     print('Final Split: [ %r / %r = %r]' % args)
 
     with open(join(labels_path, 'labels.csv'), 'a') as labels:
@@ -1527,28 +1709,50 @@ def get_aoi_training_data(ibs, dest_path=None, target_species_list=None, purge=T
     ut.ensuredir(labels_path)
 
     # gid_list = ibs.get_valid_gids()
-    train_gid_set = list(set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET'))))
+    train_gid_set = list(
+        set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
+    )
     config = {
         'algo': 'resnet',
     }
-    data_list = ibs.depc_image.get_property('features', train_gid_set, 'vector', config=config)
+    data_list = ibs.depc_image.get_property(
+        'features', train_gid_set, 'vector', config=config
+    )
     reviewed_list = ibs.get_image_reviewed(train_gid_set)
     reviewed_list = [True] * len(data_list)
     aids_list = ibs.get_image_aids(train_gid_set)
     size_list = ibs.get_image_sizes(train_gid_set)
-    bboxes_list = [ ibs.get_annot_bboxes(aid_list) for aid_list in aids_list ]
-    species_list_list = [ ibs.get_annot_species_texts(aid_list) for aid_list in aids_list ]
-    interest_list_list = [ ibs.get_annot_interest(aid_list) for aid_list in aids_list ]
+    bboxes_list = [ibs.get_annot_bboxes(aid_list) for aid_list in aids_list]
+    species_list_list = [ibs.get_annot_species_texts(aid_list) for aid_list in aids_list]
+    interest_list_list = [ibs.get_annot_interest(aid_list) for aid_list in aids_list]
 
     if target_species_list is None:
         target_species_list = list(set(ut.flatten(species_list_list)))
 
-    zipped = zip(train_gid_set, reviewed_list, data_list, aids_list, size_list, bboxes_list, species_list_list, interest_list_list)
+    zipped = zip(
+        train_gid_set,
+        reviewed_list,
+        data_list,
+        aids_list,
+        size_list,
+        bboxes_list,
+        species_list_list,
+        interest_list_list,
+    )
     label_list = []
-    for gid, reviewed, data, aid_list, (w, h), bbox_list, species_list, interest_list in zipped:
-        print('Processing GID: %r' % (gid, ))
-        print('\tAIDS  : %r' % (aid_list, ))
-        print('\tBBOXES: %r' % (bbox_list, ))
+    for (
+        gid,
+        reviewed,
+        data,
+        aid_list,
+        (w, h),
+        bbox_list,
+        species_list,
+        interest_list,
+    ) in zipped:
+        print('Processing GID: %r' % (gid,))
+        print('\tAIDS  : %r' % (aid_list,))
+        print('\tBBOXES: %r' % (bbox_list,))
 
         if reviewed in [None, 0]:
             continue
@@ -1568,13 +1772,7 @@ def get_aoi_training_data(ibs, dest_path=None, target_species_list=None, purge=T
             aoi_flag = 1 if interest else 0
             aoi_counter += aoi_flag
 
-            temp = [
-                xtl / w,
-                ytl / h,
-                (xtl + width) / w,
-                (ytl + height) / h,
-                aoi_flag
-            ]
+            temp = [xtl / w, ytl / h, (xtl + width) / w, (ytl + height) / h, aoi_flag]
             temp = list(map(str, map(float, temp)))
             label = '^'.join(temp)
             temp_list.append(label)
@@ -1584,7 +1782,11 @@ def get_aoi_training_data(ibs, dest_path=None, target_species_list=None, purge=T
         if aoi_counter == 0:
             continue
 
-        values = (dbname, gid, aid, )
+        values = (
+            dbname,
+            gid,
+            aid,
+        )
         feature_filename = '%s_vgg_feature_gid_%s_aid_%s.npy' % values
         feature_filepath = join(raw_path, feature_filename)
 
@@ -1602,10 +1804,15 @@ def get_aoi_training_data(ibs, dest_path=None, target_species_list=None, purge=T
     return name_path
 
 
-def get_aoi2_training_data(ibs, image_size=192, dest_path=None,
-                           target_species_list=None,
-                           train_gid_list=None, purge=True,
-                           cache=True):
+def get_aoi2_training_data(
+    ibs,
+    image_size=192,
+    dest_path=None,
+    target_species_list=None,
+    train_gid_list=None,
+    purge=True,
+    cache=True,
+):
     """
     Get data for bg
     """
@@ -1635,26 +1842,46 @@ def get_aoi2_training_data(ibs, image_size=192, dest_path=None,
 
         # gid_list = ibs.get_valid_gids()
         if train_gid_list is None:
-            train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
+            train_gid_set = set(
+                ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET'))
+            )
             train_gid_list = list(train_gid_set)
         # reviewed_list = ibs.get_image_reviewed(train_gid_list)
         reviewed_list = [True] * len(train_gid_list)
         aids_list = ibs.get_image_aids(train_gid_list)
         size_list = ibs.get_image_sizes(train_gid_list)
-        bboxes_list = [ ibs.get_annot_bboxes(aid_list) for aid_list in aids_list ]
-        species_list_list = [ ibs.get_annot_species_texts(aid_list) for aid_list in aids_list ]
-        interest_list_list = [ ibs.get_annot_interest(aid_list) for aid_list in aids_list ]
+        bboxes_list = [ibs.get_annot_bboxes(aid_list) for aid_list in aids_list]
+        species_list_list = [
+            ibs.get_annot_species_texts(aid_list) for aid_list in aids_list
+        ]
+        interest_list_list = [ibs.get_annot_interest(aid_list) for aid_list in aids_list]
 
         if target_species_list is None:
             target_species_list = list(set(ut.flatten(species_list_list)))
 
         mask = np.zeros((image_size, image_size, 1))
-        zipped = zip(train_gid_list, reviewed_list, aids_list, size_list, bboxes_list, species_list_list, interest_list_list)
+        zipped = zip(
+            train_gid_list,
+            reviewed_list,
+            aids_list,
+            size_list,
+            bboxes_list,
+            species_list_list,
+            interest_list_list,
+        )
         label_list = []
-        for gid, reviewed, aid_list, (w, h), bbox_list, species_list, interest_list in zipped:
-            print('Processing GID: %r' % (gid, ))
-            print('\tAIDS  : %r' % (aid_list, ))
-            print('\tBBOXES: %r' % (bbox_list, ))
+        for (
+            gid,
+            reviewed,
+            aid_list,
+            (w, h),
+            bbox_list,
+            species_list,
+            interest_list,
+        ) in zipped:
+            print('Processing GID: %r' % (gid,))
+            print('\tAIDS  : %r' % (aid_list,))
+            print('\tBBOXES: %r' % (bbox_list,))
 
             if reviewed in [None, 0]:
                 continue
@@ -1674,13 +1901,7 @@ def get_aoi2_training_data(ibs, image_size=192, dest_path=None,
                 aoi_flag = 1 if interest else 0
                 aoi_counter += aoi_flag
 
-                temp = [
-                    xtl / w,
-                    ytl / h,
-                    (xtl + width) / w,
-                    (ytl + height) / h,
-                    aoi_flag
-                ]
+                temp = [xtl / w, ytl / h, (xtl + width) / w, (ytl + height) / h, aoi_flag]
                 temp = list(map(str, map(float, temp)))
                 label = '^'.join(temp)
                 temp_list.append(label)
@@ -1691,10 +1912,15 @@ def get_aoi2_training_data(ibs, image_size=192, dest_path=None,
             #     continue
 
             image = ibs.get_images(gid)
-            image_ = cv2.resize(image, (image_size, image_size), interpolation=cv2.INTER_LANCZOS4)
+            image_ = cv2.resize(
+                image, (image_size, image_size), interpolation=cv2.INTER_LANCZOS4
+            )
             image_ = np.dstack((image_, mask))
 
-            values = (dbname, gid, )
+            values = (
+                dbname,
+                gid,
+            )
             patch_filename = '%s_image_gid_%s.png' % values
             patch_filepath = join(raw_path, patch_filename)
             cv2.imwrite(patch_filepath, image_)
@@ -1729,11 +1955,11 @@ def get_cnn_detector_training_images(ibs, dest_path=None, image_size=128):
         return cv2.resize(image, (w, h))
 
     dbname_mapping = {
-        'ELPH_Master'    : 'elephant_savanna',
-        'GIR_Master'     : 'giraffe_reticulated',
-        'GZ_Master'      : 'zebra_grevys',
-        'NNP_MasterGIRM' : 'giraffe_masai',
-        'PZ_Master1'     : 'zebra_plains',
+        'ELPH_Master': 'elephant_savanna',
+        'GIR_Master': 'giraffe_reticulated',
+        'GZ_Master': 'zebra_grevys',
+        'NNP_MasterGIRM': 'giraffe_masai',
+        'PZ_Master1': 'zebra_plains',
     }
 
     if dest_path is None:
@@ -1754,9 +1980,11 @@ def get_cnn_detector_training_images(ibs, dest_path=None, image_size=128):
     ut.ensuredir(labels_path)
 
     # gid_list = ibs.get_valid_gids()
-    train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
+    train_gid_set = set(
+        ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET'))
+    )
     aids_list = ibs.get_image_aids(train_gid_set)
-    bboxes_list = [ ibs.get_annot_bboxes(aid_list) for aid_list in aids_list ]
+    bboxes_list = [ibs.get_annot_bboxes(aid_list) for aid_list in aids_list]
 
     label_list = []
     zipped_list = zip(train_gid_set, aids_list, bboxes_list)
@@ -1769,14 +1997,19 @@ def get_cnn_detector_training_images(ibs, dest_path=None, image_size=128):
         image = ibs.get_images(gid)
         height, width, channels = image.shape
 
-        args = (gid, )
+        args = (gid,)
         print('Processing GID: %r' % args)
-        print('\tAIDS  : %r' % (aid_list, ))
-        print('\tBBOXES: %r' % (bbox_list, ))
+        print('\tAIDS  : %r' % (aid_list,))
+        print('\tBBOXES: %r' % (bbox_list,))
 
-        image_ = cv2.resize(image, (image_size, image_size), interpolation=cv2.INTER_LANCZOS4)
+        image_ = cv2.resize(
+            image, (image_size, image_size), interpolation=cv2.INTER_LANCZOS4
+        )
 
-        values = (dbname, gid, )
+        values = (
+            dbname,
+            gid,
+        )
         patch_filename = '%s_image_gid_%s.png' % values
         patch_filepath = join(raw_path, patch_filename)
         cv2.imwrite(patch_filepath, image_)
@@ -1799,7 +2032,12 @@ def get_cnn_detector_training_images(ibs, dest_path=None, image_size=128):
             yr = min(1.0, max(0.0, yr))
             yc = min(1.0, max(0.0, yc))
 
-            args = (xc, yc, xr, yr, )
+            args = (
+                xc,
+                yc,
+                xr,
+                yr,
+            )
             bbox_str = '%s:%s:%s:%s' % args
             bbox_list_.append(bbox_str)
             global_bbox_list.append(args)
@@ -1815,7 +2053,12 @@ def get_cnn_detector_training_images(ibs, dest_path=None, image_size=128):
 
         aid_list_str = ';'.join(map(str, aid_list))
         bbox_list_str = ';'.join(map(str, bbox_list_))
-        label = '%s,%s,%s,%s' % (patch_filename, positive_category, aid_list_str, bbox_list_str)
+        label = '%s,%s,%s,%s' % (
+            patch_filename,
+            positive_category,
+            aid_list_str,
+            bbox_list_str,
+        )
         label_list.append(label)
 
     with open(join(labels_path, 'labels.csv'), 'a') as labels:
@@ -1825,15 +2068,20 @@ def get_cnn_detector_training_images(ibs, dest_path=None, image_size=128):
     return global_bbox_list
 
 
-def get_cnn_classifier_cameratrap_binary_training_images(ibs, positive_imageset_id,
-                                                         negative_imageset_id,
-                                                         dest_path=None,
-                                                         image_size=192, purge=True,
-                                                         skip_rate=0.0,
-                                                         skip_rate_pos=0.0,
-                                                         skip_rate_neg=0.0):
+def get_cnn_classifier_cameratrap_binary_training_images(
+    ibs,
+    positive_imageset_id,
+    negative_imageset_id,
+    dest_path=None,
+    image_size=192,
+    purge=True,
+    skip_rate=0.0,
+    skip_rate_pos=0.0,
+    skip_rate_neg=0.0,
+):
     from os.path import join, expanduser
     import random
+
     if dest_path is None:
         dest_path = expanduser(join('~', 'Desktop', 'extracted'))
 
@@ -1850,7 +2098,9 @@ def get_cnn_classifier_cameratrap_binary_training_images(ibs, positive_imageset_
     ut.ensuredir(raw_path)
     ut.ensuredir(labels_path)
 
-    train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
+    train_gid_set = set(
+        ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET'))
+    )
 
     positive_gid_set = set(ibs.get_imageset_gids(positive_imageset_id))
     negative_gid_set = set(ibs.get_imageset_gids(negative_imageset_id))
@@ -1860,7 +2110,7 @@ def get_cnn_classifier_cameratrap_binary_training_images(ibs, positive_imageset_
 
     label_list = []
     for gid in candidate_gid_set:
-        args = (gid, )
+        args = (gid,)
         print('Processing GID: %r' % args)
 
         if skip_rate > 0.0 and random.uniform(0.0, 1.0) <= skip_rate:
@@ -1875,23 +2125,36 @@ def get_cnn_classifier_cameratrap_binary_training_images(ibs, positive_imageset_
             print('\t Skipping - No Label')
             continue
 
-        if skip_rate_pos > 0.0 and category == 'positive' and random.uniform(0.0, 1.0) <= skip_rate_pos:
+        if (
+            skip_rate_pos > 0.0
+            and category == 'positive'
+            and random.uniform(0.0, 1.0) <= skip_rate_pos
+        ):
             print('\t Skipping Positive')
             continue
 
-        if skip_rate_neg > 0.0 and category == 'negative' and random.uniform(0.0, 1.0) <= skip_rate_neg:
+        if (
+            skip_rate_neg > 0.0
+            and category == 'negative'
+            and random.uniform(0.0, 1.0) <= skip_rate_neg
+        ):
             print('\t Skipping Negative')
             continue
 
         image = ibs.get_images(gid)
-        image_ = cv2.resize(image, (image_size, image_size), interpolation=cv2.INTER_LANCZOS4)
+        image_ = cv2.resize(
+            image, (image_size, image_size), interpolation=cv2.INTER_LANCZOS4
+        )
 
-        values = (dbname, gid, )
+        values = (
+            dbname,
+            gid,
+        )
         patch_filename = '%s_image_gid_%s.png' % values
         patch_filepath = join(raw_path, patch_filename)
         cv2.imwrite(patch_filepath, image_)
 
-        label = '%s,%s' % (patch_filename, category, )
+        label = '%s,%s' % (patch_filename, category,)
         label_list.append(label)
 
     with open(join(labels_path, 'labels.csv'), 'a') as labels:
@@ -1901,14 +2164,19 @@ def get_cnn_classifier_cameratrap_binary_training_images(ibs, positive_imageset_
     return name_path
 
 
-
-def get_cnn_classifier_binary_training_images(ibs, category_list, dest_path=None,
-                                              image_size=192, purge=True,
-                                              skip_rate=0.0,
-                                              skip_rate_pos=0.0,
-                                              skip_rate_neg=0.0):
+def get_cnn_classifier_binary_training_images(
+    ibs,
+    category_list,
+    dest_path=None,
+    image_size=192,
+    purge=True,
+    skip_rate=0.0,
+    skip_rate_pos=0.0,
+    skip_rate_neg=0.0,
+):
     from os.path import join, expanduser
     import random
+
     if dest_path is None:
         dest_path = expanduser(join('~', 'Desktop', 'extracted'))
 
@@ -1926,19 +2194,20 @@ def get_cnn_classifier_binary_training_images(ibs, category_list, dest_path=None
     ut.ensuredir(labels_path)
 
     # gid_list = ibs.get_valid_gids()
-    train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
+    train_gid_set = set(
+        ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET'))
+    )
     aids_list = ibs.get_image_aids(train_gid_set)
 
     category_set = set(category_list)
 
     species_set_list = [
-        set(ibs.get_annot_species_texts(aid_list_))
-        for aid_list_ in aids_list
+        set(ibs.get_annot_species_texts(aid_list_)) for aid_list_ in aids_list
     ]
 
     label_list = []
     for gid, species_set in zip(train_gid_set, species_set_list):
-        args = (gid, )
+        args = (gid,)
         print('Processing GID: %r' % args)
 
         if skip_rate > 0.0 and random.uniform(0.0, 1.0) <= skip_rate:
@@ -1947,23 +2216,36 @@ def get_cnn_classifier_binary_training_images(ibs, category_list, dest_path=None
 
         category = 'positive' if len(species_set & category_set) else 'negative'
 
-        if skip_rate_pos > 0.0 and category == 'positive' and random.uniform(0.0, 1.0) <= skip_rate_pos:
+        if (
+            skip_rate_pos > 0.0
+            and category == 'positive'
+            and random.uniform(0.0, 1.0) <= skip_rate_pos
+        ):
             print('\t Skipping Positive')
             continue
 
-        if skip_rate_neg > 0.0 and category == 'negative' and random.uniform(0.0, 1.0) <= skip_rate_neg:
+        if (
+            skip_rate_neg > 0.0
+            and category == 'negative'
+            and random.uniform(0.0, 1.0) <= skip_rate_neg
+        ):
             print('\t Skipping Negative')
             continue
 
         image = ibs.get_images(gid)
-        image_ = cv2.resize(image, (image_size, image_size), interpolation=cv2.INTER_LANCZOS4)
+        image_ = cv2.resize(
+            image, (image_size, image_size), interpolation=cv2.INTER_LANCZOS4
+        )
 
-        values = (dbname, gid, )
+        values = (
+            dbname,
+            gid,
+        )
         patch_filename = '%s_image_gid_%s.png' % values
         patch_filepath = join(raw_path, patch_filename)
         cv2.imwrite(patch_filepath, image_)
 
-        label = '%s,%s' % (patch_filename, category, )
+        label = '%s,%s' % (patch_filename, category,)
         label_list.append(label)
 
     with open(join(labels_path, 'labels.csv'), 'a') as labels:
@@ -1973,15 +2255,20 @@ def get_cnn_classifier_binary_training_images(ibs, category_list, dest_path=None
     return name_path
 
 
-def get_cnn_classifier2_training_images(ibs, category_set=None,
-                                        category_mapping={},
-                                        dest_path=None,
-                                        train_gid_set=None,
-                                        image_size=192, purge=True,
-                                        cache=True,
-                                        skip_rate=0.0):
+def get_cnn_classifier2_training_images(
+    ibs,
+    category_set=None,
+    category_mapping={},
+    dest_path=None,
+    train_gid_set=None,
+    image_size=192,
+    purge=True,
+    cache=True,
+    skip_rate=0.0,
+):
     from os.path import join, expanduser, exists
     import random
+
     if dest_path is None:
         dest_path = expanduser(join('~', 'Desktop', 'extracted'))
 
@@ -1992,12 +2279,13 @@ def get_cnn_classifier2_training_images(ibs, category_set=None,
     labels_path = join(name_path, 'labels')
 
     if train_gid_set is None:
-        train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
+        train_gid_set = set(
+            ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET'))
+        )
 
     aids_list = ibs.get_image_aids(train_gid_set)
     species_set_list = [
-        set(ibs.get_annot_species_texts(aid_list_))
-        for aid_list_ in aids_list
+        set(ibs.get_annot_species_texts(aid_list_)) for aid_list_ in aids_list
     ]
 
     if category_set is None:
@@ -2019,22 +2307,19 @@ def get_cnn_classifier2_training_images(ibs, category_set=None,
 
         label_list = []
         for gid, species_set in zip(train_gid_set, species_set_list):
-            args = (gid, )
+            args = (gid,)
             print('Processing GID: %r' % args)
 
             if skip_rate > 0.0 and random.uniform(0.0, 1.0) <= skip_rate:
                 print('\t Skipping')
                 continue
 
-            species_set = set([
-                category_mapping.get(species, species)
-                for species in species_set
-            ])
+            species_set = set(
+                [category_mapping.get(species, species) for species in species_set]
+            )
 
             category_list_ = [
-                category
-                for category in category_list
-                if category in species_set
+                category for category in category_list if category in species_set
             ]
 
             if len(category_list_) == 0:
@@ -2042,15 +2327,20 @@ def get_cnn_classifier2_training_images(ibs, category_set=None,
                 continue
 
             image = ibs.get_images(gid)
-            image_ = cv2.resize(image, (image_size, image_size), interpolation=cv2.INTER_LANCZOS4)
+            image_ = cv2.resize(
+                image, (image_size, image_size), interpolation=cv2.INTER_LANCZOS4
+            )
 
-            values = (dbname, gid, )
+            values = (
+                dbname,
+                gid,
+            )
             patch_filename = '%s_image_gid_%s.png' % values
             patch_filepath = join(raw_path, patch_filename)
             cv2.imwrite(patch_filepath, image_)
 
             category = ';'.join(category_list_)
-            label = '%s,%s' % (patch_filename, category, )
+            label = '%s,%s' % (patch_filename, category,)
             label_list.append(label)
 
         with open(join(labels_path, 'labels.csv'), 'a') as labels:
@@ -2064,13 +2354,18 @@ def get_cnn_classifier2_training_images(ibs, category_set=None,
     return name_path, category_list
 
 
-
-
-def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
-                                    category_list=None, min_examples=10,
-                                    category_mapping=None,
-                                    viewpoint_mapping=None,
-                                    purge=True, strict=True, skip_rate=0.0):
+def get_cnn_labeler_training_images(
+    ibs,
+    dest_path=None,
+    image_size=128,
+    category_list=None,
+    min_examples=10,
+    category_mapping=None,
+    viewpoint_mapping=None,
+    purge=True,
+    strict=True,
+    skip_rate=0.0,
+):
     from os.path import join, expanduser
     import random
 
@@ -2090,11 +2385,13 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
     ut.ensuredir(raw_path)
     ut.ensuredir(labels_path)
 
-    print('category mapping = %s' % (ut.repr3(category_mapping), ))
-    print('viewpoint mapping = %s' % (ut.repr3(viewpoint_mapping), ))
+    print('category mapping = %s' % (ut.repr3(category_mapping),))
+    print('viewpoint mapping = %s' % (ut.repr3(viewpoint_mapping),))
 
     # train_gid_set = ibs.get_valid_gids()
-    train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
+    train_gid_set = set(
+        ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET'))
+    )
 
     aids_list = ibs.get_image_aids(train_gid_set)
     # bboxes_list = [ ibs.get_annot_bboxes(aid_list) for aid_list in aids_list ]
@@ -2106,8 +2403,7 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
     species_list = ibs.get_annot_species_texts(aid_list)
     if category_mapping is not None:
         species_list = [
-            category_mapping.get(species, species)
-            for species in species_list
+            category_mapping.get(species, species) for species in species_list
         ]
     species_set = set(species_list)
     yaw_list = ibs.get_annot_viewpoints(aid_list)
@@ -2116,7 +2412,7 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
         category_list = sorted(list(species_set))
         undesired_list = [
             'unspecified_animal',
-            ibs.get_species_nice(ibs.const.UNKNOWN_SPECIES_ROWID)
+            ibs.get_species_nice(ibs.const.UNKNOWN_SPECIES_ROWID),
         ]
         for undesired_species in undesired_list:
             if undesired_species in category_list:
@@ -2127,16 +2423,12 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
     tup_list = list(zip(aid_list, species_list, yaw_list))
     old_len = len(tup_list)
     tup_list = [
-        (
-            aid,
-            species,
-            viewpoint_mapping.get(species, {}).get(yaw, yaw),
-        )
+        (aid, species, viewpoint_mapping.get(species, {}).get(yaw, yaw),)
         for aid, species, yaw in tup_list
         if species in category_set
     ]
     new_len = len(tup_list)
-    print('Filtered annotations: keep %d / original %d' % (new_len, old_len, ))
+    print('Filtered annotations: keep %d / original %d' % (new_len, old_len,))
 
     # Skip any annotations that are of the wanted category and don't have a specified viewpoint
     counter = 0
@@ -2183,7 +2475,7 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
                 invalid_yaw_set.add(species)
                 continue
 
-    print('Null yaws: %d' % (counter, ))
+    print('Null yaws: %d' % (counter,))
     valid_seen_set = category_set - invalid_seen_set
     valid_yaw_set = valid_seen_set - invalid_yaw_set
     print('Requested categories:')
@@ -2211,16 +2503,16 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
             if yaw is None:
                 skipped_yaw += 1
                 continue
-            category = '%s:%s' % (species, yaw, )
+            category = '%s:%s' % (species, yaw,)
         elif species in valid_seen_set:
-            category = '%s' % (species, )
+            category = '%s' % (species,)
         else:
             skipped_seen += 1
             continue
         tup_list_.append((tup, category))
         aid_list_.append(aid)
-    print('Skipped Yaw:  skipped %d / total %d' % (skipped_yaw, len(tup_list), ))
-    print('Skipped Seen: skipped %d / total %d' % (skipped_seen, len(tup_list), ))
+    print('Skipped Yaw:  skipped %d / total %d' % (skipped_yaw, len(tup_list),))
+    print('Skipped Seen: skipped %d / total %d' % (skipped_seen, len(tup_list),))
 
     # Precompute chips
     ibs.compute_all_chips(aid_list_)
@@ -2229,7 +2521,7 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
     label_list = []
     for tup, category in tup_list_:
         aid, species, yaw = tup
-        args = (aid, )
+        args = (aid,)
         print('Processing AID: %r' % args)
 
         if skip_rate > 0.0 and random.uniform(0.0, 1.0) <= skip_rate:
@@ -2238,19 +2530,24 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
 
         # Compute data
         image = ibs.get_annot_chips(aid)
-        image_ = cv2.resize(image, (image_size, image_size), interpolation=cv2.INTER_LANCZOS4)
+        image_ = cv2.resize(
+            image, (image_size, image_size), interpolation=cv2.INTER_LANCZOS4
+        )
 
-        values = (dbname, aid, )
+        values = (
+            dbname,
+            aid,
+        )
         patch_filename = '%s_annot_aid_%s.png' % values
         patch_filepath = join(raw_path, patch_filename)
         cv2.imwrite(patch_filepath, image_)
 
         # Compute label
-        label = '%s,%s' % (patch_filename, category, )
+        label = '%s,%s' % (patch_filename, category,)
         label_list.append(label)
 
     print('Using labels for labeler training:')
-    label_list_ = set([ _[1] for _ in tup_list_ ])
+    label_list_ = set([_[1] for _ in tup_list_])
     label_list_ = sorted(label_list_)
     ut.print_list(label_list_)
 
@@ -2261,9 +2558,9 @@ def get_cnn_labeler_training_images(ibs, dest_path=None, image_size=128,
     return name_path
 
 
-def get_cnn_qualifier_training_images(ibs, dest_path=None, image_size=128,
-                                      purge=True):
+def get_cnn_qualifier_training_images(ibs, dest_path=None, image_size=128, purge=True):
     from os.path import join
+
     if dest_path is None:
         dest_path = ut.truepath('~/Desktop/extracted')
 
@@ -2281,14 +2578,16 @@ def get_cnn_qualifier_training_images(ibs, dest_path=None, image_size=128,
     ut.ensuredir(labels_path)
 
     # gid_list = ibs.get_valid_gids()
-    train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
+    train_gid_set = set(
+        ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET'))
+    )
     aids_list = ibs.get_image_aids(train_gid_set)
     # bboxes_list = [ ibs.get_annot_bboxes(aid_list) for aid_list in aids_list ]
     # aid_list = ibs.get_valid_aids()
     aid_list = ut.flatten(aids_list)
     flag_list = ibs.get_annot_reviewed(aid_list)
     aid_list = [aid for aid, flag in zip(aid_list, flag_list) if flag]
-    print('Outputing a total of %d annotations' % (len(aid_list), ))
+    print('Outputing a total of %d annotations' % (len(aid_list),))
     # import random
     # random.shuffle(aid_list)
     # aid_list = sorted(aid_list[:100])
@@ -2296,19 +2595,24 @@ def get_cnn_qualifier_training_images(ibs, dest_path=None, image_size=128,
 
     label_list = []
     for aid, quality in zip(aid_list, quality_list):
-        args = (aid, )
+        args = (aid,)
         print('Processing AID: %r' % args)
 
         image = ibs.get_annot_chips(aid)
-        image_ = cv2.resize(image, (image_size, image_size), interpolation=cv2.INTER_LANCZOS4)
+        image_ = cv2.resize(
+            image, (image_size, image_size), interpolation=cv2.INTER_LANCZOS4
+        )
 
-        values = (dbname, aid, )
+        values = (
+            dbname,
+            aid,
+        )
         patch_filename = '%s_annot_aid_%s.png' % values
         patch_filepath = join(raw_path, patch_filename)
         cv2.imwrite(patch_filepath, image_)
 
         category = quality.lower()
-        label = '%s,%s' % (patch_filename, category, )
+        label = '%s,%s' % (patch_filename, category,)
         label_list.append(label)
 
     with open(join(labels_path, 'labels.csv'), 'a') as labels:
@@ -2338,8 +2642,8 @@ def extract_orientation_chips(ibs, gid_list, image_size=128, training=True, verb
     target_size = int(np.around(image_size * 2 ** 0.5))
 
     aids_list = ibs.get_image_aids(gid_list)
-    bboxes_list = [ ibs.get_annot_bboxes(aid_list) for aid_list in aids_list ]
-    thetas_list = [ ibs.get_annot_thetas(aid_list) for aid_list in aids_list ]
+    bboxes_list = [ibs.get_annot_bboxes(aid_list) for aid_list in aids_list]
+    thetas_list = [ibs.get_annot_thetas(aid_list) for aid_list in aids_list]
 
     zipped_list = zip(gid_list, aids_list, bboxes_list, thetas_list)
 
@@ -2347,20 +2651,22 @@ def extract_orientation_chips(ibs, gid_list, image_size=128, training=True, verb
     global_theta_list = []
     global_tag_list = []
     for gid, aid_list, bbox_list, theta_list in zipped_list:
-        args = (gid, )
+        args = (gid,)
         if verbose:
             print('Processing GID: %r' % args)
-            print('\tAIDS  : %r' % (aid_list, ))
-            print('\tBBOXES: %r' % (bbox_list, ))
-            print('\tTHETAS: %r' % (theta_list, ))
+            print('\tAIDS  : %r' % (aid_list,))
+            print('\tBBOXES: %r' % (bbox_list,))
+            print('\tTHETAS: %r' % (theta_list,))
 
         if len(aid_list) > 0:
             image = ibs.get_images(gid)
             height, width, channels = image.shape
 
             padding = 1.5 * max(height, width)
-            canvas = np.zeros((width + 2 * padding, height + 2 * padding, channels), dtype=image.dtype)
-            canvas[padding:padding + height, padding:padding + width] = image
+            canvas = np.zeros(
+                (width + 2 * padding, height + 2 * padding, channels), dtype=image.dtype
+            )
+            canvas[padding : padding + height, padding : padding + width] = image
 
             for aid, bbox, theta in zip(aid_list, bbox_list, theta_list):
                 vert_list = scaled_verts_from_bbox(bbox, theta, 1.0, 1.0)
@@ -2374,8 +2680,8 @@ def extract_orientation_chips(ibs, gid_list, image_size=128, training=True, verb
                 boxy = boxb - boxt
                 target = max(boxx, boxy)
 
-                deltax = (target - boxx)
-                deltay = (target - boxy)
+                deltax = target - boxx
+                deltay = target - boxy
                 deltar = (target * 2 ** 0.5) - target if training else 0.0
 
                 # Ignoring partial pixels, should be square
@@ -2384,13 +2690,15 @@ def extract_orientation_chips(ibs, gid_list, image_size=128, training=True, verb
                 boxt -= int(np.around((deltay + deltar) * 0.5))
                 boxb += int(np.around((deltay + deltar) * 0.5))
 
-                chip = canvas[padding + boxt:padding + boxb, padding + boxl:padding + boxr]
+                chip = canvas[
+                    padding + boxt : padding + boxb, padding + boxl : padding + boxr
+                ]
                 chip = resize_target(chip, target_size, target_size)
                 global_chip_list.append(chip)
 
                 global_theta_list.append(theta / (2.0 * np.pi))
 
-                tag = '%s_chip_gid_%s_aid_%s' % (dbname, gid, aid, )
+                tag = '%s_chip_gid_%s_aid_%s' % (dbname, gid, aid,)
                 global_tag_list.append(tag)
 
     return global_chip_list, global_theta_list, global_tag_list
@@ -2426,11 +2734,11 @@ def get_orientation_training_images(ibs, dest_path=None, **kwargs):
     from os.path import join, expanduser
 
     dbname_mapping = {
-        'ELPH_Master'    : 'elephant_savanna',
-        'GIR_Master'     : 'giraffe_reticulated',
-        'GZ_Master'      : 'zebra_grevys',
-        'NNP_MasterGIRM' : 'giraffe_masai',
-        'PZ_Master1'     : 'zebra_plains',
+        'ELPH_Master': 'elephant_savanna',
+        'GIR_Master': 'giraffe_reticulated',
+        'GZ_Master': 'zebra_grevys',
+        'NNP_MasterGIRM': 'giraffe_masai',
+        'PZ_Master1': 'zebra_plains',
     }
 
     if dest_path is None:
@@ -2451,13 +2759,15 @@ def get_orientation_training_images(ibs, dest_path=None, **kwargs):
     ut.ensuredir(labels_path)
 
     # gid_list = ibs.get_valid_gids()
-    train_gid_set = set(ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET')))
+    train_gid_set = set(
+        ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET'))
+    )
     vals = extract_orientation_chips(ibs, train_gid_set, **kwargs)
 
     label_list = []
     zipped_list = zip(*vals)
     for chip, theta, tag in zipped_list:
-        chip_filename = '%s.png' % (tag, )
+        chip_filename = '%s.png' % (tag,)
         chip_filepath = join(raw_path, chip_filename)
         cv2.imwrite(chip_filepath, chip)
         label = '%s,%s' % (chip_filename, theta)
@@ -2476,6 +2786,8 @@ if __name__ == '__main__':
         python -m wbia_cnn.ingest_wbia --allexamples --noface --nosrc
     """
     import multiprocessing
+
     multiprocessing.freeze_support()  # for win32
     import utool as ut  # NOQA
+
     ut.doctest_funcs()

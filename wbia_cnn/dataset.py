@@ -4,6 +4,7 @@ from os.path import join, basename, exists
 import six
 import numpy as np
 import utool as ut
+
 print, rrr, profile = ut.inject2(__name__)
 
 
@@ -28,8 +29,16 @@ class DataSet(ut.NiceRepr):
         >>>                    output_dims=10, dataset_dpath=dataset.dataset_dpath)
         >>> model.print_structure()
     """
-    def __init__(dataset, cfgstr=None, training_dpath='.', data_shape=None,
-                 num_data=None, name=None, ext='.pkl'):
+
+    def __init__(
+        dataset,
+        cfgstr=None,
+        training_dpath='.',
+        data_shape=None,
+        num_data=None,
+        name=None,
+        ext='.pkl',
+    ):
         dataset.name = name
         dataset.cfgstr = cfgstr
         dataset.training_dpath = training_dpath
@@ -44,7 +53,7 @@ class DataSet(ut.NiceRepr):
         }
         # Dictionary for storing different data subsets
         dataset.fpath_dict = {
-            'full' : {
+            'full': {
                 'data': dataset.data_fpath,
                 'labels': dataset.labels_fpath,
                 'metadata': dataset.metadata_fpath,
@@ -188,8 +197,9 @@ class DataSet(ut.NiceRepr):
     @ut.memoize
     def subset_labels(dataset, key='full'):
         labels_fpath = dataset.fpath_dict[key]['labels']
-        labels = (None if labels_fpath is None
-                  else ut.load_data(labels_fpath, verbose=True))
+        labels = (
+            None if labels_fpath is None else ut.load_data(labels_fpath, verbose=True)
+        )
         return labels
 
     @ut.memoize
@@ -224,9 +234,15 @@ class DataSet(ut.NiceRepr):
         print('[dataset] * Data:')
         print('[dataset]     %s_data(shape=%r, dtype=%r)' % (key, data.shape, data.dtype))
         print('[dataset]     %s_memory(data) = %r' % (key, ut.get_object_size_str(data),))
-        print('[dataset]     %s_stats(data) = %s' % (key, ut.repr2(stats_dict, precision=2),))
+        print(
+            '[dataset]     %s_stats(data) = %s'
+            % (key, ut.repr2(stats_dict, precision=2),)
+        )
         print('[dataset] * Labels:')
-        print('[dataset]     %s_labels(shape=%r, dtype=%r)' % (key, labels.shape, labels.dtype))
+        print(
+            '[dataset]     %s_labels(shape=%r, dtype=%r)'
+            % (key, labels.shape, labels.dtype)
+        )
         print('[dataset]     %s_label histogram = %s' % (key, ut.repr2(labelhist)))
 
     def interact(dataset, key='full', **kwargs):
@@ -235,22 +251,24 @@ class DataSet(ut.NiceRepr):
         python -m wbia_cnn --tf netrun --db PZ_MTEST --acfg ctrl --ensuredata --show
         """
         from wbia_cnn import draw_results
-        #interact_func = draw_results.interact_siamsese_data_patches
+
+        # interact_func = draw_results.interact_siamsese_data_patches
         interact_func = draw_results.interact_dataset
         # Automatically infer which lazy properties are needed for the
         # interaction.
         kwarg_items = ut.recursive_parse_kwargs(interact_func)
         kwarg_keys = ut.get_list_column(kwarg_items, 0)
-        interact_kw = {key_: dataset.getprop(key_)
-                       for key_ in kwarg_keys if dataset.hasprop(key_)}
+        interact_kw = {
+            key_: dataset.getprop(key_) for key_ in kwarg_keys if dataset.hasprop(key_)
+        }
         interact_kw.update(**kwargs)
         # TODO : generalize
-        data     = dataset.subset_data(key)
-        labels   = dataset.subset_labels(key)
+        data = dataset.subset_data(key)
+        labels = dataset.subset_labels(key)
         metadata = dataset.subset_metadata(key)
         return interact_func(
-            labels, data, metadata, dataset._info['data_per_label'],
-            **interact_kw)
+            labels, data, metadata, dataset._info['data_per_label'], **interact_kw
+        )
 
     def view_directory(dataset):
         ut.view_directory(dataset.dataset_dpath)
@@ -282,6 +300,7 @@ class DataSet(ut.NiceRepr):
 
     def load_splitsets(dataset):
         import parse
+
         fpath_dict = {}
         fmtstr = dataset.get_split_fmtstr(forward=False)
         for fpath in ut.ls(dataset.split_dpath):
@@ -448,7 +467,7 @@ def stratified_shuffle_split(y, fractions, rng=None, class_weights=None):
     class_counts = np.bincount(y_indices)
 
     # TODO: weighted version
-    #class_counts_ = np.array([sum([w.get(cx, 0) for w in class_weights]) for cx in classes])
+    # class_counts_ = np.array([sum([w.get(cx, 0) for w in class_weights]) for cx in classes])
 
     # Number of sets to split into
     num_sets = len(fractions)
@@ -456,15 +475,18 @@ def stratified_shuffle_split(y, fractions, rng=None, class_weights=None):
     set_sizes = n_samples * fractions
 
     if np.min(class_counts) < 2:
-        raise ValueError('The least populated class in y has only 1'
-                         ' member, which is too few. The minimum'
-                         ' number of labels for any class cannot'
-                         ' be less than 2.')
+        raise ValueError(
+            'The least populated class in y has only 1'
+            ' member, which is too few. The minimum'
+            ' number of labels for any class cannot'
+            ' be less than 2.'
+        )
     for size in set_sizes:
         if size < n_classes:
-            raise ValueError('The size = %d of all splits should be greater or '
-                             'equal to the number of classes = %d' %
-                             (size, n_classes))
+            raise ValueError(
+                'The size = %d of all splits should be greater or '
+                'equal to the number of classes = %d' % (size, n_classes)
+            )
     if rng is None:
         rng = np.random
     elif isinstance(rng, int):
@@ -537,13 +559,13 @@ def stratified_label_shuffle_split(y, labels, fractions, y_idx=None, rng=None):
         >>> index_sets = stratified_label_shuffle_split(y, labels, fractions, rng)
     """
     rng = ut.ensure_rng(rng)
-    #orig_y = y
+    # orig_y = y
     unique_labels, groupxs = ut.group_indices(labels)
     grouped_ys = ut.apply_grouping(y, groupxs)
     # Assign each group a probabilistic class
     unique_ys = [ys[rng.randint(0, len(ys))] for ys in grouped_ys]
     # TODO: should weight the following selection based on size of group
-    #class_weights = [ut.dict_hist(ys) for ys in grouped_ys]
+    # class_weights = [ut.dict_hist(ys) for ys in grouped_ys]
 
     unique_idxs = stratified_shuffle_split(unique_ys, fractions, rng)
     index_sets = [np.array(ut.flatten(ut.take(groupxs, idxs))) for idxs in unique_idxs]
@@ -580,15 +602,16 @@ def stratified_kfold_label_split(y, labels, n_folds=2, y_idx=None, rng=None):
     """
 
     rng = ut.ensure_rng(rng)
-    #orig_y = y
+    # orig_y = y
     unique_labels, groupxs = ut.group_indices(labels)
     grouped_ys = ut.apply_grouping(y, groupxs)
     # Assign each group a probabilistic class
     unique_ys = [ys[rng.randint(0, len(ys))] for ys in grouped_ys]
     # TODO: should weight the following selection based on size of group
-    #class_weights = [ut.dict_hist(ys) for ys in grouped_ys]
+    # class_weights = [ut.dict_hist(ys) for ys in grouped_ys]
 
     import sklearn.cross_validation
+
     xvalkw = dict(n_folds=n_folds, shuffle=True, random_state=rng)
     skf = sklearn.cross_validation.StratifiedKFold(unique_ys, **xvalkw)
     _iter = skf
@@ -596,14 +619,17 @@ def stratified_kfold_label_split(y, labels, n_folds=2, y_idx=None, rng=None):
     folded_index_sets = []
 
     for label_idx_set in _iter:
-        index_sets = [np.array(ut.flatten(ut.take(groupxs, idxs)))
-                      for idxs in label_idx_set]
+        index_sets = [
+            np.array(ut.flatten(ut.take(groupxs, idxs))) for idxs in label_idx_set
+        ]
         folded_index_sets.append(index_sets)
 
     for train_idx, test_idx in folded_index_sets:
         train_labels = set(ut.take(labels, train_idx))
         test_labels = set(ut.take(labels, test_idx))
-        assert len(test_labels.intersection(train_labels)) == 0, 'same labels appeared in both train and test'
+        assert (
+            len(test_labels.intersection(train_labels)) == 0
+        ), 'same labels appeared in both train and test'
         pass
 
     if y_idx is not None:
@@ -613,13 +639,13 @@ def stratified_kfold_label_split(y, labels, n_folds=2, y_idx=None, rng=None):
             index_sets = [np.take(y_idx, idxs, axis=0) for idxs in index_sets]
             folded_index_sets2.append(index_sets)
         folded_index_sets = folded_index_sets2
-    #import sklearn.model_selection
-    #skf = sklearn.model_selection.StratifiedKFold(**xvalkw)
-    #_iter = skf.split(X=np.empty(len(target)), y=target)
+    # import sklearn.model_selection
+    # skf = sklearn.model_selection.StratifiedKFold(**xvalkw)
+    # _iter = skf.split(X=np.empty(len(target)), y=target)
 
-    #unique_idxs = stratified_shuffle_split(unique_ys, fractions, rng)
-    #index_sets = [np.array(ut.flatten(ut.take(groupxs, idxs))) for idxs in unique_idxs]
-    #if idx is not None:
+    # unique_idxs = stratified_shuffle_split(unique_ys, fractions, rng)
+    # index_sets = [np.array(ut.flatten(ut.take(groupxs, idxs))) for idxs in unique_idxs]
+    # if idx is not None:
     #    # These indicies subindex into parent set of indicies
     #    index_sets = [np.take(idx, idxs, axis=0) for idxs in index_sets]
     return folded_index_sets
@@ -631,8 +657,10 @@ def expand_data_indicies(label_indices, data_per_label=1):
     indicies
     """
     import numpy as np
-    expanded_indicies = [label_indices * data_per_label + count
-                         for count in range(data_per_label)]
+
+    expanded_indicies = [
+        label_indices * data_per_label + count for count in range(data_per_label)
+    ]
     data_indices = np.vstack(expanded_indicies).T.flatten()
     return data_indices
 
@@ -645,6 +673,8 @@ if __name__ == '__main__':
         python -m wbia_cnn.dataset --allexamples --noface --nosrc
     """
     import multiprocessing
+
     multiprocessing.freeze_support()  # for win32
     import utool as ut  # NOQA
+
     ut.doctest_funcs()

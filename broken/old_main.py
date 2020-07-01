@@ -120,7 +120,7 @@ r"""
 """
 
 
-#def train_mnist():
+# def train_mnist():
 #    r"""
 #    CommandLine:
 #        python -m ibeis_cnn.train --test-train_mnist

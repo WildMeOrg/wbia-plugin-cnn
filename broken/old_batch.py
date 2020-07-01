@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#def create_sliced_iter_funcs_train2(model, X_unshared, y_unshared):
+# def create_sliced_iter_funcs_train2(model, X_unshared, y_unshared):
 #    """
 #    WIP: NEW IMPLEMENTATION WITH PRELOADING GPU DATA
 
@@ -131,7 +131,7 @@
 #    return theano_backprop
 
 
-#def create_sliced_network_output_func(model):
+# def create_sliced_network_output_func(model):
 #    # Initialize symbolic input variables
 #    X_batch = T.tensor4(name='X_batch')
 #    # weird, idk why X and y exist

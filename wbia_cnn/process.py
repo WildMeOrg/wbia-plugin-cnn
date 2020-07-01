@@ -32,17 +32,21 @@ def process_image_directory(project_name, size, reset=True):
     # Process by resizing the images into the desired shape
     for file_path in direct.files():
         file_name = basename(file_path)
-        print('Processing %r' % (file_name, ))
+        print('Processing %r' % (file_name,))
         image = cv2.imread(file_path)
         image = cv2.resize(image, size, interpolation=cv2.INTER_LANCZOS4)
         dest_path = join(project_processed_path, file_name)
         cv2.imwrite(dest_path, image)
 
 
-def numpy_processed_directory(project_name, numpy_ids_file_name='ids.npy',
-                              numpy_x_file_name='X.npy',
-                              numpy_y_file_name='y.npy', labels_file_name='labels.csv',
-                              reset=True):
+def numpy_processed_directory(
+    project_name,
+    numpy_ids_file_name='ids.npy',
+    numpy_x_file_name='X.npy',
+    numpy_y_file_name='y.npy',
+    labels_file_name='labels.csv',
+    reset=True,
+):
     # Raw folders
     processed_path = abspath(join('..', 'data', 'processed'))
     labels_path = abspath(join('..', 'data', 'labels'))
@@ -88,7 +92,7 @@ def numpy_processed_directory(project_name, numpy_ids_file_name='ids.npy',
     # Process by loading images into the numpy array for saving
     for index, file_path in enumerate(direct.files()):
         file_name = basename(file_path)
-        print('Processing %r' % (file_name, ))
+        print('Processing %r' % (file_name,))
         image = cv2.imread(file_path)
         try:
             label = label_dict[file_name]
@@ -119,10 +123,15 @@ def numpy_processed_directory(project_name, numpy_ids_file_name='ids.npy',
     np.save(project_numpy_y_file_name, y)
 
 
-def numpy_processed_directory2(extracted_path, numpy_ids_file_name='ids.npy',
-                               numpy_x_file_name='X.npy',
-                               numpy_y_file_name='y.npy', labels_file_name='labels.csv',
-                               reset=True, verbose=False):
+def numpy_processed_directory2(
+    extracted_path,
+    numpy_ids_file_name='ids.npy',
+    numpy_x_file_name='X.npy',
+    numpy_y_file_name='y.npy',
+    labels_file_name='labels.csv',
+    reset=True,
+    verbose=False,
+):
     print('Caching images into Numpy files...')
 
     raw_path = join(extracted_path, 'raw')
@@ -161,7 +170,7 @@ def numpy_processed_directory2(extracted_path, numpy_ids_file_name='ids.npy',
     for index, file_path in enumerate(direct.files()):
         file_name = basename(file_path)
         if verbose:
-            print('Processing %r' % (file_name, ))
+            print('Processing %r' % (file_name,))
         image = cv2.imread(file_path)
         try:
             label = label_dict[file_name]
@@ -191,15 +200,23 @@ def numpy_processed_directory2(extracted_path, numpy_ids_file_name='ids.npy',
     np.save(project_numpy_x_file_name, X)
     np.save(project_numpy_y_file_name, y)
 
-    return project_numpy_ids_file_name, project_numpy_x_file_name, project_numpy_y_file_name
+    return (
+        project_numpy_ids_file_name,
+        project_numpy_x_file_name,
+        project_numpy_y_file_name,
+    )
 
 
-def numpy_processed_directory3(extracted_path, numpy_ids_file_name='ids.npy',
-                               numpy_x_file_name='X.npy',
-                               numpy_y_file_name='y.npy',
-                               labels_file_name='labels.csv',
-                               categories_file_name='categories.csv',
-                               reset=True, verbose=False):
+def numpy_processed_directory3(
+    extracted_path,
+    numpy_ids_file_name='ids.npy',
+    numpy_x_file_name='X.npy',
+    numpy_y_file_name='y.npy',
+    labels_file_name='labels.csv',
+    categories_file_name='categories.csv',
+    reset=True,
+    verbose=False,
+):
     print('Caching images into Numpy files with category vector...')
 
     raw_path = join(extracted_path, 'raw')
@@ -228,7 +245,7 @@ def numpy_processed_directory3(extracted_path, numpy_ids_file_name='ids.npy',
         label = line[1].strip()
         label_list = label.split(';')
         label_set = set(label_list)
-        label = [ 1 if category_ in label_set else 0 for category_ in category_list]
+        label = [1 if category_ in label_set else 0 for category_ in category_list]
         assert 1 in label
         count = label.count(1)
         if count not in count_dict:
@@ -236,7 +253,7 @@ def numpy_processed_directory3(extracted_path, numpy_ids_file_name='ids.npy',
         count_dict[count] += 1
         label_dict[file_name] = label
 
-    print('count_dict = %s' % (ut.repr3(count_dict), ))
+    print('count_dict = %s' % (ut.repr3(count_dict),))
 
     # Get shape for all images
     shape_x = list(cv2.imread(direct.files()[0]).shape)
@@ -256,7 +273,7 @@ def numpy_processed_directory3(extracted_path, numpy_ids_file_name='ids.npy',
     for index, file_path in enumerate(direct.files()):
         file_name = basename(file_path)
         if verbose:
-            print('Processing %r' % (file_name, ))
+            print('Processing %r' % (file_name,))
         image = cv2.imread(file_path)
         try:
             label = np.array(label_dict[file_name])
@@ -287,14 +304,22 @@ def numpy_processed_directory3(extracted_path, numpy_ids_file_name='ids.npy',
     np.save(project_numpy_x_file_name, X)
     np.save(project_numpy_y_file_name, y)
 
-    return project_numpy_ids_file_name, project_numpy_x_file_name, project_numpy_y_file_name
+    return (
+        project_numpy_ids_file_name,
+        project_numpy_x_file_name,
+        project_numpy_y_file_name,
+    )
 
 
-def numpy_processed_directory4(extracted_path, numpy_ids_file_name='ids.npy',
-                               numpy_x_file_name='X.npy',
-                               numpy_y_file_name='y.npy',
-                               labels_file_name='labels.csv',
-                               reset=True, verbose=False):
+def numpy_processed_directory4(
+    extracted_path,
+    numpy_ids_file_name='ids.npy',
+    numpy_x_file_name='X.npy',
+    numpy_y_file_name='y.npy',
+    labels_file_name='labels.csv',
+    reset=True,
+    verbose=False,
+):
     print('Caching images into Numpy files with category vector...')
 
     raw_path = join(extracted_path, 'raw')
@@ -314,10 +339,7 @@ def numpy_processed_directory4(extracted_path, numpy_ids_file_name='ids.npy',
         file_name = line[0].strip()
         label = line[1].strip()
         label_list = label.split(';')
-        label_list = [
-            list(map(float, _.split('^')))
-            for _ in label_list
-        ]
+        label_list = [list(map(float, _.split('^'))) for _ in label_list]
         label = np.array(label_list)
         label_dict[file_name] = label
 
@@ -330,7 +352,7 @@ def numpy_processed_directory4(extracted_path, numpy_ids_file_name='ids.npy',
     for index, file_path in enumerate(direct.files()):
         file_name = basename(file_path)
         if verbose:
-            print('Processing %r' % (file_name, ))
+            print('Processing %r' % (file_name,))
 
         with open(file_path, 'r') as file_:
             data = np.load(file_)
@@ -357,14 +379,22 @@ def numpy_processed_directory4(extracted_path, numpy_ids_file_name='ids.npy',
     np.save(project_numpy_x_file_name, X)
     np.save(project_numpy_y_file_name, y)
 
-    return project_numpy_ids_file_name, project_numpy_x_file_name, project_numpy_y_file_name
+    return (
+        project_numpy_ids_file_name,
+        project_numpy_x_file_name,
+        project_numpy_y_file_name,
+    )
 
 
-def numpy_processed_directory5(extracted_path, numpy_ids_file_name='ids.npy',
-                               numpy_x_file_name='X.npy',
-                               numpy_y_file_name='y.npy',
-                               labels_file_name='labels.csv',
-                               reset=True, verbose=False):
+def numpy_processed_directory5(
+    extracted_path,
+    numpy_ids_file_name='ids.npy',
+    numpy_x_file_name='X.npy',
+    numpy_y_file_name='y.npy',
+    labels_file_name='labels.csv',
+    reset=True,
+    verbose=False,
+):
     print('Caching images into Numpy files with category vector...')
 
     raw_path = join(extracted_path, 'raw')
@@ -384,10 +414,7 @@ def numpy_processed_directory5(extracted_path, numpy_ids_file_name='ids.npy',
         file_name = line[0].strip()
         label = line[1].strip()
         label_list = label.split(';')
-        label_list = [
-            list(map(float, _.split('^')))
-            for _ in label_list
-        ]
+        label_list = [list(map(float, _.split('^'))) for _ in label_list]
         label = np.array(label_list)
         label_dict[file_name] = label
 
@@ -400,7 +427,7 @@ def numpy_processed_directory5(extracted_path, numpy_ids_file_name='ids.npy',
     for index, file_path in enumerate(direct.files()):
         file_name = basename(file_path)
         if verbose:
-            print('Processing %r' % (file_name, ))
+            print('Processing %r' % (file_name,))
 
         image = cv2.imread(file_path, -1)
         try:
@@ -426,7 +453,11 @@ def numpy_processed_directory5(extracted_path, numpy_ids_file_name='ids.npy',
     np.save(project_numpy_x_file_name, X)
     np.save(project_numpy_y_file_name, y)
 
-    return project_numpy_ids_file_name, project_numpy_x_file_name, project_numpy_y_file_name
+    return (
+        project_numpy_ids_file_name,
+        project_numpy_x_file_name,
+        project_numpy_y_file_name,
+    )
 
 
 def view_numpy_data(project_namel, numpy_x_file_name='X.npy', numpy_y_file_name='y.npy'):

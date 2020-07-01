@@ -13,10 +13,12 @@ CHMOD_PATTERNS = [
     'run_tests.sh',
 ]
 
-PROJECT_DIRS = ['wbia_cnn', ]
+PROJECT_DIRS = [
+    'wbia_cnn',
+]
 
 CLUTTER_PATTERNS = [
-    '\'',
+    "'",
     '*.dump.txt',
     '*.prof',
     '*.prof.txt',
@@ -46,7 +48,6 @@ INSTALL_REQUIRES = [
     # 'h5py',  # Install this instead 'sudo apt-get install libhdf5-dev' due to Numpy versioning issues
     #'pylearn2',
     #'git+git://github.com/lisa-lab/pylearn2.git'
-
     #'utool >= 1.0.0.dev1',
     #'vtool >= 1.0.0.dev1',
     ##'pyhesaff >= 1.0.0.dev1',
@@ -69,7 +70,7 @@ INSTALL_REQUIRES = [
     #'PyQt 4/5 >= 4.9.1', # cannot include because pyqt4 is not in pip
 ]
 
-#INSTALL_OPTIONAL = [
+# INSTALL_OPTIONAL = [
 #    'tornado',
 #    'flask',
 #    'autopep8',
@@ -77,7 +78,7 @@ INSTALL_REQUIRES = [
 #    'theano',
 #    'pylearn2'
 #    'lasenge'
-#]
+# ]
 
 if six.PY2:
     INSTALL_REQUIRES.append('requests >= 0.8.2')
@@ -88,8 +89,8 @@ if __name__ == '__main__':
     kwargs = util_setup.setuptools_setup(
         setup_fpath=__file__,
         name='wbia_cnn',
-        #author='Hendrik Weideman, Jason Parham, and Jon Crall',
-        #author_email='erotemic@gmail.com',
+        # author='Hendrik Weideman, Jason Parham, and Jon Crall',
+        # author_email='erotemic@gmail.com',
         packages=util_setup.find_packages(),
         version=util_setup.parse_package_for_version('wbia_cnn'),
         license=util_setup.read_license('LICENSE'),
@@ -101,8 +102,9 @@ if __name__ == '__main__':
         clutter_patterns=CLUTTER_PATTERNS,
         clutter_dirs=CLUTTER_DIRS,
         install_requires=INSTALL_REQUIRES
-        #cython_files=CYTHON_FILES,
+        # cython_files=CYTHON_FILES,
     )
     import utool as ut
+
     print('kwargs = %s' % (ut.dict_str(kwargs),))
     setup(**kwargs)

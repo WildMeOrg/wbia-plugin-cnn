@@ -10,10 +10,11 @@ from __future__ import absolute_import, division, print_function
 import functools
 import numpy as np
 import utool as ut
+
 print, rrr, profile = ut.inject2(__name__)
 
 
-rot_transforms  = [functools.partial(np.rot90, k=k) for k in range(1, 4)]
+rot_transforms = [functools.partial(np.rot90, k=k) for k in range(1, 4)]
 
 flip_transforms = [np.fliplr, np.flipud]
 
@@ -37,18 +38,27 @@ TAU = 2 * np.pi
 
 
 RAND_AFF_ARGS_DEFAULTS = dict(
-    zoom_range=(1 / 1.1, 1.1), max_tx=1.0, max_ty=1.0, max_shear=TAU / 16,
-    max_theta=TAU / 32, enable_flip=False, enable_stretch=False, rng=np.random)
+    zoom_range=(1 / 1.1, 1.1),
+    max_tx=1.0,
+    max_ty=1.0,
+    max_shear=TAU / 16,
+    max_theta=TAU / 32,
+    enable_flip=False,
+    enable_stretch=False,
+    rng=np.random,
+)
 
 
-def random_affine_args(zoom_range=(1 / 1.1, 1.1),
-                       max_tx=1.0,
-                       max_ty=1.0,
-                       max_shear=TAU / 16,
-                       max_theta=TAU / 32,
-                       enable_flip=False,
-                       enable_stretch=False,
-                       rng=np.random):
+def random_affine_args(
+    zoom_range=(1 / 1.1, 1.1),
+    max_tx=1.0,
+    max_ty=1.0,
+    max_shear=TAU / 16,
+    max_theta=TAU / 32,
+    enable_flip=False,
+    enable_stretch=False,
+    rng=np.random,
+):
     r"""
     CommandLine:
         python -m wbia_cnn.augment --test-random_affine_args
@@ -100,8 +110,8 @@ def random_affine_args(zoom_range=(1 / 1.1, 1.1),
 
     affine_args = (sx, sy, theta, shear, tx, ty)
     return affine_args
-    #Aff = vt.affine_mat3x3(sx, sy, theta, shear, tx, ty)
-    #return Aff
+    # Aff = vt.affine_mat3x3(sx, sy, theta, shear, tx, ty)
+    # return Aff
 
 
 def random_affine_kwargs(*args, **kwargs):
@@ -138,13 +148,15 @@ def affine_perterb(img, rng=np.random):
     """
     import vtool as vt
     import cv2
+
     affine_args = random_affine_args(rng=rng)
     h1, w1 = img.shape[0:2]
     y1, x1 = h1 / 2.0, w1 / 2.0
     Aff = vt.affine_around_mat3x3(x1, y1, *affine_args)
     dsize = (w1, h1)
-    img_warped = cv2.warpAffine(img, Aff[0:2], dsize, flags=cv2.INTER_LANCZOS4,
-                                borderMode=cv2.BORDER_CONSTANT)
+    img_warped = cv2.warpAffine(
+        img, Aff[0:2], dsize, flags=cv2.INTER_LANCZOS4, borderMode=cv2.BORDER_CONSTANT
+    )
     return img_warped
 
 
@@ -159,6 +171,7 @@ def test_transforms():
         >>> test_transforms()
     """
     from wbia_cnn import ingest_data, utils, draw_results
+
     data, labels = ingest_data.testdata_patchmatch()
     cv2_data = utils.convert_theano_images_to_cv2_images(data)
     patches_ = cv2_data[::2]
@@ -167,12 +180,13 @@ def test_transforms():
 
     num_random = 5
     import vtool as vt
+
     for x in range(num_random):
         affine_kw = random_affine_kwargs()
         func = functools.partial(vt.affine_warp_around_center, **affine_kw)
         transform_list.append(func)
 
-    orig_list   = []
+    orig_list = []
     warped_list = []
 
     name_list = []
@@ -190,10 +204,18 @@ def test_transforms():
 
     index_list = list(range(len(orig_list)))
     label_list = None
-    tup = draw_results.get_patch_sample_img(orig_list, warped_list, label_list, {'text': name_list}, index_list, (1, len(index_list)))
+    tup = draw_results.get_patch_sample_img(
+        orig_list,
+        warped_list,
+        label_list,
+        {'text': name_list},
+        index_list,
+        (1, len(index_list)),
+    )
     stacked_img, stacked_offsets, stacked_sfs = tup
     ut.quit_if_noshow()
     import plottool as pt
+
     pt.imshow(stacked_img)
     ut.show_if_requested()
 
@@ -224,22 +246,26 @@ def augment_siamese_patches(Xb, yb=None, rng=np.random):
     """
     # Rotate corresponding patches together
     Xb1, Xb2 = Xb[::2], Xb[1::2]
-    rot_transforms  = [functools.partial(np.rot90, k=k) for k in range(1, 4)]
+    rot_transforms = [functools.partial(np.rot90, k=k) for k in range(1, 4)]
     flip_transforms = [np.fliplr, np.flipud]
-    prob_rotate = .3
-    prob_flip   = .3
+    prob_rotate = 0.3
+    prob_flip = 0.3
 
     num = len(Xb1)
 
     # Determine which examples will be augmented
-    rotate_flags   = rng.uniform(0.0, 1.0, size=num) <= prob_rotate
-    flip_flags     = rng.uniform(0.0, 1.0, size=num) <= prob_flip
+    rotate_flags = rng.uniform(0.0, 1.0, size=num) <= prob_rotate
+    flip_flags = rng.uniform(0.0, 1.0, size=num) <= prob_flip
 
     # Determine which functions to use
-    rot_fn_list  = [rot_transforms[rng.randint(len(rot_transforms))]
-                    if flag else None for flag in rotate_flags]
-    flip_fn_list = [flip_transforms[rng.randint(len(flip_transforms))]
-                    if flag else None for flag in flip_flags]
+    rot_fn_list = [
+        rot_transforms[rng.randint(len(rot_transforms))] if flag else None
+        for flag in rotate_flags
+    ]
+    flip_fn_list = [
+        flip_transforms[rng.randint(len(flip_transforms))] if flag else None
+        for flag in flip_flags
+    ]
 
     for index, func_list in enumerate(zip(rot_fn_list, flip_fn_list)):
         for func in func_list:
@@ -251,21 +277,22 @@ def augment_siamese_patches(Xb, yb=None, rng=np.random):
 
 def stacked_img_pairs(Xb, modified_indexes, label_list=None, num=None):
     from wbia_cnn import draw_results
+
     if num is None:
         num = len(modified_indexes)
-    #np.random.shuffle(modified_indexes)
+    # np.random.shuffle(modified_indexes)
     num = min(len(modified_indexes), num)
     patch_list1 = Xb[0::2]
     patch_list2 = Xb[1::2]
     per_row = 1
     cols = int(num / per_row)
-    #print('len(patch_list1) = %r' % (len(patch_list1),))
-    #print('len(patch_list2) = %r' % (len(patch_list2),))
-    #print('len(modified_indexes) = %r' % (len(modified_indexes),))
-    #print('modified_indexes = %r' % ((modified_indexes),))
-    tup = draw_results.get_patch_sample_img(patch_list1, patch_list2,
-                                            label_list, {}, modified_indexes,
-                                            (cols, per_row))
+    # print('len(patch_list1) = %r' % (len(patch_list1),))
+    # print('len(patch_list2) = %r' % (len(patch_list2),))
+    # print('len(modified_indexes) = %r' % (len(modified_indexes),))
+    # print('modified_indexes = %r' % ((modified_indexes),))
+    tup = draw_results.get_patch_sample_img(
+        patch_list1, patch_list2, label_list, {}, modified_indexes, (cols, per_row)
+    )
     stacked_img, stacked_offsets, stacked_sfs = tup
     return stacked_img
 
@@ -278,6 +305,7 @@ def show_augmented_patches(Xb, Xb_, yb, yb_, data_per_label=1, shadows=None):
     """
     import plottool as pt
     import vtool as vt
+
     Xb_old = vt.rectify_to_float01(Xb)
     Xb_new = vt.rectify_to_float01(Xb_)
 
@@ -288,39 +316,40 @@ def show_augmented_patches(Xb, Xb_, yb, yb_, data_per_label=1, shadows=None):
     diff_batches = diff.sum(-1).sum(-1).sum(-1) > 0
     modified_indexes = np.where(diff_batches > 0)[0]
     print('modified_indexes = %r' % (modified_indexes,))
-    #modified_indexes = np.arange(num_examples)
+    # modified_indexes = np.arange(num_examples)
 
     Xb_old = vt.rectify_to_uint8(Xb_old)
     Xb_new = vt.rectify_to_uint8(Xb_new)
 
     # Group data into n-tuples
-    grouped_idxs = [np.arange(n, len(Xb_), data_per_label)
-                    for n in range(data_per_label)]
+    grouped_idxs = [np.arange(n, len(Xb_), data_per_label) for n in range(data_per_label)]
     data_lists_old = vt.apply_grouping(Xb_old, grouped_idxs, axis=0)
     data_lists_new = vt.apply_grouping(Xb_new, grouped_idxs, axis=0)
 
     import six
-    #chunck_sizes = (4, 10)
+
+    # chunck_sizes = (4, 10)
     import utool
+
     with utool.embed_on_exception_context:
-        chunk_sizes = pt.get_square_row_cols(len(modified_indexes), max_cols=10,
-                                             fix=False, inclusive=False)
+        chunk_sizes = pt.get_square_row_cols(
+            len(modified_indexes), max_cols=10, fix=False, inclusive=False
+        )
         _iter = ut.iter_multichunks(modified_indexes, chunk_sizes)
         multiindices = six.next(_iter)
 
         from wbia_cnn import draw_results
-        tup = draw_results.get_patch_multichunks(data_lists_old, yb, {},
-                                                 multiindices)
+
+        tup = draw_results.get_patch_multichunks(data_lists_old, yb, {}, multiindices)
         orig_stack = tup[0]
-        #stacked_img, stacked_offsets, stacked_sfs = tup
+        # stacked_img, stacked_offsets, stacked_sfs = tup
 
-        tup = draw_results.get_patch_multichunks(data_lists_new, yb_, {},
-                                                 multiindices)
+        tup = draw_results.get_patch_multichunks(data_lists_new, yb_, {}, multiindices)
         warp_stack = tup[0]
-    #stacked_img, stacked_offsets, stacked_sfs = tup
+    # stacked_img, stacked_offsets, stacked_sfs = tup
 
-    #orig_stack = stacked_img_pairs(Xb_old, modified_indexes, yb)
-    #warp_stack = stacked_img_pairs(Xb_new, modified_indexes, yb_)
+    # orig_stack = stacked_img_pairs(Xb_old, modified_indexes, yb)
+    # warp_stack = stacked_img_pairs(Xb_new, modified_indexes, yb_)
     if shadows is not None:
         # hack
         shadow_stack = stacked_img_pairs(shadows, modified_indexes, yb_)
@@ -328,7 +357,7 @@ def show_augmented_patches(Xb, Xb_, yb, yb_, data_per_label=1, shadows=None):
     fnum = None
     fnum = pt.ensure_fnum(fnum)
     pt.figure(fnum)
-    #next_pnum = pt.make_pnum_nextgen(nRows=2 + (shadows is not None), nCols=1)
+    # next_pnum = pt.make_pnum_nextgen(nRows=2 + (shadows is not None), nCols=1)
     next_pnum = pt.make_pnum_nextgen(nCols=2 + (shadows is not None), nRows=1)
     pt.imshow(orig_stack, pnum=next_pnum(), title='before')
     pt.imshow(warp_stack, pnum=next_pnum(), title='after')
@@ -340,6 +369,7 @@ def show_augmented_patches(Xb, Xb_, yb, yb_, data_per_label=1, shadows=None):
 def testdata_augment():
     from wbia_cnn import ingest_data, utils
     import vtool as vt
+
     dataset = ingest_data.grab_siam_dataset()
     cv2_data, labels = dataset.subset('valid')
     batch_size = 128
@@ -351,8 +381,15 @@ def testdata_augment():
 
 
 @profile
-def augment_affine(Xb, yb=None, rng=np.random, data_per_label=1,
-                   inplace=False, affperterb_ranges=None, aug_prop=.5):
+def augment_affine(
+    Xb,
+    yb=None,
+    rng=np.random,
+    data_per_label=1,
+    inplace=False,
+    affperterb_ranges=None,
+    aug_prop=0.5,
+):
     """
     CommandLine:
         python -m wbia_cnn.augment --test-augment_affine --show
@@ -389,6 +426,7 @@ def augment_affine(Xb, yb=None, rng=np.random, data_per_label=1,
     """
     import vtool as vt
     import cv2
+
     assert Xb.max() <= 1.0, 'max/min = %r, %r' % (Xb.min(), Xb.max())
     assert Xb.min() >= 0.0, 'max/min = %r, %r' % (Xb.min(), Xb.max())
 
@@ -411,7 +449,7 @@ def augment_affine(Xb, yb=None, rng=np.random, data_per_label=1,
             enable_flip=False,
             enable_stretch=False,
         )
-    #affperterb_ranges.update(
+    # affperterb_ranges.update(
     #    dict(
     #        #zoom_range=(1.0, 1.7),
     #        zoom_range=(1.0, 1.3),
@@ -423,39 +461,42 @@ def augment_affine(Xb, yb=None, rng=np.random, data_per_label=1,
     #        enable_stretch=True,
     #        enable_flip=True,
     #    )
-    #)
+    # )
     index_list = np.where(affperterb_flags)[0]
 
     affperterb_kw_list = [
-        random_affine_kwargs(rng=rng, **affperterb_ranges)
-        for index in index_list
+        random_affine_kwargs(rng=rng, **affperterb_ranges) for index in index_list
     ]
 
     # Partition data into groups
-    #grouped_slices = [slice(n, len(Xb_), data_per_label)
+    # grouped_slices = [slice(n, len(Xb_), data_per_label)
     #                  for n in range(data_per_label)]
-    grouped_idxs = [np.arange(n, len(Xb_), data_per_label)
-                    for n in range(data_per_label)]
+    grouped_idxs = [np.arange(n, len(Xb_), data_per_label) for n in range(data_per_label)]
 
     # Take only the groups that were augmented
     aug_grouped = ut.take(zip(*grouped_idxs), index_list)
 
     borderMode = cv2.BORDER_CONSTANT
-    #borderMode = cv2.BORDER_REPLICATE
+    # borderMode = cv2.BORDER_REPLICATE
     flags = cv2.INTER_LANCZOS4
     num_channels = Xb.shape[-1]
-    borderValue = [.5] * num_channels
+    borderValue = [0.5] * num_channels
     for xs, affkw in zip(aug_grouped, affperterb_kw_list):
         # Modify each index in the group with the same params
         for index in xs:
             Xref = Xb_[index]
             Xref = vt.affine_warp_around_center(
-                Xref, borderMode=borderMode, flags=flags,
-                borderValue=borderValue, out=Xref, **affkw)
+                Xref,
+                borderMode=borderMode,
+                flags=flags,
+                borderValue=borderValue,
+                out=Xref,
+                **affkw
+            )
             np.clip(Xref, 0, 1, out=Xref)
             # Modify the batch
             Xb_[index] = Xref
-    #Xb_ = Xb_.astype(np.float32)
+    # Xb_ = Xb_.astype(np.float32)
     return Xb_, yb_
 
 
@@ -495,8 +536,9 @@ def augment_affine_siam(Xb, yb=None, rng=np.random):
     assert Xb.max() <= 1.0, 'max/min = %r, %r' % (Xb.min(), Xb.max())
     assert Xb.min() >= 0.0, 'max/min = %r, %r' % (Xb.min(), Xb.max())
     import vtool as vt
+
     Xb1, Xb2 = Xb[::2], Xb[1::2]
-    affprob_perterb = .7
+    affprob_perterb = 0.7
 
     num = len(Xb1)
     # Determine which examples will be augmented
@@ -513,9 +555,9 @@ def augment_affine_siam(Xb, yb=None, rng=np.random):
     )
     affperterb_ranges.update(
         dict(
-            #zoom_range=(1.0, 1.7),
+            # zoom_range=(1.0, 1.7),
             zoom_range=(1.0, 1.3),
-            #zoom_range=(.7, 1.7),
+            # zoom_range=(.7, 1.7),
             max_tx=2,
             max_ty=2,
             max_shear=TAU / 32,
@@ -527,36 +569,52 @@ def augment_affine_siam(Xb, yb=None, rng=np.random):
     index_list = np.where(affperterb_flags)[0]
 
     affperterb_kw_list = [
-        random_affine_kwargs(rng=rng, **affperterb_ranges)
-        for index in index_list
+        random_affine_kwargs(rng=rng, **affperterb_ranges) for index in index_list
     ]
 
-    #lighting_perterb_ranges = dict(
+    # lighting_perterb_ranges = dict(
     #    darken=(-.01, .01),
-    #)
+    # )
 
     import cv2
-    #borderMode = cv2.BORDER_REFLECT101
-    #borderMode = cv2.BORDER_REFLECT_101
-    #borderMode = cv2.BORDER_WRAP
-    #borderMode = cv2.BORDER_CONSTANT
-    #borderMode = cv2.BORDER_REFLECT
+
+    # borderMode = cv2.BORDER_REFLECT101
+    # borderMode = cv2.BORDER_REFLECT_101
+    # borderMode = cv2.BORDER_WRAP
+    # borderMode = cv2.BORDER_CONSTANT
+    # borderMode = cv2.BORDER_REFLECT
     borderMode = cv2.BORDER_CONSTANT
-    #borderMode = cv2.BORDER_REPLICATE
+    # borderMode = cv2.BORDER_REPLICATE
     flags = cv2.INTER_LANCZOS4
-    borderValue = [.5] * Xb1.shape[-1]
+    borderValue = [0.5] * Xb1.shape[-1]
 
     for index, kw in zip(index_list, affperterb_kw_list):
-        Xb1[index] = np.clip(vt.affine_warp_around_center(
-            Xb1[index], borderMode=borderMode, flags=flags,
-            borderValue=borderValue, **kw), 0, 1)
-        Xb2[index] = np.clip(vt.affine_warp_around_center(
-            Xb2[index], borderMode=borderMode, flags=flags,
-            borderValue=borderValue, **kw), 0, 1)
+        Xb1[index] = np.clip(
+            vt.affine_warp_around_center(
+                Xb1[index],
+                borderMode=borderMode,
+                flags=flags,
+                borderValue=borderValue,
+                **kw
+            ),
+            0,
+            1,
+        )
+        Xb2[index] = np.clip(
+            vt.affine_warp_around_center(
+                Xb2[index],
+                borderMode=borderMode,
+                flags=flags,
+                borderValue=borderValue,
+                **kw
+            ),
+            0,
+            1,
+        )
     with ut.embed_on_exception_context:
         assert Xb.max() <= 1.0, 'max/min = %r, %r' % (Xb.min(), Xb.max())
         assert Xb.min() >= 0.0, 'max/min = %r, %r' % (Xb.min(), Xb.max())
-        #bad_xs = np.where((Xb > 1).sum(axis=-1).sum(axis=-1).sum(axis=-1) > 0)[0]
+        # bad_xs = np.where((Xb > 1).sum(axis=-1).sum(axis=-1).sum(axis=-1) > 0)[0]
     Xb = Xb.astype(np.float32)
     return Xb, yb
 
@@ -580,13 +638,14 @@ def augment_shadow(Xb, yb=None, rng=np.random, return_shadowmaps=False):
     """
 
     import vtool as vt
+
     # Rotate corresponding patches together
     Xb1, Xb2 = Xb[::2], Xb[1::2]
-    perlin_perteb = .5
+    perlin_perteb = 0.5
 
     def perlin_noise01(size):
-        #scale = 128.0
-        #scale = 80.0
+        # scale = 128.0
+        # scale = 80.0
         scale = size[0] * 1.5
         noise = (vt.perlin_noise(size, scale=scale, rng=rng).astype(np.float32)) / 255.0
         noise = np.transpose(noise[None, :], (1, 2, 0))
@@ -596,12 +655,12 @@ def augment_shadow(Xb, yb=None, rng=np.random, return_shadowmaps=False):
 
     perlinperterb_flags = rng.uniform(0.0, 1.0, size=num) < perlin_perteb
 
-    #perlin_min = 0.2
-    #perlin_max = 0.9
-    #perlin_range = perlin_max - perlin_min
+    # perlin_min = 0.2
+    # perlin_max = 0.9
+    # perlin_range = perlin_max - perlin_min
     if return_shadowmaps:
         shadows = np.empty(Xb.shape, dtype=Xb.dtype)
-        shadows1, shadows2 =  shadows[::2], shadows[1::2]
+        shadows1, shadows2 = shadows[::2], shadows[1::2]
 
     for index in np.where(perlinperterb_flags)[0]:
         img1 = Xb1[index]
@@ -610,40 +669,40 @@ def augment_shadow(Xb, yb=None, rng=np.random, return_shadowmaps=False):
         noise1 = perlin_noise01(img1.shape[0:2])
         noise2 = perlin_noise01(img2.shape[0:2])
 
-        #noise1 = np.clip(noise1 / .7, 0, 1)
-        #noise2 = np.clip(noise2 / .7, 0, 1)
-        noise1 = np.clip((noise1 ** .7 - .15) / .75, .1, 1)
-        noise2 = np.clip((noise2 ** .7 - .15) / .75, .1, 1)
+        # noise1 = np.clip(noise1 / .7, 0, 1)
+        # noise2 = np.clip(noise2 / .7, 0, 1)
+        noise1 = np.clip((noise1 ** 0.7 - 0.15) / 0.75, 0.1, 1)
+        noise2 = np.clip((noise2 ** 0.7 - 0.15) / 0.75, 0.1, 1)
 
         if return_shadowmaps:
             shadows1[index] = noise1
             shadows2[index] = noise2
 
-        #noise1[noise1 > .6] = 1
-        #noise2[noise2 > .6] = 1
+        # noise1[noise1 > .6] = 1
+        # noise2[noise2 > .6] = 1
 
-        #alpha1 = ((rng.rand() * perlin_range) + perlin_min)
-        #alpha2 = ((rng.rand() * perlin_range) + perlin_min)
-        #Xb1[index] = img1 ** (noise1 * alpha1)
-        #Xb2[index] = img2 ** (noise2 * alpha2)
-        #alpha1 = alpha2 = .5
-        alpha1 = alpha2 = .5
+        # alpha1 = ((rng.rand() * perlin_range) + perlin_min)
+        # alpha2 = ((rng.rand() * perlin_range) + perlin_min)
+        # Xb1[index] = img1 ** (noise1 * alpha1)
+        # Xb2[index] = img2 ** (noise2 * alpha2)
+        # alpha1 = alpha2 = .5
+        alpha1 = alpha2 = 0.5
         Xb1[index] = vt.blend_images_multiply(img1, noise1, alpha1)
         Xb2[index] = vt.blend_images_multiply(img2, noise2, alpha2)
 
         # Linear Burn
-        #Xb1[index] = np.clip(img1 + noise1 - 1.0, 0, 1)
-        #Xb2[index] = np.clip(img2 + noise2 - 1.0, 0, 1)
+        # Xb1[index] = np.clip(img1 + noise1 - 1.0, 0, 1)
+        # Xb2[index] = np.clip(img2 + noise2 - 1.0, 0, 1)
 
-        #Xb1[index] = vt.blend_images_average(img1, noise1, alpha1)
-        #Xb2[index] = vt.blend_images_average(img2, noise2, alpha2)
+        # Xb1[index] = vt.blend_images_average(img1, noise1, alpha1)
+        # Xb2[index] = vt.blend_images_average(img2, noise2, alpha2)
 
-        #Xb1[index] = noise1
-        #Xb2[index] = noise2
-    #with ut.embed_on_exception_context:
+        # Xb1[index] = noise1
+        # Xb2[index] = noise2
+    # with ut.embed_on_exception_context:
     assert Xb.max() <= 1.0, 'max/min = %r, %r' % (Xb.min(), Xb.max())
     assert Xb.min() >= 0.0, 'max/min = %r, %r' % (Xb.min(), Xb.max())
-    #bad_xs = np.where((Xb > 1).sum(axis=-1).sum(axis=-1).sum(axis=-1) > 0)[0]
+    # bad_xs = np.where((Xb > 1).sum(axis=-1).sum(axis=-1).sum(axis=-1) > 0)[0]
     if return_shadowmaps:
         return Xb, yb, shadows
     return Xb, yb
@@ -666,28 +725,28 @@ def augment_gamma(Xb, yb=None, rng=np.random):
         >>> show_augmented_patches(Xb_orig, Xb, yb_orig, yb)
         >>> ut.show_if_requested()
     """
-    #import vtool as vt
+    # import vtool as vt
     # Rotate corresponding patches together
     Xb1, Xb2 = Xb[::2], Xb[1::2]
-    gamma_perterb = .5
+    gamma_perterb = 0.5
     num = len(Xb1)
 
     # Determine which examples will be augmented
     gammaperterb_flags = rng.uniform(0.0, 1.0, size=num) < gamma_perterb
 
     # Modify exposure
-    #perlin_min = 0.6
-    #gamma_min = 1.7
+    # perlin_min = 0.6
+    # gamma_min = 1.7
     gamma_max = 1.7
-    gamma_min = .4
+    gamma_min = 0.4
     gamma_range = gamma_max - gamma_min
     for index in np.where(gammaperterb_flags)[0]:
         img1 = Xb1[index]
         img2 = Xb2[index]
-        gamma1 = ((rng.rand() * gamma_range) + gamma_min)
-        gamma2 = ((rng.rand() * gamma_range) + gamma_min)
-        #print('gamma1 = %r' % (gamma1,))
-        #print('gamma2 = %r' % (gamma2,))
+        gamma1 = (rng.rand() * gamma_range) + gamma_min
+        gamma2 = (rng.rand() * gamma_range) + gamma_min
+        # print('gamma1 = %r' % (gamma1,))
+        # print('gamma2 = %r' % (gamma2,))
         Xb1[index] = img1 ** (gamma1)
         Xb2[index] = img2 ** (gamma2)
     assert Xb.max() <= 1.0, 'max/min = %r, %r' % (Xb.min(), Xb.max())
@@ -721,8 +780,8 @@ def augment_siamese_patches2(Xb, yb=None, rng=np.random):
         >>> ut.show_if_requested()
     """
     augment_affine(Xb, yb, rng, data_per_label=2)
-    #augment_shadow(Xb, yb, rng)
-    #augment_gamma(Xb, yb, rng)
+    # augment_shadow(Xb, yb, rng)
+    # augment_gamma(Xb, yb, rng)
     return Xb, yb
 
 
@@ -734,6 +793,8 @@ if __name__ == '__main__':
         python -m wbia_cnn.augment --allexamples --noface --nosrc
     """
     import multiprocessing
+
     multiprocessing.freeze_support()  # for win32
     import utool as ut  # NOQA
+
     ut.doctest_funcs()

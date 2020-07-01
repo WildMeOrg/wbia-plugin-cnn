@@ -16,12 +16,14 @@ import random
 import os
 import wbia.constants as const
 from six.moves import zip, range
+
 print, rrr, profile = ut.inject2(__name__)
 
 
 try:
     from wbia.control.controller_inject import make_ibs_register_decorator
     from wbia.constants import VIEWTEXT_TO_YAW_RADIANS
+
     CLASS_INJECT_KEY, register_ibs_method = make_ibs_register_decorator(__name__)
 except ImportError as ex:
     register_ibs_method = ut.identity
@@ -30,22 +32,22 @@ except ImportError as ex:
 
 def convert_species_viewpoint(species, viewpoint):
     species_mapping = {
-        'ZEBRA_PLAINS':        'zebra_plains',
-        'ZEBRA_GREVYS':        'zebra_grevys',
-        'ELEPHANT_SAVANNA':    'elephant_savanna',
+        'ZEBRA_PLAINS': 'zebra_plains',
+        'ZEBRA_GREVYS': 'zebra_grevys',
+        'ELEPHANT_SAVANNA': 'elephant_savanna',
         'GIRAFFE_RETICULATED': 'giraffe_reticulated',
-        'GIRAFFE_MASAI':       'giraffe_masai',
+        'GIRAFFE_MASAI': 'giraffe_masai',
     }
     viewpoint_list = VIEWTEXT_TO_YAW_RADIANS.keys()
     viewpoint_mapping = {
-        'LEFT':        viewpoint_list[4],
-        'FRONT_LEFT':  viewpoint_list[3],
-        'FRONT':       viewpoint_list[2],
+        'LEFT': viewpoint_list[4],
+        'FRONT_LEFT': viewpoint_list[3],
+        'FRONT': viewpoint_list[2],
         'FRONT_RIGHT': viewpoint_list[1],
-        'RIGHT':       viewpoint_list[0],
-        'BACK_RIGHT':  viewpoint_list[7],
-        'BACK':        viewpoint_list[6],
-        'BACK_LEFT':   viewpoint_list[5],
+        'RIGHT': viewpoint_list[0],
+        'BACK_RIGHT': viewpoint_list[7],
+        'BACK': viewpoint_list[6],
+        'BACK_LEFT': viewpoint_list[5],
     }
     species_ = species_mapping[species]
     viewpoint_ = viewpoint_mapping[viewpoint]
@@ -88,8 +90,9 @@ def get_verified_aid_pairs(ibs):
 
 
 @register_ibs_method
-def generate_thumbnail_class_list(ibs, thumbnail_list, nInput=None,
-                                  classifier_weight_filepath=None, **kwargs):
+def generate_thumbnail_class_list(
+    ibs, thumbnail_list, nInput=None, classifier_weight_filepath=None, **kwargs
+):
 
     # Load chips and resize to the target
     data_shape = (192, 192, 3)
@@ -113,31 +116,57 @@ def generate_thumbnail_class_list(ibs, thumbnail_list, nInput=None,
     elif classifier_weight_filepath in ['coco_zebra']:
         weights_path = grabmodels.ensure_model('classifier_coco_zebra', redownload=False)
     elif classifier_weight_filepath in ['megan1.1']:
-        weights_path = grabmodels.ensure_model('classifier_cameratrap_megan_v1', redownload=False)
+        weights_path = grabmodels.ensure_model(
+            'classifier_cameratrap_megan_v1', redownload=False
+        )
     elif classifier_weight_filepath in ['megan1.2']:
-        weights_path = grabmodels.ensure_model('classifier_cameratrap_megan_v2', redownload=False)
+        weights_path = grabmodels.ensure_model(
+            'classifier_cameratrap_megan_v2', redownload=False
+        )
     elif classifier_weight_filepath in ['megan1.3']:
-        weights_path = grabmodels.ensure_model('classifier_cameratrap_megan_v3', redownload=False)
+        weights_path = grabmodels.ensure_model(
+            'classifier_cameratrap_megan_v3', redownload=False
+        )
     elif classifier_weight_filepath in ['megan1.4']:
-        weights_path = grabmodels.ensure_model('classifier_cameratrap_megan_v4', redownload=False)
+        weights_path = grabmodels.ensure_model(
+            'classifier_cameratrap_megan_v4', redownload=False
+        )
     elif classifier_weight_filepath in ['megan1.5']:
-        weights_path = grabmodels.ensure_model('classifier_cameratrap_megan_v5', redownload=False)
+        weights_path = grabmodels.ensure_model(
+            'classifier_cameratrap_megan_v5', redownload=False
+        )
     elif classifier_weight_filepath in ['megan1.6']:
-        weights_path = grabmodels.ensure_model('classifier_cameratrap_megan_v6', redownload=False)
+        weights_path = grabmodels.ensure_model(
+            'classifier_cameratrap_megan_v6', redownload=False
+        )
     elif classifier_weight_filepath in ['megan2.1']:
-        weights_path = grabmodels.ensure_model('classifier_cameratrap_megan2_v1', redownload=False)
+        weights_path = grabmodels.ensure_model(
+            'classifier_cameratrap_megan2_v1', redownload=False
+        )
     elif classifier_weight_filepath in ['megan2.2']:
-        weights_path = grabmodels.ensure_model('classifier_cameratrap_megan2_v2', redownload=False)
+        weights_path = grabmodels.ensure_model(
+            'classifier_cameratrap_megan2_v2', redownload=False
+        )
     elif classifier_weight_filepath in ['megan2.3']:
-        weights_path = grabmodels.ensure_model('classifier_cameratrap_megan2_v3', redownload=False)
+        weights_path = grabmodels.ensure_model(
+            'classifier_cameratrap_megan2_v3', redownload=False
+        )
     elif classifier_weight_filepath in ['megan2.4']:
-        weights_path = grabmodels.ensure_model('classifier_cameratrap_megan2_v4', redownload=False)
+        weights_path = grabmodels.ensure_model(
+            'classifier_cameratrap_megan2_v4', redownload=False
+        )
     elif classifier_weight_filepath in ['megan2.5']:
-        weights_path = grabmodels.ensure_model('classifier_cameratrap_megan2_v5', redownload=False)
+        weights_path = grabmodels.ensure_model(
+            'classifier_cameratrap_megan2_v5', redownload=False
+        )
     elif classifier_weight_filepath in ['megan2.6']:
-        weights_path = grabmodels.ensure_model('classifier_cameratrap_megan2_v6', redownload=False)
+        weights_path = grabmodels.ensure_model(
+            'classifier_cameratrap_megan2_v6', redownload=False
+        )
     elif classifier_weight_filepath in ['ryan.wbia_cnn.v1']:
-        weights_path = grabmodels.ensure_model('classifier_cameratrap_ryan_wbia_cnn_v1', redownload=False)
+        weights_path = grabmodels.ensure_model(
+            'classifier_cameratrap_ryan_wbia_cnn_v1', redownload=False
+        )
     elif os.path.exists(classifier_weight_filepath):
         weights_path = classifier_weight_filepath
     else:
@@ -147,9 +176,9 @@ def generate_thumbnail_class_list(ibs, thumbnail_list, nInput=None,
     print('[model] loading model state from: %s' % (model_state_fpath,))
     model_state = ut.load_cPkl(model_state_fpath)
 
-    model.encoder      = model_state.get('encoder', None)
-    model.output_dims  = model_state['output_dims']
-    model.data_params  = model_state['data_params']
+    model.encoder = model_state.get('encoder', None)
+    model.output_dims = model_state['output_dims']
+    model.data_params = model_state['data_params']
     model._fix_center_mean_std()
 
     model.init_arch()
@@ -175,9 +204,9 @@ def generate_thumbnail_class_list(ibs, thumbnail_list, nInput=None,
 
 
 @register_ibs_method
-def generate_thumbnail_class2_list(ibs, thumbnail_list, nInput=None,
-                                   classifier_two_weight_filepath=None,
-                                   **kwargs):
+def generate_thumbnail_class2_list(
+    ibs, thumbnail_list, nInput=None, classifier_two_weight_filepath=None, **kwargs
+):
 
     # Load chips and resize to the target
     data_shape = (192, 192, 3)
@@ -211,10 +240,10 @@ def generate_thumbnail_class2_list(ibs, thumbnail_list, nInput=None,
     print('[model] loading model state from: %s' % (model_state_fpath,))
     model_state = ut.load_cPkl(model_state_fpath)
 
-    category_list      = model_state['category_list']
-    model.encoder      = model_state.get('encoder', None)
-    model.output_dims  = model_state['output_dims']
-    model.data_params  = model_state['data_params']
+    category_list = model_state['category_list']
+    model.encoder = model_state.get('encoder', None)
+    model.output_dims = model_state['output_dims']
+    model.data_params = model_state['data_params']
     model._fix_center_mean_std()
 
     model.init_arch()
@@ -237,8 +266,7 @@ def generate_thumbnail_class2_list(ibs, thumbnail_list, nInput=None,
     confidences_list[confidences_list < 0.0] = 0.0
 
     confidence_dict_list = [
-        dict(zip(category_list, confidence_list))
-        for confidence_list in confidences_list
+        dict(zip(category_list, confidence_list)) for confidence_list in confidences_list
     ]
 
     # zipped = zip(thumbnail_list, confidence_dict_list)
@@ -252,11 +280,7 @@ def generate_thumbnail_class2_list(ibs, thumbnail_list, nInput=None,
     #     cv2.imwrite(image_path % (index, y), thumbnail)
 
     predictions_list = [
-        [
-            key
-            for key in confidence_dict
-            if confidence_dict[key] >= 0.5
-        ]
+        [key for key in confidence_dict if confidence_dict[key] >= 0.5]
         for confidence_dict in confidence_dict_list
     ]
 
@@ -265,9 +289,15 @@ def generate_thumbnail_class2_list(ibs, thumbnail_list, nInput=None,
 
 
 @register_ibs_method
-def generate_thumbnail_aoi2_list(ibs, thumbnail_list, bbox_list, size_list,
-                                 nInput=None, aoi_two_weight_filepath=None,
-                                 **kwargs):
+def generate_thumbnail_aoi2_list(
+    ibs,
+    thumbnail_list,
+    bbox_list,
+    size_list,
+    nInput=None,
+    aoi_two_weight_filepath=None,
+    **kwargs
+):
     # Load chips and resize to the target
     data_shape = (192, 192, 4)
     batch_size = None
@@ -302,9 +332,9 @@ def generate_thumbnail_aoi2_list(ibs, thumbnail_list, bbox_list, size_list,
     print('[model] loading model state from: %s' % (model_state_fpath,))
     model_state = ut.load_cPkl(model_state_fpath)
 
-    model.encoder      = model_state.get('encoder', None)
-    model.output_dims  = model_state['output_dims']
-    model.data_params  = model_state['data_params']
+    model.encoder = model_state.get('encoder', None)
+    model.output_dims = model_state['output_dims']
+    model.data_params = model_state['data_params']
     model._fix_center_mean_std()
 
     model.init_arch()
@@ -333,7 +363,7 @@ def generate_thumbnail_aoi2_list(ibs, thumbnail_list, bbox_list, size_list,
         xbr = int(np.round((xbr / w) * data_shape[1]))
         ybr = int(np.round((ybr / h) * data_shape[0]))
         mask_ = np.copy(mask)
-        mask_[ytl: ybr, xtl: xbr] = 255
+        mask_[ytl:ybr, xtl:xbr] = 255
         data = np.dstack((thumbnail, mask_))
         data_list.append(data)
 
@@ -343,8 +373,7 @@ def generate_thumbnail_aoi2_list(ibs, thumbnail_list, bbox_list, size_list,
     confidence_list = test_results['confidences']
     prediction_list = test_results['predictions']
     prediction_list = [
-        'positive' if prediction == 1 else 'negative'
-        for prediction in prediction_list
+        'positive' if prediction == 1 else 'negative' for prediction in prediction_list
     ]
 
     result_list = list(zip(confidence_list, prediction_list))
@@ -352,8 +381,9 @@ def generate_thumbnail_aoi2_list(ibs, thumbnail_list, bbox_list, size_list,
 
 
 @register_ibs_method
-def generate_chip_label_list(ibs, chip_list, nInput=None,
-                             labeler_weight_filepath=None, **kwargs):
+def generate_chip_label_list(
+    ibs, chip_list, nInput=None, labeler_weight_filepath=None, **kwargs
+):
 
     # Load chips and resize to the target
     data_shape = (128, 128, 3)
@@ -399,9 +429,9 @@ def generate_chip_label_list(ibs, chip_list, nInput=None,
     print('[model] loading model state from: %s' % (model_state_fpath,))
     model_state = ut.load_cPkl(model_state_fpath)
 
-    model.encoder      = model_state.get('encoder', None)
-    model.output_dims  = model_state['output_dims']
-    model.data_params  = model_state['data_params']
+    model.encoder = model_state.get('encoder', None)
+    model.output_dims = model_state['output_dims']
+    model.data_params = model_state['data_params']
     model._fix_center_mean_std()
 
     model.best_results = model_state['best_results']
@@ -425,14 +455,17 @@ def generate_chip_label_list(ibs, chip_list, nInput=None,
     confidence_list = test_results['confidences']
     probability_list = test_results['network_output_determ']
 
-    class_list = list(map(
-        lambda x: x if isinstance(x, six.text_type) else x.decode('utf-8'),
-        class_list
-    ))
-    prediction_list = list(map(
-        lambda x: x if isinstance(x, six.text_type) else x.decode('utf-8'),
-        prediction_list
-    ))
+    class_list = list(
+        map(
+            lambda x: x if isinstance(x, six.text_type) else x.decode('utf-8'), class_list
+        )
+    )
+    prediction_list = list(
+        map(
+            lambda x: x if isinstance(x, six.text_type) else x.decode('utf-8'),
+            prediction_list,
+        )
+    )
 
     species_list = []
     viewpoint_list = []
@@ -454,14 +487,19 @@ def generate_chip_label_list(ibs, chip_list, nInput=None,
 
     probability_dict_list = []
     for probability in probability_list:
-        probability_dict = {
-            class_ : prob
-            for class_, prob in zip(class_list, probability)
-        }
+        probability_dict = {class_: prob for class_, prob in zip(class_list, probability)}
         probability_dict_list.append(probability_dict)
 
-    result_list = list(zip(confidence_list, species_list, viewpoint_list,
-                       quality_list, orientation_list, probability_dict_list))
+    result_list = list(
+        zip(
+            confidence_list,
+            species_list,
+            viewpoint_list,
+            quality_list,
+            orientation_list,
+            probability_dict_list,
+        )
+    )
 
     return result_list
 
@@ -484,7 +522,9 @@ def detect_annot_zebra_background_mask(ibs, aid_list, species=None, config2_=Non
 
 
 @register_ibs_method
-def detect_annot_whale_fluke_background_mask(ibs, aid_list, species='whale_fluke', config2_=None):
+def detect_annot_whale_fluke_background_mask(
+    ibs, aid_list, species='whale_fluke', config2_=None
+):
     r"""
     Args:
         ibs (IBEISController):  ibeis controller object
@@ -541,6 +581,7 @@ def generate_species_background_mask(ibs, chip_fpath_list, species=None):
     # Read the data
     print('\n[wbia_cnn] Loading chips...')
     import vtool as vt
+
     nInput = len(chip_fpath_list)
 
     def bufgen2(_iter, size=64, nInput=None, **kwargs):
@@ -550,10 +591,15 @@ def generate_species_background_mask(ibs, chip_fpath_list, species=None):
         for chunk in chunk_iter_:
             for item in chunk:
                 yield item
+
     chip_list = bufgen2(
         (vt.imread(fpath) for fpath in chip_fpath_list),
-        lbl='loading chip chunk', nInput=nInput, adjust=True, time_thresh=30.0)
-    #mask_list = list(generate_species_background(ibs, chip_list, species=species, nInput=nInput))
+        lbl='loading chip chunk',
+        nInput=nInput,
+        adjust=True,
+        time_thresh=30.0,
+    )
+    # mask_list = list(generate_species_background(ibs, chip_list, species=species, nInput=nInput))
     mask_gen = generate_species_background(ibs, chip_list, species=species, nInput=nInput)
     return mask_gen
 
@@ -665,36 +711,60 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         LEGACY = False
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
-        weights_path = grabmodels.ensure_model('background_candidacy_' + species, redownload=False)
+        weights_path = grabmodels.ensure_model(
+            'background_candidacy_' + species, redownload=False
+        )
         canvas_key = 1
     elif species in ['zebra_plains', 'equus_quagga', 'zebra_grevys', 'equus_grevyi']:
         if NEW:
-            assert species in ['zebra_plains', 'equus_quagga', 'zebra_grevys', 'equus_grevyi']
-            model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape, num_output=3)
-            weights_path = grabmodels.ensure_model('background_zebra_plains_grevys', redownload=False)
+            assert species in [
+                'zebra_plains',
+                'equus_quagga',
+                'zebra_grevys',
+                'equus_grevyi',
+            ]
+            model = models.BackgroundModel(
+                batch_size=batch_size, data_shape=data_shape, num_output=3
+            )
+            weights_path = grabmodels.ensure_model(
+                'background_zebra_plains_grevys', redownload=False
+            )
             canvas_key = species
         else:
             assert species in ['zebra_plains', 'equus_quagga']
             model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
-            weights_path = grabmodels.ensure_model('background_zebra_plains', redownload=False)
+            weights_path = grabmodels.ensure_model(
+                'background_zebra_plains', redownload=False
+            )
             canvas_key = 'positive'
     elif species in ['zebra_mountain', 'equus_zebra']:
         LEGACY = False
         species = 'zebra_mountain'  # Misspelled from zebra_mountain during training
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
-        weights_path = grabmodels.ensure_model('background_zebra_mountain_v0', redownload=False)
+        weights_path = grabmodels.ensure_model(
+            'background_zebra_mountain_v0', redownload=False
+        )
         canvas_key = 1
     elif species in ['giraffe_masai', 'giraffa_tippelskirchi']:
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
-        weights_path = grabmodels.ensure_model('background_giraffe_masai', redownload=False)
+        weights_path = grabmodels.ensure_model(
+            'background_giraffe_masai', redownload=False
+        )
         canvas_key = 'giraffe_masai'
-    elif species in ['whale_fluke', 'whale_humpback', 'megaptera_novaeangliae', 'physeter_macrocephalus']:
+    elif species in [
+        'whale_fluke',
+        'whale_humpback',
+        'megaptera_novaeangliae',
+        'physeter_macrocephalus',
+    ]:
         LEGACY = False
         species = 'whale_fluke'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
-        weights_path = grabmodels.ensure_model('background_candidacy_whale_fluke', redownload=False)
+        weights_path = grabmodels.ensure_model(
+            'background_candidacy_whale_fluke', redownload=False
+        )
         canvas_key = 1
         # species = 'whale_fluke'
         # model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
@@ -733,16 +803,25 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         species = 'skunk_spotted'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
-        weights_path = grabmodels.ensure_model('background_skunk_spotted_v1', redownload=False)
+        weights_path = grabmodels.ensure_model(
+            'background_skunk_spotted_v1', redownload=False
+        )
         canvas_key = 1
     elif species in ['right_whale_head', 'eubalaena_australis', 'eubalaena_glacialis']:
         LEGACY = False
         species = 'right_whale_head'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
-        weights_path = grabmodels.ensure_model('background_right_whale_head_v0', redownload=False)
+        weights_path = grabmodels.ensure_model(
+            'background_right_whale_head_v0', redownload=False
+        )
         canvas_key = 1
-    elif species in ['whale_orca', 'whale_orca+fin_dorsal', 'orcinus_orca', 'orcinus_orca+fin_dorsal']:
+    elif species in [
+        'whale_orca',
+        'whale_orca+fin_dorsal',
+        'orcinus_orca',
+        'orcinus_orca+fin_dorsal',
+    ]:
         LEGACY = False
         species = 'whale_orca'
         confidence_thresh = 0.2
@@ -754,28 +833,36 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         species = 'seadragon_leafy'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
-        weights_path = grabmodels.ensure_model('background_seadragon_leafy_v1', redownload=False)
+        weights_path = grabmodels.ensure_model(
+            'background_seadragon_leafy_v1', redownload=False
+        )
         canvas_key = 1
     elif species in ['seadragon_weedy', 'phyllopteryx_taeniolatus']:
         LEGACY = False
         species = 'seadragon_weedy'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
-        weights_path = grabmodels.ensure_model('background_seadragon_weedy_v1', redownload=False)
+        weights_path = grabmodels.ensure_model(
+            'background_seadragon_weedy_v1', redownload=False
+        )
         canvas_key = 1
     elif species in ['seadragon_leafy+head', 'phycodurus_eques+head']:
         LEGACY = False
         species = 'seadragon_leafy+head'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
-        weights_path = grabmodels.ensure_model('background_seadragon_leafy_head_v1', redownload=False)
+        weights_path = grabmodels.ensure_model(
+            'background_seadragon_leafy_head_v1', redownload=False
+        )
         canvas_key = 1
     elif species in ['seadragon_weedy+head', 'phyllopteryx_taeniolatus+head']:
         LEGACY = False
         species = 'seadragon_weedy+head'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
-        weights_path = grabmodels.ensure_model('background_seadragon_weedy_head_v1', redownload=False)
+        weights_path = grabmodels.ensure_model(
+            'background_seadragon_weedy_head_v1', redownload=False
+        )
         canvas_key = 1
 
     # elif OLD and species in ['turtle_green', 'turtle_green+head', 'turtle_hawksbill', 'turtle_hawksbill+head']:
@@ -814,15 +901,24 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
     #     model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
     #     weights_path = grabmodels.ensure_model('background_turtle_hawksbill_head_v1', redownload=False)
     #     canvas_key = 1
-    elif species in ['turtle_sea', 'chelonioidea',
-                     'turtle_sea+head', 'chelonioidea+head',
-                     'turtle_green', 'chelonia_mydas',
-                     'turtle_green+head', 'chelonia_mydas+head',
-                     'turtle_hawksbill', 'eretmochelys_imbricata',
-                     'turtle_hawksbill+head', 'eretmochelys_imbricata+head',
-                     'turtle_oliveridley', 'lepidochelys_olivacea',
-                     'turtle_oliveridley+head', 'lepidochelys_olivacea+head',
-                     ]:
+    elif species in [
+        'turtle_sea',
+        'chelonioidea',
+        'turtle_sea+head',
+        'chelonioidea+head',
+        'turtle_green',
+        'chelonia_mydas',
+        'turtle_green+head',
+        'chelonia_mydas+head',
+        'turtle_hawksbill',
+        'eretmochelys_imbricata',
+        'turtle_hawksbill+head',
+        'eretmochelys_imbricata+head',
+        'turtle_oliveridley',
+        'lepidochelys_olivacea',
+        'turtle_oliveridley+head',
+        'lepidochelys_olivacea+head',
+    ]:
         LEGACY = False
         species = 'turtle_sea'
         confidence_thresh = 0.2
@@ -834,7 +930,9 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         species = 'dolphin_spotted'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
-        weights_path = grabmodels.ensure_model('background_dolphin_spotted', redownload=False)
+        weights_path = grabmodels.ensure_model(
+            'background_dolphin_spotted', redownload=False
+        )
         canvas_key = 1
     elif species in ['leopard', 'panthera_pardus']:
         LEGACY = False
@@ -843,29 +941,46 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_leopard_v0', redownload=False)
         canvas_key = 1
-    elif species in ['wild_dog', 'wild_dog_dark', 'wild_dog_light', 'wild_dog_puppy', 'wild_dog_standard', 'wild_dog_tan', 'lycaon_pictus']:
+    elif species in [
+        'wild_dog',
+        'wild_dog_dark',
+        'wild_dog_light',
+        'wild_dog_puppy',
+        'wild_dog_standard',
+        'wild_dog_tan',
+        'lycaon_pictus',
+    ]:
         LEGACY = False
         species = 'wild_dog'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_wilddog_v0', redownload=False)
         canvas_key = 1
-    elif species in ['dolphin_spotted+dorsal', 'dolphin_spotted+fin_dorsal', 'stenella_frontalis+dorsal', 'stenella_frontalis+fin_dorsal']:
+    elif species in [
+        'dolphin_spotted+dorsal',
+        'dolphin_spotted+fin_dorsal',
+        'stenella_frontalis+dorsal',
+        'stenella_frontalis+fin_dorsal',
+    ]:
         LEGACY = False
         species = 'dolphin_spotted+fin_dorsal'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
-        weights_path = grabmodels.ensure_model('background_dolphin_spotted_fin_dorsal', redownload=False)
+        weights_path = grabmodels.ensure_model(
+            'background_dolphin_spotted_fin_dorsal', redownload=False
+        )
         canvas_key = 1
     elif species in ['whale_humpback+fin_dorsal', 'physeter_macrocephalus+fin_dorsal']:
         LEGACY = False
         species = 'whale_humpback+fin_dorsal'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
-        weights_path = grabmodels.ensure_model('background_humpback_dorsal', redownload=False)
+        weights_path = grabmodels.ensure_model(
+            'background_humpback_dorsal', redownload=False
+        )
         canvas_key = 1
     else:
-        raise ValueError('species %r key does not have a trained model' % (species, ))
+        raise ValueError('species %r key does not have a trained model' % (species,))
 
     if LEGACY:
         old_weights_fpath = weights_path
@@ -875,7 +990,7 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         print('[model] loading model state from: %s' % (model_state_fpath,))
         model_state = ut.load_cPkl(model_state_fpath)
 
-        model.output_dims  = model_state['output_dims']
+        model.output_dims = model_state['output_dims']
         model.data_params = model_state['data_params']
         model._fix_center_mean_std()
 
@@ -896,28 +1011,49 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
 
     print('[wbia_cnn] Performing inference...')
 
-    _iter = ut.ProgressIter(chip_list, nTotal=nInput, lbl=species + ' fgdetect', adjust=True, freq=10, time_thresh=30.0)
+    _iter = ut.ProgressIter(
+        chip_list,
+        nTotal=nInput,
+        lbl=species + ' fgdetect',
+        adjust=True,
+        freq=10,
+        time_thresh=30.0,
+    )
     for chip in _iter:
         try:
             if LEGACY:
-                samples, canvas_dict = test_convolutional(model, chip, padding=24, confidence_thresh=confidence_thresh)
+                samples, canvas_dict = test_convolutional(
+                    model, chip, padding=24, confidence_thresh=confidence_thresh
+                )
             else:
-                samples, canvas_dict = test_convolutional(model, chip, padding=25, confidence_thresh=confidence_thresh)
+                samples, canvas_dict = test_convolutional(
+                    model, chip, padding=25, confidence_thresh=confidence_thresh
+                )
             if NEW and LEGACY:
                 mask = np.maximum(255 - canvas_dict['negative'], canvas_dict[canvas_key])
             else:
                 mask = canvas_dict[canvas_key]
         except Exception as ex:
-            ut.printex(ex, ('Error running convnet with '
-                            'chip.shape=%r, chip.dtype=%r') % (
-                                chip.shape, chip.dtype))
+            ut.printex(
+                ex,
+                ('Error running convnet with ' 'chip.shape=%r, chip.dtype=%r')
+                % (chip.shape, chip.dtype),
+            )
             raise
         yield mask
 
 
-def test_convolutional(model, image, patch_size='auto', stride='auto',
-                       padding=32, batch_size=None, verbose=False,
-                       confidence_thresh=0.5, **kwargs):
+def test_convolutional(
+    model,
+    image,
+    patch_size='auto',
+    stride='auto',
+    padding=32,
+    batch_size=None,
+    verbose=False,
+    confidence_thresh=0.5,
+    **kwargs
+):
     """ Using a network, test an entire image full convolutionally
 
     This function will test an entire image full convolutionally (or a close
@@ -963,10 +1099,12 @@ def test_convolutional(model, image, patch_size='auto', stride='auto',
             data_padded = np.pad(data_, padding, 'reflect', reflect_type='even')
         else:
             h, w, c = data_.shape
-            data_padded = np.dstack([
-                np.pad(data_[:, :, _], padding, 'reflect', reflect_type='even')
-                for _ in range(c)
-            ])
+            data_padded = np.dstack(
+                [
+                    np.pad(data_[:, :, _], padding, 'reflect', reflect_type='even')
+                    for _ in range(c)
+                ]
+            )
         return data_padded
 
     def _resize_target(image, target_height=None, target_width=None):
@@ -1001,7 +1139,7 @@ def test_convolutional(model, image, patch_size='auto', stride='auto',
 
     h, w = image.shape[:2]
 
-    #GLOBAL_LIMIT = min(256, w, h)
+    # GLOBAL_LIMIT = min(256, w, h)
     # HACK, this only works for square data shapes
     GLOBAL_LIMIT = model.data_shape[0]
     # Inference
@@ -1022,27 +1160,26 @@ def test_convolutional(model, image, patch_size='auto', stride='auto',
     theano_predict = model.build_predict_func()
     while start < samples:
         end = min(samples, start + batch_size)
-        data_list_segment = data_list[start: end]
+        data_list_segment = data_list[start:end]
         # coord_list_segment = coord_list[start: end]
 
         # Augment the data_list by adding a reflected pad
-        data_list_ = np.array([
-            _add_pad(data_)
-            for data_ in data_list_segment
-        ])
+        data_list_ = np.array([_add_pad(data_) for data_ in data_list_segment])
 
-        #batchiter_kw = dict(
+        # batchiter_kw = dict(
         #    fix_output=False,
         #    showprog=True,
         #    spatial=True
-        #)
-        #test_results = model._predict(data_list_)
+        # )
+        # test_results = model._predict(data_list_)
         test_results = model.process_batch(theano_predict, data_list_, unwrap=False)
-        #test_results2 = batch.process_batch(model, data_list_, None,
+        # test_results2 = batch.process_batch(model, data_list_, None,
         #                                   theano_predict, **batchiter_kw)
-        #label_list.extend(test_results['labeled_predictions'])
+        # label_list.extend(test_results['labeled_predictions'])
         if model.encoder is not None:
-            labeled_predictions = model.encoder.inverse_transform(test_results['predictions'])
+            labeled_predictions = model.encoder.inverse_transform(
+                test_results['predictions']
+            )
         else:
             labeled_predictions = test_results['predictions']
         label_list.extend(labeled_predictions)
@@ -1056,9 +1193,12 @@ def test_convolutional(model, image, patch_size='auto', stride='auto',
             label_list_ = model.encoder.classes_.tolist()
         else:
             label_list_ = list(model.encoder.classes_)
-        label_list_ = list(map(
-            lambda x: x if isinstance(x, six.text_type) else x.decode('utf-8'),
-            label_list_))
+        label_list_ = list(
+            map(
+                lambda x: x if isinstance(x, six.text_type) else x.decode('utf-8'),
+                label_list_,
+            )
+        )
     else:
         label_list_ = list(range(model.output_dims))
     # Create a dictionary of canvases
@@ -1118,15 +1258,13 @@ def test_convolutional(model, image, patch_size='auto', stride='auto',
         canvas = canvas.astype(np.uint8)
         if original_shape is not None:
             canvas = _resize_target(
-                canvas,
-                target_height=original_shape[0],
-                target_width=original_shape[1]
+                canvas, target_height=original_shape[0], target_width=original_shape[1]
             )
         canvas_dict[label] = canvas
     if verbose:
         # End timer
         duration = ut.toc(tt, verbose=False)
-        print('[harness] Interface took %s seconds...' % (duration, ))
+        print('[harness] Interface took %s seconds...' % (duration,))
     # Return the canvas dict
     return samples, canvas_dict
 
@@ -1162,7 +1300,7 @@ def fix_annot_species_viewpoint_quality_cnn(ibs, aid_list, min_conf=0.8):
     test_outputs = model.predict2(X_test)
     label_list = test_outputs['labeled_predictions']
     conf_list = test_outputs['confidences']
-    species_viewpoint_list = [ convert_label(label) for label in label_list ]
+    species_viewpoint_list = [convert_label(label) for label in label_list]
     zipped = zip(aid_list, species_viewpoint_list, conf_list)
     skipped_list = []
     for aid, (species, viewpoint), conf in zipped:
@@ -1229,9 +1367,9 @@ def detect_annot_species_viewpoint_cnn(ibs, aid_list):
     # Predict on the data and convert labels to IBEIS namespace
     test_outputs = model.predict2(X_test)
     label_list = test_outputs['labeled_predictions']
-    species_viewpoint_list = [ convert_label(label) for label in label_list ]
-    #pred_list, label_list, conf_list = test.test_data(X_test, y_test, model, weights_path)
-    #species_viewpoint_list = [ convert_label(label) for label in label_list ]
+    species_viewpoint_list = [convert_label(label) for label in label_list]
+    # pred_list, label_list, conf_list = test.test_data(X_test, y_test, model, weights_path)
+    # species_viewpoint_list = [ convert_label(label) for label in label_list ]
     return species_viewpoint_list
 
 
@@ -1280,10 +1418,10 @@ def validate_annot_species_viewpoint_cnn(ibs, aid_list, verbose=False):
     data = zip(aid_list, species_list, viewpoint_list, species_viewpoint_list)
     for aid, species, viewpoint, (species_, viewpoint_) in data:
         if species != species_:
-            bad_species_list.append( (aid, species, species_) )
+            bad_species_list.append((aid, species, species_))
             continue
         if viewpoint != viewpoint_:
-            bad_viewpoint_list.append( (aid, species, viewpoint, viewpoint_) )
+            bad_viewpoint_list.append((aid, species, viewpoint, viewpoint_))
             continue
     # Print bad if verbose
     if verbose:
@@ -1302,6 +1440,7 @@ def _suggest_random_candidate_regions(ibs, image, min_size, num_candidates=2000)
     h -= 1
     w -= 1
     min_x, min_y = min_size
+
     def _candidate():
         x0, y0, x1, y1 = 0, 0, 0, 0
         while x1 - x0 < min_x or y1 - y0 < min_y:
@@ -1314,18 +1453,20 @@ def _suggest_random_candidate_regions(ibs, image, min_size, num_candidates=2000)
             if y0 > y1:
                 y0, y1 = y1, y0
         return x0, y0, x1, y1
-    candidate_list = [ _candidate() for _ in range(num_candidates) ]
+
+    candidate_list = [_candidate() for _ in range(num_candidates)]
     return candidate_list
 
 
 def _suggest_bing_candidate_regions(ibs, image_path_list):
     def _dedictify(dict_list):
-        return [ [d_['minx'], d_['miny'], d_['maxx'], d_['maxy']] for d_ in dict_list ]
+        return [[d_['minx'], d_['miny'], d_['maxx'], d_['maxy']] for d_ in dict_list]
 
     from pybing import BING_Detector
+
     detector = BING_Detector()
     results_list = detector.detect(image_path_list)
-    result_list = [ _dedictify(results[1]) for results in results_list ]
+    result_list = [_dedictify(results[1]) for results in results_list]
     return result_list
 
 
@@ -1346,7 +1487,7 @@ def non_max_suppression_fast(box_list, conf_list, overlapThresh=0.5):
         return []
 
     # Convert to Numpy
-    box_list  = np.array(box_list)
+    box_list = np.array(box_list)
     conf_list = np.array(conf_list)
 
     # if the bounding boxes integers, convert them to floats --
@@ -1363,7 +1504,7 @@ def non_max_suppression_fast(box_list, conf_list, overlapThresh=0.5):
     y1 = box_list[:, 1]
     x2 = box_list[:, 2]
     y2 = box_list[:, 3]
-    s  = conf_list
+    s = conf_list
 
     # compute the area of the bounding boxes and sort the bounding
     # boxes by the bottom-right y-coordinate of the bounding box
@@ -1395,7 +1536,9 @@ def non_max_suppression_fast(box_list, conf_list, overlapThresh=0.5):
         overlap = (w * h) / area[idxs[:last]]
 
         # delete all indexes from the index list that have
-        idxs = np.delete(idxs, np.concatenate(([last], np.where(overlap > overlapThresh)[0])))
+        idxs = np.delete(
+            idxs, np.concatenate(([last], np.where(overlap > overlapThresh)[0]))
+        )
 
     # return only the bounding boxes that were picked using the
     # integer data type
@@ -1431,7 +1574,7 @@ def detect_image_cnn(ibs, gid, confidence=0.90, extraction='bing'):
     targetx, targety = target
     # gid = gid_list[random.randint(0, len(gid_list))]
     # gid = gid_list[0]
-    print('Detecting with gid=%r...' % (gid, ))
+    print('Detecting with gid=%r...' % (gid,))
     image = ibs.get_images(gid)
     rects = np.copy(image)
     h, w, c = image.shape
@@ -1443,12 +1586,12 @@ def detect_image_cnn(ibs, gid, confidence=0.90, extraction='bing'):
     else:
         candidate_list = _suggest_bing_candidate_regions(ibs, [image_path])[0]
 
-    print('Num candidates: %r' % (len(candidate_list), ))
+    print('Num candidates: %r' % (len(candidate_list),))
     chip_list_resized = []
     print('Extracting candidate regions...')
     for candidate in candidate_list:
         x0, y0, x1, y1 = candidate
-        chip = image[y0 : y1, x0 : x1]
+        chip = image[y0:y1, x0:x1]
         chip = cv2.resize(chip, target, interpolation=cv2.INTER_LANCZOS4)
         chip_list_resized.append(chip)
         color = (255, 0, 0)
@@ -1479,19 +1622,19 @@ def detect_image_cnn(ibs, gid, confidence=0.90, extraction='bing'):
     conf_list = test_outputs['confidences']
     label_list = test_outputs['labeled_predictions']
     pred_list = test_outputs['predictions']
-    #pred_list, label_list, conf_list = test.test_data(X_test, y_test, model, weights_path)
-    species_viewpoint_list = [ convert_label(label) for label in label_list ]
+    # pred_list, label_list, conf_list = test.test_data(X_test, y_test, model, weights_path)
+    species_viewpoint_list = [convert_label(label) for label in label_list]
 
     num_all_candidates = len(conf_list)
     index_list = non_max_suppression_fast(candidate_list, conf_list)
-    print('Surviving candidates: %r' % (index_list, ))
+    print('Surviving candidates: %r' % (index_list,))
     num_supressed_candidates = num_all_candidates - len(index_list)
-    print('Supressed: %d candidates' % (num_supressed_candidates, ))
+    print('Supressed: %d candidates' % (num_supressed_candidates,))
 
-    candidate_list         = np.take(candidate_list, index_list, axis=0)
-    pred_list              = np.take(pred_list, index_list, axis=0)
+    candidate_list = np.take(candidate_list, index_list, axis=0)
+    pred_list = np.take(pred_list, index_list, axis=0)
     species_viewpoint_list = np.take(species_viewpoint_list, index_list, axis=0)
-    conf_list              = np.take(conf_list, index_list, axis=0)
+    conf_list = np.take(conf_list, index_list, axis=0)
 
     values = zip(candidate_list, pred_list, species_viewpoint_list, conf_list)
     rects = np.copy(image)
@@ -1509,13 +1652,13 @@ def detect_image_cnn(ibs, gid, confidence=0.90, extraction='bing'):
         if conf < confidence:
             skipped += 1
             continue
-        print('%r Found %s (%s, %s) at %s' % (candidate, pred, species, viewpoint, conf, ))
+        print('%r Found %s (%s, %s) at %s' % (candidate, pred, species, viewpoint, conf,))
         color = color_dict[species]
         cv2.rectangle(rects, (x0, y0), (x1, y1), color)
         # mx = int((x1 - x0) * 0.5)
         # my = int((y1 - y0) * 0.5)
         # cv2.circle(rects, (x0 + mx, y0 + my), 5, color, -1)
-    print('Skipped [ %d / %d ]' % (skipped, len(values), ))
+    print('Skipped [ %d / %d ]' % (skipped, len(values),))
 
     cv2.imshow('', rects)
     cv2.waitKey(0)
@@ -1526,15 +1669,20 @@ def get_siam_l2_model():
     """
     model.show_weights_image()
     """
-    model_url = 'https://wildbookiarepository.azureedge.net/models/siaml2_128_model_state.pkl'
+    model_url = (
+        'https://wildbookiarepository.azureedge.net/models/siaml2_128_model_state.pkl'
+    )
     model_dpath = ut.ensure_app_resource_dir('wbia_cnn', 'models')
     model_fpath = ut.grab_file_url(model_url, download_dir=model_dpath)
     model_state = ut.load_cPkl(model_fpath)
     import wbia_cnn
+
     wbia_cnn.models
     model = models.SiameseL2(
         input_shape=model_state['input_shape'],
-        arch_tag=model_state['arch_tag'], autoinit=True)
+        arch_tag=model_state['arch_tag'],
+        autoinit=True,
+    )
     model.load_model_state(fpath=model_fpath)
     return model
 
@@ -1571,63 +1719,76 @@ def generate_siam_l2_128_feats(ibs, cid_list, config2_=None):
     """
     # hack because we need the old features
     import vtool as vt
+
     model = get_siam_l2_model()
     colorspace = 'gray' if model.input_shape[1] else None  # 'bgr'
     patch_size = model.input_shape[-1]
     if config2_ is not None:
         # Get config from config2_ object
-        #print('id(config2_) = ' + str(id(config2_)))
-        feat_cfgstr     = config2_.get('feat_cfgstr')
-        hesaff_params   = config2_.get('hesaff_params')
+        # print('id(config2_) = ' + str(id(config2_)))
+        feat_cfgstr = config2_.get('feat_cfgstr')
+        hesaff_params = config2_.get('hesaff_params')
         assert feat_cfgstr is not None
         assert hesaff_params is not None
     else:
         assert False
-    hack_config2_ = dict(feat_type='hesaff+sift',
-                         feat_cfgstr=feat_cfgstr.replace('siam128', 'sift'),
-                         hesaff_params=hesaff_params)
+    hack_config2_ = dict(
+        feat_type='hesaff+sift',
+        feat_cfgstr=feat_cfgstr.replace('siam128', 'sift'),
+        hesaff_params=hesaff_params,
+    )
     print('Generating siam128 features for %d chips' % (len(cid_list),))
     BATCHED = True
     if BATCHED:
         ibs.get_chip_feat_rowid(cid_list, config2_=hack_config2_, ensure=True)
-        for cid_batch in ut.ProgressIter(list(ut.ichunks(cid_list, 128)), lbl='siam128 chip chunk'):
+        for cid_batch in ut.ProgressIter(
+            list(ut.ichunks(cid_list, 128)), lbl='siam128 chip chunk'
+        ):
             sift_fid_list = ibs.get_chip_feat_rowid(cid_batch, config2_=hack_config2_)
             print('Reading keypoints')
             kpts_list = ibs.get_feat_kpts(sift_fid_list)
             print('Reading chips')
             chip_list = vt.convert_image_list_colorspace(
-                ibs.get_chips(cid_batch, ensure=True), colorspace)
+                ibs.get_chips(cid_batch, ensure=True), colorspace
+            )
             print('Warping patches')
-            warped_patches_list = [vt.get_warped_patches(chip, kpts, patch_size=patch_size)[0]
-                                   for chip, kpts in zip(chip_list, kpts_list)]
+            warped_patches_list = [
+                vt.get_warped_patches(chip, kpts, patch_size=patch_size)[0]
+                for chip, kpts in zip(chip_list, kpts_list)
+            ]
             flat_list, cumlen_list = ut.invertible_flatten2(warped_patches_list)
             stacked_patches = np.transpose(np.array(flat_list)[None, :], (1, 2, 3, 0))
 
             test_outputs = model.predict2(X_test=stacked_patches)
             network_output_determ = test_outputs['network_output_determ']
-            #network_output_determ.min()
-            #network_output_determ.max()
+            # network_output_determ.min()
+            # network_output_determ.max()
             siam128_vecs_list = ut.unflatten2(network_output_determ, cumlen_list)
 
             for cid, kpts, vecs in zip(cid_batch, kpts_list, siam128_vecs_list):
                 yield cid, len(kpts), kpts, vecs
     else:
-        sift_fid_list = ibs.get_chip_feat_rowid(cid_list, config2_=hack_config2_, ensure=True)  # NOQA
+        sift_fid_list = ibs.get_chip_feat_rowid(
+            cid_list, config2_=hack_config2_, ensure=True
+        )  # NOQA
         print('Reading keypoints')
         kpts_list = ibs.get_feat_kpts(sift_fid_list)
         print('Reading chips')
         chip_list = vt.convert_image_list_colorspace(
-            ibs.get_chips(cid_list, ensure=True), colorspace)
+            ibs.get_chips(cid_list, ensure=True), colorspace
+        )
         print('Warping patches')
-        warped_patches_list = [vt.get_warped_patches(chip, kpts, patch_size=patch_size)[0]
-                               for chip, kpts in zip(chip_list, kpts_list)]
+        warped_patches_list = [
+            vt.get_warped_patches(chip, kpts, patch_size=patch_size)[0]
+            for chip, kpts in zip(chip_list, kpts_list)
+        ]
         flat_list, cumlen_list = ut.invertible_flatten2(warped_patches_list)
         stacked_patches = np.transpose(np.array(flat_list)[None, :], (1, 2, 3, 0))
 
         test_outputs = model.predict2(X_test=stacked_patches)
         network_output_determ = test_outputs['network_output_determ']
-        #network_output_determ.min()
-        #network_output_determ.max()
+        # network_output_determ.min()
+        # network_output_determ.max()
         siam128_vecs_list = ut.unflatten2(network_output_determ, cumlen_list)
 
         for cid, kpts, vecs in zip(cid_list, kpts_list, siam128_vecs_list):
@@ -1639,20 +1800,23 @@ def extract_siam128_vecs(chip_list, kpts_list):
     Duplicate testing func for vtool
     """
     import vtool as vt
+
     model = get_siam_l2_model()
     colorspace = 'gray' if model.input_shape[1] else None  # 'bgr'
     patch_size = model.input_shape[-1]
     chip_list_ = vt.convert_image_list_colorspace(chip_list, colorspace)
 
-    warped_patches_list = [vt.get_warped_patches(chip, kpts, patch_size=patch_size)[0]
-                           for chip, kpts in zip(chip_list_, kpts_list)]
+    warped_patches_list = [
+        vt.get_warped_patches(chip, kpts, patch_size=patch_size)[0]
+        for chip, kpts in zip(chip_list_, kpts_list)
+    ]
     flat_list, cumlen_list = ut.invertible_flatten2(warped_patches_list)
     stacked_patches = np.transpose(np.array(flat_list)[None, :], (1, 2, 3, 0))
     X_test = stacked_patches
     test_outputs = model.predict2(X_test)
     network_output_determ = test_outputs['network_output_determ']
-    #network_output_determ.min()
-    #network_output_determ.max()
+    # network_output_determ.min()
+    # network_output_determ.max()
     siam128_vecs_list = ut.unflatten2(network_output_determ, cumlen_list)
     return siam128_vecs_list
 
@@ -1665,6 +1829,8 @@ if __name__ == '__main__':
         python -m wbia_cnn._plugin --allexamples --noface --nosrc
     """
     import multiprocessing
+
     multiprocessing.freeze_support()  # for win32
     import utool as ut  # NOQA
+
     ut.doctest_funcs()

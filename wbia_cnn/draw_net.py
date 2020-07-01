@@ -16,17 +16,18 @@ import numpy as np
 import cv2
 import utool as ut
 from wbia_cnn import utils
+
 print, rrr, profile = ut.inject2(__name__)
 
 
 def imwrite_theano_symbolic_graph(thean_expr):
     import theano
+
     graph_dpath = '.'
     graph_fname = 'symbolic_graph.png'
     graph_fpath = ut.unixjoin(graph_dpath, graph_fname)
     ut.ensuredir(graph_dpath)
-    theano.printing.pydotprint(
-        thean_expr, outfile=graph_fpath, var_with_name_simple=True)
+    theano.printing.pydotprint(thean_expr, outfile=graph_fpath, var_with_name_simple=True)
     ut.startfile(graph_fpath)
     return graph_fpath
 
@@ -59,24 +60,35 @@ def draw_neural_net(ax, left, right, bottom, top, layer_sizes):
             List of layer sizes, including input and output dimensionality
     """
     import matplotlib.pyplot as plt
-    #n_layers = len(layer_sizes)
+
+    # n_layers = len(layer_sizes)
     v_spacing = (top - bottom) / float(max(layer_sizes))
     h_spacing = (right - left) / float(len(layer_sizes) - 1)
     # Nodes
     for n, layer_size in enumerate(layer_sizes):
-        layer_top = v_spacing * (layer_size - 1) / 2. + (top + bottom) / 2.
+        layer_top = v_spacing * (layer_size - 1) / 2.0 + (top + bottom) / 2.0
         for m in xrange(layer_size):
-            circle = plt.Circle((n * h_spacing + left, layer_top - m * v_spacing), v_spacing / 4.,
-                                color='w', ec='k', zorder=4)
+            circle = plt.Circle(
+                (n * h_spacing + left, layer_top - m * v_spacing),
+                v_spacing / 4.0,
+                color='w',
+                ec='k',
+                zorder=4,
+            )
             ax.add_artist(circle)
     # Edges
-    for n, (layer_size_a, layer_size_b) in enumerate(zip(layer_sizes[:-1], layer_sizes[1:])):
-        layer_top_a = v_spacing * (layer_size_a - 1) / 2. + (top + bottom) / 2.
-        layer_top_b = v_spacing * (layer_size_b - 1) / 2. + (top + bottom) / 2.
+    for n, (layer_size_a, layer_size_b) in enumerate(
+        zip(layer_sizes[:-1], layer_sizes[1:])
+    ):
+        layer_top_a = v_spacing * (layer_size_a - 1) / 2.0 + (top + bottom) / 2.0
+        layer_top_b = v_spacing * (layer_size_b - 1) / 2.0 + (top + bottom) / 2.0
         for m in range(layer_size_a):
             for o in range(layer_size_b):
-                line = plt.Line2D([n * h_spacing + left, (n + 1) * h_spacing + left],
-                                  [layer_top_a - m * v_spacing, layer_top_b - o * v_spacing], c='k')
+                line = plt.Line2D(
+                    [n * h_spacing + left, (n + 1) * h_spacing + left],
+                    [layer_top_a - m * v_spacing, layer_top_b - o * v_spacing],
+                    c='k',
+                )
                 ax.add_artist(line)
 
 
@@ -115,8 +127,9 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
     import networkx as nx
     import plottool as pt
     import wbia_cnn.__LASAGNE__ as lasange
-    #from matplotlib import offsetbox
-    #import matplotlib as mpl
+
+    # from matplotlib import offsetbox
+    # import matplotlib as mpl
 
     REMOVE_BATCH_SIZE = True
     from wbia_cnn import net_strs
@@ -140,10 +153,7 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
     edge_attrs = ut.ddict(dict)
 
     # Make layer ids (ensure no duplicates)
-    layer_to_id = {
-        l: repr(l) if l.name is None else l.name
-        for l in set(layers)
-    }
+    layer_to_id = {l: repr(l) if l.name is None else l.name for l in set(layers)}
     keys_ = layer_to_id.keys()
     dups = ut.find_duplicate_items(layer_to_id.values())
     for dupval, dupidxs in dups.items():
@@ -190,7 +200,7 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
 
         # append node
         is_main_layer = len(layer.params) > 0
-        #is_main_layer = len(lasange.layers.get_all_params(layer, trainable=True)) > 0
+        # is_main_layer = len(lasange.layers.get_all_params(layer, trainable=True)) > 0
         if layer_info['classname'] in lasange.layers.normalization.__all__:
             is_main_layer = False
         if layer_info['classname'] in lasange.layers.special.__all__:
@@ -206,12 +216,17 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
         if hasattr(layer, '_is_main_layer'):
             is_main_layer = layer._is_main_layer
 
-        #if getattr(layer, 'name', '') is not None and getattr(layer, 'name', '') .endswith('/sum'):
+        # if getattr(layer, 'name', '') is not None and getattr(layer, 'name', '') .endswith('/sum'):
         #    is_main_layer = True
 
-        node_attr = dict(name=key, label=label, color=color,
-                         fillcolor=color, style='filled',
-                         is_main_layer=is_main_layer)
+        node_attr = dict(
+            name=key,
+            label=label,
+            color=color,
+            fillcolor=color,
+            style='filled',
+            is_main_layer=is_main_layer,
+        )
 
         node_attr['is_main_layer'] = is_main_layer
         if is_main_layer:
@@ -221,24 +236,21 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
         if is_main_layer or node_attr['classalias'].startswith('Conv'):
             if hasattr(layer, 'shape'):
                 if len(layer.shape) == 3:
-                    node_attr['out_size'] = (layer.shape[2],
-                                             layer.shape[1])
+                    node_attr['out_size'] = (layer.shape[2], layer.shape[1])
                     node_attr['depth'] = layer.output_shape[0]
             if hasattr(layer, 'output_shape'):
                 if len(layer.output_shape) == 4:
                     depth = layer.output_shape[1]
-                    width, height = (layer.output_shape[3],
-                                     layer.output_shape[2])
-                    xshift = -width * (.1 / (depth ** (1 / 3))) / 3
-                    yshift = height * (.1 / (depth ** (1 / 3))) / 2
+                    width, height = (layer.output_shape[3], layer.output_shape[2])
+                    xshift = -width * (0.1 / (depth ** (1 / 3))) / 3
+                    yshift = height * (0.1 / (depth ** (1 / 3))) / 2
                     node_attr['depth'] = depth
                     node_attr['xshift'] = xshift
                     node_attr['yshift'] = yshift
                     node_attr['out_size'] = (width, height)
 
                 if len(layer.output_shape) == 2:
-                    node_attr['out_size'] = (1,
-                                             layer.output_shape[1])
+                    node_attr['out_size'] = (1, layer.output_shape[1])
 
         node_dict[key] = node_attr
 
@@ -259,13 +271,13 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
     # Setup scaled width and heights
     out_size_list = [v['out_size'] for v in node_dict.values() if 'out_size' in v]
     out_size_list = np.array(out_size_list)
-    #out_size_list = out_size_list[out_size_list.T[0] > 1]
+    # out_size_list = out_size_list[out_size_list.T[0] > 1]
     area_arr = np.prod(out_size_list, axis=1)
     main_outsize = np.array(out_size_list[area_arr.argmax()])
-    #main_outsize = np.array(out_size_list[area_arr.argmin()])
+    # main_outsize = np.array(out_size_list[area_arr.argmin()])
     scale = main_size_ / main_outsize
 
-    scale_dense_max = .25
+    scale_dense_max = 0.25
     scale_dense_min = 8
 
     for k, v in node_dict.items():
@@ -276,26 +288,26 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
                     v['shape'] = 'rect'
                     v['width'] = scale_dense_min
                     if v['out_size'][1] > main_outsize[1]:
-                        v['height'] =  v['out_size'][1] * scale[1] * scale_dense_max
+                        v['height'] = v['out_size'][1] * scale[1] * scale_dense_max
                     elif v['out_size'][1] < scale_dense_min:
                         v['height'] = scale_dense_min * v['out_size'][1]
                     else:
                         v['height'] = v['out_size'][1]
                 elif v['classalias'].startswith('Conv'):
                     v['shape'] = 'stack'
-                    #v['shape'] = 'rect'
+                    # v['shape'] = 'rect'
                     v['width'] = v['out_size'][0] * scale[0]
-                    v['height'] =  v['out_size'][1] * scale[1]
+                    v['height'] = v['out_size'][1] * scale[1]
                 else:
                     v['shape'] = 'rect'
                     v['width'] = v['out_size'][0] * scale[0]
-                    v['height'] =  v['out_size'][1] * scale[1]
+                    v['height'] = v['out_size'][1] * scale[1]
             else:
                 v['shape'] = 'rect'
                 v['width'] = main_size_[0]
                 v['height'] = main_size_[1]
         else:
-            #v['shape'] = 'ellipse'
+            # v['shape'] = 'ellipse'
             v['shape'] = 'rect'
             v['style'] = 'rounded'
             v['width'] = sub_size[0]
@@ -304,7 +316,7 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
     key_order = ut.take(layer_to_id, layers)
     node_dict = ut.dict_subset(node_dict, key_order)
 
-    #print('node_dict = ' + ut.repr3(node_dict))
+    # print('node_dict = ' + ut.repr3(node_dict))
 
     # Create the networkx graph structure
     G = nx.DiGraph()
@@ -314,12 +326,12 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
         nx.set_edge_attributes(G, key, val)
 
     # Add invisible structure
-    #main_nodes = [key for key, val in
+    # main_nodes = [key for key, val in
     #              nx.get_node_attributes(G, 'is_main_layer').items() if val]
 
     main_children = ut.odict()
 
-    #for n1, n2 in ut.itertwo(main_nodes):
+    # for n1, n2 in ut.itertwo(main_nodes):
     #    print('n1, n2 = %r %r' % (n1, n2))
     #    import utool
     #    utool.embed()
@@ -331,7 +343,7 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
     #    main_children[n1] = children
 
     #    #pass
-    #main_children[main_nodes[-1]] = []
+    # main_children[main_nodes[-1]] = []
 
     for n1 in main_nodes:
         main_children[n1] = []
@@ -354,11 +366,11 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
     # Custom positioning
     x = 0
     y = 1000
-    #print('main_children = %s' % (ut.repr3(main_children),))
+    # print('main_children = %s' % (ut.repr3(main_children),))
 
-    #main_nodes = ut.isect(list(nx.topological_sort(G)), main_nodes)
-    xpad = main_size_[0] * .3
-    ypad = main_size_[1] * .3
+    # main_nodes = ut.isect(list(nx.topological_sort(G)), main_nodes)
+    xpad = main_size_[0] * 0.3
+    ypad = main_size_[1] * 0.3
 
     # Draw each main node, and then put its children under it
     # Then move to the left and draw the next main node.
@@ -394,7 +406,7 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
     # Pin everybody
     nx.set_node_attributes(G, 'pin', 'true')
     layoutkw = dict(prog='neato', splines='line')
-    #layoutkw = dict(prog='neato', splines='spline')
+    # layoutkw = dict(prog='neato', splines='spline')
     layoutkw = dict(prog='neato', splines='ortho')
     G_ = G.copy()
     # delete lables for positioning
@@ -409,8 +421,8 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
     # reset labels
     if not nolayout:
         nx.set_node_attributes(G_, 'label', _labels)
-    _ = pt.show_nx(G_, fontsize=8, arrow_width=.3, layout='custom', fnum=fnum)  # NOQA
-    #pt.adjust_subplots(top=1, bot=0, left=0, right=1)
+    _ = pt.show_nx(G_, fontsize=8, arrow_width=0.3, layout='custom', fnum=fnum)  # NOQA
+    # pt.adjust_subplots(top=1, bot=0, left=0, right=1)
     pt.plt.tight_layout()
 
 
@@ -421,7 +433,8 @@ def pydot_to_image(pydot_graph):
     """
     from PIL import Image
     from six.moves import StringIO
-    #from cStringIO import StringIO
+
+    # from cStringIO import StringIO
     png_str = pydot_graph.create_png(prog='dot')
     sio = StringIO()
     sio.write(png_str)
@@ -434,7 +447,7 @@ def pydot_to_image(pydot_graph):
     return img
 
 
-#def make_architecture_image(layers, **kwargs):
+# def make_architecture_image(layers, **kwargs):
 #    """
 #    Args:
 #        layers (list): List of the layers, as obtained from lasange.layers.get_all_layers
@@ -470,7 +483,7 @@ def pydot_to_image(pydot_graph):
 #    return img
 
 
-#def imwrite_arch(layers, fpath, **kwargs):
+# def imwrite_arch(layers, fpath, **kwargs):
 #    """
 #    Draws a network diagram to a file
 
@@ -502,6 +515,7 @@ def pydot_to_image(pydot_graph):
 #    ext = fpath[fpath.rfind('.') + 1:]
 #    with open(fpath, 'w') as fid:
 #        fid.write(pydot_graph.create(format=ext))
+
 
 def occlusion_heatmap(net, x, target, square_length=7):
     """An occlusion test that checks an image for its critical parts.
@@ -541,11 +555,15 @@ def occlusion_heatmap(net, x, target, square_length=7):
     from lasagne.layers import get_output_shape
 
     if (x.ndim != 4) or x.shape[0] != 1:
-        raise ValueError('This function requires the input data to be of '
-                         'shape (1, c, x, y), instead got {}'.format(x.shape))
+        raise ValueError(
+            'This function requires the input data to be of '
+            'shape (1, c, x, y), instead got {}'.format(x.shape)
+        )
     if square_length % 2 == 0:
-        raise ValueError('Square length has to be an odd number, instead '
-                         'got {}.'.format(square_length))
+        raise ValueError(
+            'Square length has to be an odd number, instead '
+            'got {}.'.format(square_length)
+        )
 
     num_classes = get_output_shape(net.layers_[-1])[1]
     img = x[0].copy()
@@ -561,7 +579,7 @@ def occlusion_heatmap(net, x, target, square_length=7):
         # batch s1 occluded images for faster prediction
         for j in range(s1):
             x_pad = np.pad(img, ((0, 0), (pad, pad), (pad, pad)), 'constant')
-            x_pad[:, i:i + square_length, j:j + square_length] = 0.
+            x_pad[:, i : i + square_length, j : j + square_length] = 0.0
             x_occluded[j] = x_pad[:, pad:-pad, pad:-pad]
         y_proba = net.predict_proba_Xb(x_occluded)
         probs[i] = y_proba.reshape(s1, num_classes)
@@ -575,9 +593,12 @@ def occlusion_heatmap(net, x, target, square_length=7):
 
 def _plot_heat_map(net, Xb, figsize, get_heat_image):
     import plottool as pt
-    if (Xb.ndim != 4):
-        raise ValueError('This function requires the input data to be of '
-                         'shape (b, c, x, y), instead got {}'.format(Xb.shape))
+
+    if Xb.ndim != 4:
+        raise ValueError(
+            'This function requires the input data to be of '
+            'shape (b, c, x, y), instead got {}'.format(Xb.shape)
+        )
 
     num_images = Xb.shape[0]
     if figsize[1] is None:
@@ -590,7 +611,7 @@ def _plot_heat_map(net, Xb, figsize, get_heat_image):
         ax.axis('off')
 
     for n in range(num_images):
-        heat_img = get_heat_image(net, Xb[n:n + 1, :, :, :], n)
+        heat_img = get_heat_image(net, Xb[n : n + 1, :, :, :], n)
 
         ax = axes if num_images == 1 else axes[n]
         img = Xb[n, :, :, :].mean(0)
@@ -599,8 +620,7 @@ def _plot_heat_map(net, Xb, figsize, get_heat_image):
         ax[1].imshow(-heat_img, interpolation='nearest', cmap='Reds')
         ax[1].set_title('critical parts')
         ax[2].imshow(-img, interpolation='nearest', cmap='gray')
-        ax[2].imshow(-heat_img, interpolation='nearest', cmap='Reds',
-                     alpha=0.6)
+        ax[2].imshow(-heat_img, interpolation='nearest', cmap='Reds', alpha=0.6)
         ax[2].set_title('super-imposed')
     return pt.plt
 
@@ -632,21 +652,25 @@ def plot_occlusion(net, Xb, target, square_length=7, figsize=(9, None)):
     and both images super-imposed.
     """
     return _plot_heat_map(
-        net, Xb, figsize, lambda net, Xb, n: occlusion_heatmap(
-            net, Xb, target[n], square_length))
+        net,
+        Xb,
+        figsize,
+        lambda net, Xb, n: occlusion_heatmap(net, Xb, target[n], square_length),
+    )
 
 
 def plot_saliency(net, Xb, figsize=(9, None)):
-
     def saliency_map(input, output, pred, Xb):
         import theano.tensor as T
         from lasagne.objectives import binary_crossentropy
+
         score = -binary_crossentropy(output[:, pred], np.array([1])).sum()
         heat_map_ = np.abs(T.grad(score, input).eval({input: Xb}))
         return heat_map_
 
     def saliency_map_net(net, Xb):
         from lasagne.layers import get_output
+
         input = net.layers_[0].input_var
         output = get_output(net.layers_[-1])
         pred = output.eval({input: Xb}).argmax(axis=1)
@@ -654,8 +678,7 @@ def plot_saliency(net, Xb, figsize=(9, None)):
         heat_img = heat_map_[0].transpose(1, 2, 0).squeeze()
         return heat_img
 
-    return _plot_heat_map(
-        net, Xb, figsize, lambda net, Xb, n: -saliency_map_net(net, Xb))
+    return _plot_heat_map(net, Xb, figsize, lambda net, Xb, n: -saliency_map_net(net, Xb))
 
 
 class Dream(object):
@@ -705,6 +728,7 @@ class Dream(object):
         import lasagne
         import vtool as vt
         import theano
+
         model = dream.model
 
         # Use current weights to find the score of a particular class
@@ -714,12 +738,12 @@ class Dream(object):
         # Get the final layer and remove the softmax nonlinearity to access the
         # pre-activation. (Softmax encourages minimization of other classes)
         import copy
-        #softmax = copy.copy(model.output_layer)
-        #softmax.nonlinearity = lasagne.nonlinearities.identity
+
+        # softmax = copy.copy(model.output_layer)
+        # softmax.nonlinearity = lasagne.nonlinearities.identity
         softmax = copy.copy(model.output_layer)
 
-        class_probs = lasagne.layers.get_output(softmax, Xb_shared,
-                                                deterministic=True)
+        class_probs = lasagne.layers.get_output(softmax, Xb_shared, deterministic=True)
 
         # werid way to index into position of target
         flat_idx = (T.arange(yb_shared.shape[0]) * class_probs.shape[1]) + yb_shared
@@ -739,15 +763,22 @@ class Dream(object):
             out = vt.norm01(outs[count])
             overlay = vt.blend_images_multiply(out, img)
 
-            vt.imwrite(join(dpath, 'out%d_A_image_t=%s.jpg' % (count, y)),
-                       vt.rectify_to_uint8(img))
-            vt.imwrite(join(dpath, 'out%d_B_heat_t=%s.jpg' % (count, y)),
-                       vt.rectify_to_uint8(out))
-            vt.imwrite(join(dpath, 'out%d_C_overlay_t=%s.jpg' % (count, y)),
-                       vt.rectify_to_uint8(overlay))
+            vt.imwrite(
+                join(dpath, 'out%d_A_image_t=%s.jpg' % (count, y)),
+                vt.rectify_to_uint8(img),
+            )
+            vt.imwrite(
+                join(dpath, 'out%d_B_heat_t=%s.jpg' % (count, y)),
+                vt.rectify_to_uint8(out),
+            )
+            vt.imwrite(
+                join(dpath, 'out%d_C_overlay_t=%s.jpg' % (count, y)),
+                vt.rectify_to_uint8(overlay),
+            )
 
-    def __init__(dream, model, init='gauss', niters=100, update_rate=1e-2,
-                 weight_decay=1e-5):
+    def __init__(
+        dream, model, init='gauss', niters=100, update_rate=1e-2, weight_decay=1e-5
+    ):
         dream.model = model
         dream.init = init
         dream.niters = niters
@@ -786,12 +817,13 @@ class Dream(object):
             dream.step_fn = dream._make_objective(dream.shared_images, target_labels)
 
         # Optimize objective via backpropogation for a few iterations
-        for _ in ut.ProgIter(range(dream.niters), lbl='making class model img',
-                             bs=True):
+        for _ in ut.ProgIter(range(dream.niters), lbl='making class model img', bs=True):
             dream.step_fn()
-            #print('objective = %r' % (objective,))
+            # print('objective = %r' % (objective,))
 
-        out = dream._postprocess_class_image(dream.shared_images, target_labels, was_scalar)
+        out = dream._postprocess_class_image(
+            dream.shared_images, target_labels, was_scalar
+        )
         return out
 
     def _make_init_state(dream):
@@ -833,23 +865,29 @@ class Dream(object):
             initial_state = np.clip(initial_state, 0, 1)
         elif init in ['gauss']:
             import vtool as vt
-            initial_state = np.array([[vt.gaussian_patch((h, w), sigma=None)
-                                       for _ in range(c)]] * b)
-            #initial_state /= initial_state.max()
+
+            initial_state = np.array(
+                [[vt.gaussian_patch((h, w), sigma=None) for _ in range(c)]] * b
+            )
+            # initial_state /= initial_state.max()
         elif init in ['rgauss']:
             import vtool as vt
-            initial_state = np.array([[vt.gaussian_patch((h, w), sigma=None)
-                                       for _ in range(c)]] * b)
-            #initial_state /= initial_state.max()
-            raug = (np.abs(rng.randn(*input_shape)) * (initial_state.max() / 12))
+
+            initial_state = np.array(
+                [[vt.gaussian_patch((h, w), sigma=None) for _ in range(c)]] * b
+            )
+            # initial_state /= initial_state.max()
+            raug = np.abs(rng.randn(*input_shape)) * (initial_state.max() / 12)
             initial_state += raug
             initial_state = np.clip(initial_state, 0, 1)
 
         elif init in ['perlin']:
             import vtool as vt
+
             b, c, w, h = input_shape
-            initial_state = np.array([[vt.perlin_noise((w, h), rng=rng)
-                                       for _ in range(c)]] * b)
+            initial_state = np.array(
+                [[vt.perlin_noise((w, h), rng=rng) for _ in range(c)]] * b
+            )
             initial_state = initial_state.astype(np.float32) / 255
         initial_state = initial_state.astype(np.float32)
         return initial_state
@@ -865,6 +903,7 @@ class Dream(object):
         import copy
         import wbia_cnn.__THEANO__ as theano
         from wbia_cnn.__THEANO__ import tensor as T  # NOQA
+
         print('Making dream objective')
         # Get the final layer and remove the softmax nonlinearity to access the
         # pre-activation. (Softmax encourages minimization of other classes)
@@ -873,8 +912,9 @@ class Dream(object):
 
         # Overwrite lasagne's InputLayer with the image
         # Build expression to represent class scores wrt the image
-        class_scores = lasagne.layers.get_output(softmax, shared_images,
-                                                 deterministic=True)
+        class_scores = lasagne.layers.get_output(
+            softmax, shared_images, deterministic=True
+        )
 
         # Get the class score that represents our class of interest
         # simultaniously generate as many classes as were requested.
@@ -882,8 +922,9 @@ class Dream(object):
         max_term = T.mean(max_term_batch)
 
         # Get the squared L2 norm of the image values
-        flat_img = T.reshape(shared_images, (shared_images.shape[0],
-                                             T.prod(shared_images.shape[1:])))
+        flat_img = T.reshape(
+            shared_images, (shared_images.shape[0], T.prod(shared_images.shape[1:]))
+        )
         reg_term_batch = (flat_img ** 2).sum(axis=1)
         reg_term = T.mean(reg_term_batch)
 
@@ -899,9 +940,7 @@ class Dream(object):
             # outputs could be empty, but returning objective allows us to
             # monitor progress
             outputs=[objective],
-            updates={
-                shared_images: shared_images + dream.update_rate * grads
-            }
+            updates={shared_images: shared_images + dream.update_rate * grads},
         )
         return step_fn
 
@@ -909,8 +948,9 @@ class Dream(object):
         # return final state of the image
         Xb = shared_images.get_value()
         X = Xb.transpose((0, 2, 3, 1))
-        out_ = X[0:len(target_labels)]
+        out_ = X[0 : len(target_labels)]
         import vtool as vt  # NOQA
+
         out = out_.copy()
         out = vt.norm01(out) * 255
         out = np.round(out).astype(np.uint8)
@@ -948,6 +988,7 @@ class Dream(object):
         import wbia_cnn.__THEANO__ as theano
         from wbia_cnn.__THEANO__ import tensor as T  # NOQA
         import utool as ut
+
         input_shape = dream.model.input_shape
         b, c, w, h = input_shape
         was_scalar = not ut.isiterable(target_labels)
@@ -956,16 +997,13 @@ class Dream(object):
         initial_state = dream._make_init_state()
         shared_images = theano.shared(initial_state.astype(np.float32))
         step_fn = dream._make_objective(shared_images, target_labels)
-        out = dream._postprocess_class_image(shared_images, target_labels,
-                                             was_scalar)
+        out = dream._postprocess_class_image(shared_images, target_labels, was_scalar)
         yield out
-        for _ in ut.ProgIter(range(dream.niters), lbl='class dream',
-                             bs=True):
+        for _ in ut.ProgIter(range(dream.niters), lbl='class dream', bs=True):
             step_fn()
             # objective = step_fn()
             # print('objective = %r' % (objective,))
-            out = dream._postprocess_class_image(shared_images, target_labels,
-                                                 was_scalar)
+            out = dream._postprocess_class_image(shared_images, target_labels, was_scalar)
             yield out
 
 
@@ -1001,14 +1039,16 @@ def show_saliency_heatmap(model, dataset):
     net = model
     num = 4
     start = 0
-    X = X_valid[start:start + num]
-    y = y_valid[start:start + num]
+    X = X_valid[start : start + num]
+    y = y_valid[start : start + num]
     Xb = net.prepare_input(X)
     plot_occlusion(net, Xb, y)
-    #plot_saliency(net, Xb)
+    # plot_saliency(net, Xb)
 
 
-def show_convolutional_weights(all_weights, use_color=None, limit=144, fnum=None, pnum=(1, 1, 1)):
+def show_convolutional_weights(
+    all_weights, use_color=None, limit=144, fnum=None, pnum=(1, 1, 1)
+):
     r"""
     Args:
         all_weights (?):
@@ -1069,16 +1109,17 @@ def show_convolutional_weights(all_weights, use_color=None, limit=144, fnum=None
         >>> ut.show_if_requested()
     """
     import plottool as pt
+
     if fnum is None:
         fnum = pt.next_fnum()
     fig = pt.figure(fnum=fnum, pnum=pnum, docla=True)
     num, channels, height, width = all_weights.shape
     if use_color is None:
         # Try to infer if use_color should be shown
-        use_color = (channels == 3)
+        use_color = channels == 3
 
     stacked_img = make_conv_weight_image(all_weights, limit)
-    #ax = fig.add_subplot(111)
+    # ax = fig.add_subplot(111)
     if len(stacked_img.shape) == 3 and stacked_img.shape[-1] == 1:
         stacked_img = stacked_img.reshape(stacked_img.shape[:-1])
     pt.imshow(stacked_img)
@@ -1088,10 +1129,11 @@ def show_convolutional_weights(all_weights, use_color=None, limit=144, fnum=None
 def make_conv_weight_image(all_weights, limit=144):
     """ just makes the image ndarray of the weights """
     import vtool as vt
+
     # Try to infer if use_color should be shown
     num, channels, height, width = all_weights.shape
     # Try to infer if use_color should be shown
-    use_color = (channels == 3)
+    use_color = channels == 3
     # non-use_color features need to be flattened
     if not use_color:
         all_weights_ = all_weights.reshape(num * channels, height, width, 1)
@@ -1100,10 +1142,10 @@ def make_conv_weight_image(all_weights, limit=144):
         all_weights_ = utils.convert_theano_images_to_cv2_images(all_weights)
         # convert from BGR to RGB
         all_weights_ = all_weights_[..., ::-1]
-        #cv2.cvtColor(all_weights_[-1], cv2.COLOR_BGR2RGB)
+        # cv2.cvtColor(all_weights_[-1], cv2.COLOR_BGR2RGB)
 
     # Limit all_weights_
-    #num = all_weights_.shape[0]
+    # num = all_weights_.shape[0]
     num, height, width, channels = all_weights_.shape
     if limit is not None and num > limit:
         all_weights_ = all_weights_[:limit]
@@ -1118,8 +1160,9 @@ def make_conv_weight_image(all_weights, limit=144):
         all_domain = all_max - all_min
         extra_dims = (None,) * (len(all_weights_.shape) - 1)
         broadcaster = (slice(None),) + extra_dims
-        all_features = ((all_weights_ - all_min[broadcaster]) *
-                        (255.0 / all_domain[broadcaster])).astype(np.uint8)
+        all_features = (
+            (all_weights_ - all_min[broadcaster]) * (255.0 / all_domain[broadcaster])
+        ).astype(np.uint8)
     else:
         # Normalize jointly across all filters
         _max = all_weights_.max()
@@ -1127,28 +1170,26 @@ def make_conv_weight_image(all_weights, limit=144):
         _domain = _max - _min
         all_features = ((all_weights_ - _min) * (255.0 / _domain)).astype(np.uint8)
 
-    #import scipy.misc
+    # import scipy.misc
     # resize feature, give them a border, and stack them together
     new_height, new_width = max(32, height), max(32, width)
     nbp_ = 1  # num border pixels
-    _resized_features = np.array([
-        cv2.resize(img, (new_width, new_height),
-                   interpolation=cv2.INTER_NEAREST)
-        for img in all_features
-    ])
-    resized_features = _resized_features.reshape(
-        num, new_height, new_width, channels)
-    border_shape = (num, new_height + (nbp_ * 2),
-                    new_width + (nbp_ * 2), channels)
+    _resized_features = np.array(
+        [
+            cv2.resize(img, (new_width, new_height), interpolation=cv2.INTER_NEAREST)
+            for img in all_features
+        ]
+    )
+    resized_features = _resized_features.reshape(num, new_height, new_width, channels)
+    border_shape = (num, new_height + (nbp_ * 2), new_width + (nbp_ * 2), channels)
     bordered_features = np.zeros(border_shape, dtype=resized_features.dtype)
     bordered_features[:, nbp_:-nbp_, nbp_:-nbp_, :] = resized_features
-    #img_list = bordered_features
+    # img_list = bordered_features
     stacked_img = vt.stack_square_images(bordered_features)
     return stacked_img
 
 
-def output_confusion_matrix(X_test, results_path, test_results, model,
-                            **kwargs):
+def output_confusion_matrix(X_test, results_path, test_results, model, **kwargs):
     """ currently hacky implementation, fix it later """
     loss, accu_test, prob_list, auglbl_list, pred_list, conf_list = test_results
     # Output confusion matrix
@@ -1158,26 +1199,32 @@ def output_confusion_matrix(X_test, results_path, test_results, model,
     # TODO: THIS NEEDS TO BE FIXED
     label_list = list(range(kwargs.get('output_dims')))
     # Encode labels if avaialble
-    #encoder = kwargs.get('encoder', None)
+    # encoder = kwargs.get('encoder', None)
     encoder = getattr(model, 'encoder', None)
     if encoder is not None:
         label_list = encoder.inverse_transform(label_list)
     # Make confusion matrix (pass X to write out failed cases)
     show_confusion_matrix(
-        auglbl_list, pred_list, label_list, results_path, mapping_fn, X_test)
+        auglbl_list, pred_list, label_list, results_path, mapping_fn, X_test
+    )
 
 
-def save_confusion_matrix(results_path, correct_y, predict_y, category_list, mapping_fn=None, data_x=None):
+def save_confusion_matrix(
+    results_path, correct_y, predict_y, category_list, mapping_fn=None, data_x=None
+):
     import plottool as pt
+
     fig = show_confusion_matrix(
-        correct_y, predict_y, category_list, mapping_fn=mapping_fn, data_x=data_x)
+        correct_y, predict_y, category_list, mapping_fn=mapping_fn, data_x=data_x
+    )
     output_fpath = join(results_path, 'confusion.png')
     pt.save_figure(fig, fpath=output_fpath)
     return output_fpath
 
 
-def show_confusion_matrix(correct_y, predict_y, category_list, results_path,
-                          mapping_fn=None, data_x=None):
+def show_confusion_matrix(
+    correct_y, predict_y, category_list, results_path, mapping_fn=None, data_x=None
+):
     """
     Given the correct and predict labels, show the confusion matrix
 
@@ -1195,6 +1242,7 @@ def show_confusion_matrix(correct_y, predict_y, category_list, results_path,
     TODO FIXME and simplify
     """
     import matplotlib.pyplot as plt
+
     confused_examples = join(results_path, 'confused')
     if data_x is not None:
         if exists(confused_examples):
@@ -1204,16 +1252,17 @@ def show_confusion_matrix(correct_y, predict_y, category_list, results_path,
 
     if mapping_fn is None:
         # Identity
-        category_mapping = {key: index for index,
-                            key in enumerate(category_list)}
+        category_mapping = {key: index for index, key in enumerate(category_list)}
         category_list_ = category_list
     else:
         category_mapping = mapping_fn(category_list)
-        assert all([category in category_mapping.keys()
-                    for category in category_list]), 'Not all categories are mapped'
+        assert all(
+            [category in category_mapping.keys() for category in category_list]
+        ), 'Not all categories are mapped'
         values = list(category_mapping.values())
         assert len(list(set(values))) == len(
-            values), 'Mapped categories have a duplicate assignment'
+            values
+        ), 'Mapped categories have a duplicate assignment'
         assert 0 in values, 'Mapped categories must have a 0 index'
         temp = list(category_mapping.iteritems())
         temp = sorted(temp, key=itemgetter(1))
@@ -1236,7 +1285,9 @@ def show_confusion_matrix(correct_y, predict_y, category_list, results_path,
         if data_x is not None and correct_ != predict_:
             example = data_x[index]
             example_name = '%s^SEEN_INCORRECTLY_AS^%s' % (
-                example_correct_label, example_predict_label, )
+                example_correct_label,
+                example_predict_label,
+            )
             if example_name not in counters.keys():
                 counters[example_name] = 0
             counter = counters[example_name]
@@ -1253,22 +1304,25 @@ def show_confusion_matrix(correct_y, predict_y, category_list, results_path,
     plt.clf()
     ax = fig.add_subplot(111)
     ax.set_aspect(1)
-    res = ax.imshow(np.array(norm_conf), cmap=plt.cm.jet,
-                    interpolation='nearest')
+    res = ax.imshow(np.array(norm_conf), cmap=plt.cm.jet, interpolation='nearest')
 
     for x in range(size):
         for y in range(size):
-            ax.annotate(str(int(confidences[x][y])), xy=(y, x),
-                        horizontalalignment='center',
-                        verticalalignment='center')
+            ax.annotate(
+                str(int(confidences[x][y])),
+                xy=(y, x),
+                horizontalalignment='center',
+                verticalalignment='center',
+            )
 
     cb = fig.colorbar(res)  # NOQA
     plt.xticks(np.arange(size), category_list_[0:size], rotation=90)
     plt.yticks(np.arange(size), category_list_[0:size])
     margin_small = 0.1
     margin_large = 0.9
-    plt.subplots_adjust(left=margin_small, right=margin_large,
-                        bottom=margin_small, top=margin_large)
+    plt.subplots_adjust(
+        left=margin_small, right=margin_large, bottom=margin_small, top=margin_large
+    )
     plt.xlabel('Predicted')
     plt.ylabel('Correct')
     return fig
@@ -1282,6 +1336,8 @@ if __name__ == '__main__':
         python -m wbia_cnn.draw_net --allexamples --noface --nosrc
     """
     import multiprocessing
+
     multiprocessing.freeze_support()  # for win32
     import utool as ut  # NOQA
+
     ut.doctest_funcs()

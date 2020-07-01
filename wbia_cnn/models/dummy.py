@@ -2,17 +2,19 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import utool as ut
 from wbia_cnn.models import abstract_models
+
 print, rrr, profile = ut.inject2(__name__)
 
 
 @ut.reloadable_class
 class DummyModel(abstract_models.AbstractCategoricalModel):
     def __init__(model, batch_size=8, data_shape=(4, 4, 1), **kwargs):
-        #kwargs['autoinit'] = kwargs.get('autoinit', True)
+        # kwargs['autoinit'] = kwargs.get('autoinit', True)
         kwargs['output_dims'] = kwargs.get('output_dims', 3)
         kwargs['showprog'] = kwargs.get('showprog', False)
-        super(DummyModel, model).__init__(data_shape=data_shape,
-                                          batch_size=batch_size, **kwargs)
+        super(DummyModel, model).__init__(
+            data_shape=data_shape, batch_size=batch_size, **kwargs
+        )
 
     def init_arch(model, verbose=True):
         """
@@ -31,12 +33,12 @@ class DummyModel(abstract_models.AbstractCategoricalModel):
         """
         import wbia_cnn.__LASAGNE__ as lasange
         from wbia_cnn import custom_layers
+
         if verbose:
             print('init arch')
 
         bundles = custom_layers.make_bundles(
-            nonlinearity=lasange.nonlinearities.rectify,
-            batch_norm=False,
+            nonlinearity=lasange.nonlinearities.rectify, batch_norm=False,
         )
         b = ut.DynStruct(copy_dict=bundles)
 
@@ -48,8 +50,9 @@ class DummyModel(abstract_models.AbstractCategoricalModel):
         ]
 
         from wbia_cnn import custom_layers
+
         network_layers = custom_layers.evaluate_layer_list(network_layers_def)
-        #model.network_layers = network_layers
+        # model.network_layers = network_layers
         model.output_layer = network_layers[-1]
         if ut.VERBOSE:
             model.print_arch_str()
@@ -65,6 +68,8 @@ if __name__ == '__main__':
         python -m wbia_cnn.models.dummy --allexamples --noface --nosrc
     """
     import multiprocessing
+
     multiprocessing.freeze_support()  # for win32
     import utool as ut  # NOQA
+
     ut.doctest_funcs()

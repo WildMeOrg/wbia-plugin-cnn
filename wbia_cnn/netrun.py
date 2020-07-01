@@ -31,6 +31,7 @@ from wbia_cnn import ingest_data
 from wbia_cnn import experiments
 import utool as ut
 import sys
+
 print, rrr, profile = ut.inject2(__name__)
 
 
@@ -43,20 +44,17 @@ CHECKPOINT_TAG_ALIAS = {
 # second level of alias indirection
 # This is more of a dataset tag
 DS_TAG_ALIAS2 = {
-    'flankhack'    : "dict(acfg_name='ctrl:pername=None,excluderef=False,contributor_contains=FlankHack', colorspace='gray', db='PZ_Master1')",
-    'pzmtest-bgr'  : "PZ_MTEST;dict(colorspace='bgr', controlled=True, max_examples=None, num_top=None)",  # NOQA
-
-    'pzmtest'      : "PZ_MTEST;dict(colorspace='gray', controlled=True, max_examples=None, num_top=None)",  # NOQA
-    'gz-gray'      : "GZ_ALL;dict(colorspace='gray', controlled=False, max_examples=None, num_top=None)",  # NOQA
-
-    'liberty'      : "liberty;dict(detector='dog', pairs=250000)",
-
-    'combo'        : 'combo_vdsujffw',
-    'timectrl_pzmaster1'    : "PZ_Master1;dict(acfg_name='timectrl', colorspace='gray', min_featweight=0.8)",  # NOQA
-    'pzm2'    : "PZ_Master1;dict(acfg_name='timectrl:pername=None', colorspace='gray', min_featweight=0.8)",  # NOQA
-    'pzm3'   : "PZ_Master1;dict(acfg_name=None, colorspace='gray', controlled=True, min_featweight=0.8)",
+    'flankhack': "dict(acfg_name='ctrl:pername=None,excluderef=False,contributor_contains=FlankHack', colorspace='gray', db='PZ_Master1')",
+    'pzmtest-bgr': "PZ_MTEST;dict(colorspace='bgr', controlled=True, max_examples=None, num_top=None)",  # NOQA
+    'pzmtest': "PZ_MTEST;dict(colorspace='gray', controlled=True, max_examples=None, num_top=None)",  # NOQA
+    'gz-gray': "GZ_ALL;dict(colorspace='gray', controlled=False, max_examples=None, num_top=None)",  # NOQA
+    'liberty': "liberty;dict(detector='dog', pairs=250000)",
+    'combo': 'combo_vdsujffw',
+    'timectrl_pzmaster1': "PZ_Master1;dict(acfg_name='timectrl', colorspace='gray', min_featweight=0.8)",  # NOQA
+    'pzm2': "PZ_Master1;dict(acfg_name='timectrl:pername=None', colorspace='gray', min_featweight=0.8)",  # NOQA
+    'pzm3': "PZ_Master1;dict(acfg_name=None, colorspace='gray', controlled=True, min_featweight=0.8)",
     #'pzm3'    : "PZ_Master1;dict(acfg_name='default:is_known=True,qmin_pername=2,view=primary,species=primary,minqual=ok', colorspace='gray', min_featweight=0.8)",  # NOQA
-    'pzm4' : "PZ_Master1;dict(acfg_name='default:is_known=True,qmin_pername=2,view=primary,species=primary,minqual=ok', colorspace='gray', min_featweight=0.8)"
+    'pzm4': "PZ_Master1;dict(acfg_name='default:is_known=True,qmin_pername=2,view=primary,species=primary,minqual=ok', colorspace='gray', min_featweight=0.8)",
 }
 
 
@@ -118,10 +116,10 @@ def netrun():
     ut.colorprint('[netrun] NET RUN', 'red')
 
     requests, hyperparams, tags = parse_args()
-    ds_tag         = tags['ds_tag']
-    datatype       = tags['datatype']
-    extern_ds_tag  = tags['extern_ds_tag']
-    arch_tag       = tags['arch_tag']
+    ds_tag = tags['ds_tag']
+    datatype = tags['datatype']
+    extern_ds_tag = tags['extern_ds_tag']
+    arch_tag = tags['arch_tag']
     checkpoint_tag = tags['checkpoint_tag']
 
     # ----------------------------
@@ -136,8 +134,10 @@ def netrun():
     print('dataset.training_dpath = %r' % (dataset.training_dpath,))
 
     print('Dataset Alias Key: %r' % (dataset.alias_key,))
-    print('Current Dataset Tag: %r' % (
-        ut.invert_dict(DS_TAG_ALIAS2).get(dataset.alias_key, None),))
+    print(
+        'Current Dataset Tag: %r'
+        % (ut.invert_dict(DS_TAG_ALIAS2).get(dataset.alias_key, None),)
+    )
 
     if requests['ensuredata']:
         # Print alias key that maps to this particular dataset
@@ -155,18 +155,24 @@ def netrun():
     if arch_tag == 'siam2stream':
         model = models.SiameseCenterSurroundModel(
             data_shape=dataset.data_shape,
-            training_dpath=dataset.training_dpath, **hyperparams)
+            training_dpath=dataset.training_dpath,
+            **hyperparams
+        )
     elif arch_tag.startswith('siam'):
         model = models.SiameseL2(
             data_shape=dataset.data_shape,
             arch_tag=arch_tag,
-            training_dpath=dataset.training_dpath, **hyperparams)
+            training_dpath=dataset.training_dpath,
+            **hyperparams
+        )
     elif arch_tag == 'mnist-category':
         model = models.MNISTModel(
             data_shape=dataset.data_shape,
             output_dims=dataset.output_dims,
             arch_tag=arch_tag,
-            training_dpath=dataset.training_dpath, **hyperparams)
+            training_dpath=dataset.training_dpath,
+            **hyperparams
+        )
         pass
     else:
         raise ValueError('Unknown arch_tag=%r' % (arch_tag,))
@@ -182,26 +188,28 @@ def netrun():
         model.reinit_weights()
     else:
         checkpoint_tag = model.resolve_fuzzy_checkpoint_pattern(
-            checkpoint_tag, extern_dpath)
-        ut.colorprint('[netrun] * Resolving weights checkpoint_tag=%r' %
-                      (checkpoint_tag,), 'lightgray')
+            checkpoint_tag, extern_dpath
+        )
+        ut.colorprint(
+            '[netrun] * Resolving weights checkpoint_tag=%r' % (checkpoint_tag,),
+            'lightgray',
+        )
         if extern_dpath is not None:
-            model.load_extern_weights(dpath=extern_dpath,
-                                      checkpoint_tag=checkpoint_tag)
+            model.load_extern_weights(dpath=extern_dpath, checkpoint_tag=checkpoint_tag)
         elif model.has_saved_state(checkpoint_tag=checkpoint_tag):
             model.load_model_state(checkpoint_tag=checkpoint_tag)
         else:
-            model_state_fpath = model.get_model_state_fpath(
-                checkpoint_tag=checkpoint_tag)
+            model_state_fpath = model.get_model_state_fpath(checkpoint_tag=checkpoint_tag)
             print('model_state_fpath = %r' % (model_state_fpath,))
             ut.checkpath(model_state_fpath, verbose=True)
             print('Known checkpoints are: ' + ut.repr3(model.list_saved_checkpoints()))
-            raise ValueError(('Unresolved weight init: '
-                              'checkpoint_tag=%r, extern_ds_tag=%r') % (
-                                  checkpoint_tag, extern_ds_tag,))
+            raise ValueError(
+                ('Unresolved weight init: ' 'checkpoint_tag=%r, extern_ds_tag=%r')
+                % (checkpoint_tag, extern_ds_tag,)
+            )
 
-    #print('Model State:')
-    #print(model.get_state_str())
+    # print('Model State:')
+    # print(model.get_state_str())
     # ----------------------------
     if not model.is_train_state_initialized():
         ut.colorprint('[netrun] Need to initialize training state', 'yellow')
@@ -212,18 +220,14 @@ def netrun():
     if requests['train']:
         ut.colorprint('[netrun] Training Requested', 'yellow')
         # parse training arguments
-        config = ut.argparse_dict(dict(
-            era_size=15,
-            max_epochs=1200,
-            rate_decay=.8,
-        ))
+        config = ut.argparse_dict(dict(era_size=15, max_epochs=1200, rate_decay=0.8,))
         model.monitor_config.update(**config)
         X_train, y_train = dataset.subset('train')
         X_valid, y_valid = dataset.subset('valid')
         model.fit(X_train, y_train, X_valid=X_valid, y_valid=y_valid)
 
     elif requests['test']:
-        #assert model.best_results['epoch'] is not None
+        # assert model.best_results['epoch'] is not None
         ut.colorprint('[netrun] Test Requested', 'yellow')
         if requests['testall']:
             ut.colorprint('[netrun]  * Testing on all data', 'lightgray')
@@ -235,8 +239,7 @@ def netrun():
             flat_metadata = dataset.subset_metadata('test')
         data, labels = X_test, y_test
         dataname = dataset.alias_key
-        experiments.test_siamese_performance(model, data, labels,
-                                             flat_metadata, dataname)
+        experiments.test_siamese_performance(model, data, labels, flat_metadata, dataname)
     else:
         if not ut.get_argflag('--cmd'):
             raise ValueError('nothing here. need to train or test')
@@ -245,15 +248,18 @@ def netrun():
         ut.colorprint('[netrun] Publish Requested', 'yellow')
         publish_dpath = ut.truepath('~/Dropbox/IBEIS')
         published_model_state = ut.unixjoin(
-            publish_dpath, model.arch_tag + '_model_state.pkl')
+            publish_dpath, model.arch_tag + '_model_state.pkl'
+        )
         ut.copy(model.get_model_state_fpath(), published_model_state)
         ut.view_directory(publish_dpath)
-        print('You need to get the dropbox link and '
-              'register it into the appropriate file')
+        print(
+            'You need to get the dropbox link and '
+            'register it into the appropriate file'
+        )
         # pip install dropbox
         # https://www.dropbox.com/developers/core/start/python
         # import dropbox  # need oauth
-        #client.share('/myfile.txt', short_url=False)
+        # client.share('/myfile.txt', short_url=False)
         # https://wildbookiarepository.azureedge.net/models/siaml2_128_model_state.pkl
 
     if ut.get_argflag('--cmd'):
@@ -271,17 +277,16 @@ def parse_args():
         assert ut.inIPython()
 
     # Parse commandline args
-    ds_tag      = ut.get_argval(('--dataset', '--ds'), type_=str,
-                                default=ds_default)
-    datatype    = ut.get_argval(('--datatype', '--dt'), type_=str,
-                                default='siam-patch')
-    arch_tag    = ut.get_argval(('--arch', '-a'), default=arch_default)
-    weights_tag = ut.get_argval(('--weights', '+w'), type_=str,
-                                default=weights_tag_default)
+    ds_tag = ut.get_argval(('--dataset', '--ds'), type_=str, default=ds_default)
+    datatype = ut.get_argval(('--datatype', '--dt'), type_=str, default='siam-patch')
+    arch_tag = ut.get_argval(('--arch', '-a'), default=arch_default)
+    weights_tag = ut.get_argval(
+        ('--weights', '+w'), type_=str, default=weights_tag_default
+    )
 
     # Incorporate new config stuff?
-    #NEW = False
-    #if NEW:
+    # NEW = False
+    # if NEW:
     #    default_dstag_cfg = {
     #        'ds': 'PZ_MTEST',
     #        'mode': 'patches',
@@ -297,15 +302,12 @@ def parse_args():
             #'batch_size': 128,
             'batch_size': 256,
             #'learning_rate': .0005,
-            'learning_rate': .1,
-            'momentum': .9,
+            'learning_rate': 0.1,
+            'momentum': 0.9,
             #'weight_decay': 0.0005,
             'weight_decay': 0.0001,
         },
-        alias_dict={
-            'weight_decay': ['decay'],
-            'learning_rate': ['learn_rate'],
-        }
+        alias_dict={'weight_decay': ['decay'], 'learning_rate': ['learn_rate'],},
     )
     requests = ut.argparse_dict(
         {
@@ -371,12 +373,14 @@ if __name__ == '__main__':
         python -m wbia_cnn.train --allexamples
         python -m wbia_cnn.train --allexamples --noface --nosrc
     """
-    #train_pz()
+    # train_pz()
     import multiprocessing
+
     multiprocessing.freeze_support()  # for win32
     import utool as ut  # NOQA
-    #import warnings
-    #with warnings.catch_warnings():
+
+    # import warnings
+    # with warnings.catch_warnings():
     #    # Cause all warnings to always be triggered.
     #    warnings.filterwarnings("error", ".*get_all_non_bias_params.*")
     ut.doctest_funcs()

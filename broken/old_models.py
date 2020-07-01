@@ -2,6 +2,7 @@
 
 from ibeis_cnn import lasange_ext
 
+
 class ViewpointModel(abstract_models.AbstractCategoricalModel):
     def __init__(self):
         super(ViewpointModel, self).__init__()
@@ -9,11 +10,12 @@ class ViewpointModel(abstract_models.AbstractCategoricalModel):
     def augment(self, Xb, yb=None):
         # Invert label function
         def _invert_label(label):
-            label = label.replace('LEFT',  '^L^')
+            label = label.replace('LEFT', '^L^')
             label = label.replace('RIGHT', '^R^')
             label = label.replace('^R^', 'LEFT')
             label = label.replace('^L^', 'RIGHT')
-            return(label)
+            return label
+
         # Map
         points, channels, height, width = Xb.shape
         for index in range(points):
@@ -37,20 +39,20 @@ class ViewpointModel(abstract_models.AbstractCategoricalModel):
                 'GIRAFFE_MASAI',
             ]
         viewpoint_mapping = {
-            'LEFT':        0,
-            'FRONT_LEFT':  1,
-            'FRONT':       2,
+            'LEFT': 0,
+            'FRONT_LEFT': 1,
+            'FRONT': 2,
             'FRONT_RIGHT': 3,
-            'RIGHT':       4,
-            'BACK_RIGHT':  5,
-            'BACK':        6,
-            'BACK_LEFT':   7,
+            'RIGHT': 4,
+            'BACK_RIGHT': 5,
+            'BACK': 6,
+            'BACK_LEFT': 7,
         }
         viewpoints = len(viewpoint_mapping.keys())
         category_mapping = {}
         for index, species in enumerate(species_list):
             for viewpoint, value in viewpoint_mapping.items():
-                key = '%s:%s' % (species, viewpoint, )
+                key = '%s:%s' % (species, viewpoint,)
                 base = viewpoints * index
                 category_mapping[key] = base + value
         return category_mapping
@@ -61,7 +63,9 @@ class ViewpointModel(abstract_models.AbstractCategoricalModel):
     def learning_rate_shock(self, x):
         return x * 2.0
 
-    def build_model(self, batch_size, input_width, input_height, input_channels, output_dims):
+    def build_model(
+        self, batch_size, input_width, input_height, input_channels, output_dims
+    ):
         _CaffeNet = abstract_models.PretrainedNetwork('caffenet')
 
         l_in = layers.InputLayer(
@@ -69,16 +73,14 @@ class ViewpointModel(abstract_models.AbstractCategoricalModel):
             shape=(None, input_channels, input_width, input_height)
         )
 
-        l_noise = layers.GaussianNoiseLayer(
-            l_in,
-        )
+        l_noise = layers.GaussianNoiseLayer(l_in,)
 
         l_conv0 = Conv2DLayer(
             l_noise,
             num_filters=32,
             filter_size=(11, 11),
             # nonlinearity=nonlinearities.rectify,
-            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)),
+            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)),
             W=_CaffeNet.get_pretrained_layer(0),
         )
 
@@ -89,15 +91,11 @@ class ViewpointModel(abstract_models.AbstractCategoricalModel):
             num_filters=32,
             filter_size=(5, 5),
             # nonlinearity=nonlinearities.rectify,
-            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)),
+            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)),
             W=_CaffeNet.get_pretrained_layer(2),
         )
 
-        l_pool1 = MaxPool2DLayer(
-            l_conv1,
-            pool_size=(2, 2),
-            stride=(2, 2),
-        )
+        l_pool1 = MaxPool2DLayer(l_conv1, pool_size=(2, 2), stride=(2, 2),)
 
         l_conv2_dropout = layers.DropoutLayer(l_pool1, p=0.10)
 
@@ -106,15 +104,11 @@ class ViewpointModel(abstract_models.AbstractCategoricalModel):
             num_filters=64,
             filter_size=(3, 3),
             # nonlinearity=nonlinearities.rectify,
-            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)),
+            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)),
             W=init.Orthogonal(),
         )
 
-        l_pool2 = MaxPool2DLayer(
-            l_conv2,
-            pool_size=(2, 2),
-            stride=(2, 2),
-        )
+        l_pool2 = MaxPool2DLayer(l_conv2, pool_size=(2, 2), stride=(2, 2),)
 
         l_conv3_dropout = layers.DropoutLayer(l_pool2, p=0.30)
 
@@ -123,15 +117,11 @@ class ViewpointModel(abstract_models.AbstractCategoricalModel):
             num_filters=128,
             filter_size=(3, 3),
             # nonlinearity=nonlinearities.rectify,
-            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)),
+            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)),
             W=init.Orthogonal(),
         )
 
-        l_pool3 = MaxPool2DLayer(
-            l_conv3,
-            pool_size=(2, 2),
-            stride=(2, 2),
-        )
+        l_pool3 = MaxPool2DLayer(l_conv3, pool_size=(2, 2), stride=(2, 2),)
 
         l_conv4_dropout = layers.DropoutLayer(l_pool3, p=0.30)
 
@@ -140,28 +130,21 @@ class ViewpointModel(abstract_models.AbstractCategoricalModel):
             num_filters=128,
             filter_size=(3, 3),
             # nonlinearity=nonlinearities.rectify,
-            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)),
+            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)),
             W=init.Orthogonal(),
         )
 
-        l_pool4 = MaxPool2DLayer(
-            l_conv4,
-            pool_size=(2, 2),
-            stride=(2, 2),
-        )
+        l_pool4 = MaxPool2DLayer(l_conv4, pool_size=(2, 2), stride=(2, 2),)
 
         l_hidden1 = layers.DenseLayer(
             l_pool4,
             num_units=512,
             # nonlinearity=nonlinearities.rectify,
-            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)),
+            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)),
             W=init.Orthogonal(),
         )
 
-        l_hidden1_maxout = layers.FeaturePoolLayer(
-            l_hidden1,
-            pool_size=2,
-        )
+        l_hidden1_maxout = layers.FeaturePoolLayer(l_hidden1, pool_size=2,)
 
         l_hidden1_dropout = layers.DropoutLayer(l_hidden1_maxout, p=0.5)
 
@@ -169,14 +152,11 @@ class ViewpointModel(abstract_models.AbstractCategoricalModel):
             l_hidden1_dropout,
             num_units=512,
             # nonlinearity=nonlinearities.rectify,
-            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)),
+            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)),
             W=init.Orthogonal(),
         )
 
-        l_hidden2_maxout = layers.FeaturePoolLayer(
-            l_hidden2,
-            pool_size=2,
-        )
+        l_hidden2_maxout = layers.FeaturePoolLayer(l_hidden2, pool_size=2,)
 
         l_hidden2_dropout = layers.DropoutLayer(l_hidden2_maxout, p=0.5)
 
@@ -197,10 +177,10 @@ class QualityModel(abstract_models.AbstractCategoricalModel):
 
     def label_order_mapping(self, category_list):
         quality_mapping = {
-            'JUNK':      0,
-            'POOR':      1,
-            'GOOD':      2,
-            'OK':        3,
+            'JUNK': 0,
+            'POOR': 1,
+            'GOOD': 2,
+            'OK': 3,
             'EXCELLENT': 4,
         }
         return quality_mapping
@@ -211,7 +191,9 @@ class QualityModel(abstract_models.AbstractCategoricalModel):
     def learning_rate_shock(self, x):
         return x * 2.0
 
-    def build_model(self, batch_size, input_width, input_height, input_channels, output_dims):
+    def build_model(
+        self, batch_size, input_width, input_height, input_channels, output_dims
+    ):
         _CaffeNet = abstract_models.PretrainedNetwork('caffenet')
 
         l_in = layers.InputLayer(
@@ -219,16 +201,14 @@ class QualityModel(abstract_models.AbstractCategoricalModel):
             shape=(None, input_channels, input_width, input_height)
         )
 
-        l_noise = layers.GaussianNoiseLayer(
-            l_in,
-        )
+        l_noise = layers.GaussianNoiseLayer(l_in,)
 
         l_conv0 = Conv2DLayer(
             l_noise,
             num_filters=32,
             filter_size=(11, 11),
             # nonlinearity=nonlinearities.rectify,
-            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)),
+            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)),
             W=_CaffeNet.get_pretrained_layer(0),
         )
 
@@ -239,15 +219,11 @@ class QualityModel(abstract_models.AbstractCategoricalModel):
             num_filters=32,
             filter_size=(5, 5),
             # nonlinearity=nonlinearities.rectify,
-            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)),
+            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)),
             W=_CaffeNet.get_pretrained_layer(2),
         )
 
-        l_pool1 = MaxPool2DLayer(
-            l_conv1,
-            pool_size=(2, 2),
-            stride=(2, 2),
-        )
+        l_pool1 = MaxPool2DLayer(l_conv1, pool_size=(2, 2), stride=(2, 2),)
 
         l_conv2_dropout = layers.DropoutLayer(l_pool1, p=0.10)
 
@@ -256,15 +232,11 @@ class QualityModel(abstract_models.AbstractCategoricalModel):
             num_filters=64,
             filter_size=(3, 3),
             # nonlinearity=nonlinearities.rectify,
-            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)),
+            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)),
             W=init.Orthogonal(),
         )
 
-        l_pool2 = MaxPool2DLayer(
-            l_conv2,
-            pool_size=(2, 2),
-            stride=(2, 2),
-        )
+        l_pool2 = MaxPool2DLayer(l_conv2, pool_size=(2, 2), stride=(2, 2),)
 
         l_conv3_dropout = layers.DropoutLayer(l_pool2, p=0.30)
 
@@ -273,15 +245,11 @@ class QualityModel(abstract_models.AbstractCategoricalModel):
             num_filters=128,
             filter_size=(3, 3),
             # nonlinearity=nonlinearities.rectify,
-            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)),
+            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)),
             W=init.Orthogonal(),
         )
 
-        l_pool3 = MaxPool2DLayer(
-            l_conv3,
-            pool_size=(2, 2),
-            stride=(2, 2),
-        )
+        l_pool3 = MaxPool2DLayer(l_conv3, pool_size=(2, 2), stride=(2, 2),)
 
         l_conv4_dropout = layers.DropoutLayer(l_pool3, p=0.30)
 
@@ -290,28 +258,21 @@ class QualityModel(abstract_models.AbstractCategoricalModel):
             num_filters=128,
             filter_size=(3, 3),
             # nonlinearity=nonlinearities.rectify,
-            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)),
+            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)),
             W=init.Orthogonal(),
         )
 
-        l_pool4 = MaxPool2DLayer(
-            l_conv4,
-            pool_size=(2, 2),
-            stride=(2, 2),
-        )
+        l_pool4 = MaxPool2DLayer(l_conv4, pool_size=(2, 2), stride=(2, 2),)
 
         l_hidden1 = layers.DenseLayer(
             l_pool4,
             num_units=512,
             # nonlinearity=nonlinearities.rectify,
-            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)),
+            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)),
             W=init.Orthogonal(),
         )
 
-        l_hidden1_maxout = layers.FeaturePoolLayer(
-            l_hidden1,
-            pool_size=2,
-        )
+        l_hidden1_maxout = layers.FeaturePoolLayer(l_hidden1, pool_size=2,)
 
         l_hidden1_dropout = layers.DropoutLayer(l_hidden1_maxout, p=0.5)
 
@@ -319,14 +280,11 @@ class QualityModel(abstract_models.AbstractCategoricalModel):
             l_hidden1_dropout,
             num_units=512,
             # nonlinearity=nonlinearities.rectify,
-            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)),
+            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)),
             W=init.Orthogonal(),
         )
 
-        l_hidden2_maxout = layers.FeaturePoolLayer(
-            l_hidden2,
-            pool_size=2,
-        )
+        l_hidden2_maxout = layers.FeaturePoolLayer(l_hidden2, pool_size=2,)
 
         l_hidden2_dropout = layers.DropoutLayer(l_hidden2_maxout, p=0.5)
 
@@ -340,12 +298,11 @@ class QualityModel(abstract_models.AbstractCategoricalModel):
         return l_out
 
 
-
-
 class SiameseModel(abstract_models.BaseModel):
     """
     Model for individual identification
     """
+
     def __init__(model):
         super(SiameseModel, model).__init__()
         model.network_layers = None
@@ -355,8 +312,15 @@ class SiameseModel(abstract_models.BaseModel):
         model.data_per_label = 2
         model.needs_padding = True
 
-    def build_model(model, batch_size, input_width, input_height,
-                    input_channels, output_dims, verbose=True):
+    def build_model(
+        model,
+        batch_size,
+        input_width,
+        input_height,
+        input_channels,
+        output_dims,
+        verbose=True,
+    ):
         r"""
         CommandLine:
             python -m ibeis_cnn.models --test-SiameseModel.build_model
@@ -399,30 +363,26 @@ class SiameseModel(abstract_models.BaseModel):
             print('[model]   * input_channels = %r' % (input_channels,))
             print('[model]   * output_dims    = %r' % (model.output_dims,))
 
-        leaky = dict(nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)))
+        leaky = dict(nonlinearity=nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)))
         neuron_initkw = dict(W=init.Orthogonal(), **leaky)
 
         vggnet = abstract_models.PretrainedNetwork('vggnet')
-        #caffenet = abstract_models.PretrainedNetwork('caffenet')
+        # caffenet = abstract_models.PretrainedNetwork('caffenet')
 
         network_layers_def = [
             _P(layers.InputLayer, shape=model.input_shape),
-
             vggnet.get_conv2d_layer(0, **leaky),
-
             _P(Conv2DLayer, num_filters=16, filter_size=(3, 3), **neuron_initkw),
-
             _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2)),
             _P(Conv2DLayer, num_filters=16, filter_size=(3, 3), **neuron_initkw),
-
             _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2)),
-
             _P(layers.DenseLayer, num_units=256, **neuron_initkw),
             _P(layers.DropoutLayer, p=0.5),
         ]
 
         # connect and record layers
         from ibeis_cnn import custom_layers
+
         network_layers = custom_layers.evaluate_layer_list(network_layers_def)
         model.network_layers = network_layers
         output_layer = model.network_layers[-1]
