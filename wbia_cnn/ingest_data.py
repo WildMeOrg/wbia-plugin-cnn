@@ -6,6 +6,7 @@ from wbia_cnn import ingest_wbia
 from wbia_cnn.dataset import DataSet
 from os.path import join, basename, splitext
 import utool as ut
+
 print, rrr, profile = ut.inject2(__name__)
 
 
@@ -69,13 +70,17 @@ def merge_datasets(dataset_list):
         with the same key are consistent
         """
         from collections import defaultdict
+
         past_values = defaultdict(lambda: None)
+
         def consensus_check(value, key):
             assert past_values[key] is None or past_values[key] == value, (
-                'key=%r with value=%r does not agree with past_value=%r' %
-                (key, value, past_values[key]))
+                'key=%r with value=%r does not agree with past_value=%r'
+                % (key, value, past_values[key])
+            )
             past_values[key] = value
             return value
+
         return consensus_check
 
     total_num_labels = 0
@@ -93,8 +98,11 @@ def merge_datasets(dataset_list):
         merged_dataset = DataSet.from_alias_key(alias_key)
         return merged_dataset
     except (Exception, AssertionError) as ex:
-        ut.printex(ex, 'alias definitions have changed. alias_key=%r' %
-                   (alias_key,), iswarning=True)
+        ut.printex(
+            ex,
+            'alias definitions have changed. alias_key=%r' % (alias_key,),
+            iswarning=True,
+        )
 
     # Build the dataset
     consensus_check = consensus_check_factory()
@@ -105,19 +113,20 @@ def merge_datasets(dataset_list):
         print(dataset.num_labels)
         print(dataset.data_per_label)
         total_num_labels += dataset.num_labels
-        total_num_data += (dataset.data_per_label * dataset.num_labels)
+        total_num_data += dataset.data_per_label * dataset.num_labels
         # check that all data_dims agree
         data_shape = consensus_check(dataset.data_shape, 'data_shape')
         data_per_label = consensus_check(dataset.data_per_label, 'data_per_label')
 
     # hack record this
     import numpy as np
+
     data_dtype = np.uint8
     label_dtype = np.int32
     data = np.empty((total_num_data,) + data_shape, dtype=data_dtype)
     labels = np.empty(total_num_labels, dtype=label_dtype)
 
-    #def iterable_assignment():
+    # def iterable_assignment():
     #    pass
     data_left = 0
     data_right = None
@@ -188,7 +197,9 @@ def grab_siam_dataset(ds_tag=None):
         try:
             return DataSet.from_alias_key(ds_tag)
         except Exception as ex:
-            ut.printex(ex, 'Could not resolve alias. Need to rebuild dataset', keys=['ds_tag'])
+            ut.printex(
+                ex, 'Could not resolve alias. Need to rebuild dataset', keys=['ds_tag']
+            )
             raise
 
     dbname = ut.get_argval('--db')
@@ -219,11 +230,10 @@ def grab_mnist_category_dataset_float():
         >>> ut.show_if_requested()
     """
     import numpy as np
+
     training_dpath = ut.ensure_app_resource_dir('wbia_cnn', 'training')
     dataset = DataSet(
-        name='mnist_float32',
-        training_dpath=training_dpath,
-        data_shape=(28, 28, 1)
+        name='mnist_float32', training_dpath=training_dpath, data_shape=(28, 28, 1)
     )
     try:
         dataset.load()
@@ -261,11 +271,10 @@ def grab_mnist_category_dataset():
         >>> ut.show_if_requested()
     """
     import numpy as np
+
     training_dpath = ut.ensure_app_resource_dir('wbia_cnn', 'training')
     dataset = DataSet(
-        name='mnist_uint8',
-        training_dpath=training_dpath,
-        data_shape=(28, 28, 1)
+        name='mnist_uint8', training_dpath=training_dpath, data_shape=(28, 28, 1)
     )
     try:
         dataset.load()
@@ -305,9 +314,7 @@ def grab_mnist_siam_dataset():
     """
     training_dpath = ut.ensure_app_resource_dir('wbia_cnn', 'training')
     dataset = DataSet(
-        name='mnist_pairs',
-        training_dpath=training_dpath,
-        data_shape=(28, 28, 1),
+        name='mnist_pairs', training_dpath=training_dpath, data_shape=(28, 28, 1),
     )
     try:
         dataset.load()
@@ -392,7 +399,7 @@ def grab_liberty_siam_dataset(pairs=250000):
     ut.ensuredir(training_dpath)
 
     data_fpath = join(training_dpath, 'liberty_data_' + cfgstr + '.pkl')
-    labels_fpath = join(training_dpath, 'liberty_labels_' + cfgstr  + '.pkl')
+    labels_fpath = join(training_dpath, 'liberty_labels_' + cfgstr + '.pkl')
 
     if not ut.checkpath(data_fpath, verbose=True):
         data, labels = ingest_helpers.extract_liberty_style_patches(ds_path, pairs)
@@ -442,19 +449,18 @@ def get_wbia_patch_siam_dataset(**kwargs):
             'max_examples': None,
             #'num_top': 3,
             'num_top': None,
-            'min_featweight': .8 if not ut.WIN32 else None,
+            'min_featweight': 0.8 if not ut.WIN32 else None,
             'controlled': True,
             'colorspace': 'gray',
             'acfg_name': None,
         },
-        alias_dict={
-            'acfg_name': ['acfg', 'a']
-        },
-        verbose=True)
+        alias_dict={'acfg_name': ['acfg', 'a']},
+        verbose=True,
+    )
 
     datakw.update(kwargs)
 
-    #ut.get_func_kwargs(ingest_wbia.get_aidpairs_and_matches)
+    # ut.get_func_kwargs(ingest_wbia.get_aidpairs_and_matches)
 
     if datakw['acfg_name'] is not None:
         del datakw['controlled']
@@ -465,6 +471,7 @@ def get_wbia_patch_siam_dataset(**kwargs):
 
     with ut.Indenter('[LOAD IBEIS DB]'):
         import wbia
+
         dbname = ut.get_argval('--db', default='PZ_MTEST')
         ibs = wbia.opendb(dbname=dbname, defaultdb='PZ_MTEST')
 
@@ -472,8 +479,8 @@ def get_wbia_patch_siam_dataset(**kwargs):
     training_dpath = ibs.get_neuralnet_dir()
     ut.ensuredir(training_dpath)
     print('\n\n[get_wbia_patch_siam_dataset] START')
-    #log_dir = join(training_dpath, 'logs')
-    #ut.start_logging(log_dir=log_dir)
+    # log_dir = join(training_dpath, 'logs')
+    # ut.start_logging(log_dir=log_dir)
 
     alias_key = ibs.get_dbname() + ';' + ut.dict_str(datakw, nl=False, explicit=True)
     try:
@@ -484,23 +491,41 @@ def get_wbia_patch_siam_dataset(**kwargs):
         dataset.setprop('ibs', lambda: wbia.opendb(db=dbname))
         return dataset
     except Exception as ex:
-        ut.printex(ex, 'alias definitions have changed. alias_key=%r' %
-                   (alias_key,), iswarning=True)
+        ut.printex(
+            ex,
+            'alias definitions have changed. alias_key=%r' % (alias_key,),
+            iswarning=True,
+        )
 
     with ut.Indenter('[BuildDS]'):
         # Get training data pairs
         colorspace = datakw.pop('colorspace')
         patchmatch_tup = ingest_wbia.get_aidpairs_and_matches(ibs, **datakw)
-        aid1_list, aid2_list, kpts1_m_list, kpts2_m_list, fm_list, metadata_lists = patchmatch_tup
+        (
+            aid1_list,
+            aid2_list,
+            kpts1_m_list,
+            kpts2_m_list,
+            fm_list,
+            metadata_lists,
+        ) = patchmatch_tup
         # Extract and cache the data
         # TODO: metadata
         if ut.get_argflag('--dryrun'):
             print('exiting due to dry run')
             import sys
+
             sys.exit(0)
         tup = ingest_wbia.cached_patchmetric_training_data_fpaths(
-            ibs, aid1_list, aid2_list, kpts1_m_list, kpts2_m_list, fm_list,
-            metadata_lists, colorspace=colorspace)
+            ibs,
+            aid1_list,
+            aid2_list,
+            kpts1_m_list,
+            kpts2_m_list,
+            fm_list,
+            metadata_lists,
+            colorspace=colorspace,
+        )
         data_fpath, labels_fpath, metadata_fpath, training_dpath, data_shape = tup
         print('\n[get_wbia_patch_siam_dataset] FINISH\n\n')
 
@@ -544,6 +569,7 @@ def get_wbia_part_siam_dataset(**kwargs):
         >>> ut.show_if_requested()
     """
     import wbia
+
     datakw = ut.argparse_dict(
         {
             'colorspace': 'gray',
@@ -551,10 +577,9 @@ def get_wbia_part_siam_dataset(**kwargs):
             #'db': None,
             'db': 'PZ_MTEST',
         },
-        alias_dict={
-            'acfg_name': ['acfg']
-        },
-        verbose=True)
+        alias_dict={'acfg_name': ['acfg']},
+        verbose=True,
+    )
 
     datakw.update(kwargs)
     print('\n\n[get_wbia_part_siam_dataset] START')
@@ -571,8 +596,11 @@ def get_wbia_part_siam_dataset(**kwargs):
         dataset.setprop('ibs', lambda: wbia.opendb(db=dbname))
         return dataset
     except Exception as ex:
-        ut.printex(ex, 'alias definitions have changed. alias_key=%r' %
-                   (alias_key,), iswarning=True)
+        ut.printex(
+            ex,
+            'alias definitions have changed. alias_key=%r' % (alias_key,),
+            iswarning=True,
+        )
 
     with ut.Indenter('[LOAD IBEIS DB]'):
         ibs = wbia.opendb(db=dbname)
@@ -584,15 +612,18 @@ def get_wbia_part_siam_dataset(**kwargs):
     with ut.Indenter('[BuildDS]'):
         # Get training data pairs
         colorspace = datakw.pop('colorspace')
-        (aid_pairs, label_list,
-         flat_metadata) = ingest_wbia.get_aidpairs_partmatch(ibs, **datakw)
+        (aid_pairs, label_list, flat_metadata) = ingest_wbia.get_aidpairs_partmatch(
+            ibs, **datakw
+        )
         # Extract and cache the data, labels, and metadata
         if ut.get_argflag('--dryrun'):
             print('exiting due to dry run')
             import sys
+
             sys.exit(0)
         tup = ingest_wbia.cached_part_match_training_data_fpaths(
-            ibs, aid_pairs, label_list, flat_metadata, colorspace=colorspace)
+            ibs, aid_pairs, label_list, flat_metadata, colorspace=colorspace
+        )
         data_fpath, labels_fpath, metadata_fpath, training_dpath, data_shape = tup
         print('\n[get_wbia_part_siam_dataset] FINISH\n\n')
 
@@ -619,6 +650,7 @@ def get_numpy_dataset(data_fpath, labels_fpath, training_dpath):
     """
     """
     import numpy as np
+
     # hack for caching num_labels
     data = np.load(data_fpath)
     data_shape = data.shape[1:]
@@ -646,6 +678,7 @@ def get_numpy_dataset2(name, data_fpath, labels_fpath, training_dpath, cache=Tru
     """
     """
     import numpy as np
+
     # hack for caching num_labels
     data = np.load(data_fpath)
     data_shape = data.shape[1:]
@@ -653,11 +686,7 @@ def get_numpy_dataset2(name, data_fpath, labels_fpath, training_dpath, cache=Tru
     num_labels = len(labels)
     metadata = None
 
-    dataset = DataSet(
-        name=name,
-        training_dpath=training_dpath,
-        data_shape=data_shape,
-    )
+    dataset = DataSet(name=name, training_dpath=training_dpath, data_shape=data_shape,)
     error = False
     try:
         dataset.load()
@@ -666,6 +695,7 @@ def get_numpy_dataset2(name, data_fpath, labels_fpath, training_dpath, cache=Tru
 
     if error or not cache:
         import random
+
         # Get indicies of valid / train split
         idx_list = list(range(num_labels))
         random.shuffle(idx_list)
@@ -693,6 +723,8 @@ if __name__ == '__main__':
         python -m wbia_cnn.ingest_data --allexamples --noface --nosrc
     """
     import multiprocessing
+
     multiprocessing.freeze_support()  # for win32
     import utool as ut  # NOQA
+
     ut.doctest_funcs()

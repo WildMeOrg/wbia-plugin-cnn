@@ -4,7 +4,8 @@ from wbia_cnn import utils
 import numpy as np
 import six
 import utool as ut
-#import warnings
+
+# import warnings
 print, rrr, profile = ut.inject2(__name__)
 
 
@@ -16,8 +17,18 @@ DEBUG_AUGMENTATION = ut.get_argflag('--DEBUG_AUGMENTATION')
 
 
 @profile
-def process_batch(model, X, y, theano_fn, fix_output=False, buffered=False,
-                  show=False, spatial=False, showprog=True, **kwargs):
+def process_batch(
+    model,
+    X,
+    y,
+    theano_fn,
+    fix_output=False,
+    buffered=False,
+    show=False,
+    spatial=False,
+    showprog=True,
+    **kwargs
+):
     """
     Compute the loss over all training batches.
     Passes data to function that splits it into batches and appropriately
@@ -87,11 +98,10 @@ def process_batch(model, X, y, theano_fn, fix_output=False, buffered=False,
             [ut.is_prime(346373) for _ in range(2)]
     """
     import vtool as vt
+
     batch_output_list = []
     output_names = [
-        str(outexpr.variable)
-        if outexpr.variable.name is None else
-        outexpr.variable.name
+        str(outexpr.variable) if outexpr.variable.name is None else outexpr.variable.name
         for outexpr in theano_fn.outputs
     ]
     # augmented label list
@@ -108,8 +118,14 @@ def process_batch(model, X, y, theano_fn, fix_output=False, buffered=False,
         bs = VERBOSE_BATCH < 1
         num_batches = (X.shape[0] + model.batch_size - 1) // model.batch_size
         # progress iterator should be outside of this function
-        batch_iter = ut.ProgressIter(batch_iter, nTotal=num_batches, lbl=theano_fn.name,
-                                     freq=10, bs=bs, adjust=True)
+        batch_iter = ut.ProgressIter(
+            batch_iter,
+            nTotal=num_batches,
+            lbl=theano_fn.name,
+            freq=10,
+            bs=bs,
+            adjust=True,
+        )
     if y is None:
         # Labels are not known, only one argument
         for Xb, yb in batch_iter:
@@ -134,8 +150,10 @@ def process_batch(model, X, y, theano_fn, fix_output=False, buffered=False,
                 show = False
 
     # get outputs of each type
-    unstacked_output_gen = ([bop[count] for bop in batch_output_list]
-                            for count, name in enumerate(output_names))
+    unstacked_output_gen = (
+        [bop[count] for bop in batch_output_list]
+        for count, name in enumerate(output_names)
+    )
 
     if spatial:
         unstacked_output_gen = list(unstacked_output_gen)
@@ -144,7 +162,7 @@ def process_batch(model, X, y, theano_fn, fix_output=False, buffered=False,
             output = np.vstack(output)
             stacked_output_list[index] = output
     else:
-        stacked_output_list  = [
+        stacked_output_list = [
             vt.safe_cat(_output_unstacked, axis=0)
             # concatenate_hack(_output_unstacked, axis=0)
             for _output_unstacked in unstacked_output_gen
@@ -152,7 +170,7 @@ def process_batch(model, X, y, theano_fn, fix_output=False, buffered=False,
 
     outputs_ = dict(zip(output_names, stacked_output_list))
 
-    if y  is not None:
+    if y is not None:
         auglbl_list = np.hstack(batch_target_list)
         outputs_['auglbl_list'] = auglbl_list
 
@@ -171,9 +189,16 @@ def process_batch(model, X, y, theano_fn, fix_output=False, buffered=False,
 
 
 @profile
-def batch_iterator(model, X, y, randomize_batch_order=False, augment_on=False,
-                   X_is_cv2_native=True, verbose=None,
-                   lbl='verbose batch iteration'):
+def batch_iterator(
+    model,
+    X,
+    y,
+    randomize_batch_order=False,
+    augment_on=False,
+    X_is_cv2_native=True,
+    verbose=None,
+    lbl='verbose batch iteration',
+):
     r"""
     Breaks up data into to batches defined by model batch size
 
@@ -299,8 +324,9 @@ def batch_iterator(model, X, y, randomize_batch_order=False, augment_on=False,
     encoder = getattr(model, 'encoder', None)
     needs_convert = ut.is_int(X)
     if y is not None:
-        assert X.shape[0] == (y.shape[0] * model.data_per_label_input), (
-            'bad data / label alignment')
+        assert X.shape[0] == (
+            y.shape[0] * model.data_per_label_input
+        ), 'bad data / label alignment'
     num_batches = (X.shape[0] + model.batch_size - 1) // model.batch_size
 
     if randomize_batch_order:
@@ -309,25 +335,25 @@ def batch_iterator(model, X, y, randomize_batch_order=False, augment_on=False,
         X, y = utils.data_label_shuffle(X, y, model.data_per_label_input)
     if verbose:
         print('[batchiter] BEGIN')
-        print('[batchiter] X.shape %r' % (X.shape, ))
+        print('[batchiter] X.shape %r' % (X.shape,))
         if y is not None:
-            print('[batchiter] y.shape %r' % (y.shape, ))
-        print('[batchiter] augment_on %r' % (augment_on, ))
-        print('[batchiter] encoder %r' % (encoder, ))
-        print('[batchiter] wraparound %r' % (wraparound, ))
-        print('[batchiter] model.data_per_label_input %r' % (model.data_per_label_input, ))
+            print('[batchiter] y.shape %r' % (y.shape,))
+        print('[batchiter] augment_on %r' % (augment_on,))
+        print('[batchiter] encoder %r' % (encoder,))
+        print('[batchiter] wraparound %r' % (wraparound,))
+        print('[batchiter] model.data_per_label_input %r' % (model.data_per_label_input,))
         print('[batchiter] needs_convert = %r' % (needs_convert,))
 
     # FIXME: put in a layer?
     center_mean = None
-    center_std  = None
+    center_std = None
     # Load precomputed whitening parameters
     if model.data_params is not None:
         center_mean = np.array(model.data_params['center_mean'], dtype=np.float32)
-        center_std  = np.array(model.data_params['center_std'], dtype=np.float32)
-    do_whitening = (center_mean is not None and
-                    center_std is not None and
-                    center_std != 0.0)
+        center_std = np.array(model.data_params['center_std'], dtype=np.float32)
+    do_whitening = (
+        center_mean is not None and center_std is not None and center_std != 0.0
+    )
 
     if needs_convert:
         ceneter_mean01 = center_mean / np.array(255.0, dtype=np.float32)
@@ -340,8 +366,13 @@ def batch_iterator(model, X, y, randomize_batch_order=False, augment_on=False,
     for batch_index in range(num_batches):
         # Take a slice from the data
         Xb_orig, yb_orig = utils.slice_data_labels(
-            X, y, model.batch_size, batch_index, model.data_per_label_input,
-            wraparound=wraparound)
+            X,
+            y,
+            model.batch_size,
+            batch_index,
+            model.data_per_label_input,
+            wraparound=wraparound,
+        )
         # Ensure correct format for the GPU
         Xb = Xb_orig.astype(np.float32)
         yb = None if yb_orig is None else yb_orig.astype(np.int32)
@@ -387,7 +418,7 @@ def augment_batch(model, Xb, yb, batch_index, verbose, num_batches):
             print('Augmenting Data')
             # only copy if we have't yet
     Xb, yb = model.augment(Xb, yb)
-    #if DEBUG_AUGMENTATION:
+    # if DEBUG_AUGMENTATION:
     #    #Xb, yb = augment.augment_siamese_patches2(Xb, yb)
     #    from wbia_cnn import augment
     #    import plottool as pt
@@ -424,7 +455,7 @@ def concatenate_hack(sequence, axis=0):
     >>> sequence = (np.array([[]]), np.array([[1, 2, 3]]))
     >>> sequence = (np.array([[1, 2, 3]]), np.array([[]]))
     """
-    #print(sequence)
+    # print(sequence)
     if len(sequence) > 1 and len(sequence[1].shape) == 0:
         arr = np.hstack(sequence)
     else:
@@ -440,6 +471,8 @@ if __name__ == '__main__':
         python -m wbia_cnn.batch_processing --allexamples --noface --nosrc
     """
     import multiprocessing
+
     multiprocessing.freeze_support()  # for win32
     import utool as ut  # NOQA
+
     ut.doctest_funcs()

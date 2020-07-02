@@ -80,6 +80,7 @@ import sklearn
 from wbia_cnn import net_strs
 from wbia_cnn import draw_net
 from wbia_cnn.models import _model_legacy
+
 print, rrr, profile = ut.inject2(__name__)
 
 
@@ -111,27 +112,28 @@ def testdata_model_with_history():
             'epoch': num,
             'loss': 1 / np.exp(num / 10) + rng.rand() / 100,
             'train_loss': 1 / np.exp(num / 10) + rng.rand() / 100,
-            'train_loss_regularized': (1 / np.exp(num / 10) +
-                                       np.exp(rng.rand() * num) +
-                                       rng.rand() / 100),
+            'train_loss_regularized': (
+                1 / np.exp(num / 10) + np.exp(rng.rand() * num) + rng.rand() / 100
+            ),
             'valid_loss': 1 / np.exp(num / 10) - rng.rand() / 100,
             'param_update_mags': {
                 'C0': (rng.normal() ** 2, rng.rand()),
                 'F1': (rng.normal() ** 2, rng.rand()),
-            }
+            },
         }
         return epoch_info
+
     count = 0
     for era_length in [4, 4, 4]:
         alias_key = 'dummy_alias_key'
         model.start_new_era(X_train, y_train, X_train, y_train, alias_key)
         for count in range(count, count + era_length):
             model.record_epoch(dummy_epoch_dict(count))
-    #model.record_epoch({'epoch': 1, 'valid_loss': .8, 'train_loss': .9})
-    #model.record_epoch({'epoch': 2, 'valid_loss': .5, 'train_loss': .7})
-    #model.record_epoch({'epoch': 3, 'valid_loss': .3, 'train_loss': .6})
-    #model.record_epoch({'epoch': 4, 'valid_loss': .2, 'train_loss': .3})
-    #model.record_epoch({'epoch': 5, 'valid_loss': .1, 'train_loss': .2})
+    # model.record_epoch({'epoch': 1, 'valid_loss': .8, 'train_loss': .9})
+    # model.record_epoch({'epoch': 2, 'valid_loss': .5, 'train_loss': .7})
+    # model.record_epoch({'epoch': 3, 'valid_loss': .3, 'train_loss': .6})
+    # model.record_epoch({'epoch': 4, 'valid_loss': .2, 'train_loss': .3})
+    # model.record_epoch({'epoch': 5, 'valid_loss': .1, 'train_loss': .2})
     return model
 
 
@@ -144,6 +146,7 @@ class History(ut.NiceRepr):
     """
     Manages bookkeeping for training history
     """
+
     def __init__(history):
         # an era is a group of epochs
         history.era_list = []
@@ -157,7 +160,7 @@ class History(ut.NiceRepr):
     def __nice__(history):
         return history.get_history_nice()
 
-    #def __iter__(history):
+    # def __iter__(history):
     #    for epochs in history.grouped_epochs():
     #        yield epochs
 
@@ -219,8 +222,8 @@ class History(ut.NiceRepr):
         architecture weights.
         """
         era_hash_list = [ut.hashstr27(ut.repr2(era)) for era in history.era_list]
-        #epoch_hash_list = [ut.hashstr27(ut.repr2(epoch)) for epoch in history.epoch_list]
-        #epoch_hash_str = ''.join(epoch_hash_list)
+        # epoch_hash_list = [ut.hashstr27(ut.repr2(epoch)) for epoch in history.epoch_list]
+        # epoch_hash_str = ''.join(epoch_hash_list)
         era_hash_str = ''.join(era_hash_list)
         era_hash_str += str(history.total_epochs)
         history_hashid = ut.hashstr27(era_hash_str, hashlen=8)
@@ -253,7 +256,7 @@ class History(ut.NiceRepr):
         """
         y_hashid = ut.hashstr_arr(y_learn, 'y', alphabet=ut.ALPHABET_27)
 
-        learn_hashid =  str(model.arch_id) + '_' + y_hashid
+        learn_hashid = str(model.arch_id) + '_' + y_hashid
         if history.total_epochs > 0 and history.current_era_size == 0:
             print('Not starting new era (previous era has no epochs)')
         else:
@@ -278,16 +281,16 @@ class History(ut.NiceRepr):
         """
         # each key/val in epoch_info dict corresponds to a key/val_list in an
         # era dict.
-        #history.current_era['size'] += 1
-        #history.current_era['epoch_info_list'].append(epoch_info)
+        # history.current_era['size'] += 1
+        # history.current_era['epoch_info_list'].append(epoch_info)
         epoch_info['era_num'] = history.total_eras
         history.epoch_list.append(epoch_info)
 
     def rewind_to(history, epoch_num):
         target_epoch = history.epoch_list[epoch_num]
         era_num = target_epoch['era_num']
-        history.epoch_list = history.epoch_list[:epoch_num + 1]
-        history.era_list = history.era_list[:era_num + 1]
+        history.epoch_list = history.epoch_list[: epoch_num + 1]
+        history.era_list = history.era_list[: era_num + 1]
         history._start_epoch = history.total_epochs
 
     def to_json(history):
@@ -299,6 +302,7 @@ class LearnState(ut.DictLike):
     """
     Keeps track of parameters that can be changed during theano execution
     """
+
     def __init__(self, learning_rate, momentum, weight_decay):
         self._keys = [
             'momentum',
@@ -315,15 +319,18 @@ class LearnState(ut.DictLike):
     # --- special properties ---
     momentum = property(
         fget=lambda self: self.getitem('momentum'),
-        fset=lambda self, val: self.setitem('momentum', val))
+        fset=lambda self, val: self.setitem('momentum', val),
+    )
 
     learning_rate = property(
         fget=lambda self: self.getitem('learning_rate'),
-        fset=lambda self, val: self.setitem('learning_rate', val))
+        fset=lambda self, val: self.setitem('learning_rate', val),
+    )
 
     weight_decay = property(
         fget=lambda self: self.getitem('weight_decay'),
-        fset=lambda self, val: self.setitem('weight_decay', val))
+        fset=lambda self, val: self.setitem('weight_decay', val),
+    )
 
     @property
     def shared(self):
@@ -356,13 +363,15 @@ class LearnState(ut.DictLike):
     def setitem(self, key, value):
         if self._isinit:
             import wbia_cnn.__THEANO__ as theano
+
             print('[model] setting %s to %.9r' % (key, value))
             _shared = self._shared_state[key]
             if value is None and _shared is not None:
                 raise ValueError('Cannot set an initialized shared variable to None.')
             elif _shared is None and value is not None:
                 self._shared_state[key] = theano.shared(
-                    np.cast['float32'](value), name=key)
+                    np.cast['float32'](value), name=key
+                )
             elif _shared is not None:
                 _shared.set_value(np.cast['float32'](value))
         else:
@@ -375,6 +384,7 @@ class _ModelFitter(object):
     CommandLine:
         python -m wbia_cnn _ModelFitter.fit:0
     """
+
     def _init_fit_vars(model, kwargs):
         model._rng = ut.ensure_rng(0)
         model.history = History()
@@ -383,10 +393,10 @@ class _ModelFitter(object):
         model.data_params = None
         # Stores current result
         model.best_results = {
-            'epoch_num'  : None,
-            'learn_loss' : np.inf,
-            'valid_loss' : np.inf,
-            'weights'    : None
+            'epoch_num': None,
+            'learn_loss': np.inf,
+            'valid_loss': np.inf,
+            'weights': None,
         }
 
         # TODO: some sort of behavior config Things that dont influence
@@ -451,16 +461,22 @@ class _ModelFitter(object):
                 class_to_weight = model.data_params['class_to_weight']
                 w = class_to_weight.take(y).astype(np.float32)
             else:
-                #print('no class weights')
+                # print('no class weights')
                 w = np.ones(y.shape).astype(np.float32)
         return w
 
-    def fit(model,
-            X_train, y_train,
-            X_valid=None, y_valid=None,
-            valid_idx=None,
-            X_test=None, y_test=None,
-            verbose=True, **kwargs):
+    def fit(
+        model,
+        X_train,
+        y_train,
+        X_valid=None,
+        y_valid=None,
+        valid_idx=None,
+        X_test=None,
+        y_test=None,
+        verbose=True,
+        **kwargs
+    ):
         r"""
         Trains the network with backprop.
 
@@ -495,7 +511,8 @@ class _ModelFitter(object):
             print('[WARNING] Input validation failed...')
 
         X_learn, y_learn, X_valid, y_valid = model._ensure_learnval_split(
-            X_train, y_train, X_valid, y_valid, valid_idx)
+            X_train, y_train, X_valid, y_valid, valid_idx
+        )
 
         model.ensure_data_params(X_learn, y_learn)
 
@@ -554,10 +571,10 @@ class _ModelFitter(object):
         # ---------------------------------------
         # EPOCH 0: Execute backwards and forward passes
         tt.tic()
-        learn_info = model._epoch_validate_learn(theano_forward, X_learn,
-                                                 y_learn, w_learn)
-        valid_info = model._epoch_validate(theano_forward, X_valid,
-                                           y_valid, w_valid)
+        learn_info = model._epoch_validate_learn(
+            theano_forward, X_learn, y_learn, w_learn
+        )
+        valid_info = model._epoch_validate(theano_forward, X_valid, y_valid, w_valid)
 
         # ---------------------------------------
         # EPOCH 0: Summarize the epoch
@@ -566,9 +583,7 @@ class _ModelFitter(object):
         epoch_info.update(**valid_info)
         epoch_info['duration'] = tt.toc()
         epoch_info['learn_state'] = model.learn_state.asdict()
-        epoch_info['learnval_rat'] = (
-            epoch_info['learn_loss'] / epoch_info['valid_loss']
-        )
+        epoch_info['learnval_rat'] = epoch_info['learn_loss'] / epoch_info['valid_loss']
 
         # ---------------------------------------
         # EPOCH 0: Check how we are learning
@@ -594,12 +609,14 @@ class _ModelFitter(object):
                 # ---------------------------------------
                 # Execute backwards and forward passes
                 tt.tic()
-                learn_info = model._epoch_learn(theano_backprop, X_learn,
-                                                y_learn, w_learn, epoch)
+                learn_info = model._epoch_learn(
+                    theano_backprop, X_learn, y_learn, w_learn, epoch
+                )
                 if learn_info.get('diverged'):
                     break
-                valid_info = model._epoch_validate(theano_forward, X_valid,
-                                                   y_valid, w_valid)
+                valid_info = model._epoch_validate(
+                    theano_forward, X_valid, y_valid, w_valid
+                )
 
                 # ---------------------------------------
                 # Summarize the epoch
@@ -609,7 +626,8 @@ class _ModelFitter(object):
                 epoch_info['duration'] = tt.toc()
                 epoch_info['learn_state'] = model.learn_state.asdict()
                 epoch_info['learnval_rat'] = (
-                    epoch_info['learn_loss'] / epoch_info['valid_loss'])
+                    epoch_info['learn_loss'] / epoch_info['valid_loss']
+                )
 
                 # ---------------------------------------
                 # Record this epoch in history
@@ -625,12 +643,16 @@ class _ModelFitter(object):
                     model.best_results['weights'] = model.get_all_param_values()
                     model.best_results['epoch_num'] = epoch_info['epoch_num']
                     if 'valid_precision' in epoch_info:
-                        model.best_results['valid_precision'] = epoch_info['valid_precision']
+                        model.best_results['valid_precision'] = epoch_info[
+                            'valid_precision'
+                        ]
                         model.best_results['valid_recall'] = epoch_info['valid_recall']
                         model.best_results['valid_fscore'] = epoch_info['valid_fscore']
                         model.best_results['valid_support'] = epoch_info['valid_support']
                     if 'learn_precision' in epoch_info:
-                        model.best_results['learn_precision'] = epoch_info['learn_precision']
+                        model.best_results['learn_precision'] = epoch_info[
+                            'learn_precision'
+                        ]
                         model.best_results['learn_recall'] = epoch_info['learn_recall']
                         model.best_results['learn_fscore'] = epoch_info['learn_fscore']
                         model.best_results['learn_support'] = epoch_info['learn_support']
@@ -639,7 +661,8 @@ class _ModelFitter(object):
 
                 # Check frequencies and countdowns
                 checkpoint_flag = utils.checkfreq(
-                    model.monitor_config['checkpoint_freq'], epoch)
+                    model.monitor_config['checkpoint_freq'], epoch
+                )
 
                 if check_countdown('checkpoint'):
                     countdowns['checkpoint'] = None
@@ -663,7 +686,7 @@ class _ModelFitter(object):
 
                 if model.monitor_config['monitor']:
                     model._dump_epoch_monitor()
-                    #if epoch > 10:
+                    # if epoch > 10:
                     # TODO: can dump case info every epoch
                     # But we want to dump the images less often
                     # Make function to just grab the failure case info
@@ -688,7 +711,8 @@ class _ModelFitter(object):
                     rate_schedule = ut.ensure_iterable(rate_schedule)
                     frac = rate_schedule[min(era, len(rate_schedule) - 1)]
                     model.learn_state.learning_rate = (
-                        model.learn_state.learning_rate * frac)
+                        model.learn_state.learning_rate * frac
+                    )
                     # Increase number of epochs in the next era
                     max_era_size = np.ceil(max_era_size / (frac ** 2))
                     model._fit_session['max_era_size'] = max_era_size
@@ -696,10 +720,12 @@ class _ModelFitter(object):
                     model.history._new_era(model, X_train, y_train, X_train, y_train)
 
                     if model.hyperparams.get('era_clean', False):
-                        y_learn = model._epoch_clean(theano_forward, X_learn,
-                                                     y_learn, w_learn)
-                        y_valid = model._epoch_clean(theano_forward, X_valid,
-                                                     y_valid, w_valid)
+                        y_learn = model._epoch_clean(
+                            theano_forward, X_learn, y_learn, w_learn
+                        )
+                        y_valid = model._epoch_clean(
+                            theano_forward, X_valid, y_valid, w_valid
+                        )
 
                     utils.print_header_columns(printcol_info)
 
@@ -716,20 +742,25 @@ class _ModelFitter(object):
                 print('model.arch_id = %r' % (model.arch_id,))
                 print('learn_state = %s' % ut.repr4(model.learn_state.asdict()))
                 from six.moves import input
-                actions = ut.odict([
-                    ('resume', (['0', 'r'], 'resume training')),
-                    ('view',   (['v', 'view'], 'view session directory')),
-                    ('ipy',    (['ipy', 'ipython', 'cmd'], 'embed into IPython')),
-                    ('print',  (['p', 'print'], 'print model state')),
-                    ('shock',  (['shock'], 'shock the network')),
-                    ('save',   (['s', 'save'], 'save best weights')),
-                    ('quit',   (['q', 'exit', 'quit'], 'quit')),
-                ])
+
+                actions = ut.odict(
+                    [
+                        ('resume', (['0', 'r'], 'resume training')),
+                        ('view', (['v', 'view'], 'view session directory')),
+                        ('ipy', (['ipy', 'ipython', 'cmd'], 'embed into IPython')),
+                        ('print', (['p', 'print'], 'print model state')),
+                        ('shock', (['shock'], 'shock the network')),
+                        ('save', (['s', 'save'], 'save best weights')),
+                        ('quit', (['q', 'exit', 'quit'], 'quit')),
+                    ]
+                )
                 while True:
                     # prompt
-                    msg_list = ['enter %s to %s' % (
-                        ut.conj_phrase(ut.lmap(repr, map(str, tup[0])), 'or'), tup[1])
-                                for key, tup in actions.items()]
+                    msg_list = [
+                        'enter %s to %s'
+                        % (ut.conj_phrase(ut.lmap(repr, map(str, tup[0])), 'or'), tup[1])
+                        for key, tup in actions.items()
+                    ]
                     msg = ut.indentjoin(msg_list, '\n | * ')
                     msg = ''.join([' +-----------', msg, '\n L-----------\n'])
                     print(msg)
@@ -755,7 +786,8 @@ class _ModelFitter(object):
                     elif ans in actions['shock'][0]:
                         utils.shock_network(model.output_layer)
                         model.learn_state.learning_rate = (
-                            model.learn_state.learning_rate * 2)
+                            model.learn_state.learning_rate * 2
+                        )
                     elif ans in actions['view'][0]:
                         session_dpath = model._fit_session['session_dpath']
                         ut.view_directory(session_dpath)
@@ -769,6 +801,7 @@ class _ModelFitter(object):
                 errorstate = {'is_fixed': False}
                 # is_fixed = False
                 import utool
+
                 utool.embed()
                 if not errorstate['is_fixed']:
                     raise
@@ -792,9 +825,9 @@ class _ModelFitter(object):
             info = model._epoch_validate(theano_forward, X_test, y_test, w_test)
             print('train info = %r' % (info,))
             model.dump_cases(X_test, y_test, 'test', dpath=model.arch_dpath)
-            #model._run_test(X_test, y_test)
+            # model._run_test(X_test, y_test)
 
-    #def _run_test(model, X_test, y_test):
+    # def _run_test(model, X_test, y_test):
     #    # Perform a test on the fitted model
     #    test_outptuts = model._predict(X_test)
     #    y_pred = test_outptuts['predictions']
@@ -805,8 +838,9 @@ class _ModelFitter(object):
     #    print(report)
     #    pass
 
-    def _ensure_learnval_split(model, X_train, y_train, X_valid=None,
-                               y_valid=None, valid_idx=None):
+    def _ensure_learnval_split(
+        model, X_train, y_train, X_valid=None, y_valid=None, valid_idx=None
+    ):
         if X_valid is not None:
             assert valid_idx is None, 'Cant specify both valid_idx and X_valid'
             # When X_valid is given assume X_train is actually X_learn
@@ -816,12 +850,14 @@ class _ModelFitter(object):
             if valid_idx is None:
                 # Split training set into a learning / validation set
                 from wbia_cnn.dataset import stratified_shuffle_split
+
                 train_idx, valid_idx = stratified_shuffle_split(
-                    y_train, fractions=[.7, .3], rng=432321)
-                #import sklearn.cross_validation
-                #xvalkw = dict(n_folds=2, shuffle=True, random_state=43432)
-                #skf = sklearn.cross_validation.StratifiedKFold(y_train, **xvalkw)
-                #train_idx, valid_idx = list(skf)[0]
+                    y_train, fractions=[0.7, 0.3], rng=432321
+                )
+                # import sklearn.cross_validation
+                # xvalkw = dict(n_folds=2, shuffle=True, random_state=43432)
+                # skf = sklearn.cross_validation.StratifiedKFold(y_train, **xvalkw)
+                # train_idx, valid_idx = list(skf)[0]
             elif valid_idx is None and X_valid is None:
                 train_idx = ut.index_complement(valid_idx, len(X_train))
             else:
@@ -849,11 +885,9 @@ class _ModelFitter(object):
                 X_ = X_learn.astype(np.float32)
                 try:
                     if ut.is_int(X_learn):
-                        ut.assert_inbounds(X_learn, 0, 255, eq=True,
-                                           verbose=ut.VERBOSE)
+                        ut.assert_inbounds(X_learn, 0, 255, eq=True, verbose=ut.VERBOSE)
                         X_ = X_ / 255
-                    ut.assert_inbounds(X_, 0.0, 1.0, eq=True,
-                                       verbose=ut.VERBOSE)
+                    ut.assert_inbounds(X_, 0.0, 1.0, eq=True, verbose=ut.VERBOSE)
                 except ValueError:
                     print('[WARNING] Input bounds check failed...')
                 # Ensure that the mean is computed on 0-1 normalized data
@@ -863,15 +897,16 @@ class _ModelFitter(object):
             # Hack to preconvert mean / std to 0-1 for old models
             model._fix_center_mean_std()
         else:
-            ut.delete_dict_keys(model.data_params, ['center_mean',
-                                                    'center_std'])
+            ut.delete_dict_keys(model.data_params, ['center_mean', 'center_std'])
 
         if model.hyperparams['class_weight'] == 'balanced':
             print('Balancing class weights')
             import sklearn.utils
+
             unique_classes = np.array(sorted(ut.unique(y_learn)))
             class_to_weight = sklearn.utils.compute_class_weight(
-                'balanced', unique_classes, y_learn)
+                'balanced', unique_classes, y_learn
+            )
             model.data_params['class_to_weight'] = class_to_weight
         else:
             ut.delete_dict_keys(model.data_params, ['class_to_weight'])
@@ -883,6 +918,7 @@ class _ModelFitter(object):
 
     def _rename_old_sessions(model):
         import re
+
         dpath_list = ut.glob(model.saved_session_dpath, '*', with_files=False)
         for dpath in dpath_list:
             if True or not re.match('^.*_nEpochs_[0-9]*$', dpath):
@@ -924,8 +960,9 @@ class _ModelFitter(object):
             # Create a directory for this training session with a timestamp
             session_dname = 'fit_session_' + model._fit_session['start_time']
             session_dpath = join(model.saved_session_dpath, session_dname)
-            session_dpath = ut.get_nonconflicting_path(session_dpath, offset=1,
-                                                       suffix='_conflict%d')
+            session_dpath = ut.get_nonconflicting_path(
+                session_dpath, offset=1, suffix='_conflict%d'
+            )
 
             prog_dirs = {
                 'dream': join(session_dpath, 'dream'),
@@ -933,11 +970,11 @@ class _ModelFitter(object):
                 'weights': join(session_dpath, 'weights'),
             }
 
-            model._fit_session.update(**{
-                'prog_dirs': prog_dirs,
-            })
+            model._fit_session.update(
+                **{'prog_dirs': prog_dirs,}
+            )
 
-            #for dpath in prog_dirs.values():
+            # for dpath in prog_dirs.values():
             #    ut.ensuredir(dpath)
 
             ut.ensuredir(session_dpath)
@@ -963,7 +1000,7 @@ class _ModelFitter(object):
 
             # Write arch graph to root
             try:
-                back_archimg_fpath  = join(session_dpath, 'arch_graph_fit.jpg')
+                back_archimg_fpath = join(session_dpath, 'arch_graph_fit.jpg')
                 model.imwrite_arch(fpath=back_archimg_fpath, fullinfo=False)
                 model._overwrite_latest_image(back_archimg_fpath, 'arch_graph')
             except Exception as ex:
@@ -973,7 +1010,9 @@ class _ModelFitter(object):
             try:
                 ut.ensuredir(prog_dirs['weights'])
                 fig = model.show_weights_image(fnum=2)
-                fpath = join(prog_dirs['weights'], 'weights_' + model.history.hist_id + '.png')
+                fpath = join(
+                    prog_dirs['weights'], 'weights_' + model.history.hist_id + '.png'
+                )
                 fig.savefig(fpath)
                 model._overwrite_latest_image(fpath, 'weights')
             except Exception as ex:
@@ -985,6 +1024,7 @@ class _ModelFitter(object):
         shown
         """
         import shutil
+
         dpath, fname = split(fpath)
         ext = splitext(fpath)[1]
         session_dpath = model._fit_session['session_dpath']
@@ -1011,7 +1051,9 @@ class _ModelFitter(object):
             try:
                 # Save class dreams
                 ut.ensuredir(prog_dirs['dream'])
-                fpath = join(prog_dirs['dream'], 'class_dream_' + model.history.hist_id + '.png')
+                fpath = join(
+                    prog_dirs['dream'], 'class_dream_' + model.history.hist_id + '.png'
+                )
                 fig = model.show_class_dream(fnum=4)
                 fig.savefig(fpath, dpi=180)
                 model._overwrite_latest_image(fpath, 'class_dream')
@@ -1023,7 +1065,9 @@ class _ModelFitter(object):
         try:
             # Save weights images
             ut.ensuredir(prog_dirs['weights'])
-            fpath = join(prog_dirs['weights'], 'weights_' + model.history.hist_id + '.png')
+            fpath = join(
+                prog_dirs['weights'], 'weights_' + model.history.hist_id + '.png'
+            )
             fig = model.show_weights_image(fnum=2)
             fig.savefig(fpath, dpi=180)
             model._overwrite_latest_image(fpath, 'weights')
@@ -1085,7 +1129,9 @@ class _ModelFitter(object):
         # Save weight updates
         try:
             ut.ensuredir(prog_dirs['loss'])
-            fpath = join(prog_dirs['loss'], 'update_mag_' + model.history.hist_id + '.png')
+            fpath = join(
+                prog_dirs['loss'], 'update_mag_' + model.history.hist_id + '.png'
+            )
             fig = model.show_update_mag_history(fnum=3)
             fig.savefig(fpath, dpi=180)
             model._overwrite_latest_image(fpath, 'update_mag')
@@ -1124,8 +1170,14 @@ class _ModelFitter(object):
             augment_on = False
 
         learn_outputs = model.process_batch(
-            theano_backprop, X_learn, y_learn, w_learn, shuffle=True,
-            augment_on=augment_on, buffered=buffered)
+            theano_backprop,
+            X_learn,
+            y_learn,
+            w_learn,
+            shuffle=True,
+            augment_on=augment_on,
+            buffered=buffered,
+        )
 
         # average loss over all learning batches
         learn_info = {}
@@ -1135,23 +1187,24 @@ class _ModelFitter(object):
         if 'loss_reg' in learn_outputs:
             # Regularization information
             learn_info['learn_loss_reg'] = learn_outputs['loss_reg']
-            reg_amount = (learn_outputs['loss_reg'] - learn_outputs['loss'])
-            reg_ratio = (reg_amount / learn_outputs['loss'])
-            reg_percent = (reg_amount / learn_outputs['loss_reg'])
+            reg_amount = learn_outputs['loss_reg'] - learn_outputs['loss']
+            reg_ratio = reg_amount / learn_outputs['loss']
+            reg_percent = reg_amount / learn_outputs['loss_reg']
 
             if 'accuracy' in learn_outputs:
-                learn_info['learn_acc']  = learn_outputs['accuracy'].mean()
-                learn_info['learn_acc_std']  = learn_outputs['accuracy'].std()
+                learn_info['learn_acc'] = learn_outputs['accuracy'].mean()
+                learn_info['learn_acc_std'] = learn_outputs['accuracy'].std()
             if 'predictions' in learn_outputs:
                 try:
                     p, r, f, s = sklearn.metrics.precision_recall_fscore_support(
-                        y_true=learn_outputs['auglbl_list'], y_pred=learn_outputs['predictions']
+                        y_true=learn_outputs['auglbl_list'],
+                        y_pred=learn_outputs['predictions'],
                     )
                 except ValueError:
                     p, r, f, s = 0.0, 0.0, 0.0, 0.0
-                #report = sklearn.metrics.classification_report(
+                # report = sklearn.metrics.classification_report(
                 #    y_true=learn_outputs['auglbl_list'], y_pred=learn_outputs['predictions']
-                #)
+                # )
                 learn_info['learn_precision'] = p
                 learn_info['learn_recall'] = r
                 learn_info['learn_fscore'] = f
@@ -1186,8 +1239,9 @@ class _ModelFitter(object):
         Forwards propagate -- Run validation set through the forwards pass
         """
         augment_on = model.hyperparams.get('augment_on_validate', False)
-        learn_outputs = model.process_batch(theano_forward, X_learn, y_learn, w_learn,
-                                            augment_on=augment_on)
+        learn_outputs = model.process_batch(
+            theano_forward, X_learn, y_learn, w_learn, augment_on=augment_on
+        )
         # average loss over all learning batches
         learn_info = {}
         learn_info['learn_loss'] = learn_outputs['loss_determ'].mean()
@@ -1196,23 +1250,24 @@ class _ModelFitter(object):
         if 'loss_reg' in learn_outputs:
             # Regularization information
             learn_info['learn_loss_reg'] = learn_outputs['loss_reg']
-            reg_amount = (learn_outputs['loss_reg'] - learn_outputs['loss'])
-            reg_ratio = (reg_amount / learn_outputs['loss'])
-            reg_percent = (reg_amount / learn_outputs['loss_reg'])
+            reg_amount = learn_outputs['loss_reg'] - learn_outputs['loss']
+            reg_ratio = reg_amount / learn_outputs['loss']
+            reg_percent = reg_amount / learn_outputs['loss_reg']
 
             if 'accuracy' in learn_outputs:
-                learn_info['learn_acc']  = learn_outputs['accuracy'].mean()
-                learn_info['learn_acc_std']  = learn_outputs['accuracy'].std()
+                learn_info['learn_acc'] = learn_outputs['accuracy'].mean()
+                learn_info['learn_acc_std'] = learn_outputs['accuracy'].std()
             if 'predictions' in learn_outputs:
                 try:
                     p, r, f, s = sklearn.metrics.precision_recall_fscore_support(
-                        y_true=learn_outputs['auglbl_list'], y_pred=learn_outputs['predictions']
+                        y_true=learn_outputs['auglbl_list'],
+                        y_pred=learn_outputs['predictions'],
                     )
                 except ValueError:
                     p, r, f, s = 0.0, 0.0, 0.0, 0.0
-                #report = sklearn.metrics.classification_report(
+                # report = sklearn.metrics.classification_report(
                 #    y_true=learn_outputs['auglbl_list'], y_pred=learn_outputs['predictions']
-                #)
+                # )
                 learn_info['learn_precision'] = p
                 learn_info['learn_recall'] = r
                 learn_info['learn_fscore'] = f
@@ -1235,8 +1290,9 @@ class _ModelFitter(object):
         Forwards propagate -- Run validation set through the forwards pass
         """
         augment_on = model.hyperparams.get('augment_on_validate', False)
-        valid_outputs = model.process_batch(theano_forward, X_valid, y_valid, w_valid,
-                                            augment_on=augment_on)
+        valid_outputs = model.process_batch(
+            theano_forward, X_valid, y_valid, w_valid, augment_on=augment_on
+        )
         valid_info = {}
         valid_info['valid_loss'] = valid_outputs['loss_determ'].mean()
         valid_info['valid_loss_std'] = valid_outputs['loss_determ'].std()
@@ -1246,7 +1302,8 @@ class _ModelFitter(object):
         if 'predictions' in valid_outputs:
             try:
                 p, r, f, s = sklearn.metrics.precision_recall_fscore_support(
-                    y_true=valid_outputs['auglbl_list'], y_pred=valid_outputs['predictions']
+                    y_true=valid_outputs['auglbl_list'],
+                    y_pred=valid_outputs['predictions'],
                 )
             except ValueError:
                 p, r, f, s = 0.0, 0.0, 0.0, 0.0
@@ -1256,22 +1313,26 @@ class _ModelFitter(object):
             valid_info['valid_support'] = s
         return valid_info
 
-    def _epoch_clean(model, theano_forward, X_general, y_general, w_general,
-                     conf_thresh=0.95):
+    def _epoch_clean(
+        model, theano_forward, X_general, y_general, w_general, conf_thresh=0.95
+    ):
         """
         Forwards propogate -- Run set through the forwards pass and clean
         """
         augment_on = model.hyperparams.get('augment_on_validate', False)
-        valid_outputs = model.process_batch(theano_forward, X_general, y_general, w_general,
-                                            augment_on=augment_on)
+        valid_outputs = model.process_batch(
+            theano_forward, X_general, y_general, w_general, augment_on=augment_on
+        )
         predictions = valid_outputs['predictions']
         confidences = valid_outputs['confidences']
-        y_cleaned = np.array([
-            pred if y != pred and conf > conf_thresh else y
-            for y, pred, conf in zip(y_general, predictions, confidences)
-        ])
+        y_cleaned = np.array(
+            [
+                pred if y != pred and conf > conf_thresh else y
+                for y, pred, conf in zip(y_general, predictions, confidences)
+            ]
+        )
         num_cleaned = len(np.nonzero(y_general != y_cleaned)[0])
-        print('Cleaned %d instances' % (num_cleaned, ))
+        print('Cleaned %d instances' % (num_cleaned,))
         return y_cleaned
 
     def dump_cases(model, X, y, subset_id='unknown', dpath=None):
@@ -1286,11 +1347,12 @@ class _ModelFitter(object):
         """
         import vtool as vt
         import pandas as pd
+
         print('Dumping %s cases' % (subset_id,))
-        #pd.set_option("display.max_rows", 20)
-        #pd.set_option("display.precision", 2)
-        #pd.set_option('expand_frame_repr', False)
-        #pd.set_option('display.float_format', lambda x: '%.2f' % x)
+        # pd.set_option("display.max_rows", 20)
+        # pd.set_option("display.precision", 2)
+        # pd.set_option('expand_frame_repr', False)
+        # pd.set_option('display.float_format', lambda x: '%.2f' % x)
 
         if dpath is None:
             dpath = model._fit_session['session_dpath']
@@ -1327,10 +1389,10 @@ class _ModelFitter(object):
 
         def snapped_slice(size, frac, n):
             start = int(size * frac - np.ceil(n / 2))
-            stop  = int(size * frac + np.floor(n / 2))
+            stop = int(size * frac + np.floor(n / 2))
             buf = 0
             if stop >= size:
-                buf = (size - stop - 1)
+                buf = size - stop - 1
             elif start < 0:
                 buf = 0 - start
             stop += buf
@@ -1356,7 +1418,11 @@ class _ModelFitter(object):
             size = len(df_chunk)
             slices = [snapped_slice(size, frac, n) for frac in fracs]
 
-            hard_idx = np.array(ut.unique(ut.flatten([list(range(*sl.indices(len(df_chunk)))) for sl in slices])))
+            hard_idx = np.array(
+                ut.unique(
+                    ut.flatten([list(range(*sl.indices(len(df_chunk)))) for sl in slices])
+                )
+            )
             hard_frac = hard_idx / len(df_chunk)
             selected = df_chunk.iloc[hard_idx]
 
@@ -1366,22 +1432,27 @@ class _ModelFitter(object):
             for idx, row in selected.iterrows():
                 img = X[idx]
                 type_ = 'fail' if row['failed'] else 'success'
-                fname = 'hardidx_%04d_hardfrac_%.2f_pred_%d_case_%s.jpg' % (row['hard_idx'], row['hard_frac'], row['pred'], type_)
+                fname = 'hardidx_%04d_hardfrac_%.2f_pred_%d_case_%s.jpg' % (
+                    row['hard_idx'],
+                    row['hard_frac'],
+                    row['pred'],
+                    type_,
+                )
                 fpath = join(class_case_dpath, fname)
                 vt.imwrite(fpath, img)
 
 
 @ut.reloadable_class
 class _BatchUtility(object):
-
     @classmethod
     def expand_data_indicies(cls, label_idx, data_per_label=1):
         """
         when data_per_label > 1, gives the corresponding data indicies for the
         data indicies
         """
-        expanded_idx = [label_idx * data_per_label + count
-                        for count in range(data_per_label)]
+        expanded_idx = [
+            label_idx * data_per_label + count for count in range(data_per_label)
+        ]
         data_idx = np.vstack(expanded_idx).T.flatten()
         return data_idx
 
@@ -1402,8 +1473,9 @@ class _BatchUtility(object):
         return X, y, w
 
     @classmethod
-    def slice_batch(cls, X, y, w, batch_size, batch_index, data_per_label=1,
-                    wraparound=False):
+    def slice_batch(
+        cls, X, y, w, batch_size, batch_index, data_per_label=1, wraparound=False
+    ):
         start_x = batch_index * batch_size
         end_x = (batch_index + 1) * batch_size
         # Take full batch of images and take the fraction of labels if
@@ -1444,12 +1516,13 @@ class _BatchUtility(object):
         by the theano variable output name.
         """
         import vtool as vt
+
         output_vars = [outexpr.variable for outexpr in theano_fn.outputs]
-        output_names = [str(var) if var.name is None else var.name
-                        for var in output_vars]
-        unstacked_output_gen = [[bop[count] for bop in output_list]
-                                for count, name in enumerate(output_names)]
-        stacked_output_list  = [
+        output_names = [str(var) if var.name is None else var.name for var in output_vars]
+        unstacked_output_gen = [
+            [bop[count] for bop in output_list] for count, name in enumerate(output_names)
+        ]
+        stacked_output_list = [
             vt.safe_cat(_output_unstacked, axis=0)
             for _output_unstacked in unstacked_output_gen
         ]
@@ -1462,32 +1535,44 @@ class _BatchUtility(object):
         num_inputs = X.shape[0] / model.data_per_label_input
         num_outputs = num_inputs * model.data_per_label_output
         for key in outputs.keys():
-            outputs[key] = outputs[key][0:int(num_outputs)]
+            outputs[key] = outputs[key][0 : int(num_outputs)]
         return outputs
 
 
 @ut.reloadable_class
 class _ModelBatch(_BatchUtility):
-
     def _init_batch_vars(model, kwargs):
         model.pad_labels = False
         model.X_is_cv2_native = True
 
-    def process_batch(model, theano_fn, X, y=None, w=None, buffered=False,
-                      unwrap=False, shuffle=False, augment_on=False):
+    def process_batch(
+        model,
+        theano_fn,
+        X,
+        y=None,
+        w=None,
+        buffered=False,
+        unwrap=False,
+        shuffle=False,
+        augment_on=False,
+    ):
         """ Execute a theano function on batches of X and y """
         # Break data into generated batches
         # TODO: sliced batches when there is no shuffling
         # Create an iterator to generate batches of data
-        batch_iter = model.batch_iterator(X, y, w, shuffle=shuffle,
-                                          augment_on=augment_on)
+        batch_iter = model.batch_iterator(X, y, w, shuffle=shuffle, augment_on=augment_on)
         if buffered:
             batch_iter = ut.buffered_generator(batch_iter)
         if model.monitor_config['showprog']:
             num_batches = (X.shape[0] + model.batch_size - 1) // model.batch_size
             batch_iter = ut.ProgIter(
-                batch_iter, nTotal=num_batches, lbl=theano_fn.name, freq=10,
-                bs=True, adjust=True)
+                batch_iter,
+                nTotal=num_batches,
+                lbl=theano_fn.name,
+                freq=10,
+                bs=True,
+                adjust=True,
+            )
 
         # Execute the function with either known or unknown y-targets
         output_list = []
@@ -1520,8 +1605,7 @@ class _ModelBatch(_BatchUtility):
         return outputs
 
     @profile
-    def batch_iterator(model, X, y=None, w=None, shuffle=False,
-                       augment_on=False):
+    def batch_iterator(model, X, y=None, w=None, shuffle=False, augment_on=False):
         """
         Example:
             >>> # ENABLE_DOCTEST
@@ -1570,17 +1654,24 @@ class _ModelBatch(_BatchUtility):
         # Slice and preprocess data in batch
         for batch_index in range(num_batches):
             # Take a slice from the data
-            Xb_, yb_, wb_ = model.slice_batch(X, y, w, batch_size, batch_index,
-                                              data_per_label, wraparound)
+            Xb_, yb_, wb_ = model.slice_batch(
+                X, y, w, batch_size, batch_index, data_per_label, wraparound
+            )
             # Prepare data for the GPU
-            Xb, yb, wb = model._prepare_batch(Xb_, yb_, wb_, is_int=is_int,
-                                              is_cv2=is_cv2,
-                                              augment_on=augment_on,
-                                              whiten_on=whiten_on)
+            Xb, yb, wb = model._prepare_batch(
+                Xb_,
+                yb_,
+                wb_,
+                is_int=is_int,
+                is_cv2=is_cv2,
+                augment_on=augment_on,
+                whiten_on=whiten_on,
+            )
             yield Xb, yb, wb
 
-    def _prepare_batch(model, Xb_, yb_, wb_, is_int=True, is_cv2=True,
-                       augment_on=False, whiten_on=False):
+    def _prepare_batch(
+        model, Xb_, yb_, wb_, is_int=True, is_cv2=True, augment_on=False, whiten_on=False
+    ):
         if augment_on:
             has_encoder = getattr(model, 'encoder', None) is not None
             yb_ = model.encoder.inverse_transform(yb_) if has_encoder else yb_
@@ -1597,12 +1688,12 @@ class _ModelBatch(_BatchUtility):
             Xb = Xb / 255.0
         if whiten_on:
             mean = model.data_params['center_mean']
-            std  = model.data_params['center_std']
+            std = model.data_params['center_std']
             # assert np.all(mean <= 1.0)
             # assert np.all(std <= 1.0)
             np.subtract(Xb, mean, out=Xb)
             np.divide(Xb, std, out=Xb)
-            #Xb = (Xb - mean) / (std)
+            # Xb = (Xb - mean) / (std)
         if is_cv2 and len(Xb.shape) == 4:
             # Convert from cv2 to lasagne format
             Xb = Xb.transpose((0, 3, 1, 2))
@@ -1620,8 +1711,9 @@ class _ModelBatch(_BatchUtility):
         is_int = ut.is_int(X)
         is_cv2 = model.X_is_cv2_native
         whiten_on = model.hyperparams['whiten_on']
-        Xb, yb, wb = model._prepare_batch(X, y, w, is_int=is_int,
-                                          is_cv2=is_cv2, whiten_on=whiten_on)
+        Xb, yb, wb = model._prepare_batch(
+            X, y, w, is_int=is_int, is_cv2=is_cv2, whiten_on=whiten_on
+        )
         if y is None:
             return Xb
         elif w is None:
@@ -1631,7 +1723,6 @@ class _ModelBatch(_BatchUtility):
 
 
 class _ModelPredicter(object):
-
     def _predict(model, X_test):
         """
         Returns all prediction outputs of the network in a dictionary.
@@ -1640,13 +1731,11 @@ class _ModelPredicter(object):
             print('\n[train] --- MODEL INFO ---')
             model.print_arch_str()
             model.print_layer_info()
-            print('\n[test] predict with batch size %0.1f' % (
-                model.batch_size))
+            print('\n[test] predict with batch size %0.1f' % (model.batch_size))
         # create theano symbolic expressions that define the network
         theano_predict = model.build_predict_func()
         # Begin testing with the neural network
-        test_outputs = model.process_batch(
-            theano_predict, X_test, unwrap=True)
+        test_outputs = model.process_batch(theano_predict, X_test, unwrap=True)
         return test_outputs
 
     def predict_proba(model, X_test):
@@ -1660,8 +1749,8 @@ class _ModelPredicter(object):
         batch_label = theano_predict(Xb)
         output_names = [
             str(outexpr.variable)
-            if outexpr.variable.name is None else
-            outexpr.variable.name
+            if outexpr.variable.name is None
+            else outexpr.variable.name
             for outexpr in theano_predict.outputs
         ]
         test_outputs = dict(zip(output_names, batch_label))
@@ -1712,7 +1801,7 @@ class _ModelBackend(object):
                 givens={X_given: X_batch},
                 updates=None,
                 mode=model._theano_mode,
-                name=':predict'
+                name=':predict',
             )
             model._theano_predict = theano_predict
         return model._theano_predict
@@ -1751,7 +1840,7 @@ class _ModelBackend(object):
 
             loss_exprs = model._theano_loss_exprs
             loss_determ = loss_exprs['loss_determ']
-            #loss_std_determ = loss_exprs['loss_std_determ']
+            # loss_std_determ = loss_exprs['loss_std_determ']
             forward_losses = [loss_determ]
 
             In = theano.In
@@ -1761,7 +1850,7 @@ class _ModelBackend(object):
                 givens={X_given: X_batch, y_given: y_batch, w_given: w_batch},
                 updates=None,
                 mode=model._theano_mode,
-                name=':feedforward'
+                name=':feedforward',
             )
             model._theano_forward = theano_forward
         return model._theano_forward
@@ -1786,7 +1875,7 @@ class _ModelBackend(object):
             # Build backprop losses
             loss_exprs = model._theano_loss_exprs
             loss = loss_exprs['loss']
-            #loss_std = loss_exprs['loss_std']
+            # loss_std = loss_exprs['loss_std']
             loss_reg = loss_exprs['loss_reg']
 
             backprop_loss_ = loss_reg
@@ -1832,17 +1921,15 @@ class _ModelBackend(object):
             else:
                 w_type = T.vector
 
-            print('[model] Using y_type = %r' % (y_type, ))
+            print('[model] Using y_type = %r' % (y_type,))
 
             fn_inputs = {
                 # Data
                 'X_given': x_type('X_given'),
                 'X_batch': x_type('X_batch'),
-
                 # Labels
                 'y_given': y_type('y_given'),
                 'y_batch': y_type('y_batch'),
-
                 # Importance
                 'w_given': w_type('w_given'),
                 'w_batch': w_type('w_batch'),
@@ -1857,8 +1944,9 @@ class _ModelBackend(object):
         class_to_weight.take(labels)
         weights = class_to_weight.take(labels).astype(np.float32)
         data_per_label = model.data_per_label_input
-        Xb_, yb_, wb_ = model.slice_batch(data, labels, weights, batch_size,
-                                          data_per_label)
+        Xb_, yb_, wb_ = model.slice_batch(
+            data, labels, weights, batch_size, data_per_label
+        )
         Xb, yb, wb = model.prepare_data(Xb_, yb_, wb_)
         return Xb, yb, wb
         pass
@@ -1907,27 +1995,29 @@ class _ModelBackend(object):
                 print('Building symbolic loss function')
                 loss_item = model.loss_function(netout_learn, y_batch)
                 loss_item.name = 'loss_item'
-                #loss_std = loss_item.std()
-                #loss_std.name = 'loss_std'
-                loss = lasagne.objectives.aggregate(loss_item, weights=w_batch,
-                                                    mode='mean')
+                # loss_std = loss_item.std()
+                # loss_std.name = 'loss_std'
+                loss = lasagne.objectives.aggregate(
+                    loss_item, weights=w_batch, mode='mean'
+                )
                 loss.name = 'loss'
 
                 print('Building symbolic loss function (determenistic)')
                 loss_item_determ = model.loss_function(netout_determ, y_batch)
                 loss_item_determ.name = 'loss_item_determ'
-                #loss_std_determ = loss_item_determ.std()
-                #loss_std_determ.name = 'loss_std_determ'
-                loss_determ = lasagne.objectives.aggregate(loss_item_determ,
-                                                           weights=w_batch,
-                                                           mode='mean')
+                # loss_std_determ = loss_item_determ.std()
+                # loss_std_determ.name = 'loss_std_determ'
+                loss_determ = lasagne.objectives.aggregate(
+                    loss_item_determ, weights=w_batch, mode='mean'
+                )
                 loss_determ.name = 'loss_determ'
 
                 # Regularize the learning loss function
 
                 # TODO: L2 should one of many regularization options (Lp, L1)
                 L2 = lasagne.regularization.regularize_network_params(
-                    model.output_layer, lasagne.regularization.l2)
+                    model.output_layer, lasagne.regularization.l2
+                )
                 L2.name = 'reg_L2_param_mag'
 
                 weight_decay = model.learn_state.shared['weight_decay']
@@ -1976,12 +2066,12 @@ class _ModelBackend(object):
         if model._theano_exprs['netout'] is None:
             X_batch = model._theano_fn_inputs['X_batch']
 
-            network_output_learn = lasagne.layers.get_output(
-                model.output_layer, X_batch)
+            network_output_learn = lasagne.layers.get_output(model.output_layer, X_batch)
             network_output_learn.name = 'network_output_learn'
 
             network_output_determ = lasagne.layers.get_output(
-                model.output_layer, X_batch, deterministic=True)
+                model.output_layer, X_batch, deterministic=True
+            )
             network_output_determ.name = 'network_output_determ'
 
             netout_exprs = {
@@ -2005,7 +2095,8 @@ class _ModelBackend(object):
             network_output_determ = netout_exprs['network_output_determ']
             y_batch = model._theano_fn_inputs['y_batch']
             model._theano_exprs['labeled_out'] = model.custom_labeled_outputs(
-                network_output_determ, y_batch)
+                network_output_determ, y_batch
+            )
         return model._theano_exprs['labeled_out']
 
     def _make_monitor_outputs(model, parameters, updates):
@@ -2020,8 +2111,10 @@ class _ModelBackend(object):
                 # (one vector per channel)
                 param_update_vec = updates[param] - param
                 param_update_vec.name = 'param_update_vector_' + param.name
-                flat_shape = (param_update_vec.shape[0],
-                              T.prod(param_update_vec.shape[1:]))
+                flat_shape = (
+                    param_update_vec.shape[0],
+                    T.prod(param_update_vec.shape[1:]),
+                )
                 flat_param_update_vec = param_update_vec.reshape(flat_shape)
                 param_update_mag = (flat_param_update_vec ** 2).sum(-1)
                 param_update_mag.name = 'param_update_magnitude_' + param.name
@@ -2075,6 +2168,7 @@ class _ModelVisualization(object):
 
     def show_arch(model, fnum=None, fullinfo=True, **kwargs):
         import plottool as pt
+
         layers = model.get_all_layers(**kwargs)
         draw_net.show_arch_nx_graph(layers, fnum=fnum, fullinfo=fullinfo)
         pt.set_figtitle(model.arch_id)
@@ -2099,7 +2193,8 @@ class _ModelVisualization(object):
             >>> ut.show_if_requested()
         """
         import plottool as pt
-        kw = dict(init='randn', niters=200, update_rate=.05, weight_decay=1e-4)
+
+        kw = dict(init='randn', niters=200, update_rate=0.05, weight_decay=1e-4)
         kw.update(**kwargs)
         target_labels = list(range(model.output_dims))
         dream = getattr(model, '_dream', None)
@@ -2126,19 +2221,19 @@ class _ModelVisualization(object):
         import wbia_cnn.__THEANO__ as theano
         from wbia_cnn.__THEANO__ import tensor as T  # NOQA
         import utool as ut
+
         num = 64
         Xb = model.prepare_data(X_test[0:num])
         yb = y_test[0:num]
         shared_images = theano.shared(Xb.astype(np.float32))
         dream = model._dream
         step_fn = dream._make_objective(shared_images, yb)
-        out = dream._postprocess_class_image(shared_images, yb,
-                                             was_scalar=True)
+        out = dream._postprocess_class_image(shared_images, yb, was_scalar=True)
         import vtool as vt
+
         count = 0
         for _ in range(100):
-            out = dream._postprocess_class_image(shared_images, yb,
-                                                 was_scalar=True)
+            out = dream._postprocess_class_image(shared_images, yb, was_scalar=True)
             vt.imwrite(join(dpath, 'out%d.jpg' % (count,)), out)
             count += 1
             for _ in ut.ProgIter(range(10)):
@@ -2146,17 +2241,19 @@ class _ModelVisualization(object):
 
     def show_weights_image(model, index=0, *args, **kwargs):
         import plottool as pt
+
         network_layers = model.get_all_layers()
-        cnn_layers = [layer_ for layer_ in network_layers
-                      if hasattr(layer_, 'W')]
+        cnn_layers = [layer_ for layer_ in network_layers if hasattr(layer_, 'W')]
         layer = cnn_layers[index]
         all_weights = layer.W.get_value()
         layername = net_strs.make_layer_str(layer)
         fig = draw_net.show_convolutional_weights(all_weights, **kwargs)
         figtitle = layername + '\n' + model.arch_id + '\n' + model.history.hist_id
-        pt.set_figtitle(figtitle, subtitle='shape=%r, sum=%.4f, l2=%.4f' %
-                        (all_weights.shape, all_weights.sum(),
-                         (all_weights ** 2).sum()))
+        pt.set_figtitle(
+            figtitle,
+            subtitle='shape=%r, sum=%.4f, l2=%.4f'
+            % (all_weights.shape, all_weights.sum(), (all_weights ** 2).sum()),
+        )
         return fig
 
     def show_update_mag_history(model, fnum=None):
@@ -2173,17 +2270,20 @@ class _ModelVisualization(object):
             >>> ut.show_if_requested()
         """
         import plottool as pt
+
         fnum = pt.ensure_fnum(fnum)
 
         layer_info = model.get_all_layer_info()
-        param_groups = [[p['name'] for p in info['param_infos']
-                         if 'trainable' in p['tags']] for info in layer_info]
+        param_groups = [
+            [p['name'] for p in info['param_infos'] if 'trainable' in p['tags']]
+            for info in layer_info
+        ]
         param_groups = ut.compress(param_groups, param_groups)
 
         fig = pt.figure(fnum=fnum, pnum=(1, 1, 1), doclf=True, docla=True)
-        #next_pnum = pt.make_pnum_nextgen(nSubplots=1 + len(param_groups))
+        # next_pnum = pt.make_pnum_nextgen(nSubplots=1 + len(param_groups))
         next_pnum = pt.make_pnum_nextgen(nSubplots=1)
-        #if len(model.era_history) > 0:
+        # if len(model.era_history) > 0:
         #    for param_keys in param_groups:
         #        model.show_weight_updates(param_keys=param_keys, fnum=fnum, pnum=next_pnum())
         # Show learning rate
@@ -2194,11 +2294,19 @@ class _ModelVisualization(object):
         for epochsT in model.history.grouped_epochsT():
             learn_rate_list = ut.take_column(epochsT['learn_state'], 'learning_rate')
             ydatas.append({'rate': learn_rate_list})
-        model._show_era_measure(ydatas, labels=labels, ylabel='learning rate',
-                                yscale='linear', fnum=fnum, pnum=next_pnum())
-        #model.show_weight_updates(fnum=fnum, pnum=next_pnum())
+        model._show_era_measure(
+            ydatas,
+            labels=labels,
+            ylabel='learning rate',
+            yscale='linear',
+            fnum=fnum,
+            pnum=next_pnum(),
+        )
+        # model.show_weight_updates(fnum=fnum, pnum=next_pnum())
         # TODO: add confusion
-        pt.set_figtitle('Weight Update History: ' + model.history.hist_id + '\n' + model.arch_id)
+        pt.set_figtitle(
+            'Weight Update History: ' + model.history.hist_id + '\n' + model.arch_id
+        )
         return fig
 
     def show_pr_history(model, fnum=None):
@@ -2215,13 +2323,18 @@ class _ModelVisualization(object):
             >>> ut.show_if_requested()
         """
         import plottool as pt
+
         fnum = pt.ensure_fnum(fnum)
         fig = pt.figure(fnum=fnum, pnum=(1, 1, 1), doclf=True, docla=True)
         next_pnum = pt.make_pnum_nextgen(nRows=2, nCols=2)
         if len(model.history) > 0:
-            model._show_era_class_pr(['learn'], ['precision'], fnum=fnum, pnum=next_pnum())
+            model._show_era_class_pr(
+                ['learn'], ['precision'], fnum=fnum, pnum=next_pnum()
+            )
             model._show_era_class_pr(['learn'], ['recall'], fnum=fnum, pnum=next_pnum())
-            model._show_era_class_pr(['valid'], ['precision'], fnum=fnum, pnum=next_pnum())
+            model._show_era_class_pr(
+                ['valid'], ['precision'], fnum=fnum, pnum=next_pnum()
+            )
             model._show_era_class_pr(['valid'], ['recall'], fnum=fnum, pnum=next_pnum())
         pt.set_figtitle('Era PR History: ' + model.history.hist_id + '\n' + model.arch_id)
         return fig
@@ -2246,6 +2359,7 @@ class _ModelVisualization(object):
             >>> ut.show_if_requested()
         """
         import plottool as pt
+
         fnum = pt.ensure_fnum(fnum)
         fig = pt.figure(fnum=fnum, pnum=(1, 1, 1), doclf=True, docla=True)
         next_pnum = pt.make_pnum_nextgen(nRows=2, nCols=2)
@@ -2254,7 +2368,9 @@ class _ModelVisualization(object):
             model._show_era_loss(fnum=fnum, pnum=next_pnum(), yscale='linear')
             model._show_era_acc(fnum=fnum, pnum=next_pnum(), yscale='linear')
             model._show_era_lossratio(fnum=fnum, pnum=next_pnum())
-        pt.set_figtitle('Era Loss History: ' + model.history.hist_id + '\n' + model.arch_id)
+        pt.set_figtitle(
+            'Era Loss History: ' + model.history.hist_id + '\n' + model.arch_id
+        )
         return fig
 
     def _show_era_lossratio(model, **kwargs):
@@ -2262,16 +2378,24 @@ class _ModelVisualization(object):
         if len(model.history) > 0:
             labels = {'ratio': 'learn/valid'}
 
-        ydatas = [{
-            'ratio': np.divide(ut.take_column(epochs, 'learn_loss'),
-                               ut.take_column(epochs, 'valid_loss'),)
-        } for epochs in model.history.grouped_epochs()]
-        return model._show_era_measure(ydatas, labels, ylabel='learn/valid', yscale='linear', **kwargs)
+        ydatas = [
+            {
+                'ratio': np.divide(
+                    ut.take_column(epochs, 'learn_loss'),
+                    ut.take_column(epochs, 'valid_loss'),
+                )
+            }
+            for epochs in model.history.grouped_epochs()
+        ]
+        return model._show_era_measure(
+            ydatas, labels, ylabel='learn/valid', yscale='linear', **kwargs
+        )
 
-    def _show_era_class_pr(model, types=['valid', 'learn'],
-                           measures=['precision', 'recall'],
-                           **kwargs):
+    def _show_era_class_pr(
+        model, types=['valid', 'learn'], measures=['precision', 'recall'], **kwargs
+    ):
         import plottool as pt
+
         if getattr(model, 'encoder', None):
             # TODO: keep in data_params?
             class_idxs = model.encoder.transform(model.encoder.classes_)
@@ -2281,63 +2405,116 @@ class _ModelVisualization(object):
             class_lbls = list(range(model.output_dims))
 
         type_styles = {'learn': '-x', 'valid': '-o'}
-        styles = ut.odict(ut.flatten([
-            [(('%s_%s_%d' % (t, m, y,)), type_styles[t])
-             for t in types for m in measures]
-            for y in class_idxs]))
+        styles = ut.odict(
+            ut.flatten(
+                [
+                    [
+                        (('%s_%s_%d' % (t, m, y,)), type_styles[t])
+                        for t in types
+                        for m in measures
+                    ]
+                    for y in class_idxs
+                ]
+            )
+        )
 
         class_colors = pt.distinct_colors(len(class_idxs))
-        colors = ut.odict(ut.flatten([
-            [(('%s_%s_%d' % (t, m, y,)), color)
-             for t in types for m in measures]
-            for (y, color) in zip(class_idxs, class_colors)]))
+        colors = ut.odict(
+            ut.flatten(
+                [
+                    [(('%s_%s_%d' % (t, m, y,)), color) for t in types for m in measures]
+                    for (y, color) in zip(class_idxs, class_colors)
+                ]
+            )
+        )
 
         if len(model.history) > 0:
-            labels = ut.odict(ut.flatten([[
-                ('%s_%s_%d' % (t, m, y,), '%s %s %s' % (t, m, category,))
-                for t in types for m in measures]
-                for y, category in zip(class_idxs, class_lbls)]))
+            labels = ut.odict(
+                ut.flatten(
+                    [
+                        [
+                            ('%s_%s_%d' % (t, m, y,), '%s %s %s' % (t, m, category,))
+                            for t in types
+                            for m in measures
+                        ]
+                        for y, category in zip(class_idxs, class_lbls)
+                    ]
+                )
+            )
 
         ydatas = [
-            ut.odict(ut.flatten([[
-                ('%s_%s_%d' % (t, m, y,), np.array(ut.take_column(epochs, '%s_%s' % (t, m)))[:, y])
-                for t in types for m in measures]
-                for y in class_idxs]))
-            for epochs in model.history.grouped_epochs()]
+            ut.odict(
+                ut.flatten(
+                    [
+                        [
+                            (
+                                '%s_%s_%d' % (t, m, y,),
+                                np.array(ut.take_column(epochs, '%s_%s' % (t, m)))[:, y],
+                            )
+                            for t in types
+                            for m in measures
+                        ]
+                        for y in class_idxs
+                    ]
+                )
+            )
+            for epochs in model.history.grouped_epochs()
+        ]
 
         fig = model._show_era_measure(
-            ydatas, styles=styles, labels=labels, colors=colors,
-            ylabel='/'.join(measures), yscale='linear', **kwargs)
+            ydatas,
+            styles=styles,
+            labels=labels,
+            colors=colors,
+            ylabel='/'.join(measures),
+            yscale='linear',
+            **kwargs
+        )
         return fig
 
     def _show_era_acc(model, **kwargs):
-        #styles = {'valid': '-o'}
+        # styles = {'valid': '-o'}
         styles = {'learn': '-x', 'valid': '-o'}
         labels = None
         if len(model.history) > 0:
             last_epoch = model.history.epoch_list[-1]
             last_era = model.history.era_list[-1]
             labels = {
-                'valid': 'valid acc ' + str(last_era['num_valid']) + ' ' + ut.repr4(last_epoch['learn_acc'] * 100) + '%',
-                'learn': 'learn acc ' + str(last_era['num_learn']) + ' ' + ut.repr4(last_epoch['valid_acc'] * 100) + '%',
+                'valid': 'valid acc '
+                + str(last_era['num_valid'])
+                + ' '
+                + ut.repr4(last_epoch['learn_acc'] * 100)
+                + '%',
+                'learn': 'learn acc '
+                + str(last_era['num_learn'])
+                + ' '
+                + ut.repr4(last_epoch['valid_acc'] * 100)
+                + '%',
             }
 
-        ydatas = [{
-            'valid': ut.take_column(epochs, 'valid_acc'),
-            'learn': ut.take_column(epochs, 'learn_acc'),
-        } for epochs in model.history.grouped_epochs()]
+        ydatas = [
+            {
+                'valid': ut.take_column(epochs, 'valid_acc'),
+                'learn': ut.take_column(epochs, 'learn_acc'),
+            }
+            for epochs in model.history.grouped_epochs()
+        ]
 
-        yspreads = [{
-            'valid': ut.take_column(epochs, 'valid_acc_std'),
-            'learn': ut.take_column(epochs, 'learn_acc_std'),
-        } for epochs in model.history.grouped_epochs()]
+        yspreads = [
+            {
+                'valid': ut.take_column(epochs, 'valid_acc_std'),
+                'learn': ut.take_column(epochs, 'learn_acc_std'),
+            }
+            for epochs in model.history.grouped_epochs()
+        ]
 
-        fig = model._show_era_measure(ydatas, labels,  styles, ylabel='accuracy',
-                                      yspreads=yspreads, **kwargs)
-        #import plottool as pt
-        #ax = pt.gca()
-        #ymin, ymax = ax.get_ylim()
-        #pt.gca().set_ylim((ymin, 100))
+        fig = model._show_era_measure(
+            ydatas, labels, styles, ylabel='accuracy', yspreads=yspreads, **kwargs
+        )
+        # import plottool as pt
+        # ax = pt.gca()
+        # ymin, ymax = ax.get_ylim()
+        # pt.gca().set_ylim((ymin, 100))
         return fig
 
     def _show_era_loss(model, **kwargs):
@@ -2350,21 +2527,25 @@ class _ModelVisualization(object):
             }
         epochsT_list = list(model.history.grouped_epochsT())
 
-        ydatas = [{'learn': epochsT['learn_loss'],
-                   'valid': epochsT['valid_loss']}
-                  for epochsT in epochsT_list]
+        ydatas = [
+            {'learn': epochsT['learn_loss'], 'valid': epochsT['valid_loss']}
+            for epochsT in epochsT_list
+        ]
 
-        yspreads = [{'learn': epochsT['learn_loss_std'],
-                     'valid': epochsT['valid_loss_std']}
-                    for epochsT in epochsT_list]
+        yspreads = [
+            {'learn': epochsT['learn_loss_std'], 'valid': epochsT['valid_loss_std']}
+            for epochsT in epochsT_list
+        ]
 
-        fig = model._show_era_measure(ydatas, labels, styles, ylabel='loss',
-                                      yspreads=yspreads, **kwargs)
+        fig = model._show_era_measure(
+            ydatas, labels, styles, ylabel='loss', yspreads=yspreads, **kwargs
+        )
         return fig
 
     def show_weight_updates(model, param_keys=None, **kwargs):
         # has_mag_updates = False
         import plottool as pt
+
         xdatas = []
         ydatas = []
         yspreads = []
@@ -2375,9 +2556,13 @@ class _ModelVisualization(object):
             era = model.history.era_list[-1]
             if 'param_update_mags' in era['epoch_info_list']:
                 if param_keys is None:
-                    param_keys = list(set(ut.flatten([
-                        dict_.keys() for dict_ in era['param_update_mags_list']
-                    ])))
+                    param_keys = list(
+                        set(
+                            ut.flatten(
+                                [dict_.keys() for dict_ in era['param_update_mags_list']]
+                            )
+                        )
+                    )
                 labels = dict(zip(param_keys, param_keys))
                 colors = dict(zip(param_keys, pt.distinct_colors(len(param_keys))))
 
@@ -2392,12 +2577,11 @@ class _ModelVisualization(object):
             # FIXME
             update_mags_list = era['param_update_mags_list']
             # Transpose keys and positions
-            #param_keys = list(set(ut.flatten([
+            # param_keys = list(set(ut.flatten([
             #    dict_.keys() for dict_ in update_mags_list
-            #])))
+            # ])))
             param_val_list = [
-                [list_[param] for list_ in update_mags_list]
-                for param in param_keys
+                [list_[param] for list_ in update_mags_list] for param in param_keys
             ]
             if index == 0:
                 param_val_list = [list_[1:] for list_ in param_val_list]
@@ -2408,19 +2592,35 @@ class _ModelVisualization(object):
                 yspread[key] = ut.get_list_column(val, 1)
             ydatas.append(ydata)
             yspreads.append(yspread)
-        return model._show_era_measure(ydatas, labels=labels, colors=colors,
-                                       xdatas=xdatas,
-                                       ylabel='update magnitude',
-                                       yspreads=yspreads,
-                                       yscale='linear', **kwargs)
+        return model._show_era_measure(
+            ydatas,
+            labels=labels,
+            colors=colors,
+            xdatas=xdatas,
+            ylabel='update magnitude',
+            yspreads=yspreads,
+            yscale='linear',
+            **kwargs
+        )
 
-    def _show_era_measure(model, ydatas, labels=None, styles=None, xdatas=None,
-                          xlabel='epoch', ylabel='', yspreads=None,
-                          colors=None, fnum=None, pnum=(1, 1, 1),
-                          yscale='log'):
+    def _show_era_measure(
+        model,
+        ydatas,
+        labels=None,
+        styles=None,
+        xdatas=None,
+        xlabel='epoch',
+        ylabel='',
+        yspreads=None,
+        colors=None,
+        fnum=None,
+        pnum=(1, 1, 1),
+        yscale='log',
+    ):
 
         # print('Show Era Measure ylabel = %r' % (ylabel,))
         import plottool as pt
+
         num_eras = model.history.total_eras
 
         if labels is None:
@@ -2430,8 +2630,7 @@ class _ModelVisualization(object):
             styles = ut.ddict(lambda: '-o')
 
         if xdatas is None:
-            xdatas = [epochsT['epoch_num'] for epochsT in
-                      model.history.grouped_epochsT()]
+            xdatas = [epochsT['epoch_num'] for epochsT in model.history.grouped_epochsT()]
 
         if colors is None:
             colors = pt.distinct_colors(num_eras)
@@ -2465,9 +2664,8 @@ class _ModelVisualization(object):
                         std_ = np.array(std_)
                         ymax = np.array(ydata_) + std_
                         ymin = np.array(ydata_) - std_
-                        ax.fill_between(xdata_, ymin, ymax, alpha=.12, color=color)
-                    pt.plot(xdata_, ydata_,
-                            '--', color=color, yscale=yscale)
+                        ax.fill_between(xdata_, ymin, ymax, alpha=0.12, color=color)
+                    pt.plot(xdata_, ydata_, '--', color=color, yscale=yscale)
 
             # Draw lines inside era
             for key in ydata.keys():
@@ -2481,10 +2679,9 @@ class _ModelVisualization(object):
                     std = np.array(yspreads[index][key])
                     ymax = np.array(ydata_) + std
                     ymin = np.array(ydata_) - std
-                    ax.fill_between(xdata, ymin, ymax, alpha=.2, color=color)
+                    ax.fill_between(xdata, ymin, ymax, alpha=0.2, color=color)
                     prev_yspread[key] = std[-1:]
-                pt.plot(xdata, ydata_, styles[key], color=color,
-                        yscale=yscale, **kw)
+                pt.plot(xdata, ydata_, styles[key], color=color, yscale=yscale, **kw)
                 prev_ydata[key] = ydata_[-1:]
             prev_xdata = xdata[-1:]
 
@@ -2498,36 +2695,45 @@ class _ModelVisualization(object):
 
     def show_regularization_stuff(model, fnum=None, pnum=(1, 1, 1)):
         import plottool as pt
+
         fnum = pt.ensure_fnum(fnum)
         fig = pt.figure(fnum=fnum, pnum=pnum)
         for index, era in enumerate(model.history):
-            #epochs = era['epoch_list']
+            # epochs = era['epoch_list']
             epochs = ut.take_column(era['epoch_info_list'], 'epoch')
             if 'update_mags_list' not in era:
                 continue
             update_mags_list = era['update_mags_list']
             # Transpose keys and positions
-            param_keys = list(set(ut.flatten([
-                dict_.keys()
-                for dict_ in update_mags_list
-            ])))
+            param_keys = list(
+                set(ut.flatten([dict_.keys() for dict_ in update_mags_list]))
+            )
             param_val_list = [
-                [list_[param] for list_ in update_mags_list]
-                for param in param_keys
+                [list_[param] for list_ in update_mags_list] for param in param_keys
             ]
             colors = pt.distinct_colors(len(param_val_list))
             for key, val, color in zip(param_keys, param_val_list, colors):
                 update_mag_mean = ut.get_list_column(val, 0)
                 update_mag_std = ut.get_list_column(val, 1)
                 if index == len(model.history) - 1:
-                    pt.interval_line_plot(epochs, update_mag_mean,
-                                          update_mag_std, marker='x',
-                                          linestyle='-', color=color,
-                                          label=key)
+                    pt.interval_line_plot(
+                        epochs,
+                        update_mag_mean,
+                        update_mag_std,
+                        marker='x',
+                        linestyle='-',
+                        color=color,
+                        label=key,
+                    )
                 else:
-                    pt.interval_line_plot(epochs, update_mag_mean,
-                                          update_mag_std, marker='x',
-                                          linestyle='-', color=color)
+                    pt.interval_line_plot(
+                        epochs,
+                        update_mag_mean,
+                        update_mag_std,
+                        marker='x',
+                        linestyle='-',
+                        color=color,
+                    )
             pass
         if len(model.history) > 0:
             pt.legend()
@@ -2539,6 +2745,7 @@ class _ModelVisualization(object):
 
     def render_arch(model, fullinfo=True):
         import plottool as pt
+
         savekw = dict(dpi=180)
         with pt.RenderingContext(**savekw) as render:
             model.show_arch(fnum=render.fig.number, fullinfo=fullinfo)
@@ -2565,6 +2772,7 @@ class _ModelVisualization(object):
         """
         # FIXME
         import vtool as vt
+
         if fpath is None:
             fpath = './' + model.arch_id + '.jpg'
         image = model.render_arch(fullinfo=fullinfo)
@@ -2579,8 +2787,9 @@ class _ModelStrings(object):
 
     def get_state_str(model, other_override_reprs={}):
         era_history_str = ut.list_str(
-            [ut.dict_str(era, truncate=True, sorted_=True)
-             for era in model.history], strvals=True)
+            [ut.dict_str(era, truncate=True, sorted_=True) for era in model.history],
+            strvals=True,
+        )
 
         override_reprs = {
             'best_results': ut.repr3(model.best_results),
@@ -2634,7 +2843,7 @@ class _ModelStrings(object):
                 if v >= nl:
                     if prev:
                         l = l.lstrip(' ')
-                        newlines[-1] += ('' + l)
+                        newlines[-1] += '' + l
                     else:
                         newlines.append(l)
                         prev = True
@@ -2676,8 +2885,9 @@ class _ModelStrings(object):
         if model.output_layer is None:
             return ''
         layer_list = model.get_all_layers(with_noise=with_noise)
-        layer_str_list = [net_strs.make_layer_str(layer, with_name=with_noise)
-                          for layer in layer_list]
+        layer_str_list = [
+            net_strs.make_layer_str(layer, with_name=with_noise) for layer in layer_list
+        ]
         architecture_str = sep.join(layer_str_list)
         return architecture_str
 
@@ -2737,10 +2947,9 @@ class _ModelStrings(object):
 
 @ut.reloadable_class
 class _ModelIDs(object):
-
     def _init_id_vars(model, kwargs):
         model.name = kwargs.pop('name', None)
-        #if model.name is None:
+        # if model.name is None:
         #    model.name = ut.get_classname(model.__class__, local=True)
 
     def __nice__(model):
@@ -2811,13 +3020,15 @@ class _ModelIDs(object):
         if model.output_layer is None:
             return 'NoArch'
         else:
-            weighted_layers = model.get_all_layers(with_noise=False, with_weightless=False)
+            weighted_layers = model.get_all_layers(
+                with_noise=False, with_weightless=False
+            )
             info_list = [net_strs.get_layer_info(layer) for layer in weighted_layers]
             # The number of units depends if you look at things via input or output
             # does a convolutional layer have its outputs or the outputs of the pooling layer?
-            #num_units1 = sum([info['num_outputs'] for info in info_list])
+            # num_units1 = sum([info['num_outputs'] for info in info_list])
             nhidden = sum([info['num_inputs'] for info in info_list[1:]])
-            #num_units2 += net_strs.get_layer_info(model.output_layer)['num_outputs']
+            # num_units2 += net_strs.get_layer_info(model.output_layer)['num_outputs']
             depth = len(weighted_layers)
             nparam = sum([info['num_params'] for info in info_list])
             nin = np.prod(model.data_shape)
@@ -2828,19 +3039,18 @@ class _ModelIDs(object):
                 depth=depth,
                 nhidden=nhidden,
                 nparam=nparam,
-                #logmcomplex=int(np.round(np.log10(nhidden + nparam)))
-                mcomplex=int(np.round((nhidden + nparam) / 1000))
+                # logmcomplex=int(np.round(np.log10(nhidden + nparam)))
+                mcomplex=int(np.round((nhidden + nparam) / 1000)),
             )
-            #nice = 'i{nin}_o{nout}_d{depth}_h{nhidden}_p{nparam}'.format(**fmtdict)
+            # nice = 'i{nin}_o{nout}_d{depth}_h{nhidden}_p{nparam}'.format(**fmtdict)
             # Use a complexity measure
-            #nice = 'i{nin}_o{nout}_d{depth}_c{mcomplex}'.format(**fmtdict)
+            # nice = 'i{nin}_o{nout}_d{depth}_c{mcomplex}'.format(**fmtdict)
             nice = 'o{nout}_d{depth}_c{mcomplex}'.format(**fmtdict)
             return nice
 
 
 @ut.reloadable_class
 class _ModelIO(object):
-
     def _init_io_vars(model, kwargs):
         model.dataset_dpath = kwargs.pop('dataset_dpath', '.')
         model.training_dpath = kwargs.pop('training_dpath', '.')
@@ -2863,9 +3073,9 @@ class _ModelIO(object):
             >>> model.print_structure()
 
         """
-        #print(model.model_dpath)
+        # print(model.model_dpath)
         print(model.arch_dpath)
-        #print(model.best_dpath)
+        # print(model.best_dpath)
         print(model.saved_session_dpath)
         print(model.checkpoint_dpath)
         print(model.diagnostic_dpath)
@@ -2880,13 +3090,13 @@ class _ModelIO(object):
     def trained_arch_dpath(model):
         return join(model.trained_model_dpath, model.arch_id)
 
-    #@property
-    #def model_dpath(model):
+    # @property
+    # def model_dpath(model):
     #    return join(model.dataset_dpath, 'models')
 
     @property
     def arch_dpath(model):
-        #return join(model.model_dpath, model.arch_id)
+        # return join(model.model_dpath, model.arch_id)
         if model._arch_dpath is None:
             return join(model.dataset_dpath, 'models', model.arch_id)
         else:
@@ -2896,8 +3106,8 @@ class _ModelIO(object):
     def arch_dpath(model, arch_dpath):
         model._arch_dpath = arch_dpath
 
-    #@property
-    #def best_dpath(model):
+    # @property
+    # def best_dpath(model):
     #    return join(model.arch_dpath, 'best')
 
     @property
@@ -2908,11 +3118,11 @@ class _ModelIO(object):
     def saved_session_dpath(model):
         return join(model.arch_dpath, 'saved_sessions')
 
-    #@property
-    #def diagnostic_dpath(model):
+    # @property
+    # def diagnostic_dpath(model):
     #    return join(model.arch_dpath, 'diagnostics')
 
-    #def get_epoch_diagnostic_dpath(model, epoch=None):
+    # def get_epoch_diagnostic_dpath(model, epoch=None):
     #    import utool as ut
     #    diagnostic_dpath = model.diagnostic_dpath
     #    ut.ensuredir(diagnostic_dpath)
@@ -2935,8 +3145,7 @@ class _ModelIO(object):
                 dpath = join(dpath, checkpoint_tag)
         return dpath
 
-    def _get_model_file_fpath(model, default_fname, fpath, dpath, fname,
-                              checkpoint_tag):
+    def _get_model_file_fpath(model, default_fname, fpath, dpath, fname, checkpoint_tag):
         if fpath is None:
             fname = default_fname if fname is None else fname
             dpath = model._get_model_dpath(dpath, checkpoint_tag)
@@ -2947,8 +3156,7 @@ class _ModelIO(object):
             assert fname is None, 'fpath overrides all other settings'
         return fpath
 
-    def resolve_fuzzy_checkpoint_pattern(model, checkpoint_pattern,
-                                         extern_dpath=None):
+    def resolve_fuzzy_checkpoint_pattern(model, checkpoint_pattern, extern_dpath=None):
         r"""
         tries to find a matching checkpoint so you dont have to type a full
         hash
@@ -2962,17 +3170,22 @@ class _ModelIO(object):
             matching_dpaths = ut.glob(checkpoint_dpath, checkpoint_globpat)
             if len(matching_dpaths) == 0:
                 raise RuntimeError(
-                    'Could not resolve checkpoint_pattern=%r. No Matches' %
-                    (checkpoint_pattern,))
+                    'Could not resolve checkpoint_pattern=%r. No Matches'
+                    % (checkpoint_pattern,)
+                )
             elif len(matching_dpaths) > 1:
                 raise RuntimeError(
-                    ('Could not resolve checkpoint_pattern=%r. '
-                        'matching_dpaths=%r. Too many matches') %
-                    (checkpoint_pattern, matching_dpaths))
+                    (
+                        'Could not resolve checkpoint_pattern=%r. '
+                        'matching_dpaths=%r. Too many matches'
+                    )
+                    % (checkpoint_pattern, matching_dpaths)
+                )
             else:
                 checkpoint_tag = basename(matching_dpaths[0])
-                print('Resolved checkpoint pattern to checkpoint_tag=%r' %
-                        (checkpoint_tag,))
+                print(
+                    'Resolved checkpoint pattern to checkpoint_tag=%r' % (checkpoint_tag,)
+                )
         return checkpoint_tag
 
     def has_saved_state(model, checkpoint_tag=None):
@@ -2984,22 +3197,22 @@ class _ModelIO(object):
             ut.assertpath(fpath)
         return ut.checkpath(fpath)
 
-    def get_model_state_fpath(model, fpath=None, dpath=None, fname=None,
-                              checkpoint_tag=None):
-        default_fname = 'model_state_arch_%s.pkl' % (
-            model.get_arch_hashid())
-        model_state_fpath = model._get_model_file_fpath(default_fname, fpath,
-                                                        dpath, fname,
-                                                        checkpoint_tag)
+    def get_model_state_fpath(
+        model, fpath=None, dpath=None, fname=None, checkpoint_tag=None
+    ):
+        default_fname = 'model_state_arch_%s.pkl' % (model.get_arch_hashid())
+        model_state_fpath = model._get_model_file_fpath(
+            default_fname, fpath, dpath, fname, checkpoint_tag
+        )
         return model_state_fpath
 
-    def get_model_info_fpath(model, fpath=None, dpath=None, fname=None,
-                             checkpoint_tag=None):
-        default_fname = 'model_info_arch_%s.pkl' % (
-            model.get_arch_hashid())
-        model_state_fpath = model._get_model_file_fpath(default_fname, fpath,
-                                                        dpath, fname,
-                                                        checkpoint_tag)
+    def get_model_info_fpath(
+        model, fpath=None, dpath=None, fname=None, checkpoint_tag=None
+    ):
+        default_fname = 'model_info_arch_%s.pkl' % (model.get_arch_hashid())
+        model_state_fpath = model._get_model_file_fpath(
+            default_fname, fpath, dpath, fname, checkpoint_tag
+        )
         return model_state_fpath
 
     def checkpoint_save_model_state(model):
@@ -3020,33 +3233,31 @@ class _ModelIO(object):
             'best_results': model.best_results,
             'data_params': model.data_params,
             'current_weights': current_weights,
-
             'encoder': getattr(model, 'encoder', None),
-            'input_shape':  model.input_shape,
+            'input_shape': model.input_shape,
             'data_shape': model.data_shape,
             'batch_size': model.data_shape,
-            'output_dims':  model.output_dims,
-
-            'era_history':  model.history,
+            'output_dims': model.output_dims,
+            'era_history': model.history,
             # 'arch_tag': model.arch_tag,
         }
         model_state_fpath = model.get_model_state_fpath(**kwargs)
-        #print('saving model state to: %s' % (model_state_fpath,))
+        # print('saving model state to: %s' % (model_state_fpath,))
         ut.save_cPkl(model_state_fpath, model_state, verbose=False)
-        print('saved model state to %r' % (model_state_fpath, ))
-        #print('finished saving')
+        print('saved model state to %r' % (model_state_fpath,))
+        # print('finished saving')
         return model_state_fpath
 
     def save_model_info(model, **kwargs):
         """ save model information (history and results but no weights) """
         model_info = {
             'best_results': model.best_results,
-            'input_shape':  model.input_shape,
-            'output_dims':  model.output_dims,
-            'era_history':  model.history,
+            'input_shape': model.input_shape,
+            'output_dims': model.output_dims,
+            'era_history': model.history,
         }
         model_info_fpath = model.get_model_state_fpath(**kwargs)
-        #print('saving model info to: %s' % (model_info_fpath,))
+        # print('saving model info to: %s' % (model_info_fpath,))
         ut.save_cPkl(model_info_fpath, model_info, verbose=False)
         print('saved model info')
 
@@ -3069,10 +3280,12 @@ class _ModelIO(object):
         print('[model] loading model state from: %s' % (model_state_fpath,))
         model_state = ut.load_cPkl(model_state_fpath)
         if model.__class__.__name__ != 'BaseModel':
-            assert model_state['input_shape'][1:] == model.input_shape[1:], (
-                'architecture disagreement')
-            assert model_state['output_dims'] == model.output_dims, (
-                'architecture disagreement')
+            assert (
+                model_state['input_shape'][1:] == model.input_shape[1:]
+            ), 'architecture disagreement'
+            assert (
+                model_state['output_dims'] == model.output_dims
+            ), 'architecture disagreement'
             if 'preproc_kw' in model_state:
                 model.data_params = model_state['preproc_kw']
                 model._fix_center_mean_std()
@@ -3080,11 +3293,11 @@ class _ModelIO(object):
                 model.data_params = model_state['data_params']
         else:
             # HACK TO LOAD ABSTRACT MODEL FOR DIAGNOSITIC REASONS
-            print("WARNING LOADING ABSTRACT MODEL")
+            print('WARNING LOADING ABSTRACT MODEL')
         model.best_results = model_state['best_results']
-        model.input_shape  = model_state['input_shape']
-        model.output_dims  = model_state['output_dims']
-        model.encoder      = model_state.get('encoder', None)
+        model.input_shape = model_state['input_shape']
+        model.output_dims = model_state['output_dims']
+        model.encoder = model_state.get('encoder', None)
         if 'era_history' in model_state:
             try:
                 model.history = History.from_oldstyle(model_state['era_history'])
@@ -3107,10 +3320,12 @@ class _ModelIO(object):
             print('External Model State:')
             print(ut.dict_str(model_state, truncate=True))
         # check compatibility with this architecture
-        assert model_state['input_shape'][1:] == model.input_shape[1:], (
-            'architecture disagreement')
-        assert model_state['output_dims'] == model.output_dims, (
-            'architecture disagreement')
+        assert (
+            model_state['input_shape'][1:] == model.input_shape[1:]
+        ), 'architecture disagreement'
+        assert (
+            model_state['output_dims'] == model.output_dims
+        ), 'architecture disagreement'
         # Just set the weights, no other training state variables
         model.set_all_param_values(model_state['best_weights'])
         # also need to make sure the same preprocessing is used
@@ -3129,25 +3344,25 @@ class _ModelIO(object):
 
 
 class _ModelUtility(object):
-
     def set_all_param_values(model, weights_list):
         import wbia_cnn.__LASAGNE__ as lasagne
+
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', '.*topo.*')
-            lasagne.layers.set_all_param_values(
-                model.output_layer, weights_list)
+            lasagne.layers.set_all_param_values(model.output_layer, weights_list)
 
     def get_all_param_values(model):
         import wbia_cnn.__LASAGNE__ as lasagne
+
         weights_list = lasagne.layers.get_all_param_values(model.output_layer)
         return weights_list
 
     def get_all_params(model, **tags):
         import wbia_cnn.__LASAGNE__ as lasagne
+
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', '.*topo.*')
-            parameters = lasagne.layers.get_all_params(
-                model.output_layer, **tags)
+            parameters = lasagne.layers.get_all_params(model.output_layer, **tags)
             return parameters
 
     def get_all_layer_info(model):
@@ -3155,6 +3370,7 @@ class _ModelUtility(object):
 
     def get_all_layers(model, with_noise=True, with_weightless=True):
         import wbia_cnn.__LASAGNE__ as lasagne
+
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', '.*topo.*')
             warnings.filterwarnings('ignore', '.*layer.get_all_layers.*')
@@ -3164,7 +3380,8 @@ class _ModelUtility(object):
         if not with_noise:
             # Remove dropout / gaussian noise layers
             layer_list = [
-                layer for layer in layer_list_
+                layer
+                for layer in layer_list_
                 if layer.__class__.__name__ not in lasagne.layers.noise.__all__
             ]
         if not with_weightless:
@@ -3191,18 +3408,20 @@ class _ModelUtility(object):
         given_item_shape = X_train.shape[1:]
         if given_item_shape != expected_item_shape:
             raise ValueError(
-                'inconsistent item shape: ' +
-                ('expected_item_shape = %r, ' % (expected_item_shape,)) +
-                ('given_item_shape = %r' % (given_item_shape,))
+                'inconsistent item shape: '
+                + ('expected_item_shape = %r, ' % (expected_item_shape,))
+                + ('given_item_shape = %r' % (given_item_shape,))
             )
 
     def _validate_labels(model, X, y, w):
         if y is not None:
-            assert X.shape[0] == (y.shape[0] * model.data_per_label_input), (
-                'bad data / label alignment')
+            assert X.shape[0] == (
+                y.shape[0] * model.data_per_label_input
+            ), 'bad data / label alignment'
         if w is not None:
-            assert X.shape[0] == (w.shape[0] * model.data_per_label_input), (
-                'bad data / label alignment')
+            assert X.shape[0] == (
+                w.shape[0] * model.data_per_label_input
+            ), 'bad data / label alignment'
 
     def _validate_input(model, X, y=None, w=None):
         model._validate_data(X)
@@ -3212,8 +3431,8 @@ class _ModelUtility(object):
         print('made random testdata')
         rng = ut.ensure_rng(rng)
         num_labels = num
-        num_data   = num * model.data_per_label_input
-        X = rng.rand(num_data, * model.data_shape)
+        num_data = num * model.data_per_label_input
+        X = rng.rand(num_data, *model.data_shape)
         y = rng.rand(num_labels) * (model.output_dims - 1)
         X = (X * 100).astype(np.int) / 100
         if asint:
@@ -3227,12 +3446,23 @@ class _ModelUtility(object):
 
 
 @ut.reloadable_class
-class BaseModel(_model_legacy._ModelLegacy, _ModelVisualization, _ModelIO,
-                _ModelStrings, _ModelIDs, _ModelBackend, _ModelFitter,
-                _ModelPredicter, _ModelBatch, _ModelUtility, ut.NiceRepr):
+class BaseModel(
+    _model_legacy._ModelLegacy,
+    _ModelVisualization,
+    _ModelIO,
+    _ModelStrings,
+    _ModelIDs,
+    _ModelBackend,
+    _ModelFitter,
+    _ModelPredicter,
+    _ModelBatch,
+    _ModelUtility,
+    ut.NiceRepr,
+):
     """
     Abstract model providing functionality for all other models to derive from
     """
+
     def __init__(model, **kwargs):
         """
         Guess on Shapes:
@@ -3242,6 +3472,7 @@ class BaseModel(_model_legacy._ModelLegacy, _ModelVisualization, _ModelIO,
         kwargs = kwargs.copy()
         if kwargs.pop('verbose_compile', True):
             import logging
+
             compile_logger = logging.getLogger('theano.compile')
             compile_logger.setLevel(-10)
         # Should delayed import be moved? (or deleted)
@@ -3254,8 +3485,9 @@ class BaseModel(_model_legacy._ModelLegacy, _ModelVisualization, _ModelIO,
         model._init_batch_vars(kwargs)
         model.output_layer = None
         autoinit = kwargs.pop('autoinit', False)
-        assert len(kwargs) == 0, (
-            'Model was given unused keywords=%r' % (list(kwargs.keys())))
+        assert len(kwargs) == 0, 'Model was given unused keywords=%r' % (
+            list(kwargs.keys())
+        )
         if autoinit:
             model.init_arch()
 
@@ -3266,24 +3498,20 @@ class BaseModel(_model_legacy._ModelLegacy, _ModelVisualization, _ModelIO,
         output_dims = kwargs.pop('output_dims', None)
 
         if input_shape is None and data_shape is None:
-            report_error(
-                'Must specify either input_shape or data_shape')
+            report_error('Must specify either input_shape or data_shape')
         elif input_shape is None:
             CONST_BATCH = False
             if CONST_BATCH:
                 # Fixed batch size
-                input_shape = (batch_size, data_shape[2], data_shape[0],
-                               data_shape[1])
+                input_shape = (batch_size, data_shape[2], data_shape[0], data_shape[1])
             else:
                 # Dynamic batch size
-                input_shape = (None, data_shape[2], data_shape[0],
-                               data_shape[1])
+                input_shape = (None, data_shape[2], data_shape[0], data_shape[1])
         elif data_shape is None and batch_size is None:
             data_shape = (input_shape[2], input_shape[3], input_shape[1])
             batch_size = input_shape[0]
         else:
-            report_error(
-                'Dont specify batch_size or data_shape with input_shape')
+            report_error('Dont specify batch_size or data_shape with input_shape')
 
         model.output_dims = output_dims
         model.input_shape = input_shape
@@ -3292,25 +3520,26 @@ class BaseModel(_model_legacy._ModelLegacy, _ModelVisualization, _ModelIO,
         # bad name, says that this network will take
         # 2*N images in a batch and N labels that map to
         # two images a piece
-        model.data_per_label_input  = 1  # state of network input
+        model.data_per_label_input = 1  # state of network input
         model.data_per_label_output = 1  # state of network output
 
-    #@classmethod
-    #def from_saved_state(cls, fpath):
+    # @classmethod
+    # def from_saved_state(cls, fpath):
     #    """
     #    fpath = ut.truepath('~/Desktop/manually_saved/arch_injur-shark-resnet_o2_d27_c2942_jzuddodd/model_state_arch_jzuddodd.pkl')
     #    """
     #    arch_dpath = dirname(fpath)
     #    pass
 
-    #@classmethod
+    # @classmethod
     def init_from_json(model, fpath):
         """
         fpath = ut.truepath('~/Desktop/manually_saved/arch_injur-shark-resnet_o2_d27_c2942_jzuddodd/model_state_arch_jzuddodd.pkl')
         """
-        #import wbia_cnn.__LASAGNE__ as lasagne
-        #arch_dpath = dirname(fpath)
+        # import wbia_cnn.__LASAGNE__ as lasagne
+        # arch_dpath = dirname(fpath)
         from wbia_cnn import custom_layers
+
         arch_json_fpath = '/home/joncrall/Desktop/manually_saved/arch_injur-shark-lenet_o2_d11_c688_acioqbst/arch_info.json'
         state_fpath = '/home/joncrall/Desktop/manually_saved/arch_injur-shark-lenet_o2_d11_c688_acioqbst/model_state_arch_acioqbst.pkl'
         output_layer = custom_layers.load_json_arch_def(arch_json_fpath)
@@ -3340,6 +3569,7 @@ class BaseModel(_model_legacy._ModelLegacy, _ModelVisualization, _ModelIO,
         initailizes weights after the architecture has been defined.
         """
         import wbia_cnn.__LASAGNE__ as lasagne
+
         if W is None:
             W = 'orthogonal'
         if isinstance(W, six.string_types):
@@ -3347,9 +3577,9 @@ class BaseModel(_model_legacy._ModelLegacy, _ModelVisualization, _ModelIO,
                 W = lasagne.init.Orthogonal()
         print('Reinitializing all weights to %r' % (W,))
         weights_list = model.get_all_params(regularizable=True, trainable=True)
-        #print(weights_list)
+        # print(weights_list)
         for weights in weights_list:
-            #print(weights)
+            # print(weights)
             shape = weights.get_value().shape
             new_values = W.sample(shape)
             weights.set_value(new_values)
@@ -3374,21 +3604,22 @@ class AbstractCategoricalModel(BaseModel):
         # BaseModel.__init__(model, **kwargs)
         # HACKING
         # <Prototype code to fix reload errors>
-        #this_class_now = ut.fix_super_reload_error(AbstractCategoricalModel, model)
+        # this_class_now = ut.fix_super_reload_error(AbstractCategoricalModel, model)
         this_class_now = AbstractCategoricalModel
-        #super(AbstractCategoricalModel, model).__init__(**kwargs)
+        # super(AbstractCategoricalModel, model).__init__(**kwargs)
         super(this_class_now, model).__init__(**kwargs)
 
         # </Prototype code to fix reload errors>
 
         model.encoder = None
         # categorical models have a concept of accuracy
-        #model.requested_headers += ['valid_acc', 'test_acc']
+        # model.requested_headers += ['valid_acc', 'test_acc']
         model.requested_headers += ['valid_acc']
 
     def init_encoder(model, labels):
         print('[model] encoding labels')
         from sklearn import preprocessing
+
         model.encoder = preprocessing.LabelEncoder()
         model.encoder.fit(labels)
         model.output_dims = len(list(np.unique(labels)))
@@ -3397,12 +3628,14 @@ class AbstractCategoricalModel(BaseModel):
     def loss_function(model, network_output, truth):
         # https://en.wikipedia.org/wiki/Loss_functions_for_classification
         from wbia_cnn.__THEANO__ import tensor as T  # NOQA
+
         # categorical cross-entropy between predictions and targets
         # L_i = -\sum_{j} t_{i,j} \log{p_{i, j}}
         return T.nnet.categorical_crossentropy(network_output, truth)
 
     def custom_unlabeled_outputs(model, network_output):
         from wbia_cnn.__THEANO__ import tensor as T  # NOQA
+
         # Network outputs define category probabilities
         probs = network_output
         preds = T.argmax(probs, axis=1)
@@ -3414,6 +3647,7 @@ class AbstractCategoricalModel(BaseModel):
 
     def custom_labeled_outputs(model, network_output, y_batch):
         from wbia_cnn.__THEANO__ import tensor as T  # NOQA
+
         probs = network_output
         preds = T.argmax(probs, axis=1)
         preds.name = 'predictions'
@@ -3432,16 +3666,16 @@ class AbstractVectorModel(BaseModel):
         # BaseModel.__init__(model, **kwargs)
         # HACKING
         # <Prototype code to fix reload errors>
-        #this_class_now = ut.fix_super_reload_error(AbstractVectorModel, model)
+        # this_class_now = ut.fix_super_reload_error(AbstractVectorModel, model)
         this_class_now = AbstractVectorModel
-        #super(AbstractVectorModel, model).__init__(**kwargs)
+        # super(AbstractVectorModel, model).__init__(**kwargs)
         super(this_class_now, model).__init__(**kwargs)
 
         # </Prototype code to fix reload errors>
 
         model.encoder = None
         # categorical models have a concept of accuracy
-        #model.requested_headers += ['valid_acc', 'test_acc']
+        # model.requested_headers += ['valid_acc', 'test_acc']
         model.requested_headers += ['valid_acc']
 
     def init_output_dims(model, labels):
@@ -3454,10 +3688,12 @@ class AbstractVectorModel(BaseModel):
 
     def loss_function(model, network_output, truth):
         from wbia_cnn.__THEANO__ import tensor as T  # NOQA
+
         return T.nnet.binary_crossentropy(network_output, truth)
 
     def custom_unlabeled_outputs(model, network_output):
         from wbia_cnn.__THEANO__ import tensor as T  # NOQA
+
         # Network outputs define category probabilities
         probs = network_output
         preds = probs.round()
@@ -3469,6 +3705,7 @@ class AbstractVectorModel(BaseModel):
 
     def custom_labeled_outputs(model, network_output, y_batch):
         from wbia_cnn.__THEANO__ import tensor as T  # NOQA
+
         probs = network_output
         preds = probs.clip(0.0, 1.0).round()
         preds.name = 'predictions'
@@ -3490,13 +3727,14 @@ class AbstractVectorVectorModel(AbstractVectorModel):
         # BaseModel.__init__(model, **kwargs)
         # HACKING
         # <Prototype code to fix reload errors>
-        #this_class_now = ut.fix_super_reload_error(AbstractVectorModel, model)
+        # this_class_now = ut.fix_super_reload_error(AbstractVectorModel, model)
         this_class_now = AbstractVectorVectorModel
-        #super(AbstractVectorModel, model).__init__(**kwargs)
+        # super(AbstractVectorModel, model).__init__(**kwargs)
         super(this_class_now, model).__init__(**kwargs)
 
     def custom_labeled_outputs(model, network_output, y_batch):
         from wbia_cnn.__THEANO__ import tensor as T  # NOQA
+
         probs = network_output
         preds = probs.round()
         preds.name = 'predictions'
@@ -3514,7 +3752,7 @@ def report_error(msg):
         print('WARNING:' + msg)
 
 
-#def evaluate_layer_list(network_layers_def, verbose=None):
+# def evaluate_layer_list(network_layers_def, verbose=None):
 #    r"""
 #    compiles a sequence of partial functions into a network
 #    """
@@ -3568,8 +3806,9 @@ def testdata_model_with_history():
 
     def dummy_epoch_dict(num):
         from scipy.special import expit
+
         mean_loss = 1 / np.exp(num / 10)
-        frac = (num / total_epochs)
+        frac = num / total_epochs
         epoch_info = {
             'epoch_num': num,
             'learn_loss': mean_loss + rand(),
@@ -3589,18 +3828,19 @@ def testdata_model_with_history():
                 'C0': (rng.normal() ** 2, rng.rand()),
                 'F1': (rng.normal() ** 2, rng.rand()),
             },
-            'learn_state': {
-                'learning_rate': .01
-            },
+            'learn_state': {'learning_rate': 0.01},
         }
         return epoch_info
 
     def dummy_get_all_layer_info(model):
-        return [{'param_infos': [{'name': 'C0', 'tags': ['trainable']}]},
-                {'param_infos': [{'name': 'F1', 'tags': ['trainable']}]}]
+        return [
+            {'param_infos': [{'name': 'C0', 'tags': ['trainable']}]},
+            {'param_infos': [{'name': 'F1', 'tags': ['trainable']}]},
+        ]
 
-    ut.inject_func_as_method(model, dummy_get_all_layer_info,
-                             'get_all_layer_info', allow_override=True)
+    ut.inject_func_as_method(
+        model, dummy_get_all_layer_info, 'get_all_layer_info', allow_override=True
+    )
     epoch = 0
     eralens = [4, 4, 4]
     total_epochs = sum(eralens)
@@ -3621,6 +3861,8 @@ if __name__ == '__main__':
         python -m wbia_cnn.abstract_models --allexamples --noface --nosrc
     """
     import multiprocessing
+
     multiprocessing.freeze_support()  # for win32
     import utool as ut  # NOQA
+
     ut.doctest_funcs()

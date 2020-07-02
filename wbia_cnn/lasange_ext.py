@@ -17,12 +17,12 @@ def l1(layer, include_biases=False):
     """
     raise NotImplementedError('not working')
     with warnings.catch_warnings():
-        #warnings.simplefilter("ignore")
+        # warnings.simplefilter("ignore")
         warnings.filterwarnings('ignore', '.*topo.*')
         if include_biases:
             all_params = layers.get_all_params(layer)
         else:
-            #all_params = layers.get_all_non_bias_params(layer)
+            # all_params = layers.get_all_non_bias_params(layer)
             all_params = layers.get_all_params(regularizable=True)
 
     return sum(T.sum(T.abs_(p)) for p in all_params)
@@ -30,6 +30,7 @@ def l1(layer, include_biases=False):
 
 def testdata_contrastive_loss():
     import numpy as np
+
     batch_size = 128
     num_output = 256
     half_size = batch_size // 2
@@ -39,10 +40,12 @@ def testdata_contrastive_loss():
     G = G / np.linalg.norm(G, axis=1, ord=2)[:, None]
     G[0] = G[1]
     G[half_size] = G[half_size + 1]
-    G[0:eigh_size:2] = G[1:eigh_size:2] + np.random.rand(eigh_size / 2, num_output) * .00001
+    G[0:eigh_size:2] = (
+        G[1:eigh_size:2] + np.random.rand(eigh_size / 2, num_output) * 0.00001
+    )
     Y_padded = np.ones(batch_size)
     Y_padded[0:half_size] = 1
-    Y_padded[quar_size:half_size + quar_size]  = 0
+    Y_padded[quar_size : half_size + quar_size] = 0
     Y_padded[-half_size:] = -1
     return G, Y_padded
 
@@ -78,8 +81,8 @@ def siamese_loss(G, Y_padded, data_per_label=2, T=T):
     num_data = G.shape[0]
     num_labels = num_data // data_per_label
     # Mark same genuine pairs as 0 and imposter pairs as 1
-    Y = (1 - Y_padded[0:num_labels])
-    Y = (Y_padded[0:num_labels])
+    Y = 1 - Y_padded[0:num_labels]
+    Y = Y_padded[0:num_labels]
 
     L1_NORMALIZE = True
     if L1_NORMALIZE:

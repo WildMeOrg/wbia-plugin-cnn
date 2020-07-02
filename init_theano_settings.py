@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 References:
     http://deeplearning.net/software/theano/library/config.html
@@ -157,7 +158,7 @@ Ensure CuDNN is installed
 def init_theanorc():
     theanorc_fpath = join(os.getenv('HOME'), '.theanorc')
     theanorc_text = ut.codeblock(
-        '''
+        """
         [global]
         floatX = float32
         device = gpu0
@@ -165,7 +166,7 @@ def init_theanorc():
 
         [nvcc]
         fastmath = True
-        '''
+        """
     )
     if ut.checkpath(theanorc_fpath, verbose=True):
         if not ut.arg_you_sure('overwrite?'):

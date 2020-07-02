@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 References:
     http://deeplearning.net/software/theano/tutorial/using_gpu.html#testing-theano-with-gpu
@@ -7,7 +8,8 @@ python `python -c "import os, theano; print os.path.dirname(theano.__file__)"`/m
 """
 from __future__ import absolute_import, division, print_function
 import theano
-#from theano import function, config, shared, sandbox
+
+# from theano import function, config, shared, sandbox
 import theano.tensor as T
 import numpy
 import time
@@ -36,9 +38,10 @@ def test_theano():
     else:
         print('Used the gpu')
 
+
 if __name__ == '__main__':
     """
     python $CODE_DIR/wbia_cnn/test_theano.py
     """
     test_theano()
-    #theano.test()
+    # theano.test()

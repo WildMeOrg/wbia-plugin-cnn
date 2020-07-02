@@ -17,14 +17,12 @@ print, rrr, profile = ut.inject2(__name__)
 
 
 def augment_parallel(X, y):
-    return augment_wrapper(
-        [X],
-        None if y is None else [y]
-    )
+    return augment_wrapper([X], None if y is None else [y])
 
 
 def augment_wrapper(Xb, yb=None):
     import random
+
     for index in range(len(Xb)):
         X = np.copy(Xb[index])
         y = None if yb is None else yb[index]
@@ -48,7 +46,9 @@ def augment_wrapper(Xb, yb=None):
         skew_y = random.uniform(0.90, 1.10)
         skew_x_offset = abs(1.0 - skew_x)
         skew_y_offset = abs(1.0 - skew_y)
-        skew_offset = np.sqrt(skew_x_offset ** skew_x_offset + skew_y_offset ** skew_y_offset)
+        skew_offset = np.sqrt(
+            skew_x_offset ** skew_x_offset + skew_y_offset ** skew_y_offset
+        )
         skew_scale = 1.0 + skew_offset
         padding = np.sqrt((w) ** 2 / 4 - 2 * (w) ** 2 / 16)
         padding /= scale
@@ -68,7 +68,7 @@ def augment_wrapper(Xb, yb=None):
             A[1][1] *= skew_y
             # Apply Affine
             X_ = cv2.warpAffine(X_, A, (w_, h_), flags=cv2.INTER_LANCZOS4, borderValue=0)
-            X_ = X_[padding: -1 * padding, padding: -1 * padding]
+            X_ = X_[padding : -1 * padding, padding : -1 * padding]
             X[:, :, channel] = X_
         # Horizontal flip
         if random.uniform(0.0, 1.0) <= 0.5:
@@ -80,7 +80,10 @@ def augment_wrapper(Xb, yb=None):
         X = X.reshape(Xb[index].shape)
         X = X.astype(Xb[index].dtype)
         # Show image
-        canvas_filepath = '/home/jason/Desktop/temp-%s-%d.png' % (y, random.randint(0, 100), )
+        canvas_filepath = '/home/jason/Desktop/temp-%s-%d.png' % (
+            y,
+            random.randint(0, 100),
+        )
         if False and not exists(canvas_filepath):
             canvas = np.hstack((Xb[index], X))
             cv2.imwrite(canvas_filepath, canvas)
@@ -93,11 +96,17 @@ def augment_wrapper(Xb, yb=None):
 
 @six.add_metaclass(ut.ReloadingMetaclass)
 class Classifier2Model(abstract_models.AbstractVectorModel):
-    def __init__(model, autoinit=False, batch_size=128, data_shape=(64, 64, 3),
-                 name='classifier2', **kwargs):
-        super(Classifier2Model, model).__init__(batch_size=batch_size,
-                                                data_shape=data_shape,
-                                                name=name, **kwargs)
+    def __init__(
+        model,
+        autoinit=False,
+        batch_size=128,
+        data_shape=(64, 64, 3),
+        name='classifier2',
+        **kwargs
+    ):
+        super(Classifier2Model, model).__init__(
+            batch_size=batch_size, data_shape=data_shape, name=name, **kwargs
+        )
 
     def augment(model, Xb, yb=None, parallel=True):
         if not parallel:
@@ -106,15 +115,16 @@ class Classifier2Model(abstract_models.AbstractVectorModel):
         if yb is None:
             yb = [None] * len(Xb)
         arg_iter = list(zip(Xb, yb))
-        result_list = ut.util_parallel.generate2(augment_parallel, arg_iter,
-                                                 ordered=True, verbose=False)
+        result_list = ut.util_parallel.generate2(
+            augment_parallel, arg_iter, ordered=True, verbose=False
+        )
         result_list = list(result_list)
-        X = [ result[0][0] for result in result_list ]
+        X = [result[0][0] for result in result_list]
         X = np.array(X)
         if yb is None:
             y = None
         else:
-            y = [ result[1] for result in result_list ]
+            y = [result[1] for result in result_list]
             y = np.vstack(y)
 
         return X, y
@@ -126,43 +136,80 @@ class Classifier2Model(abstract_models.AbstractVectorModel):
         _CaffeNet = pretrained.PretrainedNetwork('caffenet_conv')
 
         hidden_initkw = {
-            'nonlinearity' : nonlinearities.LeakyRectify(leakiness=(1. / 10.)),
+            'nonlinearity': nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)),
         }
 
         from wbia_cnn import custom_layers
 
         Conv2DLayer = custom_layers.Conv2DLayer
         MaxPool2DLayer = custom_layers.MaxPool2DLayer
-        #DenseLayer = layers.DenseLayer
+        # DenseLayer = layers.DenseLayer
 
-        network_layers_def = (
-            [
-                _P(layers.InputLayer, shape=model.input_shape),
-
-                _P(Conv2DLayer, num_filters=16, filter_size=(11, 11), name='C0', W=_CaffeNet.get_pretrained_layer(0), **hidden_initkw),  # NOQA
-                _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P0'),
-
-                _P(Conv2DLayer, num_filters=32, filter_size=(5, 5), name='C1', W=_CaffeNet.get_pretrained_layer(2), **hidden_initkw),  # NOQA
-                _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P1'),
-
-                _P(Conv2DLayer, num_filters=64, filter_size=(3, 3), name='C2', W=_CaffeNet.get_pretrained_layer(4), **hidden_initkw),  # NOQA
-                _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P2'),
-
-                _P(Conv2DLayer, num_filters=128, filter_size=(3, 3), name='C3', W=init.Orthogonal('relu'), **hidden_initkw),
-                _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P3'),
-
-                _P(Conv2DLayer, num_filters=128, filter_size=(3, 3), name='C4', W=init.Orthogonal('relu'), **hidden_initkw),
-
-                _P(Conv2DLayer, num_filters=128, filter_size=(3, 3), name='C5', W=init.Orthogonal('relu'), **hidden_initkw),
-
-                _P(layers.DenseLayer, num_units=256, name='F0',  **hidden_initkw),
-                _P(layers.FeaturePoolLayer, pool_size=2, name='FP0'),
-                _P(layers.DropoutLayer, p=0.5, name='D1'),
-                _P(layers.DenseLayer, num_units=256, name='F1', **hidden_initkw),
-
-                _P(layers.DenseLayer, num_units=model.output_dims, name='F2', nonlinearity=nonlinearities.sigmoid),
-            ]
-        )
+        network_layers_def = [
+            _P(layers.InputLayer, shape=model.input_shape),
+            _P(
+                Conv2DLayer,
+                num_filters=16,
+                filter_size=(11, 11),
+                name='C0',
+                W=_CaffeNet.get_pretrained_layer(0),
+                **hidden_initkw
+            ),  # NOQA
+            _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P0'),
+            _P(
+                Conv2DLayer,
+                num_filters=32,
+                filter_size=(5, 5),
+                name='C1',
+                W=_CaffeNet.get_pretrained_layer(2),
+                **hidden_initkw
+            ),  # NOQA
+            _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P1'),
+            _P(
+                Conv2DLayer,
+                num_filters=64,
+                filter_size=(3, 3),
+                name='C2',
+                W=_CaffeNet.get_pretrained_layer(4),
+                **hidden_initkw
+            ),  # NOQA
+            _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P2'),
+            _P(
+                Conv2DLayer,
+                num_filters=128,
+                filter_size=(3, 3),
+                name='C3',
+                W=init.Orthogonal('relu'),
+                **hidden_initkw
+            ),
+            _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P3'),
+            _P(
+                Conv2DLayer,
+                num_filters=128,
+                filter_size=(3, 3),
+                name='C4',
+                W=init.Orthogonal('relu'),
+                **hidden_initkw
+            ),
+            _P(
+                Conv2DLayer,
+                num_filters=128,
+                filter_size=(3, 3),
+                name='C5',
+                W=init.Orthogonal('relu'),
+                **hidden_initkw
+            ),
+            _P(layers.DenseLayer, num_units=256, name='F0', **hidden_initkw),
+            _P(layers.FeaturePoolLayer, pool_size=2, name='FP0'),
+            _P(layers.DropoutLayer, p=0.5, name='D1'),
+            _P(layers.DenseLayer, num_units=256, name='F1', **hidden_initkw),
+            _P(
+                layers.DenseLayer,
+                num_units=model.output_dims,
+                name='F2',
+                nonlinearity=nonlinearities.sigmoid,
+            ),
+        ]
         return network_layers_def
 
     def init_arch(model, verbose=ut.VERBOSE, **kwargs):
@@ -180,8 +227,11 @@ class Classifier2Model(abstract_models.AbstractVectorModel):
         network_layers_def = model.get_classifier2_def(verbose=verbose, **kwargs)
         # connect and record layers
         from wbia_cnn import custom_layers
-        network_layers = custom_layers.evaluate_layer_list(network_layers_def, verbose=verbose)
-        #model.network_layers = network_layers
+
+        network_layers = custom_layers.evaluate_layer_list(
+            network_layers_def, verbose=verbose
+        )
+        # model.network_layers = network_layers
         output_layer = network_layers[-1]
         model.output_layer = output_layer
         return output_layer
@@ -202,24 +252,24 @@ def train_classifier2(output_path, data_fpath, labels_fpath, purge=True):
     max_epochs = 256
     hyperparams = ut.argparse_dict(
         {
-            'era_size'       : era_size,
-            'batch_size'     : 128,
-            'learning_rate'  : 0.01,
-            'rate_schedule'  : 0.75,
-            'momentum'       : .9,
-            'weight_decay'   : 0.0001,
-            'augment_on'     : True,
+            'era_size': era_size,
+            'batch_size': 128,
+            'learning_rate': 0.01,
+            'rate_schedule': 0.75,
+            'momentum': 0.9,
+            'weight_decay': 0.0001,
+            'augment_on': True,
             'augment_weights': False,
-            'whiten_on'      : True,
-            'class_weight'   : None,
-            'max_epochs'     : max_epochs,
+            'whiten_on': True,
+            'class_weight': None,
+            'max_epochs': max_epochs,
         }
     )
 
     ut.colorprint('[netrun] Ensuring Dataset', 'yellow')
-    dataset = ingest_data.get_numpy_dataset2('classifier2', data_fpath,
-                                             labels_fpath, output_path,
-                                             cache=False)
+    dataset = ingest_data.get_numpy_dataset2(
+        'classifier2', data_fpath, labels_fpath, output_path, cache=False
+    )
     X_train, y_train = dataset.subset('train')
     X_valid, y_valid = dataset.subset('valid')
     print('dataset.training_dpath = %r' % (dataset.training_dpath,))
@@ -228,7 +278,8 @@ def train_classifier2(output_path, data_fpath, labels_fpath, purge=True):
         model = Classifier2Model(
             data_shape=dataset.data_shape,
             training_dpath=dataset.training_dpath,
-            **hyperparams)
+            **hyperparams
+        )
         model.init_output_dims(y_train)
         model.init_arch()
         ut.delete(model.arch_dpath)
@@ -237,7 +288,8 @@ def train_classifier2(output_path, data_fpath, labels_fpath, purge=True):
     model = Classifier2Model(
         data_shape=dataset.data_shape,
         training_dpath=dataset.training_dpath,
-        **hyperparams)
+        **hyperparams
+    )
 
     ut.colorprint('[netrun] Init output_dims', 'yellow')
     model.init_output_dims(y_train)
@@ -257,19 +309,21 @@ def train_classifier2(output_path, data_fpath, labels_fpath, purge=True):
 
     ut.colorprint('[netrun] Training Requested', 'yellow')
     # parse training arguments
-    config = ut.argparse_dict(dict(
-        monitor=False,
-        monitor_updates=False,
-        show_confusion=False,
-        era_size=era_size,
-        max_epochs=max_epochs,
-    ))
+    config = ut.argparse_dict(
+        dict(
+            monitor=False,
+            monitor_updates=False,
+            show_confusion=False,
+            era_size=era_size,
+            max_epochs=max_epochs,
+        )
+    )
     model.monitor_config.update(**config)
 
     if getattr(model, 'encoder', None) is not None:
         class_list = list(model.encoder.classes_)
-        y_train = np.array([class_list.index(_) for _ in y_train ])
-        y_valid = np.array([class_list.index(_) for _ in y_valid ])
+        y_train = np.array([class_list.index(_) for _ in y_train])
+        y_valid = np.array([class_list.index(_) for _ in y_valid])
 
     print('\n[netrun] Model Info')
     model.print_layer_info()
@@ -289,6 +343,8 @@ if __name__ == '__main__':
         python -m wbia_cnn.models.classifier2 --allexamples --noface --nosrc
     """
     import multiprocessing
+
     multiprocessing.freeze_support()  # for win32
     import utool as ut  # NOQA
+
     ut.doctest_funcs()

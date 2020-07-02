@@ -32,6 +32,7 @@ import numpy as np
 from wbia_cnn.models import abstract_models
 import utool as ut
 from wbia_cnn import augment
+
 print, rrr, profile = ut.inject2(__name__)
 
 
@@ -55,17 +56,24 @@ class SiameseL2(AbstractSiameseModel):
     """
     Model for individual identification
     """
-    def __init__(model, autoinit=False, batch_size=128, data_shape=(64, 64, 3),
-                 arch_tag='siaml2', **kwargs):
-        #if data_shape is not None:
+
+    def __init__(
+        model,
+        autoinit=False,
+        batch_size=128,
+        data_shape=(64, 64, 3),
+        arch_tag='siaml2',
+        **kwargs
+    ):
+        # if data_shape is not None:
         #    input_shape = (batch_size, data_shape[2], data_shape[0], data_shape[1])
-        #if input_shape is None:
+        # if input_shape is None:
         #    (batch_size, 3, 64, 64)
-        super(SiameseL2, model).__init__(batch_size=batch_size,
-                                         data_shape=data_shape,
-                                         arch_tag=arch_tag, **kwargs)
-        #model.network_layers = None
-        #model.batch_size = batch_size
+        super(SiameseL2, model).__init__(
+            batch_size=batch_size, data_shape=data_shape, arch_tag=arch_tag, **kwargs
+        )
+        # model.network_layers = None
+        # model.batch_size = batch_size
         model.output_dims = 1
         model.name = arch_tag
         # bad name, says that this network will take
@@ -73,7 +81,7 @@ class SiameseL2(AbstractSiameseModel):
         # two images a piece
         model.data_per_label_input = 2
         model.data_per_label_output = 2
-        #model.arch_tag = arch_tag
+        # model.arch_tag = arch_tag
         if autoinit:
             model.init_arch()
 
@@ -87,37 +95,55 @@ class SiameseL2(AbstractSiameseModel):
         """
         _P = functools.partial
 
-        leaky_kw = dict(nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)))
-        #orthog_kw = dict(W=init.Orthogonal())
-        #hidden_initkw = ut.merge_dicts(orthog_kw, leaky_kw)
+        leaky_kw = dict(nonlinearity=nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)))
+        # orthog_kw = dict(W=init.Orthogonal())
+        # hidden_initkw = ut.merge_dicts(orthog_kw, leaky_kw)
         hidden_initkw = leaky_kw
 
-        #ReshapeLayer = layers.ReshapeLayer
+        # ReshapeLayer = layers.ReshapeLayer
 
         from wbia_cnn import custom_layers
+
         Conv2DLayer = custom_layers.Conv2DLayer
         MaxPool2DLayer = custom_layers.MaxPool2DLayer
 
-        network_layers_def = (
-            [
-                _P(layers.InputLayer, shape=model.input_shape),
-                # TODO: Stack Inputs by making a 2 Channel Layer
-                #caffenet.get_conv2d_layer(0, trainable=False, **leaky),
-                _P(Conv2DLayer, num_filters=96, filter_size=(7, 7), stride=(3, 3), name='C0', **hidden_initkw),
-                _P(layers.DropoutLayer, p=0.3),
-                _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P0'),
-                _P(Conv2DLayer, num_filters=192, filter_size=(5, 5), name='C1', **hidden_initkw),
-                _P(layers.DropoutLayer, p=0.3),
-                _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P1'),
-                _P(Conv2DLayer, num_filters=256, filter_size=(3, 3), name='C2', **hidden_initkw),
-                #_P(custom_layers.SiameseConcatLayer, axis=1, data_per_label=2, name='concat'),  # 2 when CenterSurroundIsOn but two channel network
-                _P(layers.FlattenLayer, outdim=2, name='flatten'),
-                #_P(custom_layers.L2NormalizeLayer, axis=2),
-                # TODO: L2 distance layer
-                #_P(custom_layers.SiameseConcatLayer, data_per_label=2),
-            ]
-        )
-        #raise NotImplementedError('The 2-channel part is not yet implemented')
+        network_layers_def = [
+            _P(layers.InputLayer, shape=model.input_shape),
+            # TODO: Stack Inputs by making a 2 Channel Layer
+            # caffenet.get_conv2d_layer(0, trainable=False, **leaky),
+            _P(
+                Conv2DLayer,
+                num_filters=96,
+                filter_size=(7, 7),
+                stride=(3, 3),
+                name='C0',
+                **hidden_initkw
+            ),
+            _P(layers.DropoutLayer, p=0.3),
+            _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P0'),
+            _P(
+                Conv2DLayer,
+                num_filters=192,
+                filter_size=(5, 5),
+                name='C1',
+                **hidden_initkw
+            ),
+            _P(layers.DropoutLayer, p=0.3),
+            _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P1'),
+            _P(
+                Conv2DLayer,
+                num_filters=256,
+                filter_size=(3, 3),
+                name='C2',
+                **hidden_initkw
+            ),
+            # _P(custom_layers.SiameseConcatLayer, axis=1, data_per_label=2, name='concat'),  # 2 when CenterSurroundIsOn but two channel network
+            _P(layers.FlattenLayer, outdim=2, name='flatten'),
+            # _P(custom_layers.L2NormalizeLayer, axis=2),
+            # TODO: L2 distance layer
+            # _P(custom_layers.SiameseConcatLayer, data_per_label=2),
+        ]
+        # raise NotImplementedError('The 2-channel part is not yet implemented')
         return network_layers_def
 
     def get_siaml2_128_def(model, verbose=True, **kwargs):
@@ -130,37 +156,55 @@ class SiameseL2(AbstractSiameseModel):
         """
         _P = functools.partial
 
-        leaky_kw = dict(nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)))
-        #orthog_kw = dict(W=init.Orthogonal())
-        #hidden_initkw = ut.merge_dicts(orthog_kw, leaky_kw)
+        leaky_kw = dict(nonlinearity=nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)))
+        # orthog_kw = dict(W=init.Orthogonal())
+        # hidden_initkw = ut.merge_dicts(orthog_kw, leaky_kw)
         hidden_initkw = leaky_kw
 
-        #ReshapeLayer = layers.ReshapeLayer
+        # ReshapeLayer = layers.ReshapeLayer
 
         from wbia_cnn import custom_layers
+
         Conv2DLayer = custom_layers.Conv2DLayer
         MaxPool2DLayer = custom_layers.MaxPool2DLayer
 
-        network_layers_def = (
-            [
-                _P(layers.InputLayer, shape=model.input_shape),
-                # TODO: Stack Inputs by making a 2 Channel Layer
-                #caffenet.get_conv2d_layer(0, trainable=False, **leaky),
-                _P(Conv2DLayer, num_filters=96, filter_size=(7, 7), stride=(3, 3), name='C0', **hidden_initkw),
-                _P(layers.DropoutLayer, p=0.3),
-                _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P0'),
-                _P(Conv2DLayer, num_filters=192, filter_size=(5, 5), name='C1', **hidden_initkw),
-                _P(layers.DropoutLayer, p=0.3),
-                _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P1'),
-                _P(Conv2DLayer, num_filters=128, filter_size=(3, 3), name='C2_128', **hidden_initkw),
-                #_P(custom_layers.SiameseConcatLayer, axis=1, data_per_label=2, name='concat'),  # 2 when CenterSurroundIsOn but two channel network
-                _P(layers.FlattenLayer, outdim=2, name='flatten128'),
-                #_P(custom_layers.L2NormalizeLayer, axis=2),
-                # TODO: L2 distance layer
-                #_P(custom_layers.SiameseConcatLayer, data_per_label=2),
-            ]
-        )
-        #raise NotImplementedError('The 2-channel part is not yet implemented')
+        network_layers_def = [
+            _P(layers.InputLayer, shape=model.input_shape),
+            # TODO: Stack Inputs by making a 2 Channel Layer
+            # caffenet.get_conv2d_layer(0, trainable=False, **leaky),
+            _P(
+                Conv2DLayer,
+                num_filters=96,
+                filter_size=(7, 7),
+                stride=(3, 3),
+                name='C0',
+                **hidden_initkw
+            ),
+            _P(layers.DropoutLayer, p=0.3),
+            _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P0'),
+            _P(
+                Conv2DLayer,
+                num_filters=192,
+                filter_size=(5, 5),
+                name='C1',
+                **hidden_initkw
+            ),
+            _P(layers.DropoutLayer, p=0.3),
+            _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P1'),
+            _P(
+                Conv2DLayer,
+                num_filters=128,
+                filter_size=(3, 3),
+                name='C2_128',
+                **hidden_initkw
+            ),
+            # _P(custom_layers.SiameseConcatLayer, axis=1, data_per_label=2, name='concat'),  # 2 when CenterSurroundIsOn but two channel network
+            _P(layers.FlattenLayer, outdim=2, name='flatten128'),
+            # _P(custom_layers.L2NormalizeLayer, axis=2),
+            # TODO: L2 distance layer
+            # _P(custom_layers.SiameseConcatLayer, data_per_label=2),
+        ]
+        # raise NotImplementedError('The 2-channel part is not yet implemented')
         return network_layers_def
 
     def get_siam_deepfaceish_def(model, verbose=True, **kwargs):
@@ -171,72 +215,91 @@ class SiameseL2(AbstractSiameseModel):
         """
         _P = functools.partial
 
-        leaky_kw = dict(nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)))
-        #orthog_kw = dict(W=init.Orthogonal())
-        #hidden_initkw = ut.merge_dicts(orthog_kw, leaky_kw)
+        leaky_kw = dict(nonlinearity=nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)))
+        # orthog_kw = dict(W=init.Orthogonal())
+        # hidden_initkw = ut.merge_dicts(orthog_kw, leaky_kw)
         hidden_initkw = leaky_kw
 
-        #ReshapeLayer = layers.ReshapeLayer
+        # ReshapeLayer = layers.ReshapeLayer
 
         _tmp = [1]
 
         from wbia_cnn import custom_layers
+
         Conv2DLayer = custom_layers.Conv2DLayer
         MaxPool2DLayer = custom_layers.MaxPool2DLayer
 
-        def CDP_layer(num_filters=32,
-                              conv_size=(5, 5), conv_stride=(3, 3),
-                              pool_size=(2, 2), pool_stride=(2, 2),
-                              drop_p=0.3):
+        def CDP_layer(
+            num_filters=32,
+            conv_size=(5, 5),
+            conv_stride=(3, 3),
+            pool_size=(2, 2),
+            pool_stride=(2, 2),
+            drop_p=0.3,
+        ):
             num = _tmp[0]
             _tmp[0] += 1
             return [
-                _P(Conv2DLayer, num_filters=num_filters, filter_size=conv_size,
-                   stride=conv_stride, name='C' + str(num), **hidden_initkw),
+                _P(
+                    Conv2DLayer,
+                    num_filters=num_filters,
+                    filter_size=conv_size,
+                    stride=conv_stride,
+                    name='C' + str(num),
+                    **hidden_initkw
+                ),
                 _P(layers.DropoutLayer, p=drop_p, name='D' + str(num)),
-                _P(MaxPool2DLayer, pool_size=pool_size, stride=pool_stride, name='P' + str(num)),
+                _P(
+                    MaxPool2DLayer,
+                    pool_size=pool_size,
+                    stride=pool_stride,
+                    name='P' + str(num),
+                ),
             ]
 
-        def CD_layer(num_filters=32,
-                     conv_size=(5, 5), conv_stride=(3, 3),
-                     drop_p=0.3):
+        def CD_layer(num_filters=32, conv_size=(5, 5), conv_stride=(3, 3), drop_p=0.3):
             num = _tmp[0]
             _tmp[0] += 1
             return [
-                _P(Conv2DLayer, num_filters=num_filters, filter_size=conv_size,
-                   stride=conv_stride, name='C' + str(num), **hidden_initkw),
+                _P(
+                    Conv2DLayer,
+                    num_filters=num_filters,
+                    filter_size=conv_size,
+                    stride=conv_stride,
+                    name='C' + str(num),
+                    **hidden_initkw
+                ),
                 _P(layers.DropoutLayer, p=drop_p, name='D' + str(num)),
             ]
 
         network_layers_def = (
+            [_P(layers.InputLayer, shape=model.input_shape)]
+            + CDP_layer(32, (11, 11), (1, 1), (3, 3), (2, 2))
+            + CD_layer(16, (9, 9), (1, 2))
+            + CD_layer(16, (9, 9), (1, 1))
+            + CD_layer(16, (9, 9), (1, 1))
+            + CD_layer(16, (9, 9), (2, 2))
+            + CD_layer(16, (9, 9), (2, 2))
+            + [
+                _P(layers.DenseLayer, num_units=128, name='F1', **hidden_initkw),
+                _P(layers.DenseLayer, num_units=64, name='F2', **hidden_initkw),
+                # _P(layers.DenseLayer, num_units=64, name='F3',  **hidden_initkw),
+            ]
+            +
+            # CD_layer(128, (3, 3), (2, 2)) +
+            # CD_layer(96, (2, 2), (1, 1)) +
+            # CD_layer(64, (2, 2), (1, 1)) +
+            # CD_layer(64, (1, 1), (1, 1)) +
+            # CD_layer(64, (2, 1), (2, 2)) +
             [
-                _P(layers.InputLayer, shape=model.input_shape)
-            ]  +
-            CDP_layer( 32, (11, 11), (1, 1), (3, 3), (2, 2)) +
-            CD_layer( 16, ( 9,  9), (1, 2)) +
-            CD_layer( 16, ( 9,  9), (1, 1)) +
-            CD_layer( 16, ( 9,  9), (1, 1)) +
-            CD_layer( 16, ( 9,  9), (2, 2)) +
-            CD_layer( 16, ( 9,  9), (2, 2)) +
-            [
-                _P(layers.DenseLayer, num_units=128, name='F1',  **hidden_initkw),
-                _P(layers.DenseLayer, num_units=64, name='F2',  **hidden_initkw),
-                #_P(layers.DenseLayer, num_units=64, name='F3',  **hidden_initkw),
-            ] +
-            #CD_layer(128, (3, 3), (2, 2)) +
-            #CD_layer(96, (2, 2), (1, 1)) +
-            #CD_layer(64, (2, 2), (1, 1)) +
-            #CD_layer(64, (1, 1), (1, 1)) +
-            #CD_layer(64, (2, 1), (2, 2)) +
-            [
-                #_P(Conv2DLayer, num_filters=128, filter_size=(3, 3), name='C3_128', **hidden_initkw),
-                #_P(Conv2DLayer, num_filters=64, filter_size=(3, 3), name='C4_128', **hidden_initkw),
-                #_P(Conv2DLayer, num_filters=64, filter_size=(2, 1), stride=(2, 2), name='C4_128', **hidden_initkw),
-                #_P(layers.FlattenLayer, outdim=2, name='flatten128'),
+                # _P(Conv2DLayer, num_filters=128, filter_size=(3, 3), name='C3_128', **hidden_initkw),
+                # _P(Conv2DLayer, num_filters=64, filter_size=(3, 3), name='C4_128', **hidden_initkw),
+                # _P(Conv2DLayer, num_filters=64, filter_size=(2, 1), stride=(2, 2), name='C4_128', **hidden_initkw),
+                # _P(layers.FlattenLayer, outdim=2, name='flatten128'),
                 _P(custom_layers.L2NormalizeLayer, axis=2),
             ]
         )
-        #raise NotImplementedError('The 2-channel part is not yet implemented')
+        # raise NotImplementedError('The 2-channel part is not yet implemented')
         return network_layers_def
 
     def get_siaml2_partmatch_def(model, verbose=True, **kwargs):
@@ -246,63 +309,82 @@ class SiameseL2(AbstractSiameseModel):
         """
         _P = functools.partial
 
-        leaky_kw = dict(nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)))
-        #orthog_kw = dict(W=init.Orthogonal())
-        #hidden_initkw = ut.merge_dicts(orthog_kw, leaky_kw)
+        leaky_kw = dict(nonlinearity=nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)))
+        # orthog_kw = dict(W=init.Orthogonal())
+        # hidden_initkw = ut.merge_dicts(orthog_kw, leaky_kw)
         hidden_initkw = leaky_kw
 
-        #ReshapeLayer = layers.ReshapeLayer
+        # ReshapeLayer = layers.ReshapeLayer
 
         _tmp = [1]
 
         from wbia_cnn import custom_layers
+
         Conv2DLayer = custom_layers.Conv2DLayer
         MaxPool2DLayer = custom_layers.MaxPool2DLayer
 
-        def CDP_layer(num_filters=32,
-                              conv_size=(5, 5), conv_stride=(3, 3),
-                              pool_size=(2, 2), pool_stride=(2, 2),
-                              drop_p=0.3):
+        def CDP_layer(
+            num_filters=32,
+            conv_size=(5, 5),
+            conv_stride=(3, 3),
+            pool_size=(2, 2),
+            pool_stride=(2, 2),
+            drop_p=0.3,
+        ):
             num = _tmp[0]
             _tmp[0] += 1
             return [
-                _P(Conv2DLayer, num_filters=num_filters, filter_size=conv_size,
-                   stride=conv_stride, name='C' + str(num), **hidden_initkw),
+                _P(
+                    Conv2DLayer,
+                    num_filters=num_filters,
+                    filter_size=conv_size,
+                    stride=conv_stride,
+                    name='C' + str(num),
+                    **hidden_initkw
+                ),
                 _P(layers.DropoutLayer, p=drop_p, name='D' + str(num)),
-                _P(MaxPool2DLayer, pool_size=pool_size, stride=pool_stride, name='P' + str(num)),
+                _P(
+                    MaxPool2DLayer,
+                    pool_size=pool_size,
+                    stride=pool_stride,
+                    name='P' + str(num),
+                ),
             ]
 
-        def CD_layer(num_filters=32,
-                     conv_size=(5, 5), conv_stride=(3, 3),
-                     drop_p=0.3):
+        def CD_layer(num_filters=32, conv_size=(5, 5), conv_stride=(3, 3), drop_p=0.3):
             num = _tmp[0]
             _tmp[0] += 1
             return [
-                _P(Conv2DLayer, num_filters=num_filters, filter_size=conv_size,
-                   stride=conv_stride, name='C' + str(num), **hidden_initkw),
+                _P(
+                    Conv2DLayer,
+                    num_filters=num_filters,
+                    filter_size=conv_size,
+                    stride=conv_stride,
+                    name='C' + str(num),
+                    **hidden_initkw
+                ),
                 _P(layers.DropoutLayer, p=drop_p, name='D' + str(num)),
             ]
 
         network_layers_def = (
+            [_P(layers.InputLayer, shape=model.input_shape)]
+            + CDP_layer(96, (3, 3), (2, 4), (2, 2), (2, 2), 0.1)
+            + CDP_layer(192, (3, 3), (2, 2), (2, 2), (1, 1), 0.1)
+            + CD_layer(128, (3, 3), (2, 2))
+            + CD_layer(96, (2, 2), (1, 1))
+            + CD_layer(64, (2, 2), (1, 1))
+            + CD_layer(64, (1, 1), (1, 1))
+            +
+            # CD_layer(64, (2, 1), (2, 2)) +
             [
-                _P(layers.InputLayer, shape=model.input_shape)
-            ]  +
-            CDP_layer( 96, (3, 3), (2, 4), (2, 2), (2, 2), .1) +
-            CDP_layer(192, (3, 3), (2, 2), (2, 2), (1, 1), .1) +
-            CD_layer(128, (3, 3), (2, 2)) +
-            CD_layer(96, (2, 2), (1, 1)) +
-            CD_layer(64, (2, 2), (1, 1)) +
-            CD_layer(64, (1, 1), (1, 1)) +
-            #CD_layer(64, (2, 1), (2, 2)) +
-            [
-                #_P(Conv2DLayer, num_filters=128, filter_size=(3, 3), name='C3_128', **hidden_initkw),
-                #_P(Conv2DLayer, num_filters=64, filter_size=(3, 3), name='C4_128', **hidden_initkw),
-                #_P(Conv2DLayer, num_filters=64, filter_size=(2, 1), stride=(2, 2), name='C4_128', **hidden_initkw),
+                # _P(Conv2DLayer, num_filters=128, filter_size=(3, 3), name='C3_128', **hidden_initkw),
+                # _P(Conv2DLayer, num_filters=64, filter_size=(3, 3), name='C4_128', **hidden_initkw),
+                # _P(Conv2DLayer, num_filters=64, filter_size=(2, 1), stride=(2, 2), name='C4_128', **hidden_initkw),
                 _P(layers.FlattenLayer, outdim=2, name='flatten128'),
                 _P(custom_layers.L2NormalizeLayer, axis=2),
             ]
         )
-        #raise NotImplementedError('The 2-channel part is not yet implemented')
+        # raise NotImplementedError('The 2-channel part is not yet implemented')
         return network_layers_def
 
     def get_siam2streaml2_def(model, verbose=True, **kwargs):
@@ -318,41 +400,67 @@ class SiameseL2(AbstractSiameseModel):
         """
         _P = functools.partial
 
-        leaky_kw = dict(nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)))
-        #orthog_kw = dict(W=init.Orthogonal())
-        #hidden_initkw = ut.merge_dicts(orthog_kw, leaky_kw)
+        leaky_kw = dict(nonlinearity=nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)))
+        # orthog_kw = dict(W=init.Orthogonal())
+        # hidden_initkw = ut.merge_dicts(orthog_kw, leaky_kw)
         hidden_initkw = leaky_kw
 
-        #ReshapeLayer = layers.ReshapeLayer
+        # ReshapeLayer = layers.ReshapeLayer
 
         from wbia_cnn import custom_layers
+
         Conv2DLayer = custom_layers.Conv2DLayer
         MaxPool2DLayer = custom_layers.MaxPool2DLayer
 
-        network_layers_def = (
-            [
-                _P(layers.InputLayer, shape=model.input_shape),
-                # TODO: Stack Inputs by making a 2 Channel Layer
-                #caffenet.get_conv2d_layer(0, trainable=False, **leaky),
-                _P(custom_layers.CenterSurroundLayer, name='CentSuround'),
-                _P(Conv2DLayer, num_filters=96, filter_size=(5, 5), stride=(1, 1), name='C0', **hidden_initkw),
-                _P(layers.DropoutLayer, p=0.3),
-                _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P0'),
-                _P(Conv2DLayer, num_filters=192, filter_size=(3, 3), name='C1', **hidden_initkw),
-                _P(layers.DropoutLayer, p=0.3),
-                _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P0'),
-                _P(Conv2DLayer, num_filters=256, filter_size=(3, 3), name='C2', **hidden_initkw),
-                _P(layers.DropoutLayer, p=0.3),
-                _P(MaxPool2DLayer, pool_size=(2, 2), stride=(1, 1), name='P0'),
-                _P(Conv2DLayer, num_filters=256, filter_size=(3, 3), name='C3', **hidden_initkw),
-                _P(custom_layers.SiameseConcatLayer, axis=1, data_per_label=2, name='concat'),  # 2 when CenterSurroundIsOn but two channel network
-                _P(layers.FlattenLayer, outdim=2, name='flatten'),
-                #_P(custom_layers.L2NormalizeLayer, axis=2),
-                # TODO: L2 distance layer
-                #_P(custom_layers.SiameseConcatLayer, data_per_label=2),
-            ]
-        )
-        #raise NotImplementedError('The 2-channel part is not yet implemented')
+        network_layers_def = [
+            _P(layers.InputLayer, shape=model.input_shape),
+            # TODO: Stack Inputs by making a 2 Channel Layer
+            # caffenet.get_conv2d_layer(0, trainable=False, **leaky),
+            _P(custom_layers.CenterSurroundLayer, name='CentSuround'),
+            _P(
+                Conv2DLayer,
+                num_filters=96,
+                filter_size=(5, 5),
+                stride=(1, 1),
+                name='C0',
+                **hidden_initkw
+            ),
+            _P(layers.DropoutLayer, p=0.3),
+            _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P0'),
+            _P(
+                Conv2DLayer,
+                num_filters=192,
+                filter_size=(3, 3),
+                name='C1',
+                **hidden_initkw
+            ),
+            _P(layers.DropoutLayer, p=0.3),
+            _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P0'),
+            _P(
+                Conv2DLayer,
+                num_filters=256,
+                filter_size=(3, 3),
+                name='C2',
+                **hidden_initkw
+            ),
+            _P(layers.DropoutLayer, p=0.3),
+            _P(MaxPool2DLayer, pool_size=(2, 2), stride=(1, 1), name='P0'),
+            _P(
+                Conv2DLayer,
+                num_filters=256,
+                filter_size=(3, 3),
+                name='C3',
+                **hidden_initkw
+            ),
+            _P(
+                custom_layers.SiameseConcatLayer, axis=1, data_per_label=2, name='concat'
+            ),  # 2 when CenterSurroundIsOn but two channel network
+            _P(layers.FlattenLayer, outdim=2, name='flatten'),
+            # _P(custom_layers.L2NormalizeLayer, axis=2),
+            # TODO: L2 distance layer
+            # _P(custom_layers.SiameseConcatLayer, data_per_label=2),
+        ]
+        # raise NotImplementedError('The 2-channel part is not yet implemented')
         return network_layers_def
 
     def get_mnist_siaml2_def(model, verbose=True, **kwargs):
@@ -362,37 +470,61 @@ class SiameseL2(AbstractSiameseModel):
         """
         _P = functools.partial
 
-        leaky_kw = dict(nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)))
-        #orthog_kw = dict(W=init.Orthogonal())
-        #hidden_initkw = ut.merge_dicts(orthog_kw, leaky_kw)
+        leaky_kw = dict(nonlinearity=nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)))
+        # orthog_kw = dict(W=init.Orthogonal())
+        # hidden_initkw = ut.merge_dicts(orthog_kw, leaky_kw)
         hidden_initkw = leaky_kw
 
         from wbia_cnn import custom_layers
+
         Conv2DLayer = custom_layers.Conv2DLayer
         MaxPool2DLayer = custom_layers.MaxPool2DLayer
 
-        network_layers_def = (
-            [
-                #_P(layers.InputLayer, shape=model.input_shape),
-                #_P(Conv2DLayer, num_filters=96, filter_size=(7, 7), stride=(1, 1), name='C0', **hidden_initkw),
-                #_P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P0'),
-                #_P(Conv2DLayer, num_filters=192, filter_size=(5, 5), name='C1', **hidden_initkw),
-                #_P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P1'),
-                #_P(Conv2DLayer, num_filters=256, filter_size=(4, 4), name='C2', **hidden_initkw),
-                _P(layers.InputLayer, shape=model.input_shape),
-                _P(Conv2DLayer, num_filters=96, filter_size=(5, 5), stride=(1, 1), name='C0', **hidden_initkw),
-                _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P0'),
-                _P(Conv2DLayer, num_filters=192, filter_size=(3, 3), name='C1', **hidden_initkw),
-                _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P2'),
-                _P(Conv2DLayer, num_filters=128, filter_size=(3, 3), name='C2', **hidden_initkw),
-                _P(MaxPool2DLayer, pool_size=(2, 2), stride=(1, 1), name='P3'),
-                _P(Conv2DLayer, num_filters=128, filter_size=(1, 1), name='C2', **hidden_initkw),
-                _P(MaxPool2DLayer, pool_size=(2, 2), stride=(1, 1), name='P3'),
-                #_P(layers.ReshapeLayer, shape=(-1, 128))
-                _P(layers.FlattenLayer, outdim=2)
-                #_P(Conv2DLayer, num_filters=256, filter_size=(2, 2), name='C3', **hidden_initkw),
-            ]
-        )
+        network_layers_def = [
+            # _P(layers.InputLayer, shape=model.input_shape),
+            # _P(Conv2DLayer, num_filters=96, filter_size=(7, 7), stride=(1, 1), name='C0', **hidden_initkw),
+            # _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P0'),
+            # _P(Conv2DLayer, num_filters=192, filter_size=(5, 5), name='C1', **hidden_initkw),
+            # _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P1'),
+            # _P(Conv2DLayer, num_filters=256, filter_size=(4, 4), name='C2', **hidden_initkw),
+            _P(layers.InputLayer, shape=model.input_shape),
+            _P(
+                Conv2DLayer,
+                num_filters=96,
+                filter_size=(5, 5),
+                stride=(1, 1),
+                name='C0',
+                **hidden_initkw
+            ),
+            _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P0'),
+            _P(
+                Conv2DLayer,
+                num_filters=192,
+                filter_size=(3, 3),
+                name='C1',
+                **hidden_initkw
+            ),
+            _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P2'),
+            _P(
+                Conv2DLayer,
+                num_filters=128,
+                filter_size=(3, 3),
+                name='C2',
+                **hidden_initkw
+            ),
+            _P(MaxPool2DLayer, pool_size=(2, 2), stride=(1, 1), name='P3'),
+            _P(
+                Conv2DLayer,
+                num_filters=128,
+                filter_size=(1, 1),
+                name='C2',
+                **hidden_initkw
+            ),
+            _P(MaxPool2DLayer, pool_size=(2, 2), stride=(1, 1), name='P3'),
+            # _P(layers.ReshapeLayer, shape=(-1, 128))
+            _P(layers.FlattenLayer, outdim=2)
+            # _P(Conv2DLayer, num_filters=256, filter_size=(2, 2), name='C3', **hidden_initkw),
+        ]
         return network_layers_def
 
     def init_arch(model, verbose=ut.VERBOSE, **kwargs):
@@ -418,9 +550,9 @@ class SiameseL2(AbstractSiameseModel):
             >>> ut.show_if_requested()
         """
         # TODO: remove output dims
-        #_P = functools.partial
+        # _P = functools.partial
         print('[model] init_arch')
-        #(_, input_channels, input_width, input_height) = model.input_shape
+        # (_, input_channels, input_width, input_height) = model.input_shape
         (_, input_channels, input_height, input_width) = model.input_shape
         if verbose:
             print('[model] Initialize center siamese l2 model architecture')
@@ -430,20 +562,25 @@ class SiameseL2(AbstractSiameseModel):
             print('[model]   * input_channels = %r' % (input_channels,))
             print('[model]   * output_dims    = %r' % (model.output_dims,))
 
-        #network_layers_def = model.get_mnist_siaml2_def(verbose=verbose, **kwargs)
-        network_layers_def = getattr(model, 'get_' + model.arch_tag + '_def')(verbose=verbose, **kwargs)
-        #if model.arch_tag == 'siam2streaml2':
+        # network_layers_def = model.get_mnist_siaml2_def(verbose=verbose, **kwargs)
+        network_layers_def = getattr(model, 'get_' + model.arch_tag + '_def')(
+            verbose=verbose, **kwargs
+        )
+        # if model.arch_tag == 'siam2streaml2':
         #    network_layers_def = model.get_siam2streaml2_def(verbose=verbose, **kwargs)
-        #elif model.arch_tag == 'siaml2':
+        # elif model.arch_tag == 'siaml2':
         #    network_layers_def = model.get_siaml2_def(verbose=verbose, **kwargs)
-        #elif model.arch_tag == 'siaml2_128':
+        # elif model.arch_tag == 'siaml2_128':
         #    network_layers_def = model.get_siaml2_128_def(verbose=verbose, **kwargs)
-        #elif model.arch_tag == 'mnist_siaml2':
+        # elif model.arch_tag == 'mnist_siaml2':
         #    network_layers_def = model.get_mnist_siaml2_def(verbose=verbose, **kwargs)
         # connect and record layers
         from wbia_cnn import custom_layers
-        network_layers = custom_layers.evaluate_layer_list(network_layers_def, verbose=verbose)
-        #model.network_layers = network_layers
+
+        network_layers = custom_layers.evaluate_layer_list(
+            network_layers_def, verbose=verbose
+        )
+        # model.network_layers = network_layers
         output_layer = network_layers[-1]
         model.output_layer = output_layer
         return output_layer
@@ -482,15 +619,19 @@ class SiameseL2(AbstractSiameseModel):
         dist_l2 = T.sqrt(((vecs1 - vecs2) ** 2).sum(axis=1))
         loss = constrastive_loss(dist_l2, labels, margin, T=T)
         # Ignore the hardest cases
-        #num_ignore = 3
-        #loss = ignore_hardest_cases(loss, labels, num_ignore=num_ignore, T=T)
+        # num_ignore = 3
+        # loss = ignore_hardest_cases(loss, labels, num_ignore=num_ignore, T=T)
         return loss
 
     def learn_encoder(model, labels, scores, **kwargs):
         import vtool as vt
+
         encoder = vt.ScoreNormalizer(**kwargs)
         encoder.fit(scores, labels)
-        print('[model] learned encoder accuracy = %r' % (encoder.get_accuracy(scores, labels)))
+        print(
+            '[model] learned encoder accuracy = %r'
+            % (encoder.get_accuracy(scores, labels))
+        )
         model.encoder = encoder
         return encoder
 
@@ -597,7 +738,7 @@ def ignore_hardest_cases(loss, labels, num_ignore=3, T=T):
         T.le = np.less_equal
 
     hardest_sortx_ = loss.argsort()
-    hardest_sortx  = hardest_sortx_[::-1]
+    hardest_sortx = hardest_sortx_[::-1]
 
     invert_sortx = hardest_sortx.argsort()
 
@@ -609,7 +750,7 @@ def ignore_hardest_cases(loss, labels, num_ignore=3, T=T):
     cumsum_istrue = T.cumsum(hardest_istrue)
     cumsum_isfalse = T.cumsum(hardest_isfalse)
 
-    inrange_true  = T.le(cumsum_istrue, num_ignore)
+    inrange_true = T.le(cumsum_istrue, num_ignore)
     inrange_false = T.le(cumsum_isfalse, num_ignore)
 
     hardest_false_mask = inrange_false * hardest_isfalse
@@ -621,8 +762,8 @@ def ignore_hardest_cases(loss, labels, num_ignore=3, T=T):
 
     ignored_loss = keep_mask * loss
 
-    #CHECK = False
-    #if CHECK:
+    # CHECK = False
+    # if CHECK:
     #    hardest_trues  = T.nonzero(hardest_labels)[0][0:num_ignore]
     #    hardest_falses = T.nonzero(1 - hardest_labels)[0][0:num_ignore]
     #    hardest_true_sortx  = hardest_sortx[hardest_trues]
@@ -685,7 +826,7 @@ def constrastive_loss(dist_l2, labels, margin, T=T):
         >>> pt.postsetup_axes()
         >>> ut.show_if_requested()
     """
-    #if __debug__:
+    # if __debug__:
     #    assert margin > 0
     #    assert set(labels).issubset({0, 1})
     loss_genuine = (labels * dist_l2) ** 2
@@ -701,23 +842,30 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
     """
     Model for individual identification
     """
-    def __init__(model, autoinit=False, batch_size=128, input_shape=None,
-                 data_shape=(64, 64, 3), **kwargs):
+
+    def __init__(
+        model,
+        autoinit=False,
+        batch_size=128,
+        input_shape=None,
+        data_shape=(64, 64, 3),
+        **kwargs
+    ):
         if data_shape is not None:
             input_shape = (batch_size, data_shape[2], data_shape[0], data_shape[1])
         if input_shape is None:
             (batch_size, 3, 64, 64)
-        super(SiameseCenterSurroundModel,
-              model).__init__(input_shape=input_shape, batch_size=batch_size,
-                              **kwargs)
-        #model.network_layers = None
+        super(SiameseCenterSurroundModel, model).__init__(
+            input_shape=input_shape, batch_size=batch_size, **kwargs
+        )
+        # model.network_layers = None
         model.input_shape = input_shape
         model.batch_size = batch_size
         model.output_dims = 1
         # bad name, says that this network will take
         # 2*N images in a batch and N labels that map to
         # two images a piece
-        model.data_per_label_input  = 2
+        model.data_per_label_input = 2
         model.data_per_label_output = 1
         if autoinit:
             model.init_arch()
@@ -764,8 +912,9 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
         network_layers_def = model.get_siam2stream_def(verbose=verbose, **kwargs)
         # connect and record layers
         from wbia_cnn import custom_layers
+
         network_layers = custom_layers.evaluate_layer_list(network_layers_def)
-        #model.network_layers = network_layers
+        # model.network_layers = network_layers
         output_layer = network_layers[-1]
         model.output_layer = output_layer
         return output_layer
@@ -822,8 +971,8 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
         if verbose:
             print('[model] Build SiameseCenterSurroundModel loss function')
         # make y_i in {-1, 1} where -1 denotes non-matching and +1 denotes matching
-        #Y_ = (1 - (2 * Y))
-        Y_ = ((2 * Y) - 1)
+        # Y_ = (1 - (2 * Y))
+        Y_ = (2 * Y) - 1
         # Hinge-loss objective from Zagoruyko and Komodakis
         loss = T.maximum(0, 1 - (Y_ * network_output.T))
         avg_loss = T.mean(loss)
@@ -834,9 +983,13 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
 
     def learn_encoder(model, labels, scores, **kwargs):
         import vtool as vt
+
         encoder = vt.ScoreNormalizer(**kwargs)
         encoder.fit(scores, labels)
-        print('[model] learned encoder accuracy = %r' % (encoder.get_accuracy(scores, labels)))
+        print(
+            '[model] learned encoder accuracy = %r'
+            % (encoder.get_accuracy(scores, labels))
+        )
         model.encoder = encoder
         return encoder
 
@@ -851,37 +1004,62 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
         """
         raise NotImplementedError('The 2-channel part is not yet implemented')
         _P = functools.partial
-        leaky_kw = dict(nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)))
+        leaky_kw = dict(nonlinearity=nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)))
         orthog_kw = dict(W=init.Orthogonal())
         hidden_initkw = ut.merge_dicts(orthog_kw, leaky_kw)
 
         from wbia_cnn import custom_layers
+
         Conv2DLayer = custom_layers.Conv2DLayer
         MaxPool2DLayer = custom_layers.MaxPool2DLayer
 
-        network_layers_def = (
-            [
-                _P(layers.InputLayer, shape=model.input_shape),
-                # TODO: Stack Inputs by making a 2 Channel Layer
-                _P(custom_layers.CenterSurroundLayer, name='CentSur'),
-
-                #layers.GaussianNoiseLayer,
-                #caffenet.get_conv2d_layer(0, trainable=False, **leaky),
-                #lasange_ext.freeze_params,
-                _P(Conv2DLayer, num_filters=96, filter_size=(5, 5), stride=(1, 1), name='C0', **hidden_initkw),
-                _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P0'),
-                _P(Conv2DLayer, num_filters=96, filter_size=(3, 3), name='C1', **hidden_initkw),
-                _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P1'),
-                _P(Conv2DLayer, num_filters=192, filter_size=(3, 3), name='C2', **hidden_initkw),
-                _P(Conv2DLayer, num_filters=192, filter_size=(3, 3), name='C3', **hidden_initkw),
-                #_P(custom_layers.L2NormalizeLayer, axis=2),
-                _P(custom_layers.SiameseConcatLayer, axis=1, data_per_label=4, name='Concat'),  # 4 when CenterSurroundIsOn
-                #_P(custom_layers.SiameseConcatLayer, data_per_label=2),
-                _P(layers.DenseLayer, num_units=768, name='F1',  **hidden_initkw),
-                _P(layers.DropoutLayer, p=0.5),
-                _P(layers.DenseLayer, num_units=1, name='F2', **hidden_initkw),
-            ]
-        )
+        network_layers_def = [
+            _P(layers.InputLayer, shape=model.input_shape),
+            # TODO: Stack Inputs by making a 2 Channel Layer
+            _P(custom_layers.CenterSurroundLayer, name='CentSur'),
+            # layers.GaussianNoiseLayer,
+            # caffenet.get_conv2d_layer(0, trainable=False, **leaky),
+            # lasange_ext.freeze_params,
+            _P(
+                Conv2DLayer,
+                num_filters=96,
+                filter_size=(5, 5),
+                stride=(1, 1),
+                name='C0',
+                **hidden_initkw
+            ),
+            _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P0'),
+            _P(
+                Conv2DLayer,
+                num_filters=96,
+                filter_size=(3, 3),
+                name='C1',
+                **hidden_initkw
+            ),
+            _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P1'),
+            _P(
+                Conv2DLayer,
+                num_filters=192,
+                filter_size=(3, 3),
+                name='C2',
+                **hidden_initkw
+            ),
+            _P(
+                Conv2DLayer,
+                num_filters=192,
+                filter_size=(3, 3),
+                name='C3',
+                **hidden_initkw
+            ),
+            # _P(custom_layers.L2NormalizeLayer, axis=2),
+            _P(
+                custom_layers.SiameseConcatLayer, axis=1, data_per_label=4, name='Concat'
+            ),  # 4 when CenterSurroundIsOn
+            # _P(custom_layers.SiameseConcatLayer, data_per_label=2),
+            _P(layers.DenseLayer, num_units=768, name='F1', **hidden_initkw),
+            _P(layers.DropoutLayer, p=0.5),
+            _P(layers.DenseLayer, num_units=1, name='F2', **hidden_initkw),
+        ]
         return network_layers_def
 
     def get_siam2stream_def(model, verbose=True, **kwargs):
@@ -896,10 +1074,11 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
         _P = functools.partial
 
         from wbia_cnn import custom_layers
+
         Conv2DLayer = custom_layers.Conv2DLayer
         MaxPool2DLayer = custom_layers.MaxPool2DLayer
 
-        leaky_kw = dict(nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)))
+        leaky_kw = dict(nonlinearity=nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)))
         orthog_kw = dict(W=init.Orthogonal())
         hidden_initkw = ut.merge_dicts(orthog_kw, leaky_kw)
         if not kwargs.get('fresh_model', False):
@@ -909,28 +1088,51 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
             # don't do fancy initializating unless training from scratch
             del hidden_initkw['W']
 
-        network_layers_def = (
-            [
-                _P(layers.InputLayer, shape=model.input_shape),
-                # TODO: Stack Inputs by making a 2 Channel Layer
-                _P(custom_layers.CenterSurroundLayer, name='CS'),
-
-                layers.GaussianNoiseLayer,
-                #caffenet.get_conv2d_layer(0, trainable=False, **leaky),
-                _P(Conv2DLayer, num_filters=96, filter_size=(4, 4), name='C0', **hidden_initkw),
-                _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P0'),
-                _P(Conv2DLayer, num_filters=192, filter_size=(3, 3), name='C2', **hidden_initkw),
-                _P(Conv2DLayer, num_filters=256, filter_size=(3, 3), name='C3', **hidden_initkw),
-                _P(Conv2DLayer, num_filters=256, filter_size=(3, 3), name='C4', **hidden_initkw),
-                #_P(custom_layers.L2NormalizeLayer, axis=2),
-                _P(custom_layers.SiameseConcatLayer, axis=1, data_per_label=4),  # 4 when CenterSurroundIsOn
-                #_P(custom_layers.SiameseConcatLayer, data_per_label=2),
-                _P(layers.DenseLayer, num_units=512, name='F1',  **hidden_initkw),
-                _P(layers.DropoutLayer, p=0.5),
-                _P(layers.DenseLayer, num_units=1, name='F2', **hidden_initkw),
-            ]
-        )
-        #raise NotImplementedError('The 2-channel part is not yet implemented')
+        network_layers_def = [
+            _P(layers.InputLayer, shape=model.input_shape),
+            # TODO: Stack Inputs by making a 2 Channel Layer
+            _P(custom_layers.CenterSurroundLayer, name='CS'),
+            layers.GaussianNoiseLayer,
+            # caffenet.get_conv2d_layer(0, trainable=False, **leaky),
+            _P(
+                Conv2DLayer,
+                num_filters=96,
+                filter_size=(4, 4),
+                name='C0',
+                **hidden_initkw
+            ),
+            _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P0'),
+            _P(
+                Conv2DLayer,
+                num_filters=192,
+                filter_size=(3, 3),
+                name='C2',
+                **hidden_initkw
+            ),
+            _P(
+                Conv2DLayer,
+                num_filters=256,
+                filter_size=(3, 3),
+                name='C3',
+                **hidden_initkw
+            ),
+            _P(
+                Conv2DLayer,
+                num_filters=256,
+                filter_size=(3, 3),
+                name='C4',
+                **hidden_initkw
+            ),
+            # _P(custom_layers.L2NormalizeLayer, axis=2),
+            _P(
+                custom_layers.SiameseConcatLayer, axis=1, data_per_label=4
+            ),  # 4 when CenterSurroundIsOn
+            # _P(custom_layers.SiameseConcatLayer, data_per_label=2),
+            _P(layers.DenseLayer, num_units=512, name='F1', **hidden_initkw),
+            _P(layers.DropoutLayer, p=0.5),
+            _P(layers.DenseLayer, num_units=1, name='F2', **hidden_initkw),
+        ]
+        # raise NotImplementedError('The 2-channel part is not yet implemented')
         return network_layers_def
 
     def get_siam2stream_l2_def(model, verbose=True, **kwargs):
@@ -943,10 +1145,11 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
         _P = functools.partial
 
         from wbia_cnn import custom_layers
+
         Conv2DLayer = custom_layers.Conv2DLayer
         MaxPool2DLayer = custom_layers.MaxPool2DLayer
 
-        leaky_kw = dict(nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)))
+        leaky_kw = dict(nonlinearity=nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)))
         orthog_kw = dict(W=init.Orthogonal())
         hidden_initkw = ut.merge_dicts(orthog_kw, leaky_kw)
         if not kwargs.get('fresh_model', False):
@@ -956,26 +1159,49 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
             # don't do fancy initializating unless training from scratch
             del hidden_initkw['W']
 
-        network_layers_def = (
-            [
-                _P(layers.InputLayer, shape=model.input_shape),
-                # TODO: Stack Inputs by making a 2 Channel Layer
-                _P(custom_layers.CenterSurroundLayer),
-
-                layers.GaussianNoiseLayer,
-                #caffenet.get_conv2d_layer(0, trainable=False, **leaky),
-                _P(Conv2DLayer, num_filters=96, filter_size=(4, 4), name='C0', **hidden_initkw),
-                _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P0'),
-                _P(Conv2DLayer, num_filters=192, filter_size=(3, 3), name='C2', **hidden_initkw),
-                _P(Conv2DLayer, num_filters=256, filter_size=(3, 3), name='C3', **hidden_initkw),
-                _P(Conv2DLayer, num_filters=256, filter_size=(3, 3), name='C4', **hidden_initkw),
-                #_P(custom_layers.L2NormalizeLayer, axis=2),
-                _P(custom_layers.SiameseConcatLayer, axis=1, data_per_label=4),  # 4 when CenterSurroundIsOn
-                # TODO: L2 distance layer
-                #_P(custom_layers.SiameseConcatLayer, data_per_label=2),
-            ]
-        )
-        #raise NotImplementedError('The 2-channel part is not yet implemented')
+        network_layers_def = [
+            _P(layers.InputLayer, shape=model.input_shape),
+            # TODO: Stack Inputs by making a 2 Channel Layer
+            _P(custom_layers.CenterSurroundLayer),
+            layers.GaussianNoiseLayer,
+            # caffenet.get_conv2d_layer(0, trainable=False, **leaky),
+            _P(
+                Conv2DLayer,
+                num_filters=96,
+                filter_size=(4, 4),
+                name='C0',
+                **hidden_initkw
+            ),
+            _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name='P0'),
+            _P(
+                Conv2DLayer,
+                num_filters=192,
+                filter_size=(3, 3),
+                name='C2',
+                **hidden_initkw
+            ),
+            _P(
+                Conv2DLayer,
+                num_filters=256,
+                filter_size=(3, 3),
+                name='C3',
+                **hidden_initkw
+            ),
+            _P(
+                Conv2DLayer,
+                num_filters=256,
+                filter_size=(3, 3),
+                name='C4',
+                **hidden_initkw
+            ),
+            # _P(custom_layers.L2NormalizeLayer, axis=2),
+            _P(
+                custom_layers.SiameseConcatLayer, axis=1, data_per_label=4
+            ),  # 4 when CenterSurroundIsOn
+            # TODO: L2 distance layer
+            # _P(custom_layers.SiameseConcatLayer, data_per_label=2),
+        ]
+        # raise NotImplementedError('The 2-channel part is not yet implemented')
         return network_layers_def
 
 
@@ -985,6 +1211,7 @@ def predict():
 
 def testdata_siam_desc(num_data=128, desc_dim=8):
     import vtool as vt
+
     rng = np.random.RandomState(0)
     network_output = vt.normalize_rows(rng.rand(num_data, desc_dim))
     vecs1 = network_output[0::2]
@@ -994,15 +1221,17 @@ def testdata_siam_desc(num_data=128, desc_dim=8):
     network_output[1::2] = vecs2
     # Every other pair is an imposter match
     network_output[::4, :] = vt.normalize_rows(rng.rand(32, desc_dim))
-    #data_per_label = 2
+    # data_per_label = 2
 
     vecs1 = network_output[0::2]
     vecs2 = network_output[1::2]
+
     def true_dist_metric(vecs1, vecs2):
         g1_ = np.roll(vecs1, 1, axis=1)
         dist = vt.L2(g1_, vecs2)
         return dist
-    #l2dist = vt.L2(vecs1, vecs2)
+
+    # l2dist = vt.L2(vecs1, vecs2)
     true_dist = true_dist_metric(vecs1, vecs2)
 
     labels = true_dist > 0
@@ -1017,6 +1246,8 @@ if __name__ == '__main__':
         python -m wbia_cnn.models.siam --allexamples --noface --nosrc
     """
     import multiprocessing
+
     multiprocessing.freeze_support()  # for win32
     import utool as ut  # NOQA
+
     ut.doctest_funcs()

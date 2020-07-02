@@ -15,16 +15,23 @@ Pretrained Models:
 from __future__ import absolute_import, division, print_function
 from six.moves import input, zip, range  # NOQA
 import utool as ut
+
 print, rrr, profile = ut.inject2(__name__)
 
 
 def _clean(model, theano_forward, X_list, y_list, min_conf=0.95):
     from wbia_cnn import batch_processing as batch
     import random
+
     # Perform testing
     clean_outputs = batch.process_batch(
-        model, X_list, y_list, theano_forward, augment_on=False,
-        randomize_batch_order=False)
+        model,
+        X_list,
+        y_list,
+        theano_forward,
+        augment_on=False,
+        randomize_batch_order=False,
+    )
     prediction_list = clean_outputs['labeled_predictions']
     confidence_list = clean_outputs['confidences']
     enumerated = enumerate(zip(y_list, prediction_list, confidence_list))
@@ -52,10 +59,14 @@ def _clean(model, theano_forward, X_list, y_list, min_conf=0.95):
 
     total = len(y_list)
     ratio = switched_counter / total
-    args = (switched_counter, total, ratio, )
+    args = (
+        switched_counter,
+        total,
+        ratio,
+    )
     print('[_clean] Cleaned Data... [ %d / %d ] ( %0.04f )' % args)
     for src in sorted(switched.keys()):
         for dst in sorted(switched[src].keys()):
-            print('[_clean] \t%r -> %r : %d' % (src, dst, switched[src][dst], ))
+            print('[_clean] \t%r -> %r : %d' % (src, dst, switched[src][dst],))
 
     return y_list

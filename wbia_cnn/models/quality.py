@@ -3,8 +3,10 @@ from __future__ import absolute_import, division, print_function
 import utool as ut
 from wbia_cnn.__LASAGNE__ import layers
 from wbia_cnn.__LASAGNE__ import nonlinearities
+
 # from wbia_cnn.__LASAGNE__ import init
 from wbia_cnn.models import abstract_models
+
 print, rrr, profile = ut.inject2(__name__)
 
 
@@ -15,10 +17,10 @@ class QualityModel(abstract_models.AbstractCategoricalModel):
 
     def label_order_mapping(self, category_list):
         quality_mapping = {
-            'JUNK':      0,
-            'POOR':      1,
-            'GOOD':      2,
-            'OK':        3,
+            'JUNK': 0,
+            'POOR': 1,
+            'GOOD': 2,
+            'OK': 3,
             'EXCELLENT': 4,
         }
         return quality_mapping
@@ -29,9 +31,12 @@ class QualityModel(abstract_models.AbstractCategoricalModel):
     def learning_rate_shock(self, x):
         return x * 2.0
 
-    def build_model(self, batch_size, input_width, input_height, input_channels, output_dims):
+    def build_model(
+        self, batch_size, input_width, input_height, input_channels, output_dims
+    ):
 
         from wbia_cnn import custom_layers
+
         Conv2DLayer = custom_layers.Conv2DLayer
         MaxPool2DLayer = custom_layers.MaxPool2DLayer
 
@@ -42,16 +47,14 @@ class QualityModel(abstract_models.AbstractCategoricalModel):
             shape=(None, input_channels, input_width, input_height)
         )
 
-        l_noise = layers.GaussianNoiseLayer(
-            l_in,
-        )
+        l_noise = layers.GaussianNoiseLayer(l_in,)
 
         l_conv0 = Conv2DLayer(
             l_noise,
             num_filters=32,
             filter_size=(11, 11),
             # nonlinearity=nonlinearities.rectify,
-            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)),
+            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)),
             W=_CaffeNet.get_pretrained_layer(0),
         )
 
@@ -62,15 +65,11 @@ class QualityModel(abstract_models.AbstractCategoricalModel):
             num_filters=32,
             filter_size=(5, 5),
             # nonlinearity=nonlinearities.rectify,
-            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)),
+            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)),
             W=_CaffeNet.get_pretrained_layer(2),
         )
 
-        l_pool1 = MaxPool2DLayer(
-            l_conv1,
-            pool_size=(2, 2),
-            stride=(2, 2),
-        )
+        l_pool1 = MaxPool2DLayer(l_conv1, pool_size=(2, 2), stride=(2, 2),)
 
         l_conv2_dropout = layers.DropoutLayer(l_pool1, p=0.10)
 
@@ -79,15 +78,11 @@ class QualityModel(abstract_models.AbstractCategoricalModel):
             num_filters=64,
             filter_size=(3, 3),
             # nonlinearity=nonlinearities.rectify,
-            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)),
+            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)),
             # W=init.Orthogonal(),
         )
 
-        l_pool2 = MaxPool2DLayer(
-            l_conv2,
-            pool_size=(2, 2),
-            stride=(2, 2),
-        )
+        l_pool2 = MaxPool2DLayer(l_conv2, pool_size=(2, 2), stride=(2, 2),)
 
         l_conv3_dropout = layers.DropoutLayer(l_pool2, p=0.30)
 
@@ -96,15 +91,11 @@ class QualityModel(abstract_models.AbstractCategoricalModel):
             num_filters=128,
             filter_size=(3, 3),
             # nonlinearity=nonlinearities.rectify,
-            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)),
+            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)),
             # W=init.Orthogonal(),
         )
 
-        l_pool3 = MaxPool2DLayer(
-            l_conv3,
-            pool_size=(2, 2),
-            stride=(2, 2),
-        )
+        l_pool3 = MaxPool2DLayer(l_conv3, pool_size=(2, 2), stride=(2, 2),)
 
         l_conv4_dropout = layers.DropoutLayer(l_pool3, p=0.30)
 
@@ -113,28 +104,21 @@ class QualityModel(abstract_models.AbstractCategoricalModel):
             num_filters=128,
             filter_size=(3, 3),
             # nonlinearity=nonlinearities.rectify,
-            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)),
+            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)),
             # W=init.Orthogonal(),
         )
 
-        l_pool4 = MaxPool2DLayer(
-            l_conv4,
-            pool_size=(2, 2),
-            stride=(2, 2),
-        )
+        l_pool4 = MaxPool2DLayer(l_conv4, pool_size=(2, 2), stride=(2, 2),)
 
         l_hidden1 = layers.DenseLayer(
             l_pool4,
             num_units=512,
             # nonlinearity=nonlinearities.rectify,
-            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)),
+            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)),
             # W=init.Orthogonal(),
         )
 
-        l_hidden1_maxout = layers.FeaturePoolLayer(
-            l_hidden1,
-            pool_size=2,
-        )
+        l_hidden1_maxout = layers.FeaturePoolLayer(l_hidden1, pool_size=2,)
 
         l_hidden1_dropout = layers.DropoutLayer(l_hidden1_maxout, p=0.5)
 
@@ -142,14 +126,11 @@ class QualityModel(abstract_models.AbstractCategoricalModel):
             l_hidden1_dropout,
             num_units=512,
             # nonlinearity=nonlinearities.rectify,
-            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)),
+            nonlinearity=nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0)),
             # W=init.Orthogonal(),
         )
 
-        l_hidden2_maxout = layers.FeaturePoolLayer(
-            l_hidden2,
-            pool_size=2,
-        )
+        l_hidden2_maxout = layers.FeaturePoolLayer(l_hidden2, pool_size=2,)
 
         l_hidden2_dropout = layers.DropoutLayer(l_hidden2_maxout, p=0.5)
 
@@ -171,6 +152,8 @@ if __name__ == '__main__':
         python -m wbia_cnn.models.quality --allexamples --noface --nosrc
     """
     import multiprocessing
+
     multiprocessing.freeze_support()  # for win32
     import utool as ut  # NOQA
+
     ut.doctest_funcs()

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 r"""
     RENAME:
@@ -119,7 +120,7 @@ r"""
 """
 
 
-#def train_mnist():
+# def train_mnist():
 #    r"""
 #    CommandLine:
 #        python -m ibeis_cnn.train --test-train_mnist

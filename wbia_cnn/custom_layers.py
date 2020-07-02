@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function
 import numpy as np
 import warnings
@@ -31,10 +32,12 @@ try:
     if conv_impl == 'cuda_convnet':
         # cannot handle non-square images (pylearn2 module)
         import lasagne.layers.cuda_convnet
+
         Conv2DLayer = lasagne.layers.cuda_convnet.Conv2DCCLayer
         MaxPool2DLayer = lasagne.layers.cuda_convnet.MaxPool2DCCLayer
     elif conv_impl == 'cuDNN':
         import lasagne.layers.dnn
+
         Conv2DLayer = lasagne.layers.dnn.Conv2DDNNLayer
         MaxPool2DLayer = lasagne.layers.dnn.MaxPool2DDNNLayer
         """
@@ -51,6 +54,7 @@ try:
     elif conv_impl == 'gemm':
         # Dont use gemm
         import lasagne.layers.corrmm
+
         Conv2DLayer = lasagne.layers.corrmm.Conv2DLayer
         MaxPool2DLayer = lasagne.layers.corrmm.Conv2DLayer
     else:
@@ -126,11 +130,20 @@ class LocallyConnected2DLayer(lasagne.layers.Layer):
         self.get_output_rc(self.input_shape)
     """
 
-    def __init__(self, incoming, num_filters, filter_size, stride=(1, 1),
-                 pad=0, untie_biases=False,
-                 W=lasagne.init.GlorotUniform(), b=lasagne.init.Constant(0.),
-                 nonlinearity=lasagne.nonlinearities.rectify,
-                 convolution=T.nnet.conv2d, **kwargs):
+    def __init__(
+        self,
+        incoming,
+        num_filters,
+        filter_size,
+        stride=(1, 1),
+        pad=0,
+        untie_biases=False,
+        W=lasagne.init.GlorotUniform(),
+        b=lasagne.init.Constant(0.0),
+        nonlinearity=lasagne.nonlinearities.rectify,
+        convolution=T.nnet.conv2d,
+        **kwargs
+    ):
         super(LocallyConnected2DLayer, self).__init__(incoming, **kwargs)
         if nonlinearity is None:
             self.nonlinearity = lasagne.nonlinearities.identity
@@ -145,8 +158,7 @@ class LocallyConnected2DLayer(lasagne.layers.Layer):
 
         if pad == 'same':
             if any(s % 2 == 0 for s in self.filter_size):
-                raise NotImplementedError(
-                    '`same` padding requires odd filter size.')
+                raise NotImplementedError('`same` padding requires odd filter size.')
 
         if pad == 'valid':
             self.pad = (0, 0)
@@ -155,17 +167,15 @@ class LocallyConnected2DLayer(lasagne.layers.Layer):
         else:
             self.pad = lasagne.utils.as_tuple(pad, 2, int)
 
-        self.W = self.add_param(W, self.get_W_shape(), name="W")
+        self.W = self.add_param(W, self.get_W_shape(), name='W')
         if b is None:
             self.b = None
         else:
             if self.untie_biases:
-                biases_shape = (num_filters, self.output_shape[2], self.
-                                output_shape[3])
+                biases_shape = (num_filters, self.output_shape[2], self.output_shape[3])
             else:
                 biases_shape = (num_filters,)
-            self.b = self.add_param(b, biases_shape, name="b",
-                                    regularizable=False)
+            self.b = self.add_param(b, biases_shape, name='b', regularizable=False)
 
     def get_W_shape(self):
         """Get the shape of the weight matrix `W`.
@@ -180,17 +190,25 @@ class LocallyConnected2DLayer(lasagne.layers.Layer):
         """
         num_input_channels = self.input_shape[1]
         output_rows, output_cols = self.get_output_rc(self.input_shape)
-        return (self.num_filters, num_input_channels, self.filter_size[0],
-                self.filter_size[1], output_rows, output_cols)
+        return (
+            self.num_filters,
+            num_input_channels,
+            self.filter_size[0],
+            self.filter_size[1],
+            output_rows,
+            output_cols,
+        )
 
     def get_output_rc(self, input_shape):
         pad = self.pad if isinstance(self.pad, tuple) else (self.pad,) * 2
 
         output_rows = lasagne.layers.conv.conv_output_length(
-            input_shape[2], self.filter_size[0], self.stride[0], pad[0])
+            input_shape[2], self.filter_size[0], self.stride[0], pad[0]
+        )
 
         output_columns = lasagne.layers.conv.conv_output_length(
-            input_shape[3], self.filter_size[1], self.stride[1], pad[1])
+            input_shape[3], self.filter_size[1], self.stride[1], pad[1]
+        )
 
         return output_rows, output_columns
 
@@ -206,14 +224,17 @@ class LocallyConnected2DLayer(lasagne.layers.Layer):
 
         if self.stride == (1, 1) and self.pad == 'same':
             # simulate same convolution by cropping a full convolution
-            conved = self.convolution(input, self.W, subsample=self.stride,
-                                      image_shape=input_shape,
-                                      filter_shape=self.get_W_shape(),
-                                      border_mode='full')
+            conved = self.convolution(
+                input,
+                self.W,
+                subsample=self.stride,
+                image_shape=input_shape,
+                filter_shape=self.get_W_shape(),
+                border_mode='full',
+            )
             crop_x = self.filter_size[0] // 2
             crop_y = self.filter_size[1] // 2
-            conved = conved[:, :, crop_x:-crop_x or None,
-                            crop_y:-crop_y or None]
+            conved = conved[:, :, crop_x : -crop_x or None, crop_y : -crop_y or None]
         else:
             # no padding needed, or explicit padding of input needed
             if self.pad == 'full':
@@ -221,25 +242,33 @@ class LocallyConnected2DLayer(lasagne.layers.Layer):
                 pad = [(0, 0), (0, 0)]
             elif self.pad == 'same':
                 border_mode = 'valid'
-                pad = [(self.filter_size[0] // 2,
-                        self.filter_size[0] // 2),
-                       (self.filter_size[1] // 2,
-                        self.filter_size[1] // 2)]
+                pad = [
+                    (self.filter_size[0] // 2, self.filter_size[0] // 2),
+                    (self.filter_size[1] // 2, self.filter_size[1] // 2),
+                ]
             else:
                 border_mode = 'valid'
                 pad = [(self.pad[0], self.pad[0]), (self.pad[1], self.pad[1])]
             if pad != [(0, 0), (0, 0)]:
-                input = lasagne.theano_extensions.padding.pad(input, pad,
-                                                              batch_ndim=2)
-                input_shape = (input_shape[0], input_shape[1],
-                               None if input_shape[2] is None else
-                               input_shape[2] + pad[0][0] + pad[0][1],
-                               None if input_shape[3] is None else
-                               input_shape[3] + pad[1][0] + pad[1][1])
-            conved = self.convolution(input, self.W, subsample=self.stride,
-                                      image_shape=input_shape,
-                                      filter_shape=self.get_W_shape(),
-                                      border_mode=border_mode)
+                input = lasagne.theano_extensions.padding.pad(input, pad, batch_ndim=2)
+                input_shape = (
+                    input_shape[0],
+                    input_shape[1],
+                    None
+                    if input_shape[2] is None
+                    else input_shape[2] + pad[0][0] + pad[0][1],
+                    None
+                    if input_shape[3] is None
+                    else input_shape[3] + pad[1][0] + pad[1][1],
+                )
+            conved = self.convolution(
+                input,
+                self.W,
+                subsample=self.stride,
+                image_shape=input_shape,
+                filter_shape=self.get_W_shape(),
+                border_mode=border_mode,
+            )
 
         if self.b is None:
             activation = conved
@@ -251,7 +280,7 @@ class LocallyConnected2DLayer(lasagne.layers.Layer):
         return self.nonlinearity(activation)
 
 
-#@six.add_metaclass(ut.ReloadingMetaclass)
+# @six.add_metaclass(ut.ReloadingMetaclass)
 class L2NormalizeLayer(lasagne.layers.Layer):
     """
     Normalizes the outputs of a layer to have an L2 norm of 1.
@@ -259,6 +288,7 @@ class L2NormalizeLayer(lasagne.layers.Layer):
     the L2 distance.
 
     """
+
     def __init__(self, input_layer, axis=1, **kwargs):
         super(L2NormalizeLayer, self).__init__(input_layer, **kwargs)
         self.axis = axis
@@ -323,9 +353,9 @@ class L2NormalizeLayer(lasagne.layers.Layer):
 
         # reshape to two dimensions
         input_reshaped_ = input_.reshape((batch_size, rest_size))
-        #if T is np:
+        # if T is np:
         #    #input_reshaped_ = input_.reshape(batch_shape + (rest_size,))
-        #else:
+        # else:
         #    # hack because I don't know how to get ndim yet
         #    if axis == 1:
         #        input_reshaped_ = input_.reshape(batch_shape + (rest_size,), ndim=2)
@@ -334,14 +364,14 @@ class L2NormalizeLayer(lasagne.layers.Layer):
 
         ell2_norm = T.sqrt(T.power(input_reshaped_, 2).sum(axis=-1))
         if T is np:
-            #outputreshaped_ = input_reshaped_ / ell2_norm[..., None]
+            # outputreshaped_ = input_reshaped_ / ell2_norm[..., None]
             outputreshaped_ = input_reshaped_ / ell2_norm[:, None]
             output_ = outputreshaped_.reshape(input_shape)
         else:
             outputreshaped_ = input_reshaped_ / ell2_norm[:, None]
             output_ = outputreshaped_.reshape(input_shape)
             output_.name = 'l2normalized(%s)' % (input_.name)
-            #.dimshuffle(0, 'x', 1)
+            # .dimshuffle(0, 'x', 1)
         return output_
 
 
@@ -386,6 +416,7 @@ class SiameseConcatLayer(lasagne.layers.Layer):
 
     Takes two network representations in the batch and combines them along an axis.
     """
+
     def __init__(self, input_layer, data_per_label=2, axis=1, **kwargs):
         super(SiameseConcatLayer, self).__init__(input_layer, **kwargs)
         self.data_per_label = data_per_label
@@ -429,13 +460,13 @@ class SiameseConcatLayer(lasagne.layers.Layer):
             axis = self.axis
         assert self.axis != 0, 'self.axis=%r cannot be 0' % (self.axis,)
         new_batch_shape = (input_shape[0] // self.data_per_label,)
-        new_shape_middle = (input_shape[axis]  * self.data_per_label,)
+        new_shape_middle = (input_shape[axis] * self.data_per_label,)
         if axis >= 0:
             shape_front = input_shape[1:axis]
-            shape_end = input_shape[axis + 1:]
+            shape_end = input_shape[axis + 1 :]
         else:
             shape_front = input_shape[1:axis]
-            shape_end = input_shape[len(input_shape) + axis + 1:]
+            shape_end = input_shape[len(input_shape) + axis + 1 :]
         output_shape = new_batch_shape + shape_front + new_shape_middle + shape_end
         return output_shape
 
@@ -483,14 +514,14 @@ class SiameseConcatLayer(lasagne.layers.Layer):
         """
         data_per_label = self.data_per_label
         split_inputs = [input_[count::data_per_label] for count in range(data_per_label)]
-        output_ =  T.concatenate(split_inputs, axis=self.axis)
-        #input1, input2 = input_[0::2], input_[1::2]
-        #output_ =  T.concatenate([input1, input2], axis=1)
+        output_ = T.concatenate(split_inputs, axis=self.axis)
+        # input1, input2 = input_[0::2], input_[1::2]
+        # output_ =  T.concatenate([input1, input2], axis=1)
         return output_
 
 
 def interact_image_list(img_list, num_per_page=1):
-    #from wbia.viz import viz_helpers as vh
+    # from wbia.viz import viz_helpers as vh
     import plottool as pt
 
     nRows, nCols = pt.get_square_row_cols(num_per_page)
@@ -500,9 +531,9 @@ def interact_image_list(img_list, num_per_page=1):
         pt.figure(fnum=1, doclf=True)
         for img in img_chunks:
             pt.imshow(img, pnum=pnum_())
-        #pt.draw_border(pt.gca(), color=vh.get_truth_color(label))
-        #pt.imshow(patch2, pnum=(1, 2, 2))
-        #pt.draw_border(pt.gca(), color=vh.get_truth_color(label))
+        # pt.draw_border(pt.gca(), color=vh.get_truth_color(label))
+        # pt.imshow(patch2, pnum=(1, 2, 2))
+        # pt.draw_border(pt.gca(), color=vh.get_truth_color(label))
         pt.update()
 
 
@@ -516,13 +547,15 @@ def testdata_centersurround(item_shape):
 
 class CenterSurroundLayer(lasagne.layers.Layer):
     def __init__(self, input_layer, *args, **kwargs):
-        #self.name = kwargs.pop('name', None)
+        # self.name = kwargs.pop('name', None)
         super(CenterSurroundLayer, self).__init__(input_layer, *args, **kwargs)
 
     def get_output_shape_for(self, input_shape):
         batch_size, channels, height, width = input_shape
         if height % 2 == 1 or width % 2 == 1:
-            warnings.warn("input layer to CenterSurroundLayer should ideally have an even width and height.")
+            warnings.warn(
+                'input layer to CenterSurroundLayer should ideally have an even width and height.'
+            )
         output_shape = (batch_size * 2, channels, height // 2, width // 2)
         return output_shape
 
@@ -568,7 +601,7 @@ class CenterSurroundLayer(lasagne.layers.Layer):
             T = np
         """
         # Create a center and surround for each input patch
-        #return input_
+        # return input_
         input_shape = input_expr.shape
         batch_size, channels, height, width = input_shape
 
@@ -592,18 +625,18 @@ class CenterSurroundLayer(lasagne.layers.Layer):
             output_expr = T.alloc(0.0, *output_shape)
             output_expr.name = 'center_surround_alloc'
             set_subtensor = functools.partial(T.set_subtensor)
-            #set_subtensor = functools.partial(T.set_subtensor, inplace=True, tolerate_inplace_aliasing=True)
+            # set_subtensor = functools.partial(T.set_subtensor, inplace=True, tolerate_inplace_aliasing=True)
             output_expr = set_subtensor(output_expr[::2], center)
             output_expr = set_subtensor(output_expr[1::2], surround)
             output_expr.name = 'center_surround_output'
-            #from wbia_cnn import draw_net
-            #draw_net.draw_theano_symbolic_expression(output_expr)
+            # from wbia_cnn import draw_net
+            # draw_net.draw_theano_symbolic_expression(output_expr)
         else:
             # debugging numpy version
             output_expr = np.empty(output_shape, dtype=input_expr.dtype)
-            output_expr[::2] =  center
-            output_expr[1::2] =  surround
-        #output_expr = T.concatenate([center, surround], axis=0)
+            output_expr[::2] = center
+            output_expr[1::2] = surround
+        # output_expr = T.concatenate([center, surround], axis=0)
         return output_expr
 
 
@@ -620,6 +653,7 @@ class MultiImageSliceLayer(lasagne.layers.Layer):
     Note that the stacking happens on axis 0, so a reshape to
     (4, batch_size, num_channels, r, c) will separate the slice axis.
     """
+
     def __init__(self, input_layer):
         super(MultiImageSliceLayer, self).__init__(input_layer)
 
@@ -627,12 +661,15 @@ class MultiImageSliceLayer(lasagne.layers.Layer):
         return (4 * input_shape[0],) + input_shape[1:]
 
     def get_output_for(self, input_, *args, **kwargs):
-        return lasagne.utils.concatenate([
-            #array_tf_0(input_),
-            #array_tf_90(input_),
-            #array_tf_180(input_),
-            #array_tf_270(input_),
-        ], axis=0)
+        return lasagne.utils.concatenate(
+            [
+                # array_tf_0(input_),
+                # array_tf_90(input_),
+                # array_tf_180(input_),
+                # array_tf_270(input_),
+            ],
+            axis=0,
+        )
 
 
 class MultiImageRollLayer(lasagne.layers.Layer):
@@ -649,6 +686,7 @@ class MultiImageRollLayer(lasagne.layers.Layer):
     References:
         https://github.com/benanne/kaggle-ndsb/blob/master/dihedral.py#L224
     """
+
     def __init__(self, input_layer):
         super(MultiImageRollLayer, self).__init__(input_layer)
         self.inv_tf_funcs = []  # array_tf_0, array_tf_270, array_tf_180, array_tf_90]
@@ -678,7 +716,9 @@ class MultiImageRollLayer(lasagne.layers.Layer):
             input_permuted = inv_tf(input_unfolded[p].reshape(s))
             permuted_inputs.append(input_permuted)
 
-        return lasagne.utils.concatenate(permuted_inputs, axis=1)  # concatenate long the channel axis
+        return lasagne.utils.concatenate(
+            permuted_inputs, axis=1
+        )  # concatenate long the channel axis
 
 
 class CyclicPoolLayer(lasagne.layers.Layer):
@@ -687,6 +727,7 @@ class CyclicPoolLayer(lasagne.layers.Layer):
     Note that this only makes sense for dense representations, not for
     feature maps (because no inverse transforms are applied to align them).
     """
+
     def __init__(self, input_layer, pool_function=T.mean):
         super(CyclicPoolLayer, self).__init__(input_layer)
         self.pool_function = pool_function
@@ -703,19 +744,21 @@ class BatchNormLayer2(lasagne.layers.BatchNormLayer):
     """
     Adds a nonlinearity to batch norm layer to reduce number of layers
     """
+
     def __init__(self, incoming, nonlinearity=None, **kwargs):
-        #this_class_now = ut.fix_super_reload_error(BatchNormLayer2, self)
+        # this_class_now = ut.fix_super_reload_error(BatchNormLayer2, self)
         this_class_now = BatchNormLayer2
         super(this_class_now, self).__init__(incoming, **kwargs)
-        #super(BatchNormLayer2, self).__init__(incoming, **kwargs)
-        self.nonlinearity = (lasagne.nonlinearities.identity
-                             if nonlinearity is None else nonlinearity)
+        # super(BatchNormLayer2, self).__init__(incoming, **kwargs)
+        self.nonlinearity = (
+            lasagne.nonlinearities.identity if nonlinearity is None else nonlinearity
+        )
 
     def get_output_for(self, input, **kwargs):
-        #this_class_now = ut.fix_super_reload_error(BatchNormLayer2, self)
+        # this_class_now = ut.fix_super_reload_error(BatchNormLayer2, self)
         this_class_now = BatchNormLayer2
         normalized = super(this_class_now, self).get_output_for(input, **kwargs)
-        #normalized = super(BatchNormLayer2, self).get_output_for(input, **kwargs)
+        # normalized = super(BatchNormLayer2, self).get_output_for(input, **kwargs)
         normalized_activation = self.nonlinearity(normalized)
         return normalized_activation
 
@@ -807,8 +850,10 @@ def evaluate_layer_list(network_layers_def, verbose=None):
             next_args = tuple()
             for count, layer_fn in enumerate(layer_fn_iter, start=1):
                 if verbose:
-                    print('Evaluating layer %d/%d (%s) ' %
-                          (count, total, ut.get_funcname(layer_fn), ))
+                    print(
+                        'Evaluating layer %d/%d (%s) '
+                        % (count, total, ut.get_funcname(layer_fn),)
+                    )
                 with ut.Timer(verbose=False) as tt:
                     layer = layer_fn(*next_args)
                 next_args = (layer,)
@@ -817,18 +862,21 @@ def evaluate_layer_list(network_layers_def, verbose=None):
                     print('  * took %.4fs' % (tt.toc(),))
                     print('  * layer = %r' % (layer,))
                     if hasattr(layer, 'input_shape'):
-                        print('  * layer.input_shape = %r' % (
-                            layer.input_shape,))
+                        print('  * layer.input_shape = %r' % (layer.input_shape,))
                     if hasattr(layer, 'shape'):
-                        print('  * layer.shape = %r' % (
-                            layer.shape,))
-                    print('  * layer.output_shape = %r' % (
-                        layer.output_shape,))
+                        print('  * layer.shape = %r' % (layer.shape,))
+                    print('  * layer.output_shape = %r' % (layer.output_shape,))
     except Exception as ex:
-        keys = ['layer_fn', 'layer_fn.func', 'layer_fn.args',
-                'layer_fn.keywords', 'layer_fn.__dict__', 'layer', 'count']
-        ut.printex(ex, ('Error building layers.\n' 'layer=%r') % (layer,),
-                   keys=keys)
+        keys = [
+            'layer_fn',
+            'layer_fn.func',
+            'layer_fn.args',
+            'layer_fn.keywords',
+            'layer_fn.__dict__',
+            'layer',
+            'count',
+        ]
+        ut.printex(ex, ('Error building layers.\n' 'layer=%r') % (layer,), keys=keys)
         raise
     return network_layers
 
@@ -836,14 +884,16 @@ def evaluate_layer_list(network_layers_def, verbose=None):
 # Bundle common layers together
 
 
-def make_bundles(nonlinearity='lru', batch_norm=True,
-                 filter_size=(3, 3),
-                 stride=(1, 1),
-                 pool_stride=(2, 2),
-                 pool_size=(2, 2),
-                 branches=None,
-                 W=None,
-                 ):
+def make_bundles(
+    nonlinearity='lru',
+    batch_norm=True,
+    filter_size=(3, 3),
+    stride=(1, 1),
+    pool_stride=(2, 2),
+    pool_size=(2, 2),
+    branches=None,
+    W=None,
+):
 
     # FIXME; dropout is a pre-operation
     import wbia_cnn.__LASAGNE__ as lasagne
@@ -851,12 +901,12 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
     import six
 
     if W is None:
-        #W = init.GlorotUniform()
+        # W = init.GlorotUniform()
         W = lasagne.init.Orthogonal('relu')
 
     # Rectify default inputs
     if nonlinearity == 'lru':
-        nonlinearity = lasagne.nonlinearities.LeakyRectify(leakiness=(1. / 10.))
+        nonlinearity = lasagne.nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0))
     nonlinearity = nonlinearity
     namer = ut.partial(lambda x: str(six.next(x)), itertools.count(1))
 
@@ -885,8 +935,9 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
 
         def apply_dropout(self, layer):
             # change name standard
-            outgoing = lasagne.layers.DropoutLayer(layer, p=self.dropout,
-                                                   name='D' + self.name)
+            outgoing = lasagne.layers.DropoutLayer(
+                layer, p=self.dropout, name='D' + self.name
+            )
             return outgoing
 
         def apply_batch_norm(self, layer, **kwargs):
@@ -897,20 +948,21 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
             if hasattr(layer, 'b') and layer.b is not None:
                 del layer.params[layer.b]
                 layer.b = None
-            #bn_name = (kwargs.pop('name', None) or
+            # bn_name = (kwargs.pop('name', None) or
             #           (getattr(layer, 'name', None) and self.name + '/bn'))
             bn_name = layer.name + '/bn'
-            layer = BatchNormLayer2(layer, name=bn_name,
-                                    nonlinearity=nonlinearity, **kwargs)
-            #layer._is_main_layer = False
-            #if nonlinearity is not None:
+            layer = BatchNormLayer2(
+                layer, name=bn_name, nonlinearity=nonlinearity, **kwargs
+            )
+            # layer._is_main_layer = False
+            # if nonlinearity is not None:
             #    nonlin_name = 'g' + self.name
             #    layer = lasagne.layers.special.NonlinearityLayer(layer,
             #                                                     nonlinearity,
             #                                                     name=nonlin_name)
-            #outgoing = lasagne.layers.normalization.batch_norm(layer, **kwargs)
-            #outgoing.input_layer.name = 'bn' + self.name
-            #outgoing.name = 'nl' + self.name
+            # outgoing = lasagne.layers.normalization.batch_norm(layer, **kwargs)
+            # outgoing.input_layer.name = 'bn' + self.name
+            # outgoing.name = 'nl' + self.name
             outgoing = layer
             return outgoing
 
@@ -922,20 +974,31 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
             super(InputBundle, self).__init__()
 
         def __call__(self):
-            outgoing = lasagne.layers.InputLayer(shape=self.shape,
-                                                 name='I' + self.name)
+            outgoing = lasagne.layers.InputLayer(shape=self.shape, name='I' + self.name)
             if self.noise:
                 outgoing = lasagne.layers.GaussianNoiseLayer(
-                    outgoing, name='N' + self.name)
+                    outgoing, name='N' + self.name
+                )
             return outgoing
 
     @register_bundle
     class ConvBundle(Bundle):
-        def __init__(self, num_filters, filter_size=filter_size,
-                     stride=stride, nonlinearity=nonlinearity,
-                     batch_norm=batch_norm, pool_size=pool_size,
-                     W=W, pool_stride=pool_stride, dropout=None,
-                     pool=False, preactivate=False, pad=0, name=None):
+        def __init__(
+            self,
+            num_filters,
+            filter_size=filter_size,
+            stride=stride,
+            nonlinearity=nonlinearity,
+            batch_norm=batch_norm,
+            pool_size=pool_size,
+            W=W,
+            pool_stride=pool_stride,
+            dropout=None,
+            pool=False,
+            preactivate=False,
+            pad=0,
+            name=None,
+        ):
             self.num_filters = num_filters
             self.filter_size = filter_size
             self.stride = stride
@@ -965,38 +1028,55 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
                 nonlinearity = self.nonlinearity
 
             if self.preactivate:
-                outgoing = BatchNormLayer2(outgoing,
-                                           nonlinearity=self.nonlinearity,
-                                           name=self.name + '/_bn')
+                outgoing = BatchNormLayer2(
+                    outgoing, nonlinearity=self.nonlinearity, name=self.name + '/_bn'
+                )
 
             if self.dropout is not None and self.dropout > 0:
                 outgoing = self.apply_dropout(outgoing)
 
-            outgoing = Conv2DLayer(outgoing, num_filters=self.num_filters,
-                                   filter_size=self.filter_size,
-                                   stride=self.stride, name=self.name,
-                                   pad=self.pad, W=W,
-                                   nonlinearity=nonlinearity, b=b)
+            outgoing = Conv2DLayer(
+                outgoing,
+                num_filters=self.num_filters,
+                filter_size=self.filter_size,
+                stride=self.stride,
+                name=self.name,
+                pad=self.pad,
+                W=W,
+                nonlinearity=nonlinearity,
+                b=b,
+            )
 
             if self.batch_norm and not self.preactivate:
-                outgoing = BatchNormLayer2(outgoing,
-                                           nonlinearity=self.nonlinearity,
-                                           name=self.name + '/bn_')
+                outgoing = BatchNormLayer2(
+                    outgoing, nonlinearity=self.nonlinearity, name=self.name + '/bn_'
+                )
 
             if self.pool:
-                outgoing = MaxPool2DLayer(outgoing, pool_size=self.pool_size,
-                                          name=self.name + '/P',
-                                          stride=self.pool_stride)
+                outgoing = MaxPool2DLayer(
+                    outgoing,
+                    pool_size=self.pool_size,
+                    name=self.name + '/P',
+                    stride=self.pool_stride,
+                )
             return outgoing
 
     @register_bundle
     class ResidualBundle(Bundle):
-        def __init__(self, num_filters, filter_size=filter_size,
-                     stride=stride, nonlinearity=nonlinearity,
-                     pool_size=pool_size, W=W, pool_stride=pool_stride,
-                     dropout=None, pool=False,
-                     preactivate=True,
-                     postactivate=False):
+        def __init__(
+            self,
+            num_filters,
+            filter_size=filter_size,
+            stride=stride,
+            nonlinearity=nonlinearity,
+            pool_size=pool_size,
+            W=W,
+            pool_stride=pool_stride,
+            dropout=None,
+            pool=False,
+            preactivate=True,
+            postactivate=False,
+        ):
             self.num_filters = num_filters
             self.filter_size = filter_size
             self.stride = stride
@@ -1011,7 +1091,7 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
             super(ResidualBundle, self).__init__()
             self.name = 'R' + self.name
 
-        #def projectionA(l_inp):
+        # def projectionA(l_inp):
         #    n_filters = l_inp.output_shape[1] * 2
 
         #    def ceildiv(a, b):
@@ -1034,10 +1114,16 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
             # I think preactivation should not trigger any nonlinearities. Just
             # batch normalization. But I haven't been able to confirm.
             projector = ConvBundle(
-                filter_size=(1, 1), num_filters=self.num_filters,
-                stride=self.stride, W=self.W, pad='same',
-                dropout=self.dropout, name=self.name + '/proj',
-                nonlinearity=None, preactivate=self.preactivate)
+                filter_size=(1, 1),
+                num_filters=self.num_filters,
+                stride=self.stride,
+                W=self.W,
+                pad='same',
+                dropout=self.dropout,
+                name=self.name + '/proj',
+                nonlinearity=None,
+                preactivate=self.preactivate,
+            )
             shortcut = projector(incoming)
             return shortcut
 
@@ -1049,18 +1135,28 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
             """
 
             # Check if this bundle is going to reduce the spatial dimensions
-            size_reduced = (np.prod(self.stride) != 1)
+            size_reduced = np.prod(self.stride) != 1
 
             # Define convolvers
-            convkw = dict(W=self.W, pad='same', dropout=self.dropout,
-                          batch_norm=False, filter_size=self.filter_size,
-                          num_filters=self.num_filters)
+            convkw = dict(
+                W=self.W,
+                pad='same',
+                dropout=self.dropout,
+                batch_norm=False,
+                filter_size=self.filter_size,
+                num_filters=self.num_filters,
+            )
 
             # Do not preactivate if this is the first layer in the network
-            convolver1 = ConvBundle(stride=self.stride, preactivate=self.preactivate,
-                                    name=self.name + '/C1', **convkw)
-            convolver2 = ConvBundle(stride=(1, 1), preactivate=True,
-                                    name=self.name + '/C2', **convkw)
+            convolver1 = ConvBundle(
+                stride=self.stride,
+                preactivate=self.preactivate,
+                name=self.name + '/C1',
+                **convkw
+            )
+            convolver2 = ConvBundle(
+                stride=(1, 1), preactivate=True, name=self.name + '/C2', **convkw
+            )
 
             branch = incoming
             branch = convolver1(branch)
@@ -1074,18 +1170,22 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
                 shortcut = incoming
 
             outgoing = lasagne.layers.ElemwiseSumLayer(
-                [branch, shortcut], name=self.name + '/sum')
+                [branch, shortcut], name=self.name + '/sum'
+            )
 
             # Postactivate if this is the last residual layer.
             if self.postactivate:
                 outgoing = BatchNormLayer2(
-                    outgoing, name=self.name + '/bn_',
-                    nonlinearity=nonlinearity)
+                    outgoing, name=self.name + '/bn_', nonlinearity=nonlinearity
+                )
 
             if self.pool:
-                outgoing = MaxPool2DLayer(outgoing, pool_size=self.pool_size,
-                                          name=self.name + '/P',
-                                          stride=self.pool_stride)
+                outgoing = MaxPool2DLayer(
+                    outgoing,
+                    pool_size=self.pool_size,
+                    name=self.name + '/P',
+                    stride=self.pool_stride,
+                )
 
             return outgoing
 
@@ -1093,10 +1193,17 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
     class InceptionBundle(Bundle):
         # https://github.com/317070/lasagne-googlenet/blob/master/googlenet.py
 
-        def __init__(self, branches=branches,
-                     nonlinearity=nonlinearity, batch_norm=batch_norm,
-                     dropout=None, pool=False, pool_size=pool_size,
-                     pool_stride=pool_stride, W=W):
+        def __init__(
+            self,
+            branches=branches,
+            nonlinearity=nonlinearity,
+            batch_norm=batch_norm,
+            dropout=None,
+            pool=False,
+            pool_size=pool_size,
+            pool_stride=pool_stride,
+            W=W,
+        ):
             # standard
             self.branches = branches
             self.nonlinearity = nonlinearity
@@ -1115,58 +1222,66 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
                 in_ = self.apply_dropout(in_)
             name = self.name
 
-            #branches = self.inception_v0(in_)
+            # branches = self.inception_v0(in_)
             if self.branches is not None:
                 branches = []
                 for b in self.branches:
                     print(b)
                     if b['t'] == 'c':
                         branch = self.conv_branch(
-                            in_, b['s'], b['n'], b['r'], b.get('d', 1))
+                            in_, b['s'], b['n'], b['r'], b.get('d', 1)
+                        )
                     elif b['t'] == 'p':
-                        branch = self.proj_branch(
-                            in_, b['s'], b['n'])
+                        branch = self.proj_branch(in_, b['s'], b['n'])
                     else:
                         print('b = %r' % (b,))
                         assert False
                     branches.append(branch)
             else:
-                #branches = self.inception_v3_A(in_)
+                # branches = self.inception_v3_A(in_)
                 branches = self.inception_v0(in_)
 
-            #print(branches)
-            #for b in branches:
+            # print(branches)
+            # for b in branches:
             #    print(b.output_shape)
 
-            outgoing = lasagne.layers.ConcatLayer(branches,
-                                                  name=name + '/cat')
+            outgoing = lasagne.layers.ConcatLayer(branches, name=name + '/cat')
             outgoing._is_main_layer = True
             if self.pool:
-                outgoing = MaxPool2DLayer(outgoing, pool_size=self.pool_size,
-                                          name='P' + self.name,
-                                          stride=self.pool_stride)
+                outgoing = MaxPool2DLayer(
+                    outgoing,
+                    pool_size=self.pool_size,
+                    name='P' + self.name,
+                    stride=self.pool_stride,
+                )
             return outgoing
 
-        def conv_branch(self, incoming, filter_size, num_filters, num_reduce,
-                        depth=1):
+        def conv_branch(self, incoming, filter_size, num_filters, num_reduce, depth=1):
             name = self.name
             name_aug = 'x'.join([str(s) for s in filter_size])
             if num_reduce > 0:
                 if False:
-                    bias = .1
+                    bias = 0.1
                     redu = lasagne.layers.NINLayer(
-                        incoming, num_units=num_reduce,
+                        incoming,
+                        num_units=num_reduce,
                         W=self.W,
                         b=lasagne.init.Constant(bias),
                         nonlinearity=self.nonlinearity,
-                        name=name + '/' + name_aug + '_reduce',)
+                        name=name + '/' + name_aug + '_reduce',
+                    )
 
                 else:
-                    redu = Conv2DLayer(incoming, num_filters=num_reduce,
-                                       filter_size=(1, 1), pad=0, stride=(1, 1),
-                                       nonlinearity=self.nonlinearity,
-                                       W=self.W,
-                                       name=name + '/' + name_aug + '_reduce',)
+                    redu = Conv2DLayer(
+                        incoming,
+                        num_filters=num_reduce,
+                        filter_size=(1, 1),
+                        pad=0,
+                        stride=(1, 1),
+                        nonlinearity=self.nonlinearity,
+                        W=self.W,
+                        name=name + '/' + name_aug + '_reduce',
+                    )
                 if self.batch_norm:
                     redu = self.apply_batch_norm(redu)
             else:
@@ -1174,31 +1289,45 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
             conv = redu
             for d in range(depth):
                 pad = min(filter_size) // 2
-                conv = Conv2DLayer(conv, num_filters=num_filters,
-                                   filter_size=filter_size, pad=pad, stride=(1, 1),
-                                   nonlinearity=self.nonlinearity,
-                                   W=self.W,
-                                   name=name + '/' + name_aug + '_' + str(d))
+                conv = Conv2DLayer(
+                    conv,
+                    num_filters=num_filters,
+                    filter_size=filter_size,
+                    pad=pad,
+                    stride=(1, 1),
+                    nonlinearity=self.nonlinearity,
+                    W=self.W,
+                    name=name + '/' + name_aug + '_' + str(d),
+                )
                 if d > 0:
                     conv._is_main_layer = False
                 if self.batch_norm:
                     conv = self.apply_batch_norm(conv)
-            #if num_reduce > 0:
+            # if num_reduce > 0:
             #    conv._is_main_layer = False
             return conv
 
         def proj_branch(self, incoming, pool_size, num_proj):
             name = self.name
             flipped = FlipLayer(incoming, name=name + '/Flip')
-            pool = MaxPool2DLayer(flipped, pool_size=pool_size,
-                                  stride=(1, 1), pad=(1, 1),
-                                  name=name + '/pool')
+            pool = MaxPool2DLayer(
+                flipped,
+                pool_size=pool_size,
+                stride=(1, 1),
+                pad=(1, 1),
+                name=name + '/pool',
+            )
             unflipped = FlipLayer(pool, name=name + '/Unflip')
 
-            project = Conv2DLayer(unflipped, num_filters=num_proj,
-                                  filter_size=(1, 1), pad=0, stride=(1, 1),
-                                  nonlinearity=self.nonlinearity,
-                                  name=name + '/proj')
+            project = Conv2DLayer(
+                unflipped,
+                num_filters=num_proj,
+                filter_size=(1, 1),
+                pad=0,
+                stride=(1, 1),
+                nonlinearity=self.nonlinearity,
+                name=name + '/proj',
+            )
             if self.batch_norm:
                 project = self.apply_batch_norm(project)
             return project
@@ -1211,9 +1340,7 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
                 self.conv_branch(in_, (5, 5), 16, 16),
             ]
             # Define the projection branch
-            proj_branches = [
-                self.proj_branch(in_, (3, 3), 32)
-            ]
+            proj_branches = [self.proj_branch(in_, (3, 3), 32)]
             branches = conv_branches + proj_branches
             return branches
 
@@ -1223,16 +1350,20 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
                 self.conv_branch(in_, (3, 3), 128, 96),
                 self.conv_branch(in_, (3, 3), 16, 16, depth=2),
             ]
-            proj_branches = [
-                self.proj_branch(in_, (3, 3), 32)
-            ]
+            proj_branches = [self.proj_branch(in_, (3, 3), 32)]
             branches = conv_branches + proj_branches
             return branches
 
     @register_bundle
     class DenseBundle(Bundle):
-        def __init__(self, num_units, batch_norm=batch_norm,
-                     nonlinearity=nonlinearity, W=W, dropout=None):
+        def __init__(
+            self,
+            num_units,
+            batch_norm=batch_norm,
+            nonlinearity=nonlinearity,
+            W=W,
+            dropout=None,
+        ):
             self.num_units = num_units
             self.batch_norm = batch_norm
             self.nonlinearity = nonlinearity
@@ -1245,8 +1376,12 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
             if self.dropout is not None and self.dropout > 0:
                 outgoing = self.apply_dropout(outgoing)
             outgoing = lasagne.layers.DenseLayer(
-                outgoing, num_units=self.num_units, name='F' + self.name,
-                nonlinearity=self.nonlinearity, W=self.W)
+                outgoing,
+                num_units=self.num_units,
+                name='F' + self.name,
+                nonlinearity=self.nonlinearity,
+                W=self.W,
+            )
             if self.batch_norm:
                 outgoing = self.apply_batch_norm(outgoing)
             return outgoing
@@ -1265,8 +1400,12 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
             if self.dropout is not None and self.dropout > 0:
                 outgoing = self.apply_dropout(outgoing)
             outgoing = lasagne.layers.DenseLayer(
-                outgoing, num_units=self.num_units, name='F' + self.name,
-                W=self.W, nonlinearity=lasagne.nonlinearities.softmax)
+                outgoing,
+                num_units=self.num_units,
+                name='F' + self.name,
+                W=self.W,
+                nonlinearity=lasagne.nonlinearities.softmax,
+            )
             return outgoing
 
     @register_bundle
@@ -1280,21 +1419,19 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
 
     @register_bundle
     class GlobalPool(Bundle):
-        def __call__(self, incoming, ):
-            outgoing = lasagne.layers.GlobalPoolLayer(
-                incoming,
-                name='GP' + self.name,
-            )
+        def __call__(
+            self, incoming,
+        ):
+            outgoing = lasagne.layers.GlobalPoolLayer(incoming, name='GP' + self.name,)
             outgoing._is_main_layer = True
             return outgoing
 
     @register_bundle
     class AveragePool(Bundle):
-        def __call__(self, incoming, ):
-            outgoing = lasagne.layers.GlobalPoolLayer(
-                incoming,
-                name='AP' + self.name,
-            )
+        def __call__(
+            self, incoming,
+        ):
+            outgoing = lasagne.layers.GlobalPoolLayer(incoming, name='AP' + self.name,)
             outgoing._is_main_layer = True
             return outgoing
 
@@ -1313,7 +1450,7 @@ def make_bundles(nonlinearity='lru', batch_norm=True,
                 name='P' + self.name,
             )
 
-    #def inception_module(l_in, num_1x1, reduce_3x3, num_3x3, reduce_5x5,
+    # def inception_module(l_in, num_1x1, reduce_3x3, num_3x3, reduce_5x5,
     #                     num_5x5, gain=1.0, bias=0.1):
     #    """
     #    inception module (without the 3x3x1 pooling and projection because
@@ -1332,6 +1469,8 @@ if __name__ == '__main__':
         python -m wbia_cnn.custom_layers --allexamples --noface --nosrc
     """
     import multiprocessing
+
     multiprocessing.freeze_support()  # for win32
     import utool as ut  # NOQA
+
     ut.doctest_funcs()
