@@ -134,13 +134,22 @@ def parse_requirements(fname='requirements.txt', with_version=True):
 
 if __name__ == '__main__':
     print('[setup] Entering IBEIS setup')
-    kwargs = util_setup.setuptools_setup(
+    kwargs = dict(
         setup_fpath=__file__,
         name='wbia_cnn',
         # author='Hendrik Weideman, Jason Parham, and Jon Crall',
         # author_email='erotemic@gmail.com',
         packages=util_setup.find_packages(),
-        version=util_setup.parse_package_for_version('wbia_cnn'),
+        # --- VERSION ---
+        # The following settings retreive the version from git.
+        # See https://github.com/pypa/setuptools_scm/ for more information
+        setup_requires=['setuptools_scm'],
+        use_scm_version={
+            'write_to': 'wbia_cnn/_version.py',
+            'write_to_template': '__version__ = "{version}"',
+            'tag_regex': '^(?P<prefix>v)?(?P<version>[^\\+]+)(?P<suffix>.*)?$',
+            'local_scheme': 'dirty-tag',
+        },
         license=util_setup.read_license('LICENSE'),
         long_description=util_setup.parse_readme('README.md'),
         ext_modules=util_setup.find_ext_modules(),

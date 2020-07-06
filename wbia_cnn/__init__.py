@@ -16,7 +16,10 @@ from wbia_cnn import theano_ext
 # from wbia_cnn import _plugin
 print, print_, profile = ut.inject2(__name__, '[wbia_cnn]')
 
-__version__ = '1.0.0.dev1'
+try:
+    from wbia_cnn._version import __version__
+except ImportError:
+    __version__ = '0.0.0'
 
 
 def reassign_submodule_attributes(verbose=True):
