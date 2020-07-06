@@ -41,48 +41,6 @@ References:
     pip install -r https://raw.githubusercontent.com/Lasagne/Lasagne/v0.1/requirements.txt
 """
 
-INSTALL_REQUIRES = [
-    'scikit-learn >= 0.16.1',
-    'theano',
-    'lasagne',
-    # 'h5py',  # Install this instead 'sudo apt-get install libhdf5-dev' due to Numpy versioning issues
-    #'pylearn2',
-    #'git+git://github.com/lisa-lab/pylearn2.git'
-    #'utool >= 1.0.0.dev1',
-    #'vtool >= 1.0.0.dev1',
-    ##'pyhesaff >= 1.0.0.dev1',
-    #'pyrf >= 1.0.0.dev1',
-    #'guitool >= 1.0.0.dev1',
-    #'plottool >= 1.0.0.dev1',
-    #'matplotlib >= 1.3.1',
-    #'scipy >= 0.13.2',
-    #'numpy >= 1.8.0',
-    #'Pillow >= 2.4.0',
-    #'psutil',
-    #'requests >= 0.8.2',
-    #'setproctitle >= 1.1.8',
-    ##'decorator',
-    #'lockfile >= 0.10.2',
-    #'apipkg',
-    #'objgraph',
-    #'pycallgraph',
-    #'gevent',
-    #'PyQt 4/5 >= 4.9.1', # cannot include because pyqt4 is not in pip
-]
-
-# INSTALL_OPTIONAL = [
-#    'tornado',
-#    'flask',
-#    'autopep8',
-#    'pyfiglet',
-#    'theano',
-#    'pylearn2'
-#    'lasenge'
-# ]
-
-if six.PY2:
-    INSTALL_REQUIRES.append('requests >= 0.8.2')
-
 
 def parse_requirements(fname='requirements.txt', with_version=False):
     """
@@ -165,6 +123,17 @@ def parse_requirements(fname='requirements.txt', with_version=False):
 
 if __name__ == '__main__':
     print('[setup] Entering IBEIS setup')
+
+    install_requires = parse_requirements('requirements/runtime.txt')
+    extras_require = {
+        'all': parse_requirements('requirements.txt'),
+        'runtime': parse_requirements('requirements/runtime.txt'),
+        'build': parse_requirements('requirements/build.txt'),
+        'optional': parse_requirements('requirements/optional.txt'),
+    }
+    if six.PY2:
+        install_requires.append('requests >= 0.8.2')
+
     kwargs = util_setup.setuptools_setup(
         setup_fpath=__file__,
         name='wbia_cnn',
@@ -180,7 +149,8 @@ if __name__ == '__main__':
         chmod_patterns=CHMOD_PATTERNS,
         clutter_patterns=CLUTTER_PATTERNS,
         clutter_dirs=CLUTTER_DIRS,
-        install_requires=INSTALL_REQUIRES
+        install_requires=install_requires,
+        extras_require=extras_require,
         # cython_files=CYTHON_FILES,
     )
     import utool as ut
