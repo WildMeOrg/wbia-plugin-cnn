@@ -1,110 +1,235 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function
-import six
-from utool import util_setup
-from setuptools import setup
-import utool as ut
+import sys
+from os.path import exists
+from collections import OrderedDict
 
-(print, rrr, profile) = ut.inject2(__name__)
+# from setuptools import find_packages
+from skbuild import setup
 
 
-CHMOD_PATTERNS = [
-    'run_tests.sh',
+def native_mb_python_tag(plat_impl=None, version_info=None):
+    """
+    Example:
+        >>> print(native_mb_python_tag())
+        >>> print(native_mb_python_tag('PyPy', (2, 7)))
+        >>> print(native_mb_python_tag('CPython', (3, 8)))
+    """
+    if plat_impl is None:
+        import platform
+
+        plat_impl = platform.python_implementation()
+
+    if version_info is None:
+        import sys
+
+        version_info = sys.version_info
+
+    major, minor = version_info[0:2]
+    ver = '{}{}'.format(major, minor)
+
+    if plat_impl == 'CPython':
+        # TODO: get if cp27m or cp27mu
+        impl = 'cp'
+        if ver == '27':
+            IS_27_BUILT_WITH_UNICODE = True  # how to determine this?
+            if IS_27_BUILT_WITH_UNICODE:
+                abi = 'mu'
+            else:
+                abi = 'm'
+        else:
+            if ver == '38':
+                # no abi in 38?
+                abi = ''
+            else:
+                abi = 'm'
+        mb_tag = '{impl}{ver}-{impl}{ver}{abi}'.format(**locals())
+    elif plat_impl == 'PyPy':
+        abi = ''
+        impl = 'pypy'
+        ver = '{}{}'.format(major, minor)
+        mb_tag = '{impl}-{ver}'.format(**locals())
+    else:
+        raise NotImplementedError(plat_impl)
+    return mb_tag
+
+
+def parse_version(fpath='wbia_cnn/__init__.py'):
+    """
+    Statically parse the version number from a python file
+
+
+    """
+    import ast
+
+    if not exists(fpath):
+        raise ValueError('fpath={!r} does not exist'.format(fpath))
+    with open(fpath, 'r') as file_:
+        sourcecode = file_.read()
+    pt = ast.parse(sourcecode)
+
+    class VersionVisitor(ast.NodeVisitor):
+        def visit_Assign(self, node):
+            for target in node.targets:
+                if getattr(target, 'id', None) == '__version__':
+                    self.version = node.value.s
+
+    visitor = VersionVisitor()
+    visitor.visit(pt)
+    return visitor.version
+
+
+def parse_long_description(fpath='README.rst'):
+    """
+    Reads README text, but doesn't break if README does not exist.
+    """
+    if exists(fpath):
+        with open(fpath, 'r') as file:
+            return file.read()
+    return ''
+
+
+def parse_requirements(fname='requirements.txt'):
+    """
+    Parse the package dependencies listed in a requirements file but
+    strips specific versioning information.
+
+    CommandLine:
+        python -c "import setup; print(setup.parse_requirements())"
+    """
+    import re
+
+    require_fpath = fname
+
+    def parse_line(line):
+        """
+        Parse information from a line in a requirements text file
+        """
+        if line.startswith('-r '):
+            # Allow specifying requirements in other files
+            target = line.split(' ')[1]
+            for info in parse_require_file(target):
+                yield info
+        elif line.startswith('-e '):
+            info = {}
+            info['package'] = line.split('#egg=')[1]
+            yield info
+        else:
+            # Remove versioning from the package
+            pat = '(' + '|'.join(['>=', '==', '>']) + ')'
+            parts = re.split(pat, line, maxsplit=1)
+            parts = [p.strip() for p in parts]
+
+            info = {}
+            info['package'] = parts[0]
+            if len(parts) > 1:
+                op, rest = parts[1:]
+                if ';' in rest:
+                    # Handle platform specific dependencies
+                    # http://setuptools.readthedocs.io/en/latest/setuptools.html#declaring-platform-specific-dependencies
+                    version, platform_deps = map(str.strip, rest.split(';'))
+                    info['platform_deps'] = platform_deps
+                else:
+                    version = rest  # NOQA
+                info['version'] = (op, version)
+            yield info
+
+    def parse_require_file(fpath):
+        with open(fpath, 'r') as f:
+            for line in f.readlines():
+                line = line.strip()
+                if line and not line.startswith('#'):
+                    for info in parse_line(line):
+                        yield info
+
+    # This breaks on pip install, so check that it exists.
+    packages = []
+    if exists(require_fpath):
+        for info in parse_require_file(require_fpath):
+            package = info['package']
+            if not sys.version.startswith('3.4'):
+                # apparently package_deps are broken in 3.4
+                platform_deps = info.get('platform_deps')
+                if platform_deps is not None:
+                    package += ';' + platform_deps
+            packages.append(package)
+    return packages
+
+
+NAME = 'wbia_cnn'
+
+
+MB_PYTHON_TAG = native_mb_python_tag()  # NOQA
+
+AUTHORS = [
+    'Jason Parham',
+    'Jon Crall',
+    'Hendri Weideman',
+    'WildMe Developers',
 ]
+AUTHOR_EMAIL = 'dev@wildme.org'
+URL = 'https://github.com/WildbookOrg/wbia-plugin-cnn'
+LICENSE = 'BSD'
+DESCRIPTION = 'wbia_cnn - Convolutional Neural Network Plug-in for WBIA'
 
-PROJECT_DIRS = [
-    'wbia_cnn',
-]
 
-CLUTTER_PATTERNS = [
-    "'",
-    '*.dump.txt',
-    '*.prof',
-    '*.prof.txt',
-    '*.lprof',
-    '*.ln.pkg',
-    'timeings.txt',
-]
-
-CLUTTER_DIRS = [
-    'logs/',
-    'dist/',
-    'testsuite',
-    '__pycache__/',
-]
-
-"""
-Need special theano
-References:
-    http://lasagne.readthedocs.org/en/latest/user/installation.html
-    pip install -r https://raw.githubusercontent.com/Lasagne/Lasagne/v0.1/requirements.txt
-"""
-
-INSTALL_REQUIRES = [
-    'scikit-learn >= 0.16.1',
-    'theano',
-    'lasagne',
-    # 'h5py',  # Install this instead 'sudo apt-get install libhdf5-dev' due to Numpy versioning issues
-    #'pylearn2',
-    #'git+git://github.com/lisa-lab/pylearn2.git'
-    #'utool >= 1.0.0.dev1',
-    #'vtool >= 1.0.0.dev1',
-    ##'pyhesaff >= 1.0.0.dev1',
-    #'pyrf >= 1.0.0.dev1',
-    #'guitool >= 1.0.0.dev1',
-    #'plottool >= 1.0.0.dev1',
-    #'matplotlib >= 1.3.1',
-    #'scipy >= 0.13.2',
-    #'numpy >= 1.8.0',
-    #'Pillow >= 2.4.0',
-    #'psutil',
-    #'requests >= 0.8.2',
-    #'setproctitle >= 1.1.8',
-    ##'decorator',
-    #'lockfile >= 0.10.2',
-    #'apipkg',
-    #'objgraph',
-    #'pycallgraph',
-    #'gevent',
-    #'PyQt 4/5 >= 4.9.1', # cannot include because pyqt4 is not in pip
-]
-
-# INSTALL_OPTIONAL = [
-#    'tornado',
-#    'flask',
-#    'autopep8',
-#    'pyfiglet',
-#    'theano',
-#    'pylearn2'
-#    'lasenge'
-# ]
-
-if six.PY2:
-    INSTALL_REQUIRES.append('requests >= 0.8.2')
-
+KWARGS = OrderedDict(
+    name=NAME,
+    author=', '.join(AUTHORS),
+    author_email=AUTHOR_EMAIL,
+    description=DESCRIPTION,
+    long_description=parse_long_description('README.rst'),
+    long_description_content_type='text/x-rst',
+    url=URL,
+    license=LICENSE,
+    install_requires=parse_requirements('requirements/runtime.txt'),
+    extras_require={
+        'all': parse_requirements('requirements.txt'),
+        'tests': parse_requirements('requirements/tests.txt'),
+        'build': parse_requirements('requirements/build.txt'),
+        'runtime': parse_requirements('requirements/runtime.txt'),
+    },
+    # --- VERSION ---
+    # The following settings retreive the version from git.
+    # See https://github.com/pypa/setuptools_scm/ for more information
+    setup_requires=['setuptools_scm'],
+    use_scm_version={
+        'write_to': 'wbia_cnn/_version.py',
+        'write_to_template': '__version__ = "{version}"',
+        'tag_regex': '^(?P<prefix>v)?(?P<version>[^\\+]+)(?P<suffix>.*)?$',
+        'local_scheme': 'dirty-tag',
+    },
+    # packages=find_packages(),
+    packages=[
+        'wbia_cnn',
+        'wbia_cnn._internal',
+        'wbia_cnn.tests',
+        'wbia_cnn.util_scripts',
+    ],
+    package_dir={'wbia_cnn': 'wbia_cnn',},
+    include_package_data=False,
+    # List of classifiers available at:
+    # https://pypi.python.org/pypi?%3Aaction=list_classifiers
+    classifiers=[
+        'Development Status :: 6 - Mature',
+        'License :: OSI Approved :: BSD License',
+        'Intended Audience :: Developers',
+        'Intended Audience :: Science/Research',
+        'Operating System :: MacOS :: MacOS X',
+        'Operating System :: Unix',
+        'Topic :: Software Development :: Libraries :: Python Modules',
+        'Topic :: Utilities',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+    ],
+)
 
 if __name__ == '__main__':
-    print('[setup] Entering IBEIS setup')
-    kwargs = util_setup.setuptools_setup(
-        setup_fpath=__file__,
-        name='wbia_cnn',
-        # author='Hendrik Weideman, Jason Parham, and Jon Crall',
-        # author_email='erotemic@gmail.com',
-        packages=util_setup.find_packages(),
-        version=util_setup.parse_package_for_version('wbia_cnn'),
-        license=util_setup.read_license('LICENSE'),
-        long_description=util_setup.parse_readme('README.md'),
-        ext_modules=util_setup.find_ext_modules(),
-        cmdclass=util_setup.get_cmdclass(),
-        project_dirs=PROJECT_DIRS,
-        chmod_patterns=CHMOD_PATTERNS,
-        clutter_patterns=CLUTTER_PATTERNS,
-        clutter_dirs=CLUTTER_DIRS,
-        install_requires=INSTALL_REQUIRES
-        # cython_files=CYTHON_FILES,
-    )
-    import utool as ut
-
-    print('kwargs = %s' % (ut.dict_str(kwargs),))
-    setup(**kwargs)
+    """
+    python -c "import wbia_cnn; print(wbia_cnn.__file__)"
+    """
+    setup(**KWARGS)
