@@ -203,9 +203,6 @@ KWARGS = OrderedDict(
     # packages=find_packages(),
     packages=[
         'wbia_cnn',
-        'wbia_cnn._internal',
-        'wbia_cnn.tests',
-        'wbia_cnn.util_scripts',
     ],
     package_dir={'wbia_cnn': 'wbia_cnn',},
     include_package_data=False,
