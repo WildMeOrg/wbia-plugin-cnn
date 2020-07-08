@@ -24,31 +24,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: macOS - Prepare MacPorts - Prefer Xcode 11.5
-        if: ${{ runner.os == 'macOS' }}
-        run: |
-          xcode-select -p
-          xcodebuild -version
-          sudo xcode-select -s /Applications/Xcode_11.5.app/Contents/Developer
-          xcodebuild -version
-
-      # - name: macOS - Cache libgpuarray dependencies for macOS
-      #   id: caching
-      #   if: ${{ runner.os == 'macOS' }}
-      #   uses: actions/cache@v2
-      #   with:
-      #     path: |
-      #       /opt/libgpuarray
-      #     # The key based on the file hash of the build script
-      #     key: ${{ runner.os }}-build-opencv-${{ hashFiles('scripts/_install_libgpuarray_build_software_multi_platform.sh') }}
-
-      - name: macOS - Install MacPorts
-        if: ${{ runner.os == 'macOS' }}
-        uses: WildbookOrg/wbia-pypkg-build/actions/macports@v1.0.0
-
       - name: Build wheel
         env:
-          CIBW_MANYLINUX_X86_64_IMAGE: wildme/manylinux:opencv-4.2.0
           CIBW_SKIP: cp27-* pp27-* pp36-* *-win32 *-win_amd64 *-manylinux_i686 *-manylinux_aarch64 *-manylinux_ppc64le *-manylinux_s390x
           CIBW_BEFORE_BUILD_LINUX: bash scripts/ci_prepare_centos_for_build.sh
           CIBW_BEFORE_BUILD_MACOS: bash scripts/ci_prepare_macos_for_build.sh
