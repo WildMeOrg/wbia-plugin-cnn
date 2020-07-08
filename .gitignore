@@ -66,3 +66,6 @@ raw_profile*
 failed_doctests.txt
 timeings.txt
 branch.sync.sh
+
+wbia_cnn/_version.py
+
