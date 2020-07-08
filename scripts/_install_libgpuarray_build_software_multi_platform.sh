@@ -22,8 +22,8 @@ cmake \
     -D CMAKE_INSTALL_PREFIX=${VIRTUAL_ENV} \
     ..
 make -j9
-sudo make install
-sudo update_dyld_shared_cache
+make install || sudo make install
+ldconfig || sudo update_dyld_shared_cache || echo "Could not update dynamic libraries"
 cd ..
 python setup.py build_ext -L ${VIRTUAL_ENV}/lib -I ${VIRTUAL_ENV}/include
 pip install -e .
