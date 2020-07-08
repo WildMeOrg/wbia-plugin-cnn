@@ -1,5 +1,5 @@
+theano
 lasagne
 requests
 scikit-learn >= 0.16.1
-theano
 wbia-utool

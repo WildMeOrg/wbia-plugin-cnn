@@ -1,6 +1,5 @@
 #!/bin/bash
 
-rm -rf ibeis_cnn/
 rm -rf __pycache__
 rm -rf _skbuild
 rm -rf dist
