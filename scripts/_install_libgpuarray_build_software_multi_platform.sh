@@ -26,8 +26,8 @@ if [ ! -d ${WORKSPACE} ]; then
     sudo make install
     sudo update_dyld_shared_cache
     cd ..
-    python3 setup.py build_ext -L ${VIRTUAL_ENV}/lib -I ${VIRTUAL_ENV}/include
-    python3 -m pip install -e .
+    python setup.py build_ext -L ${VIRTUAL_ENV}/lib -I ${VIRTUAL_ENV}/include
+    pip install -e .
 fi
 
 # Return to the workspace
