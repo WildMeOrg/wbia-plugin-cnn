@@ -1,2 +1,4 @@
 setuptools>=34.1.0
+six
+wbia-utool
 wheel
