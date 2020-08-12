@@ -1,4 +1,4 @@
-lasagne
+git+https://github.com/Lasagne/Lasagne.git#egg=lasagne
 requests>=0.8.2; python_version < '3'
 scikit-learn>=0.16.1
 theano
