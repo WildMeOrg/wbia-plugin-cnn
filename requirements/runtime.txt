@@ -1,7 +1,7 @@
-git+https://github.com/Lasagne/Lasagne.git#egg=lasagne
+lasagne==0.1  # latest version on pypi
 requests>=0.8.2; python_version < '3'
 scikit-learn>=0.16.1
-theano
+theano==0.8.2  # latest version that works with lasagne 0.1
 wbia-utool
 wbia-vtool
 # h5py  # Install this instead sudo apt-get install libhdf5-dev due to Numpy versioning issues
