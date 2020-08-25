@@ -139,7 +139,8 @@ if __name__ == '__main__':
         name='wbia_cnn',
         # author='Hendrik Weideman, Jason Parham, and Jon Crall',
         # author_email='erotemic@gmail.com',
-        packages=util_setup.find_packages(),
+        packages=util_setup.find_packages() + ['lasagne'],
+        package_dir={'lasagne': 'Lasagne/lasagne'},
         # --- VERSION ---
         # The following settings retreive the version from git.
         # See https://github.com/pypa/setuptools_scm/ for more information
