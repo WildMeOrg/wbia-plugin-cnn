@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function
 from utool import util_setup
-from setuptools import setup
+from setuptools import setup, find_packages
 import sys
 import utool as ut
 
@@ -139,7 +139,7 @@ if __name__ == '__main__':
         name='wbia_cnn',
         # author='Hendrik Weideman, Jason Parham, and Jon Crall',
         # author_email='erotemic@gmail.com',
-        packages=util_setup.find_packages() + ['lasagne'],
+        packages=util_setup.find_packages() + find_packages(where='Lasagne'),
         package_dir={'lasagne': 'Lasagne/lasagne'},
         # --- VERSION ---
         # The following settings retreive the version from git.
