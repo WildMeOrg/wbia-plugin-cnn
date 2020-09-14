@@ -1177,7 +1177,7 @@ def get_aidpairs_and_matches(
             sortx = flat_scores.take(type_indicies).argsort()[::-1]
             return type_indicies.take(sortx[:min_])
 
-        sample_func = {'rand': pref_rand, 'scores': pref_scores, 'first': pref_first,}[
+        sample_func = {'rand': pref_rand, 'scores': pref_scores, 'first': pref_first}[
             pref_method
         ]
 
@@ -1388,6 +1388,10 @@ def get_background_training_patches2(
         train_gid_set = set(
             ibs.get_imageset_gids(ibs.get_imageset_imgsetids_from_text('TRAIN_SET'))
         )
+
+    if shuffle:
+        train_gid_set = list(train_gid_set)
+        random.shuffle(train_gid_set)
 
     if shuffle:
         train_gid_set = list(train_gid_set)

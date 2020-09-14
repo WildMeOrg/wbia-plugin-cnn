@@ -6,6 +6,8 @@ from wbia_cnn.abstract_models import *
 
 (print, rrr, profile) = ut.inject2(__name__)
 
+(print, rrr, profile) = ut.inject2(__name__)
+
 
 def check_external_training_paths():
     """

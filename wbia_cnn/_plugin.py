@@ -165,7 +165,7 @@ def generate_thumbnail_class_list(
         )
     elif classifier_weight_filepath in ['ryan.wbia_cnn.v1']:
         weights_path = grabmodels.ensure_model(
-            'classifier_cameratrap_ryan_wbia_cnn_v1', redownload=False
+            'classifier_cameratrap_ryan_cnn_v1', redownload=False
         )
     elif os.path.exists(classifier_weight_filepath):
         weights_path = classifier_weight_filepath
@@ -791,7 +791,12 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_jaguar_v2', redownload=False)
         canvas_key = 1
-    elif species in ['manta_ray_giant', 'mobula_birostris', 'manta_birostris', 'mobula_alfredi']:
+    elif species in [
+        'manta_ray_giant',
+        'mobula_birostris',
+        'manta_birostris',
+        'mobula_alfredi',
+    ]:
         LEGACY = False
         species = 'manta'
         confidence_thresh = 0.2
