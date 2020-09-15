@@ -45,6 +45,8 @@ if DEVICE is not None:
 if 'theano' in sys.modules:
     print('IBEIS_CNN cannot apply settings to theano because it was already imported')
 
+import theano
 from theano import *  # NOQA
 
+__version__ = theano.__version__
 # from theano import tensor
