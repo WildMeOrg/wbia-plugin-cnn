@@ -3,10 +3,10 @@ from __future__ import absolute_import, division, print_function
 from ibeis_cnn import utils, draw_net
 import utool as ut
 import numpy as np
-import lasagne
-from lasagne import objectives
+import wbia_cnn.__LASAGNE__ as lasagne
+from wbia_cnn.__LASAGNE__ import objectives
+from wbia_cnn.__LASAGNE__ import layers
 import theano.tensor as T
-from lasagne import layers
 import warnings
 import theano
 

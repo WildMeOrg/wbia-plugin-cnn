@@ -6,7 +6,7 @@ from wbia_cnn import __THEANO__ as theano
 (print, rrr, profile) = ut.inject2(__name__)
 
 try:
-    from lasagne import *  # NOQA
+    from Lasagne.lasagne import *  # NOQA
 except ImportError as ex:
     print('Lasagne failed to import')
     print(ex)
@@ -14,6 +14,7 @@ except ImportError as ex:
     print('theano.__file__ = %r' % (theano.__file__,))
     raise
 
-from lasagne import layers
-from lasagne import init
-from lasagne import nonlinearities
+from Lasagne.lasagne import layers
+from Lasagne.lasagne import init
+from Lasagne.lasagne import objectives
+from Lasagne.lasagne import nonlinearities

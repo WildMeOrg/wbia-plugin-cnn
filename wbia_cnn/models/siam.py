@@ -21,10 +21,10 @@ References:
     https://groups.google.com/forum/#!topic/lasagne-users/7JX_8zKfDI0
 """
 from __future__ import absolute_import, division, print_function
-import lasagne  # NOQA
-from lasagne import layers
-from lasagne import nonlinearities
-from lasagne import init
+import wbia_cnn.__LASAGNE__ as lasagne  # NOQA
+from wbia_cnn.__LASAGNE__ import layers
+from wbia_cnn.__LASAGNE__ import nonlinearities
+from wbia_cnn.__LASAGNE__ import init
 import functools
 import six
 from wbia_cnn.__THEANO__ import tensor as T  # NOQA

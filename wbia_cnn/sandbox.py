@@ -111,7 +111,7 @@ def theano_gradient_funtimes():
     import theano
     import numpy as np
     import theano.tensor as T
-    import lasagne
+    import wbia_cnn.__LASAGNE__ as lasagne
     import wbia_cnn.theano_ext as theano_ext
 
     TEST = True

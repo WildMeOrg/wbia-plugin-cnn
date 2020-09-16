@@ -57,7 +57,7 @@ Purge from system and environ:
     # Test that they dont exist
     python -c "import pylearn2; print(pylearn2.__file__)"
     python -c "import theano; print(theano.__version__)"
-    python -c "import lasagne; print(lasagne.__version__)"
+    python -c "from Lasagne import lasagne; print(lasagne.__version__)"
 
 
 PythonPrereqs:
@@ -71,7 +71,7 @@ PythonPrereqs:
 
     python -c "import pylearn2; print(pylearn2.__file__)"
     python -c "import theano; print(theano.__version__)"
-    python -c "import lasagne; print(lasagne.__version__)"
+    python -c "from Lasagne import lasagne; print(lasagne.__version__)"
 
 
 git checkout 8758ac1434175159e5c1f30123041799c2b6098a

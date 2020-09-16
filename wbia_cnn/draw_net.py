@@ -126,7 +126,7 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
     """
     import networkx as nx
     import plottool as pt
-    import wbia_cnn.__LASAGNE__ as lasange
+    import wbia_cnn.__LASAGNE__ as lasagne
 
     # from matplotlib import offsetbox
     # import matplotlib as mpl
@@ -552,7 +552,7 @@ def occlusion_heatmap(net, x, target, square_length=7):
       probability of the correct class if the image is occluded by a
       square with center (i, j).
     """
-    from lasagne.layers import get_output_shape
+    from wbia_cnn.__LASAGNE__.layers import get_output_shape
 
     if (x.ndim != 4) or x.shape[0] != 1:
         raise ValueError(
@@ -662,14 +662,14 @@ def plot_occlusion(net, Xb, target, square_length=7, figsize=(9, None)):
 def plot_saliency(net, Xb, figsize=(9, None)):
     def saliency_map(input, output, pred, Xb):
         import theano.tensor as T
-        from lasagne.objectives import binary_crossentropy
+        from wbia_cnn.__LASAGNE__.objectives import binary_crossentropy
 
         score = -binary_crossentropy(output[:, pred], np.array([1])).sum()
         heat_map_ = np.abs(T.grad(score, input).eval({input: Xb}))
         return heat_map_
 
     def saliency_map_net(net, Xb):
-        from lasagne.layers import get_output
+        from wbia_cnn.__LASAGNE__.layers import get_output
 
         input = net.layers_[0].input_var
         output = get_output(net.layers_[-1])
@@ -725,7 +725,7 @@ class Dream(object):
         dpath = '.'
 
         import theano.tensor as T
-        import lasagne
+        import wbia_cnn.__LASAGNE__ as lasagne
         import vtool as vt
         import theano
 
@@ -1095,7 +1095,7 @@ def show_convolutional_weights(
         >>> # ENABLE_DOCTEST
         >>> from wbia_cnn.draw_net import *  # NOQA
         >>> from wbia_cnn import models
-        >>> from lasagne import layers
+        >>> from wbia_cnn.__LASAGNE__ import layers
         >>> model = models.SiameseCenterSurroundModel(autoinit=True)
         >>> output_layer = model.get_output_layer()
         >>> nn_layers = layers.get_all_layers(output_layer)

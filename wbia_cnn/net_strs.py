@@ -125,7 +125,7 @@ def print_pretrained_weights(pretrained_weights, lbl=''):
 
 
 def count_bytes(output_layer):
-    import lasagne
+    import wbia_cnn.__LASAGNE__ as lasagne
 
     layers = lasagne.layers.get_all_layers(output_layer)
     info_list = [get_layer_info(layer) for layer in layers]

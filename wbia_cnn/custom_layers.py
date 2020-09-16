@@ -6,7 +6,7 @@ import six
 import theano
 import functools
 from wbia_cnn.__THEANO__ import tensor as T  # NOQA
-from wbia_cnn import __LASAGNE__ as lasagne
+import wbia_cnn.__LASAGNE__ as lasagne
 from wbia_cnn import utils
 import utool as ut
 
@@ -31,12 +31,12 @@ try:
 
     if conv_impl == 'cuda_convnet':
         # cannot handle non-square images (pylearn2 module)
-        import lasagne.layers.cuda_convnet
+        # import lasagne.layers.cuda_convnet
 
         Conv2DLayer = lasagne.layers.cuda_convnet.Conv2DCCLayer
         MaxPool2DLayer = lasagne.layers.cuda_convnet.MaxPool2DCCLayer
     elif conv_impl == 'cuDNN':
-        import lasagne.layers.dnn
+        # import lasagne.layers.dnn
 
         Conv2DLayer = lasagne.layers.dnn.Conv2DDNNLayer
         MaxPool2DLayer = lasagne.layers.dnn.MaxPool2DDNNLayer
@@ -53,7 +53,7 @@ try:
         """
     elif conv_impl == 'gemm':
         # Dont use gemm
-        import lasagne.layers.corrmm
+        # import lasagne.layers.corrmm
 
         Conv2DLayer = lasagne.layers.corrmm.Conv2DLayer
         MaxPool2DLayer = lasagne.layers.corrmm.Conv2DLayer
@@ -782,7 +782,7 @@ def load_json_arch_def(arch_json_fpath):
     arch_json_fpath = '/media/raid/work/WS_ALL/_ibsdb/_ibeis_cache/nets/injur-shark_10056_224x224x3_auqbfhle/models/arch_injur-shark_o2_d11_c688_acioqbst/saved_sessions/fit_session_2016-08-26T173854+5/fit_arch_info.json'
     """
     from wbia_cnn import custom_layers
-    import lasagne.layers.dnn
+    # import lasagne.layers.dnn
 
     # FIXME: Need to redo the saved arch json file.
     # Need to give layers identifiers and specify their inputs / outputs

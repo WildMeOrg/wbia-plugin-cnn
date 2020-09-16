@@ -6,7 +6,7 @@ from ibeis_cnn import net_strs
 from ibeis_cnn import batch_processing as batch
 
 from six.moves import cPickle as pickle
-from lasagne import layers
+from wbia_cnn.__LASAGNE__ import layers
 
 import theano
 import time
