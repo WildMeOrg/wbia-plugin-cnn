@@ -121,17 +121,6 @@ def parse_requirements(fname='requirements.txt', with_version=True):
     return packages
 
 
-# INSTALL_OPTIONAL = [
-#    'tornado',
-#    'flask',
-#    'autopep8',
-#    'pyfiglet',
-#    'theano',
-#    'pylearn2'
-#    'lasenge'
-# ]
-
-
 if __name__ == '__main__':
     print('[setup] Entering IBEIS setup')
     kwargs = dict(
