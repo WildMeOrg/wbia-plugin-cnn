@@ -70,7 +70,7 @@ class PretrainedNetwork(object):
         """Assumes requested layer is convolutional
 
         Returns:
-            lasange.layers.Layer: Layer
+            lasagne.layers.Layer: Layer
         """
         if name is None:
             name = '%s_layer%r' % (self.model_key, layer_index)

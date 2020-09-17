@@ -168,7 +168,7 @@ class SiameseCenterSurroundModel(BaseModel):
             _P(custom_layers.CenterSurroundLayer),
             # layers.GaussianNoiseLayer,
             # caffenet.get_conv2d_layer(0, trainable=False, **leaky),
-            # lasange_ext.freeze_params,
+            # lasagne_ext.freeze_params,
             _P(
                 Conv2DLayer,
                 num_filters=96,
@@ -433,7 +433,7 @@ class SiameseCenterSurroundModel(BaseModel):
         avg_loss.name = 'avg_loss'
         return avg_loss
 
-        # avg_loss = lasange_ext.siamese_loss(G, Y_padded, data_per_label=2)
+        # avg_loss = lasagne_ext.siamese_loss(G, Y_padded, data_per_label=2)
         # return avg_loss
 
 
@@ -529,7 +529,7 @@ class SiameseModel(BaseModel):
             # _P(layers.DropoutLayer, p=0.5),
             _P(layers.DenseLayer, num_units=256, **leaky_orthog),
             _P(layers.DropoutLayer, p=0.5),
-            # _P(lasange_ext.l1),  # TODO: make a layer
+            # _P(lasagne_ext.l1),  # TODO: make a layer
             # _P(layers.DenseLayer, num_units=256, **leaky_orthog),
             # _P(layers.DropoutLayer, p=0.5),
             # _P(layers.FeaturePoolLayer, pool_size=2),

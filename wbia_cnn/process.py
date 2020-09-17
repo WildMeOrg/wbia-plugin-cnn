@@ -98,7 +98,7 @@ def numpy_processed_directory(
             label = label_dict[file_name]
             # X[index] = np.array(cv2.split(image))
             # y[index] = label
-            # X.append(np.array(cv2.split(image)))  # Lasange format
+            # X.append(np.array(cv2.split(image)))  # Lasagne format
             ids.append(file_name)
             X.append(image)  # cv2 format
             y.append(label)
@@ -176,7 +176,7 @@ def numpy_processed_directory2(
             label = label_dict[file_name]
             # X[index] = np.array(cv2.split(image))
             # y[index] = label
-            # X.append(np.array(cv2.split(image)))  # Lasange format
+            # X.append(np.array(cv2.split(image)))  # Lasagne format
             ids.append(file_name)
             X.append(image)  # cv2 format
             y.append(label)
@@ -279,7 +279,7 @@ def numpy_processed_directory3(
             label = np.array(label_dict[file_name])
             # X[index] = np.array(cv2.split(image))
             # y[index] = label
-            # X.append(np.array(cv2.split(image)))  # Lasange format
+            # X.append(np.array(cv2.split(image)))  # Lasagne format
             ids.append(file_name)
             X.append(image)  # cv2 format
             y.append(label)

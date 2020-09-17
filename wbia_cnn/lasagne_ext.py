@@ -4,13 +4,13 @@ import warnings
 import utool as ut
 from Lasagne.lasagne import layers
 import theano
-from theano import tensor as T
+from theano import tensor as T  # NOQA
 
 (print, rrr, profile) = ut.inject2(__name__)
 
 
 def l1(layer, include_biases=False):
-    """custom should move to regulariztion.lasange.l1
+    """custom should move to regulariztion.lasagne.l1
 
     NOT WORKING
 
@@ -61,16 +61,16 @@ def siamese_loss(G, Y_padded, data_per_label=2, T=T):
         https://github.com/Lasagne/Lasagne/issues/168
 
     CommandLine:
-        python -m wbia_cnn.lasange_ext --test-siamese_loss
+        python -m wbia_cnn.lasagne_ext --test-siamese_loss
         # Train Network
         python -m wbia_cnn.train --test-pz_patchmatch --vtd --max-examples=16 --batch_size=128 --learning_rate .0000001
 
     CommandLine:
-        python -m wbia_cnn.lasange_ext --test-siamese_loss
+        python -m wbia_cnn.lasagne_ext --test-siamese_loss
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from wbia_cnn.lasange_ext import *  # NOQA
+        >>> from wbia_cnn.lasagne_ext import *  # NOQA
         >>> # numpy testing but in reality these are theano functions
         >>> verbose = True
         >>> G, Y_padded = testdata_contrastive_loss()

@@ -11,7 +11,7 @@ print, rrr, profile = ut.inject2(__name__)
 def make_layer_str(layer, with_name=True):
     r"""
     Args:
-        layer (lasange.Layer): a network layer
+        layer (lasagne.Layer): a network layer
     """
     # layer_dict = make_layer_json_dict(layer, extra=with_name)
     # layer_str = layer_dict['type']
@@ -415,7 +415,7 @@ def get_layer_info(layer):
 def get_layer_info_str(output_layer, batch_size=128):
     r"""
     Args:
-        output_layer (lasange.layers.Layer):
+        output_layer (lasagne.layers.Layer):
 
     CommandLine:
         python -m wbia_cnn.net_strs --test-get_layer_info_str:0

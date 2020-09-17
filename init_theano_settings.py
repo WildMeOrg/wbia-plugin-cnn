@@ -26,7 +26,7 @@ Purge from system and environ:
 
     python -c "import utool as ut; ut.total_purge_developed_repo('~/code/pylearn2')"
     python -c "import utool as ut; ut.total_purge_developed_repo('~/code/Theano')"
-    python -c "import utool as ut; ut.total_purge_developed_repo('~/code/Lasange')"
+    python -c "import utool as ut; ut.total_purge_developed_repo('~/code/Lasagne')"
 
     # Remove pylearn2 scripts
     sudo rm /home/joncrall/venv/bin/pylearn2-*

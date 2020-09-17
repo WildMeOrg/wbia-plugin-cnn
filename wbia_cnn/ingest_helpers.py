@@ -34,7 +34,7 @@ def load_mnist_labels(gz_fpath):
 
 
 def grab_mnist2():
-    """ Follows lasange example """
+    """ Follows lasagne example """
     train_data_gz = ut.grab_file_url(
         'http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz'
     )
@@ -62,7 +62,7 @@ def grab_mnist2():
 
 
 def grab_mnist1():
-    # This is the same mnist data used in the lasange script
+    # This is the same mnist data used in the lasagne script
     train_imgs_fpath = ut.grab_zipped_url(
         'http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz'
     )

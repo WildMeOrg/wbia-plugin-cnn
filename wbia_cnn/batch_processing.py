@@ -389,7 +389,7 @@ def batch_iterator(
             # Center the batch data in the range (-1.0, 1.0)
             Xb = (Xb - ceneter_mean01) / (center_std01)
         if X_is_cv2_native:
-            # Convert from cv2 to lasange format
+            # Convert from cv2 to lasagne format
             Xb = Xb.transpose((0, 3, 1, 2))
         if yb is not None:
             if encoder is not None:

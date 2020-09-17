@@ -1015,7 +1015,7 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
             _P(custom_layers.CenterSurroundLayer, name='CentSur'),
             # layers.GaussianNoiseLayer,
             # caffenet.get_conv2d_layer(0, trainable=False, **leaky),
-            # lasange_ext.freeze_params,
+            # lasagne_ext.freeze_params,
             _P(
                 Conv2DLayer,
                 num_filters=96,
