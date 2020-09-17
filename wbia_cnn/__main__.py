@@ -19,23 +19,17 @@ def main():  # nocover
 
     print('wbia = {!r}'.format(wbia))
 
-    try:
-        import theano
+    import theano
 
-        print('theano = {!r}'.format(theano))
-        print('theano.__file__ = {!r}'.format(theano.__file__))
-        print('theano.__version__ = {!r}'.format(theano.__version__))
-    except Exception:
-        print('Theano (theano) failed to import')
+    print('theano = {!r}'.format(theano))
+    print('theano.__file__ = {!r}'.format(theano.__file__))
+    print('theano.__version__ = {!r}'.format(theano.__version__))
 
-    try:
-        import lasagne
+    import lasagne
 
-        print('lasagne = {!r}'.format(lasagne))
-        print('lasagne.__file__ = {!r}'.format(lasagne.__file__))
-        print('lasagne.__version__ = {!r}'.format(lasagne.__version__))
-    except Exception:
-        print('Lasagne (lasagne) failed to import')
+    print('lasagne = {!r}'.format(lasagne))
+    print('lasagne.__file__ = {!r}'.format(lasagne.__file__))
+    print('lasagne.__version__ = {!r}'.format(lasagne.__version__))
 
     try:
         import cv2
