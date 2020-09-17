@@ -14,6 +14,6 @@ Convolutional Neural Network (CNN) plug-in for WBIA - Part of the WildMe / Wildb
    :target: https://pypi.python.org/pypi/wbia-cnn
    :alt: Latest PyPI version
 
-.. |ReadTheDocs| image:: https://readthedocs.org/projects/wbia-cnn/badge/?version=latest
-    :target: http://wbia-cnn.readthedocs.io/en/latest/
+.. |ReadTheDocs| image:: https://readthedocs.org/projects/wbia-plugin-cnn/badge/?version=latest
+    :target: http://wbia-plugin-cnn.readthedocs.io/en/latest/
     :alt: Documentation on ReadTheDocs
