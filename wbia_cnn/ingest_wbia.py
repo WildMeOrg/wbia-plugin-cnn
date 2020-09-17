@@ -7,7 +7,6 @@ import six
 import itertools
 from six.moves import zip, map, range
 from functools import partial
-from wbia import dtool
 from wbia_cnn import draw_results  # NOQA
 
 print, rrr, profile = ut.inject2(__name__)
@@ -631,51 +630,56 @@ def estimate_data_bytes(num_data, item_shape):
 #        return ut.KwargsWrapper(self)
 
 
-class PartMatchDataConfig(dtool.Config):
-    _param_info_list = [
-        ut.ParamInfo('part_chip_width', 256),
-        ut.ParamInfo('part_chip_height', 128),
-        ut.ParamInfo('colorspace', 'gray', valid_values=['gray', 'bgr', 'lab']),
-    ]
-    # def __init__(pmcfg, **kwargs):
-    #    #pmcfg.part_chip_width = 256
-    #    #pmcfg.part_chip_height = 128
-    #    #pmcfg.colorspace = 'gray'
-    #    super(PartMatchDataConfig, pmcfg).__init__(**kwargs)
+try:
+    from wbia import dtool
 
-    # def get_cfgstr(pmcfg):
-    #    cfgstr_list = [
-    #        'sz=(%d,%d)' % (pmcfg.part_chip_width, pmcfg.part_chip_height),
-    #    ]
-    #    cfgstr_list.append(pmcfg.colorspace)
-    #    return ','.join(cfgstr_list)
+    class PartMatchDataConfig(dtool.Config):
+        _param_info_list = [
+            ut.ParamInfo('part_chip_width', 256),
+            ut.ParamInfo('part_chip_height', 128),
+            ut.ParamInfo('colorspace', 'gray', valid_values=['gray', 'bgr', 'lab']),
+        ]
+        # def __init__(pmcfg, **kwargs):
+        #    #pmcfg.part_chip_width = 256
+        #    #pmcfg.part_chip_height = 128
+        #    #pmcfg.colorspace = 'gray'
+        #    super(PartMatchDataConfig, pmcfg).__init__(**kwargs)
 
-    def get_data_shape(pmcfg):
-        channels = 1 if pmcfg.colorspace == 'gray' else 3
-        return (pmcfg['part_chip_height'], pmcfg['part_chip_width'], channels)
+        # def get_cfgstr(pmcfg):
+        #    cfgstr_list = [
+        #        'sz=(%d,%d)' % (pmcfg.part_chip_width, pmcfg.part_chip_height),
+        #    ]
+        #    cfgstr_list.append(pmcfg.colorspace)
+        #    return ','.join(cfgstr_list)
 
+        def get_data_shape(pmcfg):
+            channels = 1 if pmcfg.colorspace == 'gray' else 3
+            return (pmcfg['part_chip_height'], pmcfg['part_chip_width'], channels)
 
-class PatchMetricDataConfig(dtool.Config):
-    _param_info_list = [
-        ut.ParamInfo('patch_size', 64),
-        ut.ParamInfo('colorspace', 'gray', valid_values=['gray', 'bgr', 'lab']),
-    ]
-    # def __init__(pmcfg, **kwargs):
-    #    #pmcfg.patch_size = 64
-    #    #pmcfg.colorspace = 'bgr'
-    #    #pmcfg.colorspace = 'gray'
-    #    super(PatchMetricDataConfig, pmcfg).__init__(**kwargs)
-    # def get_cfgstr(pmcfg):
-    #    cfgstr_list = [
-    #        'patch_size=%d' % (pmcfg.patch_size,),
-    #    ]
-    #    #if pmcfg.colorspace != 'bgr':
-    #    cfgstr_list.append(pmcfg.colorspace)
-    #    return ','.join(cfgstr_list)
+    class PatchMetricDataConfig(dtool.Config):
+        _param_info_list = [
+            ut.ParamInfo('patch_size', 64),
+            ut.ParamInfo('colorspace', 'gray', valid_values=['gray', 'bgr', 'lab']),
+        ]
+        # def __init__(pmcfg, **kwargs):
+        #    #pmcfg.patch_size = 64
+        #    #pmcfg.colorspace = 'bgr'
+        #    #pmcfg.colorspace = 'gray'
+        #    super(PatchMetricDataConfig, pmcfg).__init__(**kwargs)
+        # def get_cfgstr(pmcfg):
+        #    cfgstr_list = [
+        #        'patch_size=%d' % (pmcfg.patch_size,),
+        #    ]
+        #    #if pmcfg.colorspace != 'bgr':
+        #    cfgstr_list.append(pmcfg.colorspace)
+        #    return ','.join(cfgstr_list)
 
-    def get_data_shape(pmcfg):
-        channels = 1 if pmcfg['colorspace'] == 'gray' else 3
-        return (pmcfg['patch_size'], pmcfg['patch_size'], channels)
+        def get_data_shape(pmcfg):
+            channels = 1 if pmcfg['colorspace'] == 'gray' else 3
+            return (pmcfg['patch_size'], pmcfg['patch_size'], channels)
+except ImportError:
+    PartMatchDataConfig = None
+    PatchMetricDataConfig = None
 
 
 def cached_part_match_training_data_fpaths(
@@ -923,7 +927,6 @@ def get_aidpairs_and_matches(
         >>>     pt.update()
         >>> ut.show_if_requested()
     """
-
     def get_query_results():
         if acfg_name is not None:
             print('NEW WAY OF FILTERING')
