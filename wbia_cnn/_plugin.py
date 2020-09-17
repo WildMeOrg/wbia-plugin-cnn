@@ -9,7 +9,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 from wbia_cnn import models
 from wbia_cnn import _plugin_grabmodels as grabmodels
 import utool as ut
-import cv2
 import six
 import numpy as np
 import random
@@ -1098,6 +1097,7 @@ def test_convolutional(
             labels as the strings and the numpy array image as the values.
     """
     from wbia_cnn import utils
+    import cv2
 
     def _add_pad(data_):
         if len(data_.shape) == 2:
@@ -1113,6 +1113,8 @@ def test_convolutional(
         return data_padded
 
     def _resize_target(image, target_height=None, target_width=None):
+        import cv2
+
         assert target_height is not None or target_width is not None
         height, width = image.shape[:2]
         if target_height is not None and target_width is not None:
@@ -1281,6 +1283,8 @@ def fix_annot_species_viewpoint_quality_cnn(ibs, aid_list, min_conf=0.8):
         ibs (IBEISController):  ibeis controller object
         aid_list (int):  list of annotation ids
     """
+    import cv2
+
     # Load chips and resize to the target
     data_shape = (96, 96, 3)
     # Define model and load weights
@@ -1349,6 +1353,8 @@ def detect_annot_species_viewpoint_cnn(ibs, aid_list):
         >>> result = ('species_viewpoint_list = %s' % (str(species_viewpoint_list),))
         >>> print(result)
     """
+    import cv2
+
     # Load chips and resize to the target
     data_shape = (96, 96, 3)
     # Define model and load weights
@@ -1574,6 +1580,8 @@ def detect_image_cnn(ibs, gid, confidence=0.90, extraction='bing'):
         >>> result = detect_image_cnn(ibs, gid, confidence, extraction)
         >>> print(result)
     """
+    import cv2
+
     # Load chips and resize to the target
     target = (96, 96)
     targetx, targety = target

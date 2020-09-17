@@ -12,7 +12,6 @@ import theano
 import time
 import numpy as np
 import utool as ut
-import cv2
 import six  # NOQA
 from os.path import join, abspath
 
@@ -150,6 +149,8 @@ def display_caffe_model(weights_model_path, results_path, **kwargs):
 
 
 def review_labels(id_path, data_fpath, labels_fpath, model, weights_fpath, **kwargs):
+    import cv2
+
     print('\n[data] loading data...')
     print('data_fpath = %r' % (data_fpath,))
     ids_test = utils.load_ids(id_path)

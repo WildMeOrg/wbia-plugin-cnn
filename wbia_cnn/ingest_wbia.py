@@ -4,7 +4,6 @@ import utool as ut
 import numpy as np
 import vtool as vt
 import six
-import cv2
 import itertools
 from six.moves import zip, map, range
 from functools import partial
@@ -188,6 +187,7 @@ def extract_annotpair_training_chips(ibs, aid_pairs, **kwargs):
     """
     # TODO extract chips in a sane manner
     import wbia.algo.hots.vsone_pipeline
+    import cv2
 
     kwargs = kwargs.copy()
     part_chip_width = kwargs.pop('part_chip_width', 256)
@@ -1337,6 +1337,7 @@ def get_background_training_patches2(
     """
     import random
     from os.path import join, expanduser
+    import cv2
 
     def resize_target(image, target_height=None, target_width=None):
         assert target_height is not None or target_width is not None
@@ -1838,6 +1839,7 @@ def get_aoi2_training_data(
     Get data for bg
     """
     from os.path import join, expanduser, exists
+    import cv2
 
     if dest_path is None:
         dest_path = expanduser(join('~', 'Desktop', 'extracted'))
@@ -1959,6 +1961,7 @@ def get_aoi2_training_data(
 
 def get_cnn_detector_training_images(ibs, dest_path=None, image_size=128):
     from os.path import join, expanduser
+    import cv2
 
     def resize_target(image, target_height=None, target_width=None):
         assert target_height is not None or target_width is not None
@@ -2102,6 +2105,7 @@ def get_cnn_classifier_cameratrap_binary_training_images(
 ):
     from os.path import join, expanduser
     import random
+    import cv2
 
     if dest_path is None:
         dest_path = expanduser(join('~', 'Desktop', 'extracted'))
@@ -2200,6 +2204,7 @@ def get_cnn_classifier_binary_training_images(
 ):
     from os.path import join, expanduser
     import random
+    import cv2
 
     if dest_path is None:
         dest_path = expanduser(join('~', 'Desktop', 'extracted'))
@@ -2295,6 +2300,7 @@ def get_cnn_classifier2_training_images(
 ):
     from os.path import join, expanduser, exists
     import random
+    import cv2
 
     if dest_path is None:
         dest_path = expanduser(join('~', 'Desktop', 'extracted'))
@@ -2398,6 +2404,7 @@ def get_cnn_labeler_training_images(
 ):
     from os.path import join, expanduser
     import random
+    import cv2
 
     if dest_path is None:
         dest_path = expanduser(join('~', 'Desktop', 'extracted'))
@@ -2618,6 +2625,7 @@ def get_cnn_labeler_training_images(
 
 def get_cnn_qualifier_training_images(ibs, dest_path=None, image_size=128, purge=True):
     from os.path import join
+    import cv2
 
     if dest_path is None:
         dest_path = ut.truepath('~/Desktop/extracted')
@@ -2682,6 +2690,8 @@ def get_cnn_qualifier_training_images(ibs, dest_path=None, image_size=128, purge
 
 
 def extract_orientation_chips(ibs, gid_list, image_size=128, training=True, verbose=True):
+    import cv2
+
     def resize_target(image, target_height=None, target_width=None):
         assert target_height is not None or target_width is not None
         height, width = image.shape[:2]
@@ -2797,6 +2807,7 @@ def get_orientation_training_images(ibs, dest_path=None, **kwargs):
         >>> get_orientation_training_images(ibs)
     """
     from os.path import join, expanduser
+    import cv2
 
     dbname_mapping = {
         'ELPH_Master': 'elephant_savanna',

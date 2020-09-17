@@ -8,11 +8,10 @@ fully setup
 from __future__ import absolute_import, division, print_function
 import time
 import numpy as np
-from six.moves import cPickle as pickle
+from six.moves import cPickle as pickle  # NOQA
 import utool as ut
 import six
 from wbia_cnn import net_strs
-import cv2
 
 print, rrr, profile = ut.inject2(__name__)
 
@@ -310,12 +309,12 @@ def get_printcolinfo(requested_headers_):
     requested_headers = ['epoch_num'] + requested_headers_ + ['duration']
     header_dict = {
         'epoch_num': '   Epoch ',
-        #'learn_loss'   : '  Learn Loss (determ)  ',
+        # 'learn_loss'   : '  Learn Loss (determ)  ',
         # We always use determenistic reporting, so dont be redundant
         'learn_loss': '  Learn Loss  ',
         'valid_loss': '  Valid Loss  ',
         'learnval_rat': '  Learn / Val  ',
-        #'learnval_rat' : '  Learn / Val (determ)  ',
+        # 'learnval_rat' : '  Learn / Val (determ)  ',
         'valid_acc': '  Valid Acc ',
         'test_acc': '  Test Acc  ',
         'duration': '  Dur ',
@@ -558,6 +557,8 @@ def multinomial_nll(x, t):
 
 
 def add_channels(data):
+    import cv2
+
     add = 5 + 3 + 3 + 2
     points, channels, height, width = data.shape
     dtype = data.dtype
@@ -587,6 +588,8 @@ def add_channels(data):
 
 
 def show_image_from_data(data):
+    import cv2
+
     def add_to_template(template, x, y, image_):
         template[y * h : (y + 1) * h, x * h : (x + 1) * w] = image_
 

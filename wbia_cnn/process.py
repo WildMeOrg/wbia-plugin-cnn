@@ -7,13 +7,14 @@ from __future__ import absolute_import, division, print_function
 from wbia.detecttools.directory import Directory
 from os.path import join, abspath, exists, basename
 import utool as ut
-import cv2
 import numpy as np
 
 (print, rrr, profile) = ut.inject2(__name__)
 
 
 def process_image_directory(project_name, size, reset=True):
+    import cv2
+
     # Raw folders
     raw_path = abspath(join('..', 'data', 'raw'))
     processed_path = abspath(join('..', 'data', 'processed'))
@@ -47,6 +48,8 @@ def numpy_processed_directory(
     labels_file_name='labels.csv',
     reset=True,
 ):
+    import cv2
+
     # Raw folders
     processed_path = abspath(join('..', 'data', 'processed'))
     labels_path = abspath(join('..', 'data', 'labels'))
@@ -132,6 +135,8 @@ def numpy_processed_directory2(
     reset=True,
     verbose=False,
 ):
+    import cv2
+
     print('Caching images into Numpy files...')
 
     raw_path = join(extracted_path, 'raw')
@@ -217,6 +222,8 @@ def numpy_processed_directory3(
     reset=True,
     verbose=False,
 ):
+    import cv2
+
     print('Caching images into Numpy files with category vector...')
 
     raw_path = join(extracted_path, 'raw')
@@ -395,6 +402,8 @@ def numpy_processed_directory5(
     reset=True,
     verbose=False,
 ):
+    import cv2
+
     print('Caching images into Numpy files with category vector...')
 
     raw_path = join(extracted_path, 'raw')

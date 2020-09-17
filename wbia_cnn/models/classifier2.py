@@ -9,7 +9,6 @@ from Lasagne.lasagne import init, layers, nonlinearities
 from theano import tensor as T  # NOQA
 from wbia_cnn.models import abstract_models, pretrained
 from os.path import exists
-import cv2
 
 print, rrr, profile = ut.inject2(__name__)
 
@@ -20,6 +19,7 @@ def augment_parallel(X, y):
 
 def augment_wrapper(Xb, yb=None):
     import random
+    import cv2
 
     for index in range(len(Xb)):
         X = np.copy(Xb[index])

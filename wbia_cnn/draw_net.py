@@ -13,7 +13,6 @@ from __future__ import absolute_import, division, print_function
 from operator import itemgetter
 from os.path import join, exists
 import numpy as np
-import cv2
 import utool as ut
 from wbia_cnn import utils
 
@@ -1131,6 +1130,7 @@ def show_convolutional_weights(
 def make_conv_weight_image(all_weights, limit=144):
     """ just makes the image ndarray of the weights """
     import vtool as vt
+    import cv2
 
     # Try to infer if use_color should be shown
     num, channels, height, width = all_weights.shape
@@ -1244,6 +1244,7 @@ def show_confusion_matrix(
     TODO FIXME and simplify
     """
     import matplotlib.pyplot as plt
+    import cv2
 
     confused_examples = join(results_path, 'confused')
     if data_x is not None:
