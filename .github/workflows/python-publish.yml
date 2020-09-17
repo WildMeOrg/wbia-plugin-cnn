@@ -10,7 +10,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macos-latest]
         python-version: [3.7]
 
     steps:
@@ -54,7 +54,7 @@ jobs:
 
       - name: Build sdist
         run: |
-          pip install -r requirements/build.txt
+          pip install scikit-build
           python setup.py sdist
 
       - uses: actions/upload-artifact@v2

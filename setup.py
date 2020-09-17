@@ -212,7 +212,7 @@ KWARGS = OrderedDict(
         'local_scheme': 'dirty-tag',
     },
     packages=find_packages() + find_packages(where='Lasagne'),
-    package_dir={'lasagne': 'Lasagne/lasagne', 'wbia_cnn': 'wbia_cnn'},
+    package_dir={'wbia_cnn': 'wbia_cnn', 'lasagne': 'Lasagne/lasagne'},
     include_package_data=False,
     # List of classifiers available at:
     # https://pypi.python.org/pypi?%3Aaction=list_classifiers
