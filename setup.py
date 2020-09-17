@@ -94,14 +94,11 @@ def parse_requirements(fname='requirements.txt', with_version=True):
     """
     Parse the package dependencies listed in a requirements file but strips
     specific versioning information.
-
     Args:
         fname (str): path to requirements file
-        with_version (bool, default=False): if true include version specs
-
+        with_version (bool, default=True): if true include version specs
     Returns:
         List[str]: list of requirements items
-
     CommandLine:
         python -c "import setup; print(setup.parse_requirements())"
         python -c "import setup; print(chr(10).join(setup.parse_requirements(with_version=True)))"
@@ -122,7 +119,7 @@ def parse_requirements(fname='requirements.txt', with_version=True):
                 yield info
         else:
             info = {'line': line}
-            if line.startswith('-e '):
+            if line.startswith('-e ') or line.startswith('git+'):
                 info['package'] = line.split('#egg=')[1]
             else:
                 # Remove versioning from the package
@@ -186,6 +183,7 @@ DESCRIPTION = 'WBIA CNN - Convolutional Neural Network (CNN) plug-in for WBIA'
 
 
 KWARGS = OrderedDict(
+    setup_fpath=__file__,
     name=NAME,
     author=', '.join(AUTHORS),
     author_email=AUTHOR_EMAIL,
