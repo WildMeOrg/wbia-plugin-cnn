@@ -1,6 +1,6 @@
 # lasagne  # Use the one embedded here instead because the pypi version is too old
 scikit-learn>=0.16.1
 theano
-wildbook-ia
+# wildbook-ia
 wbia-utool
 wbia-vtool

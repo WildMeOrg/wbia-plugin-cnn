@@ -1,0 +1,1227 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lasagne.lasagne.layers.pool &#8212; wbia-cnn 3.3.0 documentation</title>
+    <link rel="stylesheet" href="../../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+    <script src="../../../../_static/jquery.js"></script>
+    <script src="../../../../_static/underscore.js"></script>
+    <script src="../../../../_static/doctools.js"></script>
+    <script src="../../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for Lasagne.lasagne.layers.pool</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">theano.tensor</span> <span class="k">as</span> <span class="nn">T</span>
+
+<span class="kn">from</span> <span class="nn">.base</span> <span class="kn">import</span> <span class="n">Layer</span>
+<span class="kn">from</span> <span class="nn">..utils</span> <span class="kn">import</span> <span class="n">as_tuple</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;MaxPool1DLayer&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;MaxPool2DLayer&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;MaxPool3DLayer&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Pool1DLayer&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Pool2DLayer&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Pool3DLayer&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Upscale1DLayer&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Upscale2DLayer&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Upscale3DLayer&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;FeaturePoolLayer&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;FeatureWTALayer&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;GlobalPoolLayer&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;SpatialPyramidPoolingLayer&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">pool_output_length</span><span class="p">(</span><span class="n">input_length</span><span class="p">,</span> <span class="n">pool_size</span><span class="p">,</span> <span class="n">stride</span><span class="p">,</span> <span class="n">pad</span><span class="p">,</span> <span class="n">ignore_border</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the output length of a pooling operator</span>
+<span class="sd">    along a single dimension.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    input_length : integer</span>
+<span class="sd">        The length of the input in the pooling dimension</span>
+<span class="sd">    pool_size : integer</span>
+<span class="sd">        The length of the pooling region</span>
+<span class="sd">    stride : integer</span>
+<span class="sd">        The stride between successive pooling regions</span>
+<span class="sd">    pad : integer</span>
+<span class="sd">        The number of elements to be added to the input on each side.</span>
+<span class="sd">    ignore_border: bool</span>
+<span class="sd">        If ``True``, partial pooling regions will be ignored.</span>
+<span class="sd">        Must be ``True`` if ``pad != 0``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    output_length</span>
+<span class="sd">        * None if either input is None.</span>
+<span class="sd">        * Computed length of the pooling operator otherwise.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    When ``ignore_border == True``, this is given by the number of full</span>
+<span class="sd">    pooling regions that fit in the padded input length,</span>
+<span class="sd">    divided by the stride (rounding down).</span>
+
+<span class="sd">    If ``ignore_border == False``, a single partial pooling region is</span>
+<span class="sd">    appended if at least one input element would be left uncovered otherwise.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">input_length</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">pool_size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">ignore_border</span><span class="p">:</span>
+        <span class="n">output_length</span> <span class="o">=</span> <span class="n">input_length</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">pad</span> <span class="o">-</span> <span class="n">pool_size</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">output_length</span> <span class="o">=</span> <span class="p">(</span><span class="n">output_length</span> <span class="o">+</span> <span class="n">stride</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="n">stride</span>
+
+    <span class="c1"># output length calculation taken from:</span>
+    <span class="c1"># https://github.com/Theano/Theano/blob/master/theano/tensor/signal/downsample.py</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">pad</span> <span class="o">==</span> <span class="mi">0</span>
+
+        <span class="k">if</span> <span class="n">stride</span> <span class="o">&gt;=</span> <span class="n">pool_size</span><span class="p">:</span>
+            <span class="n">output_length</span> <span class="o">=</span> <span class="p">(</span><span class="n">input_length</span> <span class="o">+</span> <span class="n">stride</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="n">stride</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">output_length</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                <span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="n">input_length</span> <span class="o">-</span> <span class="n">pool_size</span> <span class="o">+</span> <span class="n">stride</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="n">stride</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="k">return</span> <span class="n">output_length</span>
+
+
+<span class="k">def</span> <span class="nf">pool_2d</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wrapper function that calls :func:`theano.tensor.signal.pool_2d` either</span>
+<span class="sd">    with the new or old keyword argument names expected by Theano.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">T</span><span class="o">.</span><span class="n">signal</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">pool_2d</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+        <span class="c1"># convert from new to old interface</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;ds&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;ws&#39;</span><span class="p">)</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;st&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;stride&#39;</span><span class="p">)</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;padding&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;pad&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">T</span><span class="o">.</span><span class="n">signal</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">pool_2d</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">pool_3d</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>  <span class="c1"># pragma: no cover</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wrapper function that calls :func:`theano.tensor.signal.pool_3d` either</span>
+<span class="sd">    with the new or old keyword argument names expected by Theano.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">T</span><span class="o">.</span><span class="n">signal</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">pool_3d</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+        <span class="c1"># convert from new to old interface</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;ds&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;ws&#39;</span><span class="p">)</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;st&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;stride&#39;</span><span class="p">)</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;padding&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;pad&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">T</span><span class="o">.</span><span class="n">signal</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">pool_3d</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Pool1DLayer</span><span class="p">(</span><span class="n">Layer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    1D pooling layer</span>
+
+<span class="sd">    Performs 1D mean or max-pooling over the trailing axis</span>
+<span class="sd">    of a 3D input tensor.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    incoming : a :class:`Layer` instance or tuple</span>
+<span class="sd">        The layer feeding into this layer, or the expected input shape.</span>
+
+<span class="sd">    pool_size : integer or iterable</span>
+<span class="sd">        The length of the pooling region. If an iterable, it should have a</span>
+<span class="sd">        single element.</span>
+
+<span class="sd">    stride : integer, iterable or ``None``</span>
+<span class="sd">        The stride between sucessive pooling regions.</span>
+<span class="sd">        If ``None`` then ``stride == pool_size``.</span>
+
+<span class="sd">    pad : integer or iterable</span>
+<span class="sd">        The number of elements to be added to the input on each side.</span>
+<span class="sd">        Must be less than stride.</span>
+
+<span class="sd">    ignore_border : bool</span>
+<span class="sd">        If ``True``, partial pooling regions will be ignored.</span>
+<span class="sd">        Must be ``True`` if ``pad != 0``.</span>
+
+<span class="sd">    mode : {&#39;max&#39;, &#39;average_inc_pad&#39;, &#39;average_exc_pad&#39;}</span>
+<span class="sd">        Pooling mode: max-pooling or mean-pooling including/excluding zeros</span>
+<span class="sd">        from partially padded pooling regions. Default is &#39;max&#39;.</span>
+
+<span class="sd">    **kwargs</span>
+<span class="sd">        Any additional keyword arguments are passed to the :class:`Layer`</span>
+<span class="sd">        superclass.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    MaxPool1DLayer : Shortcut for max pooling layer.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The value used to pad the input is chosen to be less than</span>
+<span class="sd">    the minimum of the input, so that the output of each pooling region</span>
+<span class="sd">    always corresponds to some element in the unpadded input region.</span>
+
+<span class="sd">    Using ``ignore_border=False`` prevents Theano from using cuDNN for the</span>
+<span class="sd">    operation, so it will fall back to a slower implementation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">incoming</span><span class="p">,</span> <span class="n">pool_size</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                 <span class="n">ignore_border</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;max&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Pool1DLayer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">incoming</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_shape</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Tried to create a 1D pooling layer with &quot;</span>
+                             <span class="s2">&quot;input shape </span><span class="si">%r</span><span class="s2">. Expected 3 input dimensions &quot;</span>
+                             <span class="s2">&quot;(batchsize, channels, 1 spatial dimensions).&quot;</span>
+                             <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_shape</span><span class="p">,))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">pool_size</span> <span class="o">=</span> <span class="n">as_tuple</span><span class="p">(</span><span class="n">pool_size</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stride</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool_size</span> <span class="k">if</span> <span class="n">stride</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">as_tuple</span><span class="p">(</span><span class="n">stride</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pad</span> <span class="o">=</span> <span class="n">as_tuple</span><span class="p">(</span><span class="n">pad</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ignore_border</span> <span class="o">=</span> <span class="n">ignore_border</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">mode</span>
+
+    <span class="k">def</span> <span class="nf">get_output_shape_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_shape</span><span class="p">):</span>
+        <span class="n">output_shape</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">input_shape</span><span class="p">)</span>  <span class="c1"># copy / convert to mutable list</span>
+
+        <span class="n">output_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">pool_output_length</span><span class="p">(</span><span class="n">input_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                                              <span class="n">pool_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pool_size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                                              <span class="n">stride</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">stride</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                                              <span class="n">pad</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pad</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                                              <span class="n">ignore_border</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ignore_border</span><span class="p">,</span>
+                                              <span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">output_shape</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_output_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">input_4d</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">shape_padright</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">pooled</span> <span class="o">=</span> <span class="n">pool_2d</span><span class="p">(</span><span class="n">input_4d</span><span class="p">,</span>
+                         <span class="n">ws</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pool_size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">),</span>
+                         <span class="n">stride</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stride</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">),</span>
+                         <span class="n">ignore_border</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ignore_border</span><span class="p">,</span>
+                         <span class="n">pad</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pad</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">0</span><span class="p">),</span>
+                         <span class="n">mode</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span>
+                         <span class="p">)</span>
+        <span class="k">return</span> <span class="n">pooled</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span>
+
+
+<span class="k">class</span> <span class="nc">Pool2DLayer</span><span class="p">(</span><span class="n">Layer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    2D pooling layer</span>
+
+<span class="sd">    Performs 2D mean or max-pooling over the two trailing axes</span>
+<span class="sd">    of a 4D input tensor.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    incoming : a :class:`Layer` instance or tuple</span>
+<span class="sd">        The layer feeding into this layer, or the expected input shape.</span>
+
+<span class="sd">    pool_size : integer or iterable</span>
+<span class="sd">        The length of the pooling region in each dimension.  If an integer, it</span>
+<span class="sd">        is promoted to a square pooling region. If an iterable, it should have</span>
+<span class="sd">        two elements.</span>
+
+<span class="sd">    stride : integer, iterable or ``None``</span>
+<span class="sd">        The strides between sucessive pooling regions in each dimension.</span>
+<span class="sd">        If ``None`` then ``stride = pool_size``.</span>
+
+<span class="sd">    pad : integer or iterable</span>
+<span class="sd">        Number of elements to be added on each side of the input</span>
+<span class="sd">        in each dimension. Each value must be less than</span>
+<span class="sd">        the corresponding stride.</span>
+
+<span class="sd">    ignore_border : bool</span>
+<span class="sd">        If ``True``, partial pooling regions will be ignored.</span>
+<span class="sd">        Must be ``True`` if ``pad != (0, 0)``.</span>
+
+<span class="sd">    mode : {&#39;max&#39;, &#39;average_inc_pad&#39;, &#39;average_exc_pad&#39;}</span>
+<span class="sd">        Pooling mode: max-pooling or mean-pooling including/excluding zeros</span>
+<span class="sd">        from partially padded pooling regions. Default is &#39;max&#39;.</span>
+
+<span class="sd">    **kwargs</span>
+<span class="sd">        Any additional keyword arguments are passed to the :class:`Layer`</span>
+<span class="sd">        superclass.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    MaxPool2DLayer : Shortcut for max pooling layer.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The value used to pad the input is chosen to be less than</span>
+<span class="sd">    the minimum of the input, so that the output of each pooling region</span>
+<span class="sd">    always corresponds to some element in the unpadded input region.</span>
+
+<span class="sd">    Using ``ignore_border=False`` prevents Theano from using cuDNN for the</span>
+<span class="sd">    operation, so it will fall back to a slower implementation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">incoming</span><span class="p">,</span> <span class="n">pool_size</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                 <span class="n">ignore_border</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;max&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Pool2DLayer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">incoming</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">pool_size</span> <span class="o">=</span> <span class="n">as_tuple</span><span class="p">(</span><span class="n">pool_size</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_shape</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Tried to create a 2D pooling layer with &quot;</span>
+                             <span class="s2">&quot;input shape </span><span class="si">%r</span><span class="s2">. Expected 4 input dimensions &quot;</span>
+                             <span class="s2">&quot;(batchsize, channels, 2 spatial dimensions).&quot;</span>
+                             <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_shape</span><span class="p">,))</span>
+
+        <span class="k">if</span> <span class="n">stride</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stride</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool_size</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stride</span> <span class="o">=</span> <span class="n">as_tuple</span><span class="p">(</span><span class="n">stride</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">pad</span> <span class="o">=</span> <span class="n">as_tuple</span><span class="p">(</span><span class="n">pad</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">ignore_border</span> <span class="o">=</span> <span class="n">ignore_border</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">mode</span>
+
+    <span class="k">def</span> <span class="nf">get_output_shape_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_shape</span><span class="p">):</span>
+        <span class="n">output_shape</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">input_shape</span><span class="p">)</span>  <span class="c1"># copy / convert to mutable list</span>
+
+        <span class="n">output_shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">pool_output_length</span><span class="p">(</span><span class="n">input_shape</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+                                             <span class="n">pool_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pool_size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                                             <span class="n">stride</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">stride</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                                             <span class="n">pad</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pad</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                                             <span class="n">ignore_border</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ignore_border</span><span class="p">,</span>
+                                             <span class="p">)</span>
+
+        <span class="n">output_shape</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">pool_output_length</span><span class="p">(</span><span class="n">input_shape</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span>
+                                             <span class="n">pool_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pool_size</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                                             <span class="n">stride</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">stride</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                                             <span class="n">pad</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pad</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                                             <span class="n">ignore_border</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ignore_border</span><span class="p">,</span>
+                                             <span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">output_shape</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_output_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">pooled</span> <span class="o">=</span> <span class="n">pool_2d</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span>
+                         <span class="n">ws</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pool_size</span><span class="p">,</span>
+                         <span class="n">stride</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">stride</span><span class="p">,</span>
+                         <span class="n">ignore_border</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ignore_border</span><span class="p">,</span>
+                         <span class="n">pad</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pad</span><span class="p">,</span>
+                         <span class="n">mode</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span>
+                         <span class="p">)</span>
+        <span class="k">return</span> <span class="n">pooled</span>
+
+
+<span class="k">class</span> <span class="nc">Pool3DLayer</span><span class="p">(</span><span class="n">Layer</span><span class="p">):</span>  <span class="c1"># pragma: no cover</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    3D pooling layer</span>
+
+<span class="sd">    Performs 3D mean or max-pooling over the three trailing axes</span>
+<span class="sd">    of a 5D input tensor.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    incoming : a :class:`Layer` instance or tuple</span>
+<span class="sd">        The layer feeding into this layer, or the expected input shape.</span>
+
+<span class="sd">    pool_size : integer or iterable</span>
+<span class="sd">        The length of the pooling region in each dimension.  If an integer, it</span>
+<span class="sd">        is promoted to a cubic pooling region. If an iterable, it should have</span>
+<span class="sd">        three elements.</span>
+
+<span class="sd">    stride : integer, iterable or ``None``</span>
+<span class="sd">        The strides between sucessive pooling regions in each dimension.</span>
+<span class="sd">        If ``None`` then ``stride = pool_size``.</span>
+
+<span class="sd">    pad : integer or iterable</span>
+<span class="sd">        Number of elements to be added on each side of the input</span>
+<span class="sd">        in each dimension. Each value must be less than</span>
+<span class="sd">        the corresponding stride.</span>
+
+<span class="sd">    ignore_border : bool</span>
+<span class="sd">        If ``True``, partial pooling regions will be ignored.</span>
+<span class="sd">        Must be ``True`` if ``pad != (0, 0, 0)``.</span>
+
+<span class="sd">    mode : {&#39;max&#39;, &#39;average_inc_pad&#39;, &#39;average_exc_pad&#39;}</span>
+<span class="sd">        Pooling mode: max-pooling or mean-pooling including/excluding zeros</span>
+<span class="sd">        from partially padded pooling regions. Default is &#39;max&#39;.</span>
+
+<span class="sd">    **kwargs</span>
+<span class="sd">        Any additional keyword arguments are passed to the :class:`Layer`</span>
+<span class="sd">        superclass.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    MaxPool3DLayer : Shortcut for max pooling layer.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The value used to pad the input is chosen to be less than</span>
+<span class="sd">    the minimum of the input, so that the output of each pooling region</span>
+<span class="sd">    always corresponds to some element in the unpadded input region.</span>
+
+<span class="sd">    Using ``ignore_border=False`` prevents Theano from using cuDNN for the</span>
+<span class="sd">    operation, so it will fall back to a slower implementation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">incoming</span><span class="p">,</span> <span class="n">pool_size</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                 <span class="n">ignore_border</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;max&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Pool3DLayer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">incoming</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">pool_size</span> <span class="o">=</span> <span class="n">as_tuple</span><span class="p">(</span><span class="n">pool_size</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_shape</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">5</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Tried to create a 3D pooling layer with &quot;</span>
+                             <span class="s2">&quot;input shape </span><span class="si">%r</span><span class="s2">. Expected 5 input dimensions &quot;</span>
+                             <span class="s2">&quot;(batchsize, channels, 3 spatial dim).&quot;</span>
+                             <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_shape</span><span class="p">,))</span>
+
+        <span class="k">if</span> <span class="n">stride</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stride</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool_size</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stride</span> <span class="o">=</span> <span class="n">as_tuple</span><span class="p">(</span><span class="n">stride</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">pad</span> <span class="o">=</span> <span class="n">as_tuple</span><span class="p">(</span><span class="n">pad</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">ignore_border</span> <span class="o">=</span> <span class="n">ignore_border</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">mode</span>
+
+    <span class="k">def</span> <span class="nf">get_output_shape_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_shape</span><span class="p">):</span>
+        <span class="n">output_shape</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">input_shape</span><span class="p">)</span>  <span class="c1"># copy / convert to mutable list</span>
+
+        <span class="n">output_shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">pool_output_length</span><span class="p">(</span><span class="n">input_shape</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+                                             <span class="n">pool_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pool_size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                                             <span class="n">stride</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">stride</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                                             <span class="n">pad</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pad</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                                             <span class="n">ignore_border</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ignore_border</span><span class="p">,</span>
+                                             <span class="p">)</span>
+
+        <span class="n">output_shape</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">pool_output_length</span><span class="p">(</span><span class="n">input_shape</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span>
+                                             <span class="n">pool_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pool_size</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                                             <span class="n">stride</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">stride</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                                             <span class="n">pad</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pad</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                                             <span class="n">ignore_border</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ignore_border</span><span class="p">,</span>
+                                             <span class="p">)</span>
+
+        <span class="n">output_shape</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">pool_output_length</span><span class="p">(</span><span class="n">input_shape</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span>
+                                             <span class="n">pool_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pool_size</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+                                             <span class="n">stride</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">stride</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+                                             <span class="n">pad</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pad</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+                                             <span class="n">ignore_border</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ignore_border</span><span class="p">,</span>
+                                             <span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">output_shape</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_output_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">pooled</span> <span class="o">=</span> <span class="n">pool_3d</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span>
+                         <span class="n">ws</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pool_size</span><span class="p">,</span>
+                         <span class="n">stride</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">stride</span><span class="p">,</span>
+                         <span class="n">ignore_border</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ignore_border</span><span class="p">,</span>
+                         <span class="n">pad</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pad</span><span class="p">,</span>
+                         <span class="n">mode</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span>
+                         <span class="p">)</span>
+        <span class="k">return</span> <span class="n">pooled</span>
+
+
+<span class="k">class</span> <span class="nc">MaxPool1DLayer</span><span class="p">(</span><span class="n">Pool1DLayer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    1D max-pooling layer</span>
+
+<span class="sd">    Performs 1D max-pooling over the trailing axis of a 3D input tensor.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    incoming : a :class:`Layer` instance or tuple</span>
+<span class="sd">        The layer feeding into this layer, or the expected input shape.</span>
+
+<span class="sd">    pool_size : integer or iterable</span>
+<span class="sd">        The length of the pooling region. If an iterable, it should have a</span>
+<span class="sd">        single element.</span>
+
+<span class="sd">    stride : integer, iterable or ``None``</span>
+<span class="sd">        The stride between sucessive pooling regions.</span>
+<span class="sd">        If ``None`` then ``stride == pool_size``.</span>
+
+<span class="sd">    pad : integer or iterable</span>
+<span class="sd">        The number of elements to be added to the input on each side.</span>
+<span class="sd">        Must be less than stride.</span>
+
+<span class="sd">    ignore_border : bool</span>
+<span class="sd">        If ``True``, partial pooling regions will be ignored.</span>
+<span class="sd">        Must be ``True`` if ``pad != 0``.</span>
+
+<span class="sd">    **kwargs</span>
+<span class="sd">        Any additional keyword arguments are passed to the :class:`Layer`</span>
+<span class="sd">        superclass.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The value used to pad the input is chosen to be less than</span>
+<span class="sd">    the minimum of the input, so that the output of each pooling region</span>
+<span class="sd">    always corresponds to some element in the unpadded input region.</span>
+
+<span class="sd">    Using ``ignore_border=False`` prevents Theano from using cuDNN for the</span>
+<span class="sd">    operation, so it will fall back to a slower implementation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">incoming</span><span class="p">,</span> <span class="n">pool_size</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                 <span class="n">ignore_border</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">MaxPool1DLayer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">incoming</span><span class="p">,</span>
+                                             <span class="n">pool_size</span><span class="p">,</span>
+                                             <span class="n">stride</span><span class="p">,</span>
+                                             <span class="n">pad</span><span class="p">,</span>
+                                             <span class="n">ignore_border</span><span class="p">,</span>
+                                             <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;max&#39;</span><span class="p">,</span>
+                                             <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="MaxPool2DLayer"><a class="viewcode-back" href="../../../../wbia_cnn.html#wbia_cnn.custom_layers.MaxPool2DLayer">[docs]</a><span class="k">class</span> <span class="nc">MaxPool2DLayer</span><span class="p">(</span><span class="n">Pool2DLayer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    2D max-pooling layer</span>
+
+<span class="sd">    Performs 2D max-pooling over the two trailing axes of a 4D input tensor.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    incoming : a :class:`Layer` instance or tuple</span>
+<span class="sd">        The layer feeding into this layer, or the expected input shape.</span>
+
+<span class="sd">    pool_size : integer or iterable</span>
+<span class="sd">        The length of the pooling region in each dimension.  If an integer, it</span>
+<span class="sd">        is promoted to a square pooling region. If an iterable, it should have</span>
+<span class="sd">        two elements.</span>
+
+<span class="sd">    stride : integer, iterable or ``None``</span>
+<span class="sd">        The strides between sucessive pooling regions in each dimension.</span>
+<span class="sd">        If ``None`` then ``stride = pool_size``.</span>
+
+<span class="sd">    pad : integer or iterable</span>
+<span class="sd">        Number of elements to be added on each side of the input</span>
+<span class="sd">        in each dimension. Each value must be less than</span>
+<span class="sd">        the corresponding stride.</span>
+
+<span class="sd">    ignore_border : bool</span>
+<span class="sd">        If ``True``, partial pooling regions will be ignored.</span>
+<span class="sd">        Must be ``True`` if ``pad != (0, 0)``.</span>
+
+<span class="sd">    **kwargs</span>
+<span class="sd">        Any additional keyword arguments are passed to the :class:`Layer`</span>
+<span class="sd">        superclass.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The value used to pad the input is chosen to be less than</span>
+<span class="sd">    the minimum of the input, so that the output of each pooling region</span>
+<span class="sd">    always corresponds to some element in the unpadded input region.</span>
+
+<span class="sd">    Using ``ignore_border=False`` prevents Theano from using cuDNN for the</span>
+<span class="sd">    operation, so it will fall back to a slower implementation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">incoming</span><span class="p">,</span> <span class="n">pool_size</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                 <span class="n">ignore_border</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">MaxPool2DLayer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">incoming</span><span class="p">,</span>
+                                             <span class="n">pool_size</span><span class="p">,</span>
+                                             <span class="n">stride</span><span class="p">,</span>
+                                             <span class="n">pad</span><span class="p">,</span>
+                                             <span class="n">ignore_border</span><span class="p">,</span>
+                                             <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;max&#39;</span><span class="p">,</span>
+                                             <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<span class="c1"># TODO: add reshape-based implementation to MaxPool*DLayer</span>
+
+
+<span class="k">class</span> <span class="nc">MaxPool3DLayer</span><span class="p">(</span><span class="n">Pool3DLayer</span><span class="p">):</span>  <span class="c1"># pragma: no cover</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    3D max-pooling layer</span>
+
+<span class="sd">    Performs 3D max-pooling over the three trailing axes of a 5D input tensor.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    incoming : a :class:`Layer` instance or tuple</span>
+<span class="sd">        The layer feeding into this layer, or the expected input shape.</span>
+
+<span class="sd">    pool_size : integer or iterable</span>
+<span class="sd">        The length of the pooling region in each dimension.  If an integer, it</span>
+<span class="sd">        is promoted to a cubic pooling region. If an iterable, it should have</span>
+<span class="sd">        three elements.</span>
+
+<span class="sd">    stride : integer, iterable or ``None``</span>
+<span class="sd">        The strides between sucessive pooling regions in each dimension.</span>
+<span class="sd">        If ``None`` then ``stride = pool_size``.</span>
+
+<span class="sd">    pad : integer or iterable</span>
+<span class="sd">        Number of elements to be added on each side of the input</span>
+<span class="sd">        in each dimension. Each value must be less than</span>
+<span class="sd">        the corresponding stride.</span>
+
+<span class="sd">    ignore_border : bool</span>
+<span class="sd">        If ``True``, partial pooling regions will be ignored.</span>
+<span class="sd">        Must be ``True`` if ``pad != (0, 0, 0)``.</span>
+
+<span class="sd">    **kwargs</span>
+<span class="sd">        Any additional keyword arguments are passed to the :class:`Layer`</span>
+<span class="sd">        superclass.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The value used to pad the input is chosen to be less than</span>
+<span class="sd">    the minimum of the input, so that the output of each pooling region</span>
+<span class="sd">    always corresponds to some element in the unpadded input region.</span>
+
+<span class="sd">    Using ``ignore_border=False`` prevents Theano from using cuDNN for the</span>
+<span class="sd">    operation, so it will fall back to a slower implementation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">incoming</span><span class="p">,</span> <span class="n">pool_size</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                 <span class="n">ignore_border</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">MaxPool3DLayer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">incoming</span><span class="p">,</span>
+                                             <span class="n">pool_size</span><span class="p">,</span>
+                                             <span class="n">stride</span><span class="p">,</span>
+                                             <span class="n">pad</span><span class="p">,</span>
+                                             <span class="n">ignore_border</span><span class="p">,</span>
+                                             <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;max&#39;</span><span class="p">,</span>
+                                             <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">T</span><span class="o">.</span><span class="n">signal</span><span class="o">.</span><span class="n">pool</span><span class="p">,</span> <span class="s1">&#39;pool_3d&#39;</span><span class="p">):</span>  <span class="c1"># pragma: no cover</span>
+    <span class="c1"># Hide Pool3DLayer/MaxPool3DLayer for old Theano versions</span>
+    <span class="k">del</span> <span class="n">Pool3DLayer</span><span class="p">,</span> <span class="n">MaxPool3DLayer</span>
+    <span class="n">__all__</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;Pool3DLayer&#39;</span><span class="p">)</span>
+    <span class="n">__all__</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;MaxPool3DLayer&#39;</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Upscale1DLayer</span><span class="p">(</span><span class="n">Layer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    1D upscaling layer</span>
+
+<span class="sd">    Performs 1D upscaling over the trailing axis of a 3D input tensor.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    incoming : a :class:`Layer` instance or tuple</span>
+<span class="sd">        The layer feeding into this layer, or the expected input shape.</span>
+
+<span class="sd">    scale_factor : integer or iterable</span>
+<span class="sd">        The scale factor. If an iterable, it should have one element.</span>
+
+<span class="sd">    mode : {&#39;repeat&#39;, &#39;dilate&#39;}</span>
+<span class="sd">        Upscaling mode: repeat element values or upscale leaving zeroes between</span>
+<span class="sd">        upscaled elements. Default is &#39;repeat&#39;.</span>
+
+<span class="sd">    **kwargs</span>
+<span class="sd">        Any additional keyword arguments are passed to the :class:`Layer`</span>
+<span class="sd">        superclass.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">incoming</span><span class="p">,</span> <span class="n">scale_factor</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;repeat&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Upscale1DLayer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">incoming</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">scale_factor</span> <span class="o">=</span> <span class="n">as_tuple</span><span class="p">(</span><span class="n">scale_factor</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale_factor</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Scale factor must be &gt;= 1, not </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">scale_factor</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">&#39;repeat&#39;</span><span class="p">,</span> <span class="s1">&#39;dilate&#39;</span><span class="p">}:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Mode must be either &#39;repeat&#39; or &#39;dilate&#39;, not </span><span class="si">{0}</span><span class="s2">&quot;</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">mode</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">mode</span>
+
+    <span class="k">def</span> <span class="nf">get_output_shape_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_shape</span><span class="p">):</span>
+        <span class="n">output_shape</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">input_shape</span><span class="p">)</span>  <span class="c1"># copy / convert to mutable list</span>
+        <span class="k">if</span> <span class="n">output_shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">output_shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale_factor</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">output_shape</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_output_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">a</span><span class="p">,</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale_factor</span>
+        <span class="n">upscaled</span> <span class="o">=</span> <span class="nb">input</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;repeat&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">a</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">upscaled</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">extra_ops</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">upscaled</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;dilate&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">a</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">output_shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_output_shape_for</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+                <span class="n">upscaled</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="n">output_shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">input</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+                <span class="n">upscaled</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">set_subtensor</span><span class="p">(</span><span class="n">upscaled</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">::</span><span class="n">a</span><span class="p">],</span> <span class="nb">input</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">upscaled</span>
+
+
+<span class="k">class</span> <span class="nc">Upscale2DLayer</span><span class="p">(</span><span class="n">Layer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    2D upscaling layer</span>
+
+<span class="sd">    Performs 2D upscaling over the two trailing axes of a 4D input tensor.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    incoming : a :class:`Layer` instance or tuple</span>
+<span class="sd">        The layer feeding into this layer, or the expected input shape.</span>
+
+<span class="sd">    scale_factor : integer or iterable</span>
+<span class="sd">        The scale factor in each dimension. If an integer, it is promoted to</span>
+<span class="sd">        a square scale factor region. If an iterable, it should have two</span>
+<span class="sd">        elements.</span>
+
+<span class="sd">    mode : {&#39;repeat&#39;, &#39;dilate&#39;}</span>
+<span class="sd">        Upscaling mode: repeat element values or upscale leaving zeroes between</span>
+<span class="sd">        upscaled elements. Default is &#39;repeat&#39;.</span>
+
+<span class="sd">    **kwargs</span>
+<span class="sd">        Any additional keyword arguments are passed to the :class:`Layer`</span>
+<span class="sd">        superclass.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Using ``mode=&#39;dilate&#39;`` followed by a convolution can be</span>
+<span class="sd">    realized more efficiently with a transposed convolution, see</span>
+<span class="sd">    :class:`lasagne.layers.TransposedConv2DLayer`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">incoming</span><span class="p">,</span> <span class="n">scale_factor</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;repeat&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Upscale2DLayer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">incoming</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">scale_factor</span> <span class="o">=</span> <span class="n">as_tuple</span><span class="p">(</span><span class="n">scale_factor</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale_factor</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale_factor</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Scale factor must be &gt;= 1, not </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">scale_factor</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">&#39;repeat&#39;</span><span class="p">,</span> <span class="s1">&#39;dilate&#39;</span><span class="p">}:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Mode must be either &#39;repeat&#39; or &#39;dilate&#39;, not </span><span class="si">{0}</span><span class="s2">&quot;</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">mode</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">mode</span>
+
+    <span class="k">def</span> <span class="nf">get_output_shape_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_shape</span><span class="p">):</span>
+        <span class="n">output_shape</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">input_shape</span><span class="p">)</span>  <span class="c1"># copy / convert to mutable list</span>
+        <span class="k">if</span> <span class="n">output_shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">output_shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale_factor</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">output_shape</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">output_shape</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale_factor</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">output_shape</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_output_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale_factor</span>
+        <span class="n">upscaled</span> <span class="o">=</span> <span class="nb">input</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;repeat&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">b</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">upscaled</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">extra_ops</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">upscaled</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">a</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">upscaled</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">extra_ops</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">upscaled</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;dilate&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">b</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">a</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">output_shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_output_shape_for</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+                <span class="n">upscaled</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="n">output_shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">input</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+                <span class="n">upscaled</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">set_subtensor</span><span class="p">(</span><span class="n">upscaled</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">::</span><span class="n">a</span><span class="p">,</span> <span class="p">::</span><span class="n">b</span><span class="p">],</span> <span class="nb">input</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">upscaled</span>
+
+
+<span class="k">class</span> <span class="nc">Upscale3DLayer</span><span class="p">(</span><span class="n">Layer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    3D upscaling layer</span>
+
+<span class="sd">    Performs 3D upscaling over the three trailing axes of a 5D input tensor.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    incoming : a :class:`Layer` instance or tuple</span>
+<span class="sd">        The layer feeding into this layer, or the expected input shape.</span>
+
+<span class="sd">    scale_factor : integer or iterable</span>
+<span class="sd">        The scale factor in each dimension. If an integer, it is promoted to</span>
+<span class="sd">        a cubic scale factor region. If an iterable, it should have three</span>
+<span class="sd">        elements.</span>
+
+<span class="sd">    mode : {&#39;repeat&#39;, &#39;dilate&#39;}</span>
+<span class="sd">        Upscaling mode: repeat element values or upscale leaving zeroes between</span>
+<span class="sd">        upscaled elements. Default is &#39;repeat&#39;.</span>
+
+<span class="sd">    **kwargs</span>
+<span class="sd">        Any additional keyword arguments are passed to the :class:`Layer`</span>
+<span class="sd">        superclass.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">incoming</span><span class="p">,</span> <span class="n">scale_factor</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;repeat&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Upscale3DLayer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">incoming</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">scale_factor</span> <span class="o">=</span> <span class="n">as_tuple</span><span class="p">(</span><span class="n">scale_factor</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale_factor</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale_factor</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">or</span> \
+           <span class="bp">self</span><span class="o">.</span><span class="n">scale_factor</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Scale factor must be &gt;= 1, not </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">scale_factor</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">&#39;repeat&#39;</span><span class="p">,</span> <span class="s1">&#39;dilate&#39;</span><span class="p">}:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Mode must be either &#39;repeat&#39; or &#39;dilate&#39;, not </span><span class="si">{0}</span><span class="s2">&quot;</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">mode</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">mode</span>
+
+    <span class="k">def</span> <span class="nf">get_output_shape_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_shape</span><span class="p">):</span>
+        <span class="n">output_shape</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">input_shape</span><span class="p">)</span>  <span class="c1"># copy / convert to mutable list</span>
+        <span class="k">if</span> <span class="n">output_shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">output_shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale_factor</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">output_shape</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">output_shape</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale_factor</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">output_shape</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">output_shape</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale_factor</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">output_shape</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_output_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale_factor</span>
+        <span class="n">upscaled</span> <span class="o">=</span> <span class="nb">input</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;repeat&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">c</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">upscaled</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">extra_ops</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">upscaled</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">b</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">upscaled</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">extra_ops</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">upscaled</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">a</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">upscaled</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">extra_ops</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">upscaled</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;dilate&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">c</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">b</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">a</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">output_shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_output_shape_for</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+                <span class="n">upscaled</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="n">output_shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">input</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+                <span class="n">upscaled</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">set_subtensor</span><span class="p">(</span>
+                    <span class="n">upscaled</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">::</span><span class="n">a</span><span class="p">,</span> <span class="p">::</span><span class="n">b</span><span class="p">,</span> <span class="p">::</span><span class="n">c</span><span class="p">],</span> <span class="nb">input</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">upscaled</span>
+
+
+<span class="k">class</span> <span class="nc">FeaturePoolLayer</span><span class="p">(</span><span class="n">Layer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    lasagne.layers.FeaturePoolLayer(incoming, pool_size, axis=1,</span>
+<span class="sd">    pool_function=theano.tensor.max, **kwargs)</span>
+
+<span class="sd">    Feature pooling layer</span>
+
+<span class="sd">    This layer pools across a given axis of the input. By default this is axis</span>
+<span class="sd">    1, which corresponds to the feature axis for :class:`DenseLayer`,</span>
+<span class="sd">    :class:`Conv1DLayer` and :class:`Conv2DLayer`. The layer can be used to</span>
+<span class="sd">    implement maxout.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    incoming : a :class:`Layer` instance or tuple</span>
+<span class="sd">        The layer feeding into this layer, or the expected input shape.</span>
+
+<span class="sd">    pool_size : integer</span>
+<span class="sd">        the size of the pooling regions, i.e. the number of features / feature</span>
+<span class="sd">        maps to be pooled together.</span>
+
+<span class="sd">    axis : integer</span>
+<span class="sd">        the axis along which to pool. The default value of ``1`` works</span>
+<span class="sd">        for :class:`DenseLayer`, :class:`Conv1DLayer` and :class:`Conv2DLayer`.</span>
+
+<span class="sd">    pool_function : callable</span>
+<span class="sd">        the pooling function to use. This defaults to `theano.tensor.max`</span>
+<span class="sd">        (i.e. max-pooling) and can be replaced by any other aggregation</span>
+<span class="sd">        function.</span>
+
+<span class="sd">    **kwargs</span>
+<span class="sd">        Any additional keyword arguments are passed to the :class:`Layer`</span>
+<span class="sd">        superclass.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    This layer requires that the size of the axis along which it pools is a</span>
+<span class="sd">    multiple of the pool size.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">incoming</span><span class="p">,</span> <span class="n">pool_size</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">pool_function</span><span class="o">=</span><span class="n">T</span><span class="o">.</span><span class="n">max</span><span class="p">,</span>
+                 <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">FeaturePoolLayer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">incoming</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pool_size</span> <span class="o">=</span> <span class="n">pool_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">axis</span> <span class="o">=</span> <span class="n">axis</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pool_function</span> <span class="o">=</span> <span class="n">pool_function</span>
+
+        <span class="n">num_feature_maps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_shape</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">num_feature_maps</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool_size</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Number of input feature maps (</span><span class="si">%d</span><span class="s2">) is not a &quot;</span>
+                             <span class="s2">&quot;multiple of the pool size (pool_size=</span><span class="si">%d</span><span class="s2">)&quot;</span> <span class="o">%</span>
+                             <span class="p">(</span><span class="n">num_feature_maps</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool_size</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">get_output_shape_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_shape</span><span class="p">):</span>
+        <span class="n">output_shape</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">input_shape</span><span class="p">)</span>  <span class="c1"># make a mutable copy</span>
+        <span class="n">output_shape</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="n">input_shape</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="p">]</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool_size</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">output_shape</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_output_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">input_shape</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">num_feature_maps</span> <span class="o">=</span> <span class="n">input_shape</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="p">]</span>
+        <span class="n">num_feature_maps_out</span> <span class="o">=</span> <span class="n">num_feature_maps</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool_size</span>
+
+        <span class="n">pool_shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">input_shape</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="p">]</span> <span class="o">+</span>
+                      <span class="p">(</span><span class="n">num_feature_maps_out</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool_size</span><span class="p">)</span> <span class="o">+</span>
+                      <span class="n">input_shape</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="o">+</span><span class="mi">1</span><span class="p">:])</span>
+
+        <span class="n">input_reshaped</span> <span class="o">=</span> <span class="nb">input</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">pool_shape</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool_function</span><span class="p">(</span><span class="n">input_reshaped</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">FeatureWTALayer</span><span class="p">(</span><span class="n">Layer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    &#39;Winner Take All&#39; layer</span>
+
+<span class="sd">    This layer performs &#39;Winner Take All&#39; (WTA) across feature maps: zero out</span>
+<span class="sd">    all but the maximal activation value within a region.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    incoming : a :class:`Layer` instance or tuple</span>
+<span class="sd">        The layer feeding into this layer, or the expected input shape.</span>
+
+<span class="sd">    pool_size : integer</span>
+<span class="sd">        the number of feature maps per region.</span>
+
+<span class="sd">    axis : integer</span>
+<span class="sd">        the axis along which the regions are formed.</span>
+
+<span class="sd">    **kwargs</span>
+<span class="sd">        Any additional keyword arguments are passed to the :class:`Layer`</span>
+<span class="sd">        superclass.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    This layer requires that the size of the axis along which it groups units</span>
+<span class="sd">    is a multiple of the pool size.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">incoming</span><span class="p">,</span> <span class="n">pool_size</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">FeatureWTALayer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">incoming</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pool_size</span> <span class="o">=</span> <span class="n">pool_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">axis</span> <span class="o">=</span> <span class="n">axis</span>
+
+        <span class="n">num_feature_maps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_shape</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">num_feature_maps</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool_size</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Number of input feature maps (</span><span class="si">%d</span><span class="s2">) is not a &quot;</span>
+                             <span class="s2">&quot;multiple of the region size (pool_size=</span><span class="si">%d</span><span class="s2">)&quot;</span> <span class="o">%</span>
+                             <span class="p">(</span><span class="n">num_feature_maps</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool_size</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">get_output_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">num_feature_maps</span> <span class="o">=</span> <span class="nb">input</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="p">]</span>
+        <span class="n">num_pools</span> <span class="o">=</span> <span class="n">num_feature_maps</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool_size</span>
+
+        <span class="n">pool_shape</span> <span class="o">=</span> <span class="p">()</span>
+        <span class="n">arange_shuffle_pattern</span> <span class="o">=</span> <span class="p">()</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="p">):</span>
+            <span class="n">pool_shape</span> <span class="o">+=</span> <span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">k</span><span class="p">],)</span>
+            <span class="n">arange_shuffle_pattern</span> <span class="o">+=</span> <span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,)</span>
+
+        <span class="n">pool_shape</span> <span class="o">+=</span> <span class="p">(</span><span class="n">num_pools</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool_size</span><span class="p">)</span>
+        <span class="n">arange_shuffle_pattern</span> <span class="o">+=</span> <span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">input</span><span class="o">.</span><span class="n">ndim</span><span class="p">):</span>
+            <span class="n">pool_shape</span> <span class="o">+=</span> <span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">k</span><span class="p">],)</span>
+            <span class="n">arange_shuffle_pattern</span> <span class="o">+=</span> <span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,)</span>
+
+        <span class="n">input_reshaped</span> <span class="o">=</span> <span class="nb">input</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">pool_shape</span><span class="p">)</span>
+        <span class="n">max_indices</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">input_reshaped</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+                               <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">arange</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pool_size</span><span class="p">)</span><span class="o">.</span><span class="n">dimshuffle</span><span class="p">(</span><span class="o">*</span><span class="n">arange_shuffle_pattern</span><span class="p">)</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="n">max_indices</span><span class="p">,</span> <span class="n">arange</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">input</span> <span class="o">*</span> <span class="n">mask</span>
+
+
+<span class="k">class</span> <span class="nc">GlobalPoolLayer</span><span class="p">(</span><span class="n">Layer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    lasagne.layers.GlobalPoolLayer(incoming,</span>
+<span class="sd">    pool_function=theano.tensor.mean, **kwargs)</span>
+
+<span class="sd">    Global pooling layer</span>
+
+<span class="sd">    This layer pools globally across all trailing dimensions beyond the 2nd.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    incoming : a :class:`Layer` instance or tuple</span>
+<span class="sd">        The layer feeding into this layer, or the expected input shape.</span>
+
+<span class="sd">    pool_function : callable</span>
+<span class="sd">        the pooling function to use. This defaults to `theano.tensor.mean`</span>
+<span class="sd">        (i.e. mean-pooling) and can be replaced by any other aggregation</span>
+<span class="sd">        function.</span>
+
+<span class="sd">    **kwargs</span>
+<span class="sd">        Any additional keyword arguments are passed to the :class:`Layer`</span>
+<span class="sd">        superclass.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">incoming</span><span class="p">,</span> <span class="n">pool_function</span><span class="o">=</span><span class="n">T</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">GlobalPoolLayer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">incoming</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pool_function</span> <span class="o">=</span> <span class="n">pool_function</span>
+
+    <span class="k">def</span> <span class="nf">get_output_shape_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_shape</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">input_shape</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">get_output_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool_function</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">pool_2d_nxn_regions</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">output_size</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;max&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Performs a pooling operation that results in a fixed size:</span>
+<span class="sd">    output_size x output_size.</span>
+<span class="sd">    Used by SpatialPyramidPoolingLayer. Refer to appendix A in [1]</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    inputs : a tensor with 4 dimensions (N x C x H x W)</span>
+<span class="sd">    output_size: integer</span>
+<span class="sd">        The output size of the pooling operation</span>
+<span class="sd">    mode : string</span>
+<span class="sd">        Pooling mode, one of &#39;max&#39;, &#39;average_inc_pad&#39;, &#39;average_exc_pad&#39;</span>
+<span class="sd">        Defaults to &#39;max&#39;.</span>
+
+<span class="sd">    Returns a list of tensors, for each output bin.</span>
+<span class="sd">       The list contains output_size*output_size elements, where</span>
+<span class="sd">       each element is a 3D tensor (N x C x 1)</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    .. [1] He, Kaiming et al (2015):</span>
+<span class="sd">           Spatial Pyramid Pooling in Deep Convolutional Networks</span>
+<span class="sd">           for Visual Recognition.</span>
+<span class="sd">           http://arxiv.org/pdf/1406.4729.pdf.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;max&#39;</span><span class="p">:</span>
+        <span class="n">pooling_op</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">max</span>
+    <span class="k">elif</span> <span class="n">mode</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;average_inc_pad&#39;</span><span class="p">,</span> <span class="s1">&#39;average_exc_pad&#39;</span><span class="p">]:</span>
+        <span class="n">pooling_op</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">mean</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Mode must be either &#39;max&#39;, &#39;average_inc_pad&#39; or &quot;</span>
+        <span class="n">msg</span> <span class="o">+=</span> <span class="s2">&quot;&#39;average_exc_pad&#39;. Got &#39;</span><span class="si">{0}</span><span class="s2">&#39;&quot;</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">mode</span><span class="p">))</span>
+
+    <span class="n">h</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">inputs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">output_size</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">output_size</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">output_size</span><span class="p">):</span>
+            <span class="n">start_h</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">row</span> <span class="o">/</span> <span class="n">n</span> <span class="o">*</span> <span class="n">h</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;int32&#39;</span><span class="p">)</span>
+            <span class="n">end_h</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">ceil</span><span class="p">((</span><span class="n">row</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span> <span class="o">*</span> <span class="n">h</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;int32&#39;</span><span class="p">)</span>
+            <span class="n">start_w</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">col</span> <span class="o">/</span> <span class="n">n</span> <span class="o">*</span> <span class="n">w</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;int32&#39;</span><span class="p">)</span>
+            <span class="n">end_w</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">ceil</span><span class="p">((</span><span class="n">col</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span> <span class="o">*</span> <span class="n">w</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;int32&#39;</span><span class="p">)</span>
+
+            <span class="n">pooling_region</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">start_h</span><span class="p">:</span><span class="n">end_h</span><span class="p">,</span> <span class="n">start_w</span><span class="p">:</span><span class="n">end_w</span><span class="p">]</span>
+            <span class="n">this_result</span> <span class="o">=</span> <span class="n">pooling_op</span><span class="p">(</span><span class="n">pooling_region</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">this_result</span><span class="o">.</span><span class="n">dimshuffle</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">result</span>
+
+
+<span class="k">class</span> <span class="nc">SpatialPyramidPoolingLayer</span><span class="p">(</span><span class="n">Layer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Spatial Pyramid Pooling Layer</span>
+
+<span class="sd">    Performs spatial pyramid pooling (SPP) over the input.</span>
+<span class="sd">    It will turn a 2D input of arbitrary size into an output of fixed</span>
+<span class="sd">    dimension.</span>
+<span class="sd">    Hence, the convolutional part of a DNN can be connected to a dense part</span>
+<span class="sd">    with a fixed number of nodes even if the dimensions of the</span>
+<span class="sd">    input image are unknown.</span>
+
+<span class="sd">    The pooling is performed over :math:`l` pooling levels.</span>
+<span class="sd">    Each pooling level :math:`i` will create :math:`M_i` output features.</span>
+<span class="sd">    :math:`M_i` is given by :math:`n_i * n_i`,</span>
+<span class="sd">    with :math:`n_i` as the number of pooling operation per dimension in</span>
+<span class="sd">    level :math:`i`, and we use a list of the :math:`n_i`&#39;s as a</span>
+<span class="sd">    parameter for SPP-Layer.</span>
+<span class="sd">    The length of this list is the level of the spatial pyramid.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    incoming : a :class:`Layer` instance or tuple</span>
+<span class="sd">        The layer feeding into this layer, or the expected input shape.</span>
+
+<span class="sd">    pool_dims : list of integers</span>
+<span class="sd">        The list of :math:`n_i`&#39;s that define the output dimension of each</span>
+<span class="sd">        pooling level :math:`i`. The length of pool_dims is the level of</span>
+<span class="sd">        the spatial pyramid.</span>
+
+<span class="sd">    mode : string</span>
+<span class="sd">        Pooling mode, one of &#39;max&#39;, &#39;average_inc_pad&#39;, &#39;average_exc_pad&#39;</span>
+<span class="sd">        Defaults to &#39;max&#39;.</span>
+
+<span class="sd">    implementation : string</span>
+<span class="sd">        Either &#39;fast&#39; or &#39;kaiming&#39;. The &#39;fast&#39; version uses theano&#39;s pool_2d</span>
+<span class="sd">        operation, which is fast but does not work for all input sizes.</span>
+<span class="sd">        The &#39;kaiming&#39; mode is slower but implements the pooling as described</span>
+<span class="sd">        in [1], and works with any input size.</span>
+
+<span class="sd">    **kwargs</span>
+<span class="sd">        Any additional keyword arguments are passed to the :class:`Layer`</span>
+<span class="sd">        superclass.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    This layer should be inserted between the convolutional part of a</span>
+<span class="sd">    DNN and its dense part. Convolutions can be used for</span>
+<span class="sd">    arbitrary input dimensions, but the size of their output will</span>
+<span class="sd">    depend on their input dimensions. Connecting the output of the</span>
+<span class="sd">    convolutional to the dense part then usually demands us to fix</span>
+<span class="sd">    the dimensions of the network&#39;s InputLayer.</span>
+<span class="sd">    The spatial pyramid pooling layer, however, allows us to leave the</span>
+<span class="sd">    network input dimensions arbitrary. The advantage over a global</span>
+<span class="sd">    pooling layer is the added robustness against object deformations</span>
+<span class="sd">    due to the pooling on different scales.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    .. [1] He, Kaiming et al (2015):</span>
+<span class="sd">           Spatial Pyramid Pooling in Deep Convolutional Networks</span>
+<span class="sd">           for Visual Recognition.</span>
+<span class="sd">           http://arxiv.org/pdf/1406.4729.pdf.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">incoming</span><span class="p">,</span> <span class="n">pool_dims</span><span class="o">=</span><span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;max&#39;</span><span class="p">,</span>
+                 <span class="n">implementation</span><span class="o">=</span><span class="s1">&#39;fast&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">SpatialPyramidPoolingLayer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">incoming</span><span class="p">,</span>
+                                                             <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_shape</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">4</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Tried to create a SPP layer with &quot;</span>
+                                 <span class="s2">&quot;input shape </span><span class="si">%r</span><span class="s2">. Expected 4 input dimensions &quot;</span>
+                                 <span class="s2">&quot;(batchsize, channels, 2 spatial dimensions).&quot;</span>
+                                 <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_shape</span><span class="p">,))</span>
+
+            <span class="k">if</span> <span class="n">implementation</span> <span class="o">!=</span> <span class="s1">&#39;kaiming&#39;</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+                <span class="c1"># Check if the running theano version supports symbolic</span>
+                <span class="c1"># variables as arguments for pool_2d. This is required</span>
+                <span class="c1"># unless using implementation=&#39;kaiming&#39;</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">pool_2d</span><span class="p">(</span><span class="n">T</span><span class="o">.</span><span class="n">tensor4</span><span class="p">(),</span>
+                            <span class="n">ws</span><span class="o">=</span><span class="n">T</span><span class="o">.</span><span class="n">ivector</span><span class="p">(),</span>
+                            <span class="n">stride</span><span class="o">=</span><span class="n">T</span><span class="o">.</span><span class="n">ivector</span><span class="p">(),</span>
+                            <span class="n">ignore_border</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                            <span class="n">pad</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s2">&quot;SpatialPyramidPoolingLayer with &quot;</span>
+                                      <span class="s2">&quot;implementation=&#39;</span><span class="si">%s</span><span class="s2">&#39; requires a newer &quot;</span>
+                                      <span class="s2">&quot;version of theano. Either update &quot;</span>
+                                      <span class="s2">&quot;theano, or use implementation=&quot;</span>
+                                      <span class="s2">&quot;&#39;kaiming&#39;&quot;</span> <span class="o">%</span> <span class="n">implementation</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">mode</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">implementation</span> <span class="o">=</span> <span class="n">implementation</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pool_dims</span> <span class="o">=</span> <span class="n">pool_dims</span>
+
+    <span class="k">def</span> <span class="nf">get_output_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">input_size</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">symb</span> <span class="k">if</span> <span class="n">fixed</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">fixed</span>
+                           <span class="k">for</span> <span class="n">fixed</span><span class="p">,</span> <span class="n">symb</span>
+                           <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:],</span> <span class="nb">input</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:]))</span>
+        <span class="n">pool_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">pool_dim</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool_dims</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">implementation</span> <span class="o">==</span> <span class="s1">&#39;kaiming&#39;</span><span class="p">:</span>
+                <span class="n">pool_list</span> <span class="o">+=</span> <span class="n">pool_2d_nxn_regions</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span>
+                                                 <span class="n">pool_dim</span><span class="p">,</span>
+                                                 <span class="n">mode</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+                <span class="n">win_size</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">((</span><span class="n">i</span> <span class="o">+</span> <span class="n">pool_dim</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="n">pool_dim</span>
+                                 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">input_size</span><span class="p">)</span>
+                <span class="n">str_size</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">i</span> <span class="o">//</span> <span class="n">pool_dim</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">input_size</span><span class="p">)</span>
+
+                <span class="n">pool</span> <span class="o">=</span> <span class="n">pool_2d</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span>
+                               <span class="n">ws</span><span class="o">=</span><span class="n">win_size</span><span class="p">,</span>
+                               <span class="n">stride</span><span class="o">=</span><span class="n">str_size</span><span class="p">,</span>
+                               <span class="n">mode</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span>
+                               <span class="n">pad</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                               <span class="n">ignore_border</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="n">pool</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+                <span class="n">pool_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">T</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">pool_list</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_output_shape_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_shape</span><span class="p">):</span>
+        <span class="n">num_features</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">*</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool_dims</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">input_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">input_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">num_features</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../index.html">wbia-cnn</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../wbia_cnn.html">wbia_cnn package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Wild Me.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

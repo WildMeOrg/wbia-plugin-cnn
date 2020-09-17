@@ -7,6 +7,7 @@ import theano
 import functools
 from theano import tensor as T  # NOQA
 import Lasagne as lasagne
+from Lasagne.lasagne import init, layers, nonlinearities
 from wbia_cnn import utils
 import utool as ut
 
@@ -27,19 +28,19 @@ try:
         # cuda_convnet seems broken on hyrule
         conv_impl = 'cuDNN'
 
-    # http://lasagne.readthedocs.org/en/latest/modules/layers/conv.html#lasagne.layers.Conv2DLayer
+    # http://lasagne.readthedocs.org/en/latest/modules/layers/conv.html#layers.Conv2DLayer
 
     if conv_impl == 'cuda_convnet':
         # cannot handle non-square images (pylearn2 module)
-        import lasagne.layers.cuda_convnet
+        import layers.cuda_convnet
 
-        Conv2DLayer = lasagne.layers.cuda_convnet.Conv2DCCLayer
-        MaxPool2DLayer = lasagne.layers.cuda_convnet.MaxPool2DCCLayer
+        Conv2DLayer = layers.cuda_convnet.Conv2DCCLayer
+        MaxPool2DLayer = layers.cuda_convnet.MaxPool2DCCLayer
     elif conv_impl == 'cuDNN':
-        import lasagne.layers.dnn
+        import layers.dnn
 
-        Conv2DLayer = lasagne.layers.dnn.Conv2DDNNLayer
-        MaxPool2DLayer = lasagne.layers.dnn.MaxPool2DDNNLayer
+        Conv2DLayer = layers.dnn.Conv2DDNNLayer
+        MaxPool2DLayer = layers.dnn.MaxPool2DDNNLayer
         """
         Need cuda convnet for background model otherwise
         <type 'exceptions.ValueError'>: GpuReshape: cannot reshape input of shape (128, 12, 26, 26) to shape (128, 676).
@@ -53,17 +54,17 @@ try:
         """
     elif conv_impl == 'gemm':
         # Dont use gemm
-        import lasagne.layers.corrmm
+        import layers.corrmm
 
-        Conv2DLayer = lasagne.layers.corrmm.Conv2DLayer
-        MaxPool2DLayer = lasagne.layers.corrmm.Conv2DLayer
+        Conv2DLayer = layers.corrmm.Conv2DLayer
+        MaxPool2DLayer = layers.corrmm.Conv2DLayer
     else:
         raise NotImplementedError('conv_impl = %r' % (conv_impl,))
 
     USING_GPU = True
 except (Exception, ImportError) as ex:
-    Conv2DLayer = lasagne.layers.Conv2DLayer
-    MaxPool2DLayer = lasagne.layers.MaxPool2DLayer
+    Conv2DLayer = layers.Conv2DLayer
+    MaxPool2DLayer = layers.MaxPool2DLayer
 
     if utils.VERBOSE_CNN:
         print('Conv2DLayer = %r' % (Conv2DLayer,))
@@ -81,7 +82,7 @@ if utils.VERBOSE_CNN:
     print('theano.__file__ = %r' % (getattr(theano, '__file__', None),))
 
 
-class L1NormalizeLayer(lasagne.layers.Layer):
+class L1NormalizeLayer(layers.Layer):
     def __init__(self, input_layer, *args, **kwargs):
         super(L1NormalizeLayer, self).__init__(input_layer, *args, **kwargs)
 
@@ -92,19 +93,19 @@ class L1NormalizeLayer(lasagne.layers.Layer):
 
 
 @six.add_metaclass(ut.ReloadingMetaclass)
-class LocallyConnected2DLayer(lasagne.layers.Layer):
+class LocallyConnected2DLayer(layers.Layer):
     """
     Copy of the Conv2D layer that needs to be adapted into a locally connected layer
 
     Args:
-        incoming (lasagne.layers.Layer):
+        incoming (layers.Layer):
         num_filters (?):
         filter_size (?):
         stride (tuple): (default = (1, 1))
         pad (int): (default = 0)
         untie_biases (bool): (default = False)
-        W (GlorotUniform): (default = <lasagne.init.GlorotUniform object at 0x7f551a3537d0>)
-        b (Constant): (default = <lasagne.init.Constant object at 0x7f551a33ecd0>)
+        W (GlorotUniform): (default = <init.GlorotUniform object at 0x7f551a3537d0>)
+        b (Constant): (default = <init.Constant object at 0x7f551a33ecd0>)
         nonlinearity (function): (default = <function rectify at 0x7f55307989b0>)
         convolution (function): (default = <function conv2d at 0x7f55330148c0>)
 
@@ -120,9 +121,9 @@ class LocallyConnected2DLayer(lasagne.layers.Layer):
         >>> stride = (1, 1)
         >>> pad = 0
         >>> untie_biases = False
-        >>> W = lasagne.init.GlorotUniform()
-        >>> b = lasagne.init.Constant(0.)
-        >>> nonlinearity = lasagne.nonlinearities.rectify
+        >>> W = init.GlorotUniform()
+        >>> b = init.Constant(0.)
+        >>> nonlinearity = nonlinearities.rectify
         >>> convolution = T.nnet.conv2d
         >>> self = LocallyConnected2DLayer(incoming, num_filters, filter_size,
         >>>                                stride, pad, untie_biases, W, b,
@@ -140,15 +141,15 @@ class LocallyConnected2DLayer(lasagne.layers.Layer):
         stride=(1, 1),
         pad=0,
         untie_biases=False,
-        W=lasagne.init.GlorotUniform(),
-        b=lasagne.init.Constant(0.0),
-        nonlinearity=lasagne.nonlinearities.rectify,
+        W=init.GlorotUniform(),
+        b=init.Constant(0.0),
+        nonlinearity=nonlinearities.rectify,
         convolution=T.nnet.conv2d,
         **kwargs
     ):
         super(LocallyConnected2DLayer, self).__init__(incoming, **kwargs)
         if nonlinearity is None:
-            self.nonlinearity = lasagne.nonlinearities.identity
+            self.nonlinearity = nonlinearities.identity
         else:
             self.nonlinearity = nonlinearity
 
@@ -204,11 +205,11 @@ class LocallyConnected2DLayer(lasagne.layers.Layer):
     def get_output_rc(self, input_shape):
         pad = self.pad if isinstance(self.pad, tuple) else (self.pad,) * 2
 
-        output_rows = lasagne.layers.conv.conv_output_length(
+        output_rows = layers.conv.conv_output_length(
             input_shape[2], self.filter_size[0], self.stride[0], pad[0]
         )
 
-        output_columns = lasagne.layers.conv.conv_output_length(
+        output_columns = layers.conv.conv_output_length(
             input_shape[3], self.filter_size[1], self.stride[1], pad[1]
         )
 
@@ -283,7 +284,7 @@ class LocallyConnected2DLayer(lasagne.layers.Layer):
 
 
 # @six.add_metaclass(ut.ReloadingMetaclass)
-class L2NormalizeLayer(lasagne.layers.Layer):
+class L2NormalizeLayer(layers.Layer):
     """
     Normalizes the outputs of a layer to have an L2 norm of 1.
     This is useful for siamese networks who's outputs will be comparsed using
@@ -377,7 +378,7 @@ class L2NormalizeLayer(lasagne.layers.Layer):
         return output_
 
 
-class L2SquaredDistanceLayer(lasagne.layers.Layer):
+class L2SquaredDistanceLayer(layers.Layer):
     def __init__(self, input_layer, *args, **kwargs):
         super(L2SquaredDistanceLayer, self).__init__(input_layer, *args, **kwargs)
 
@@ -391,7 +392,7 @@ class L2SquaredDistanceLayer(lasagne.layers.Layer):
         return E
 
 
-class L1DistanceLayer(lasagne.layers.Layer):
+class L1DistanceLayer(layers.Layer):
     def __init__(self, input_layer, *args, **kwargs):
         super(L1DistanceLayer, self).__init__(input_layer, *args, **kwargs)
 
@@ -407,11 +408,11 @@ class L1DistanceLayer(lasagne.layers.Layer):
 
 def testdata_input_layer(item_shape=(3, 32, 32), batch_size=128):
     input_shape = (batch_size,) + item_shape
-    input_layer = lasagne.layers.InputLayer(shape=input_shape)
+    input_layer = layers.InputLayer(shape=input_shape)
     return input_layer
 
 
-class SiameseConcatLayer(lasagne.layers.Layer):
+class SiameseConcatLayer(layers.Layer):
     """
 
     TODO checkout layers.merge.ConcatLayer
@@ -481,7 +482,7 @@ class SiameseConcatLayer(lasagne.layers.Layer):
             >>> # ENABLE_DOCTEST
             >>> from wbia_cnn.custom_layers import *  # NOQA
             >>> input_shape = (128, 1024)
-            >>> input_layer = lasagne.layers.InputLayer(shape=input_shape)
+            >>> input_layer = layers.InputLayer(shape=input_shape)
             >>> self = SiameseConcatLayer(input_layer)
             >>> np.random.seed(0)
             >>> input_ = np.random.rand(*input_shape)
@@ -500,7 +501,7 @@ class SiameseConcatLayer(lasagne.layers.Layer):
             >>> from wbia_cnn import draw_net
             >>> import theano
             >>> import numpy as np
-            >>> input_layer = lasagne.layers.InputLayer(shape=(4, 3, 32, 32))
+            >>> input_layer = layers.InputLayer(shape=(4, 3, 32, 32))
             >>> cs_layer = CenterSurroundLayer(input_layer)
             >>> # Make sure that this can concat center surround properly
             >>> self = SiameseConcatLayer(cs_layer, axis=2, data_per_label=4)
@@ -547,7 +548,7 @@ def testdata_centersurround(item_shape):
     return self, inputdata_
 
 
-class CenterSurroundLayer(lasagne.layers.Layer):
+class CenterSurroundLayer(layers.Layer):
     def __init__(self, input_layer, *args, **kwargs):
         # self.name = kwargs.pop('name', None)
         super(CenterSurroundLayer, self).__init__(input_layer, *args, **kwargs)
@@ -642,7 +643,7 @@ class CenterSurroundLayer(lasagne.layers.Layer):
         return output_expr
 
 
-class MultiImageSliceLayer(lasagne.layers.Layer):
+class MultiImageSliceLayer(layers.Layer):
     """
     orig CyclicSliceLayer
     References:
@@ -674,7 +675,7 @@ class MultiImageSliceLayer(lasagne.layers.Layer):
         )
 
 
-class MultiImageRollLayer(lasagne.layers.Layer):
+class MultiImageRollLayer(layers.Layer):
     """
     orig CyclicConvRollLayer
 
@@ -723,7 +724,7 @@ class MultiImageRollLayer(lasagne.layers.Layer):
         )  # concatenate long the channel axis
 
 
-class CyclicPoolLayer(lasagne.layers.Layer):
+class CyclicPoolLayer(layers.Layer):
     """
     Utility layer that unfolds the viewpoints dimension and pools over it.
     Note that this only makes sense for dense representations, not for
@@ -742,7 +743,7 @@ class CyclicPoolLayer(lasagne.layers.Layer):
         return self.pool_function(unfolded_input, axis=0)
 
 
-class BatchNormLayer2(lasagne.layers.BatchNormLayer):
+class BatchNormLayer2(layers.BatchNormLayer):
     """
     Adds a nonlinearity to batch norm layer to reduce number of layers
     """
@@ -753,7 +754,7 @@ class BatchNormLayer2(lasagne.layers.BatchNormLayer):
         super(this_class_now, self).__init__(incoming, **kwargs)
         # super(BatchNormLayer2, self).__init__(incoming, **kwargs)
         self.nonlinearity = (
-            lasagne.nonlinearities.identity if nonlinearity is None else nonlinearity
+            nonlinearities.identity if nonlinearity is None else nonlinearity
         )
 
     def get_output_for(self, input, **kwargs):
@@ -765,7 +766,7 @@ class BatchNormLayer2(lasagne.layers.BatchNormLayer):
         return normalized_activation
 
 
-class FlipLayer(lasagne.layers.Layer):
+class FlipLayer(layers.Layer):
     def get_output_shape_for(self, input_shape):
         return input_shape
 
@@ -775,7 +776,7 @@ class FlipLayer(lasagne.layers.Layer):
 
 def load_json_arch_def(arch_json_fpath):
     """
-    layer_list = lasagne.layers.get_all_layers(output_layer)
+    layer_list = layers.get_all_layers(output_layer)
 
     from wbia_cnn import net_strs
     layer_json_list = [net_strs.make_layer_json_dict(layer)
@@ -784,7 +785,7 @@ def load_json_arch_def(arch_json_fpath):
     arch_json_fpath = '/media/raid/work/WS_ALL/_ibsdb/_ibeis_cache/nets/injur-shark_10056_224x224x3_auqbfhle/models/arch_injur-shark_o2_d11_c688_acioqbst/saved_sessions/fit_session_2016-08-26T173854+5/fit_arch_info.json'
     """
     from wbia_cnn import custom_layers
-    import lasagne.layers.dnn
+    import layers.dnn
 
     # FIXME: Need to redo the saved arch json file.
     # Need to give layers identifiers and specify their inputs / outputs
@@ -811,7 +812,7 @@ def load_json_arch_def(arch_json_fpath):
         if classtype is None:
             classtype = getattr(lasagne.layers, classname, None)
         if classtype is None:
-            classtype = getattr(lasagne.layers.dnn, classname, None)
+            classtype = getattr(layers.dnn, classname, None)
         if classtype is None:
             classtype = getattr(custom_layers, classname, None)
 
@@ -824,7 +825,7 @@ def load_json_arch_def(arch_json_fpath):
     layer_list = custom_layers.evaluate_layer_list(network_def_list)
     # Hack, remove all biases before batch norm
     for layer in layer_list:
-        if isinstance(layer, lasagne.layers.BatchNormLayer):
+        if isinstance(layer, layers.BatchNormLayer):
             in_layer = layer.input_layer
             if in_layer is not None:
                 if getattr(in_layer, 'b') is not None:
@@ -902,17 +903,16 @@ def make_bundles(
 ):
 
     # FIXME; dropout is a pre-operation
-    import Lasagne as lasagne
     import itertools
     import six
 
     if W is None:
         # W = init.GlorotUniform()
-        W = lasagne.init.Orthogonal('relu')
+        W = init.Orthogonal('relu')
 
     # Rectify default inputs
     if nonlinearity == 'lru':
-        nonlinearity = lasagne.nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0))
+        nonlinearity = nonlinearities.LeakyRectify(leakiness=(1.0 / 10.0))
     nonlinearity = nonlinearity
     namer = ut.partial(lambda x: str(six.next(x)), itertools.count(1))
 
@@ -941,7 +941,7 @@ def make_bundles(
 
         def apply_dropout(self, layer):
             # change name standard
-            outgoing = lasagne.layers.DropoutLayer(
+            outgoing = layers.DropoutLayer(
                 layer, p=self.dropout, name='D' + self.name
             )
             return outgoing
@@ -950,7 +950,7 @@ def make_bundles(
             # change name standard
             nonlinearity = getattr(layer, 'nonlinearity', None)
             if nonlinearity is not None:
-                layer.nonlinearity = lasagne.nonlinearities.identity
+                layer.nonlinearity = nonlinearities.identity
             if hasattr(layer, 'b') and layer.b is not None:
                 del layer.params[layer.b]
                 layer.b = None
@@ -963,10 +963,10 @@ def make_bundles(
             # layer._is_main_layer = False
             # if nonlinearity is not None:
             #    nonlin_name = 'g' + self.name
-            #    layer = lasagne.layers.special.NonlinearityLayer(layer,
+            #    layer = layers.special.NonlinearityLayer(layer,
             #                                                     nonlinearity,
             #                                                     name=nonlin_name)
-            # outgoing = lasagne.layers.normalization.batch_norm(layer, **kwargs)
+            # outgoing = layers.normalization.batch_norm(layer, **kwargs)
             # outgoing.input_layer.name = 'bn' + self.name
             # outgoing.name = 'nl' + self.name
             outgoing = layer
@@ -980,9 +980,9 @@ def make_bundles(
             super(InputBundle, self).__init__()
 
         def __call__(self):
-            outgoing = lasagne.layers.InputLayer(shape=self.shape, name='I' + self.name)
+            outgoing = layers.InputLayer(shape=self.shape, name='I' + self.name)
             if self.noise:
-                outgoing = lasagne.layers.GaussianNoiseLayer(
+                outgoing = layers.GaussianNoiseLayer(
                     outgoing, name='N' + self.name
                 )
             return outgoing
@@ -1030,7 +1030,7 @@ def make_bundles(
                 b = None
                 nonlinearity = None
             else:
-                b = lasagne.init.Constant(0)
+                b = init.Constant(0)
                 nonlinearity = self.nonlinearity
 
             if self.preactivate:
@@ -1103,11 +1103,11 @@ def make_bundles(
         #    def ceildiv(a, b):
         #        return -(-a // b)
 
-        #    l = lasagne.layers.ExpressionLayer(
+        #    l = layers.ExpressionLayer(
         #        l_inp,
         #        lambda X: X[:, :, ::2, ::2],
         #        lambda s: (s[0], s[1], ceildiv(s[2], 2), ceildiv(s[3], 2)))
-        #    l = lasagne.layers.PadLayer(l, [n_filters // 4, 0, 0], batch_ndim=1)
+        #    l = layers.PadLayer(l, [n_filters // 4, 0, 0], batch_ndim=1)
         #    return l
 
         def projectionB(self, incoming):
@@ -1139,7 +1139,6 @@ def make_bundles(
             https://github.com/alrojo/lasagne_residual_network/search?utf8=%E2%9C%93&q=residual
             https://github.com/FlorianMuellerklein/Identity-Mapping-ResNet-Lasagne/blob/master/models.py
             """
-
             # Check if this bundle is going to reduce the spatial dimensions
             size_reduced = np.prod(self.stride) != 1
 
@@ -1175,7 +1174,7 @@ def make_bundles(
             else:
                 shortcut = incoming
 
-            outgoing = lasagne.layers.ElemwiseSumLayer(
+            outgoing = layers.ElemwiseSumLayer(
                 [branch, shortcut], name=self.name + '/sum'
             )
 
@@ -1251,7 +1250,7 @@ def make_bundles(
             # for b in branches:
             #    print(b.output_shape)
 
-            outgoing = lasagne.layers.ConcatLayer(branches, name=name + '/cat')
+            outgoing = layers.ConcatLayer(branches, name=name + '/cat')
             outgoing._is_main_layer = True
             if self.pool:
                 outgoing = MaxPool2DLayer(
@@ -1268,11 +1267,11 @@ def make_bundles(
             if num_reduce > 0:
                 if False:
                     bias = 0.1
-                    redu = lasagne.layers.NINLayer(
+                    redu = layers.NINLayer(
                         incoming,
                         num_units=num_reduce,
                         W=self.W,
-                        b=lasagne.init.Constant(bias),
+                        b=init.Constant(bias),
                         nonlinearity=self.nonlinearity,
                         name=name + '/' + name_aug + '_reduce',
                     )
@@ -1381,7 +1380,7 @@ def make_bundles(
             outgoing = incoming
             if self.dropout is not None and self.dropout > 0:
                 outgoing = self.apply_dropout(outgoing)
-            outgoing = lasagne.layers.DenseLayer(
+            outgoing = layers.DenseLayer(
                 outgoing,
                 num_units=self.num_units,
                 name='F' + self.name,
@@ -1405,21 +1404,21 @@ def make_bundles(
             outgoing = incoming
             if self.dropout is not None and self.dropout > 0:
                 outgoing = self.apply_dropout(outgoing)
-            outgoing = lasagne.layers.DenseLayer(
+            outgoing = layers.DenseLayer(
                 outgoing,
                 num_units=self.num_units,
                 name='F' + self.name,
                 W=self.W,
-                nonlinearity=lasagne.nonlinearities.softmax,
+                nonlinearity=nonlinearities.softmax,
             )
             return outgoing
 
     @register_bundle
     class NonlinearitySoftmax(Bundle):
         def __call__(self, incoming):
-            return lasagne.layers.NonlinearityLayer(
+            return layers.NonlinearityLayer(
                 incoming,
-                nonlinearity=lasagne.nonlinearities.softmax,
+                nonlinearity=nonlinearities.softmax,
                 name='Softmax' + self.name,
             )
 
@@ -1429,7 +1428,7 @@ def make_bundles(
             self,
             incoming,
         ):
-            outgoing = lasagne.layers.GlobalPoolLayer(
+            outgoing = layers.GlobalPoolLayer(
                 incoming,
                 name='GP' + self.name,
             )
@@ -1442,7 +1441,7 @@ def make_bundles(
             self,
             incoming,
         ):
-            outgoing = lasagne.layers.GlobalPoolLayer(
+            outgoing = layers.GlobalPoolLayer(
                 incoming,
                 name='AP' + self.name,
             )

@@ -1,0 +1,222 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>wbia_cnn._plugin_grabmodels &#8212; wbia-cnn 3.3.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for wbia_cnn._plugin_grabmodels</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="c1"># -*- coding                                        :utf-8 -*-</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span>
+<span class="kn">import</span> <span class="nn">utool</span> <span class="k">as</span> <span class="nn">ut</span>
+
+<span class="p">(</span><span class="nb">print</span><span class="p">,</span> <span class="n">rrr</span><span class="p">,</span> <span class="n">profile</span><span class="p">)</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">inject2</span><span class="p">(</span><span class="vm">__name__</span><span class="p">,</span> <span class="s1">&#39;[wbia_cnn._plugin_grabmodels]&#39;</span><span class="p">)</span>
+
+
+<span class="c1"># DEFAULT_CNNMODELS_DIR = ut.get_app_resource_dir(&#39;wbia_cnn&#39;, &#39;pretrained&#39;)</span>
+
+<span class="n">MODEL_DOMAIN</span> <span class="o">=</span> <span class="s1">&#39;https://wildbookiarepository.azureedge.net/models/&#39;</span>
+<span class="n">MODEL_URLS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;classifier_cameratrap_megan_v1&#39;</span><span class="p">:</span> <span class="s1">&#39;classifier.cameratrap.megan.v1.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;classifier_cameratrap_megan_v2&#39;</span><span class="p">:</span> <span class="s1">&#39;classifier.cameratrap.megan.v2.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;classifier_cameratrap_megan_v3&#39;</span><span class="p">:</span> <span class="s1">&#39;classifier.cameratrap.megan.v3.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;classifier_cameratrap_megan_v4&#39;</span><span class="p">:</span> <span class="s1">&#39;classifier.cameratrap.megan.v4.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;classifier_cameratrap_megan_v5&#39;</span><span class="p">:</span> <span class="s1">&#39;classifier.cameratrap.megan.v5.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;classifier_cameratrap_megan_v6&#39;</span><span class="p">:</span> <span class="s1">&#39;classifier.cameratrap.megan.v6.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;classifier_cameratrap_megan2_v1&#39;</span><span class="p">:</span> <span class="s1">&#39;classifier.cameratrap.megan2.v1.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;classifier_cameratrap_megan2_v2&#39;</span><span class="p">:</span> <span class="s1">&#39;classifier.cameratrap.megan2.v2.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;classifier_cameratrap_megan2_v3&#39;</span><span class="p">:</span> <span class="s1">&#39;classifier.cameratrap.megan2.v3.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;classifier_cameratrap_megan2_v4&#39;</span><span class="p">:</span> <span class="s1">&#39;classifier.cameratrap.megan2.v4.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;classifier_cameratrap_megan2_v5&#39;</span><span class="p">:</span> <span class="s1">&#39;classifier.cameratrap.megan2.v5.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;classifier_cameratrap_megan2_v6&#39;</span><span class="p">:</span> <span class="s1">&#39;classifier.cameratrap.megan2.v6.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;classifier_cameratrap_ryan_cnn_v1&#39;</span><span class="p">:</span> <span class="s1">&#39;classifier.cameratrap.ryan.wbia_cnn.v1.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;classifier_coco_zebra&#39;</span><span class="p">:</span> <span class="s1">&#39;classifier.coco.zebra.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;classifier_v3_zebra&#39;</span><span class="p">:</span> <span class="s1">&#39;classifier.29.zebra.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;classifier2_v3&#39;</span><span class="p">:</span> <span class="s1">&#39;classifier2.29.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;classifier2_candidacy&#39;</span><span class="p">:</span> <span class="s1">&#39;classifier2.candidacy.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;classifier2_ggr2&#39;</span><span class="p">:</span> <span class="s1">&#39;classifier2.ggr2.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;labeler_v1&#39;</span><span class="p">:</span> <span class="s1">&#39;labeler.v1.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;labeler_v3&#39;</span><span class="p">:</span> <span class="s1">&#39;labeler.29.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;labeler_candidacy&#39;</span><span class="p">:</span> <span class="s1">&#39;labeler.candidacy.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;labeler_cheetah_v0&#39;</span><span class="p">:</span> <span class="s1">&#39;labeler.cheetah.v0.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;labeler_lynx_v1&#39;</span><span class="p">:</span> <span class="s1">&#39;labeler.lynx.v1.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;labeler_lynx_v2&#39;</span><span class="p">:</span> <span class="s1">&#39;labeler.lynx.v2.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;labeler_jaguar_v1&#39;</span><span class="p">:</span> <span class="s1">&#39;labeler.jaguar.v1.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;labeler_jaguar_v2&#39;</span><span class="p">:</span> <span class="s1">&#39;labeler.jaguar.v2.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;labeler_manta&#39;</span><span class="p">:</span> <span class="s1">&#39;labeler.manta_ray_giant.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;labeler_hendrik_dorsal&#39;</span><span class="p">:</span> <span class="s1">&#39;labeler.hendrik_dorsal.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;labeler_seaturtle_v1&#39;</span><span class="p">:</span> <span class="s1">&#39;labeler.seaturtle.v1.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;labeler_seaturtle_v2&#39;</span><span class="p">:</span> <span class="s1">&#39;labeler.seaturtle.v2.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_giraffe_masai&#39;</span><span class="p">:</span> <span class="s1">&#39;background.giraffe_masai.npy&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_zebra_plains&#39;</span><span class="p">:</span> <span class="s1">&#39;background.zebra_plains.npy&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_zebra_plains_grevys&#39;</span><span class="p">:</span> <span class="s1">&#39;background.zebra_plains_grevys.npy&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_whale_fluke&#39;</span><span class="p">:</span> <span class="s1">&#39;background.whale_fluke.npy&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_lynx_v2&#39;</span><span class="p">:</span> <span class="s1">&#39;background.lynx.v2.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_lynx_v3&#39;</span><span class="p">:</span> <span class="s1">&#39;background.lynx.v3.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_cheetah_v0&#39;</span><span class="p">:</span> <span class="s1">&#39;background.cheetah.v0.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_cheetah_v1&#39;</span><span class="p">:</span> <span class="s1">&#39;background.cheetah.v1.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_jaguar_v1&#39;</span><span class="p">:</span> <span class="s1">&#39;background.jaguar.v1.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_jaguar_v2&#39;</span><span class="p">:</span> <span class="s1">&#39;background.jaguar.v2.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_manta&#39;</span><span class="p">:</span> <span class="s1">&#39;background.manta_ray_giant.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_right_whale_head_v0&#39;</span><span class="p">:</span> <span class="s1">&#39;background.right_whale_head.v0.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_orca_v0&#39;</span><span class="p">:</span> <span class="s1">&#39;background.whale_orca.v0.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_skunk_spotted_v0&#39;</span><span class="p">:</span> <span class="s1">&#39;background.skunk_spotted.v0.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_skunk_spotted_v1&#39;</span><span class="p">:</span> <span class="s1">&#39;background.skunk_spotted.v1.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_dolphin_spotted&#39;</span><span class="p">:</span> <span class="s1">&#39;background.dolphin_spotted.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_dolphin_spotted_fin_dorsal&#39;</span><span class="p">:</span> <span class="s1">&#39;background.dolphin_spotted+fin_dorsal.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_humpback_dorsal&#39;</span><span class="p">:</span> <span class="s1">&#39;background.whake_humpback.dorsal.v0.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_seadragon_leafy_v1&#39;</span><span class="p">:</span> <span class="s1">&#39;background.seadragon_leafy.v1.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_seadragon_weedy_v1&#39;</span><span class="p">:</span> <span class="s1">&#39;background.seadragon_weedy.v1.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_seadragon_leafy_head_v1&#39;</span><span class="p">:</span> <span class="s1">&#39;background.seadragon_leafy+head.v1.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_seadragon_weedy_head_v1&#39;</span><span class="p">:</span> <span class="s1">&#39;background.seadragon_weedy+head.v1.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_turtle_green_v1&#39;</span><span class="p">:</span> <span class="s1">&#39;background.turtle_green.v1.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_turtle_hawksbill_v1&#39;</span><span class="p">:</span> <span class="s1">&#39;background.turtle_hawksbill.v1.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_turtle_green_head_v1&#39;</span><span class="p">:</span> <span class="s1">&#39;background.turtle_green+head.v1.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_turtle_hawksbill_head_v1&#39;</span><span class="p">:</span> <span class="s1">&#39;background.turtle_hawksbill+head.v1.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_candidacy_giraffe_masai&#39;</span><span class="p">:</span> <span class="s1">&#39;background.candidacy.giraffe_masai.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_candidacy_giraffe_reticulated&#39;</span><span class="p">:</span> <span class="s1">&#39;background.candidacy.giraffe_reticulated.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_candidacy_turtle_sea&#39;</span><span class="p">:</span> <span class="s1">&#39;background.candidacy.turtle_sea.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_candidacy_whale_fluke&#39;</span><span class="p">:</span> <span class="s1">&#39;background.candidacy.whale_fluke.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_candidacy_zebra_grevys&#39;</span><span class="p">:</span> <span class="s1">&#39;background.candidacy.zebra_grevys.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_candidacy_zebra_plains&#39;</span><span class="p">:</span> <span class="s1">&#39;background.candidacy.zebra_plains.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_zebra_mountain_v0&#39;</span><span class="p">:</span> <span class="s1">&#39;background.zebra_mountain.v0.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_iot_v0&#39;</span><span class="p">:</span> <span class="s1">&#39;background.iot.v0.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_wilddog_v0&#39;</span><span class="p">:</span> <span class="s1">&#39;background.wild_dog.v0.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_leopard_v0&#39;</span><span class="p">:</span> <span class="s1">&#39;background.leopard.v0.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;aoi2_candidacy&#39;</span><span class="p">:</span> <span class="s1">&#39;aoi2.candidacy.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;aoi2_ggr2&#39;</span><span class="p">:</span> <span class="s1">&#39;aoi2.ggr2.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;aoi2_hammerhead&#39;</span><span class="p">:</span> <span class="s1">&#39;aoi2.shark_hammerhead.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;aoi2_jaguar_v1&#39;</span><span class="p">:</span> <span class="s1">&#39;aoi2.jaguar.v1.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;aoi2_jaguar_v2&#39;</span><span class="p">:</span> <span class="s1">&#39;aoi2.jaguar.v2.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;viewpoint&#39;</span><span class="p">:</span> <span class="s1">&#39;viewpoint.v1.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;caffenet&#39;</span><span class="p">:</span> <span class="s1">&#39;pretrained.caffe.caffenet.slice_0_6_None.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;caffenet_conv&#39;</span><span class="p">:</span> <span class="s1">&#39;pretrained.caffe.caffenet.slice_0_10_None.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;caffenet_full&#39;</span><span class="p">:</span> <span class="s1">&#39;pretrained.caffe.caffenet.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;vggnet&#39;</span><span class="p">:</span> <span class="s1">&#39;pretrained.caffe.vgg.slice_0_6_None.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;vggnet_conv&#39;</span><span class="p">:</span> <span class="s1">&#39;pretrained.caffe.vgg.slice_0_32_None.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;vggnet_full&#39;</span><span class="p">:</span> <span class="s1">&#39;pretrained.caffe.vgg.pkl&#39;</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="ensure_model"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn._plugin_grabmodels.ensure_model">[docs]</a><span class="k">def</span> <span class="nf">ensure_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">redownload</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="n">MODEL_DOMAIN</span> <span class="o">+</span> <span class="n">MODEL_URLS</span><span class="p">[</span><span class="n">model</span><span class="p">]</span>
+        <span class="n">extracted_fpath</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">grab_file_url</span><span class="p">(</span>
+            <span class="n">url</span><span class="p">,</span> <span class="n">appname</span><span class="o">=</span><span class="s1">&#39;wbia_cnn&#39;</span><span class="p">,</span> <span class="n">redownload</span><span class="o">=</span><span class="n">redownload</span><span class="p">,</span> <span class="n">check_hash</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+        <span class="n">ut</span><span class="o">.</span><span class="n">printex</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="s1">&#39;model is not uploaded&#39;</span><span class="p">,</span> <span class="n">iswarning</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">extracted_fpath</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">unixjoin</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">get_app_resource_dir</span><span class="p">(</span><span class="s1">&#39;wbia_cnn&#39;</span><span class="p">),</span> <span class="n">model</span><span class="p">)</span>
+        <span class="n">ut</span><span class="o">.</span><span class="n">assert_exists</span><span class="p">(</span><span class="n">extracted_fpath</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">extracted_fpath</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    CommandLine:</span>
+<span class="sd">        python -m wbia_cnn._plugin_grabmodels.ensure_models</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">multiprocessing</span>
+
+    <span class="n">multiprocessing</span><span class="o">.</span><span class="n">freeze_support</span><span class="p">()</span>  <span class="c1"># for win32</span>
+    <span class="kn">import</span> <span class="nn">utool</span> <span class="k">as</span> <span class="nn">ut</span>  <span class="c1"># NOQA</span>
+
+    <span class="n">ut</span><span class="o">.</span><span class="n">doctest_funcs</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">wbia-cnn</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../wbia_cnn.html">wbia_cnn package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  <li><a href="../wbia_cnn.html">wbia_cnn</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Wild Me.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

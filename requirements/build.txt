@@ -1,3 +1,6 @@
+cmake
+ninja
+scikit-build
 setuptools>=42
-wbia-utool
+setuptools_scm[toml]>=3.4
 wheel

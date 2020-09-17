@@ -1,0 +1,182 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>wbia_cnn.models.dummy &#8212; wbia-cnn 3.3.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for wbia_cnn.models.dummy</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">unicode_literals</span>
+<span class="kn">import</span> <span class="nn">utool</span> <span class="k">as</span> <span class="nn">ut</span>
+<span class="kn">from</span> <span class="nn">wbia_cnn.models</span> <span class="kn">import</span> <span class="n">abstract_models</span>
+
+<span class="nb">print</span><span class="p">,</span> <span class="n">rrr</span><span class="p">,</span> <span class="n">profile</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">inject2</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="DummyModel"><a class="viewcode-back" href="../../../wbia_cnn.models.html#wbia_cnn.models.dummy.DummyModel">[docs]</a><span class="nd">@ut</span><span class="o">.</span><span class="n">reloadable_class</span>
+<span class="k">class</span> <span class="nc">DummyModel</span><span class="p">(</span><span class="n">abstract_models</span><span class="o">.</span><span class="n">AbstractCategoricalModel</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">data_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># kwargs[&#39;autoinit&#39;] = kwargs.get(&#39;autoinit&#39;, True)</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;output_dims&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;output_dims&#39;</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;showprog&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;showprog&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">DummyModel</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">data_shape</span><span class="o">=</span><span class="n">data_shape</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="DummyModel.init_arch"><a class="viewcode-back" href="../../../wbia_cnn.models.html#wbia_cnn.models.dummy.DummyModel.init_arch">[docs]</a>    <span class="k">def</span> <span class="nf">init_arch</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        CommandLine:</span>
+<span class="sd">            python -m wbia_cnn DummyModel.init_arch --verbcnn --show</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; # ENABLE_DOCTEST</span>
+<span class="sd">            &gt;&gt;&gt; from wbia_cnn.models.dummy import *  # NOQA</span>
+<span class="sd">            &gt;&gt;&gt; model = DummyModel(autoinit=True)</span>
+<span class="sd">            &gt;&gt;&gt; model.print_model_info_str()</span>
+<span class="sd">            &gt;&gt;&gt; print(model)</span>
+<span class="sd">            &gt;&gt;&gt; ut.quit_if_noshow()</span>
+<span class="sd">            &gt;&gt;&gt; model.show_arch()</span>
+<span class="sd">            &gt;&gt;&gt; ut.show_if_requested()</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">Lasagne</span> <span class="kn">import</span> <span class="n">lasagne</span>
+        <span class="kn">from</span> <span class="nn">wbia_cnn</span> <span class="kn">import</span> <span class="n">custom_layers</span>
+
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;init arch&#39;</span><span class="p">)</span>
+
+        <span class="n">bundles</span> <span class="o">=</span> <span class="n">custom_layers</span><span class="o">.</span><span class="n">make_bundles</span><span class="p">(</span>
+            <span class="n">nonlinearity</span><span class="o">=</span><span class="n">lasagne</span><span class="o">.</span><span class="n">nonlinearities</span><span class="o">.</span><span class="n">rectify</span><span class="p">,</span>
+            <span class="n">batch_norm</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">DynStruct</span><span class="p">(</span><span class="n">copy_dict</span><span class="o">=</span><span class="n">bundles</span><span class="p">)</span>
+
+        <span class="n">network_layers_def</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">b</span><span class="o">.</span><span class="n">InputBundle</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">input_shape</span><span class="p">),</span>
+            <span class="n">b</span><span class="o">.</span><span class="n">ConvBundle</span><span class="p">(</span><span class="n">num_filters</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">filter_size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)),</span>
+            <span class="n">b</span><span class="o">.</span><span class="n">DenseBundle</span><span class="p">(</span><span class="n">num_units</span><span class="o">=</span><span class="mi">8</span><span class="p">),</span>
+            <span class="n">b</span><span class="o">.</span><span class="n">SoftmaxBundle</span><span class="p">(</span><span class="n">num_units</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">output_dims</span><span class="p">),</span>
+        <span class="p">]</span>
+
+        <span class="kn">from</span> <span class="nn">wbia_cnn</span> <span class="kn">import</span> <span class="n">custom_layers</span>
+
+        <span class="n">network_layers</span> <span class="o">=</span> <span class="n">custom_layers</span><span class="o">.</span><span class="n">evaluate_layer_list</span><span class="p">(</span><span class="n">network_layers_def</span><span class="p">)</span>
+        <span class="c1"># model.network_layers = network_layers</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">output_layer</span> <span class="o">=</span> <span class="n">network_layers</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">ut</span><span class="o">.</span><span class="n">VERBOSE</span><span class="p">:</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">print_arch_str</span><span class="p">()</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">print_layer_info</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">output_layer</span></div></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    CommandLine:</span>
+<span class="sd">        python -m wbia_cnn.models.dummy</span>
+<span class="sd">        python -m wbia_cnn.models.dummy --allexamples</span>
+<span class="sd">        python -m wbia_cnn.models.dummy --allexamples --noface --nosrc</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">multiprocessing</span>
+
+    <span class="n">multiprocessing</span><span class="o">.</span><span class="n">freeze_support</span><span class="p">()</span>  <span class="c1"># for win32</span>
+    <span class="kn">import</span> <span class="nn">utool</span> <span class="k">as</span> <span class="nn">ut</span>  <span class="c1"># NOQA</span>
+
+    <span class="n">ut</span><span class="o">.</span><span class="n">doctest_funcs</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">wbia-cnn</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../wbia_cnn.html">wbia_cnn package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  <li><a href="../../wbia_cnn.html">wbia_cnn</a><ul>
+  <li><a href="../models.html">wbia_cnn.models</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Wild Me.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

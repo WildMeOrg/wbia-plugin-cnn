@@ -1,0 +1,540 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>wbia_cnn.ingest_helpers &#8212; wbia-cnn 3.3.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for wbia_cnn.ingest_helpers</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span>
+<span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">join</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">utool</span> <span class="k">as</span> <span class="nn">ut</span>
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="nb">range</span><span class="p">,</span> <span class="nb">zip</span>
+
+<span class="nb">print</span><span class="p">,</span> <span class="n">rrr</span><span class="p">,</span> <span class="n">profile</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">inject2</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="load_mnist_images"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.ingest_helpers.load_mnist_images">[docs]</a><span class="k">def</span> <span class="nf">load_mnist_images</span><span class="p">(</span><span class="n">gz_fpath</span><span class="p">):</span>
+    <span class="kn">import</span> <span class="nn">gzip</span>
+
+    <span class="c1"># Read the inputs in Yann LeCun&#39;s binary format.</span>
+    <span class="k">with</span> <span class="n">gzip</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">gz_fpath</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">(),</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+    <span class="c1"># The inputs are vectors now, we reshape them to monochrome 2D images,</span>
+    <span class="c1"># use the cv2 convention for now (examples, rows, columns, channels)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># The inputs come as bytes, we convert them to float32 in range [0,1].</span>
+    <span class="c1"># (Actually to range [0, 255/256], for compatibility to the version</span>
+    <span class="c1"># provided at http://deeplearning.net/data/mnist/mnist.pkl.gz.)</span>
+    <span class="k">return</span> <span class="n">data</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">(</span><span class="mi">256</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="load_mnist_labels"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.ingest_helpers.load_mnist_labels">[docs]</a><span class="k">def</span> <span class="nf">load_mnist_labels</span><span class="p">(</span><span class="n">gz_fpath</span><span class="p">):</span>
+    <span class="kn">import</span> <span class="nn">gzip</span>
+
+    <span class="c1"># Read the labels in Yann LeCun&#39;s binary format.</span>
+    <span class="k">with</span> <span class="n">gzip</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">gz_fpath</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">(),</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+    <span class="c1"># The labels are vectors of integers now, that&#39;s exactly what we want.</span>
+    <span class="k">return</span> <span class="n">data</span></div>
+
+
+<div class="viewcode-block" id="grab_mnist2"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.ingest_helpers.grab_mnist2">[docs]</a><span class="k">def</span> <span class="nf">grab_mnist2</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot; Follows lasagne example &quot;&quot;&quot;</span>
+    <span class="n">train_data_gz</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">grab_file_url</span><span class="p">(</span>
+        <span class="s1">&#39;http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz&#39;</span>
+    <span class="p">)</span>
+    <span class="n">train_labels_gz</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">grab_file_url</span><span class="p">(</span>
+        <span class="s1">&#39;http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz&#39;</span>
+    <span class="p">)</span>
+    <span class="n">test_data_gz</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">grab_file_url</span><span class="p">(</span>
+        <span class="s1">&#39;http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz&#39;</span>
+    <span class="p">)</span>
+    <span class="n">test_labels_gz</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">grab_file_url</span><span class="p">(</span>
+        <span class="s1">&#39;http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz&#39;</span>
+    <span class="p">)</span>
+
+    <span class="n">train_data</span> <span class="o">=</span> <span class="n">load_mnist_images</span><span class="p">(</span><span class="n">train_data_gz</span><span class="p">)</span>
+    <span class="n">test_data</span> <span class="o">=</span> <span class="n">load_mnist_images</span><span class="p">(</span><span class="n">test_data_gz</span><span class="p">)</span>
+
+    <span class="n">train_labels</span> <span class="o">=</span> <span class="n">load_mnist_labels</span><span class="p">(</span><span class="n">train_labels_gz</span><span class="p">)</span>
+    <span class="n">test_labels</span> <span class="o">=</span> <span class="n">load_mnist_labels</span><span class="p">(</span><span class="n">test_labels_gz</span><span class="p">)</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">train_data</span><span class="p">,</span> <span class="n">test_data</span><span class="p">))</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">train_labels</span><span class="p">,</span> <span class="n">test_labels</span><span class="p">)</span>
+    <span class="n">metadata</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;splitset&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;train&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_data</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;test&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">test_labels</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">metadata</span></div>
+
+
+<div class="viewcode-block" id="grab_mnist1"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.ingest_helpers.grab_mnist1">[docs]</a><span class="k">def</span> <span class="nf">grab_mnist1</span><span class="p">():</span>
+    <span class="c1"># This is the same mnist data used in the lasagne script</span>
+    <span class="n">train_imgs_fpath</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">grab_zipped_url</span><span class="p">(</span>
+        <span class="s1">&#39;http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz&#39;</span>
+    <span class="p">)</span>
+    <span class="n">train_lbls_fpath</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">grab_zipped_url</span><span class="p">(</span>
+        <span class="s1">&#39;http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz&#39;</span>
+    <span class="p">)</span>
+    <span class="n">test_imgs_fpath</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">grab_zipped_url</span><span class="p">(</span>
+        <span class="s1">&#39;http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz&#39;</span>
+    <span class="p">)</span>
+    <span class="n">test_lbls_fpath</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">grab_zipped_url</span><span class="p">(</span>
+        <span class="s1">&#39;http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz&#39;</span>
+    <span class="p">)</span>
+
+    <span class="n">train_images</span><span class="p">,</span> <span class="n">train_labels</span> <span class="o">=</span> <span class="n">open_mnist_files</span><span class="p">(</span><span class="n">train_imgs_fpath</span><span class="p">,</span> <span class="n">train_lbls_fpath</span><span class="p">)</span>
+    <span class="n">test_images</span><span class="p">,</span> <span class="n">test_labels</span> <span class="o">=</span> <span class="n">open_mnist_files</span><span class="p">(</span><span class="n">test_imgs_fpath</span><span class="p">,</span> <span class="n">test_lbls_fpath</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">train_images</span><span class="p">,</span> <span class="n">test_images</span><span class="p">))</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">train_labels</span><span class="p">,</span> <span class="n">test_labels</span><span class="p">)</span>
+    <span class="n">metadata</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">metadata</span></div>
+
+
+<div class="viewcode-block" id="open_mnist_files"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.ingest_helpers.open_mnist_files">[docs]</a><span class="k">def</span> <span class="nf">open_mnist_files</span><span class="p">(</span><span class="n">data_fpath</span><span class="p">,</span> <span class="n">labels_fpath</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    For mnist1</span>
+
+<span class="sd">    References:</span>
+<span class="sd">        http://g.sweyla.com/blog/2012/mnist-numpy/</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">struct</span>
+
+    <span class="c1"># import os</span>
+    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+    <span class="kn">from</span> <span class="nn">array</span> <span class="kn">import</span> <span class="n">array</span> <span class="k">as</span> <span class="n">pyarray</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">labels_fpath</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">flbl</span><span class="p">:</span>
+        <span class="n">magic_nr</span><span class="p">,</span> <span class="n">size</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&gt;II&#39;</span><span class="p">,</span> <span class="n">flbl</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">8</span><span class="p">))</span>
+        <span class="n">lbl</span> <span class="o">=</span> <span class="n">pyarray</span><span class="p">(</span><span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="n">flbl</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">data_fpath</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fimg</span><span class="p">:</span>
+        <span class="n">magic_nr</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&gt;IIII&#39;</span><span class="p">,</span> <span class="n">fimg</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">16</span><span class="p">))</span>
+        <span class="n">img</span> <span class="o">=</span> <span class="n">pyarray</span><span class="p">(</span><span class="s1">&#39;B&#39;</span><span class="p">,</span> <span class="n">fimg</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+    <span class="n">digits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+
+    <span class="n">ind</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">size</span><span class="p">)</span> <span class="k">if</span> <span class="n">lbl</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="ow">in</span> <span class="n">digits</span><span class="p">]</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ind</span><span class="p">)</span>
+
+    <span class="n">images</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">N</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">N</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ind</span><span class="p">)):</span>
+        <span class="n">images</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="n">img</span><span class="p">[</span><span class="n">ind</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">rows</span> <span class="o">*</span> <span class="n">cols</span> <span class="p">:</span> <span class="p">(</span><span class="n">ind</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">rows</span> <span class="o">*</span> <span class="n">cols</span><span class="p">]</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">))</span>
+        <span class="n">labels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">lbl</span><span class="p">[</span><span class="n">ind</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+    <span class="k">return</span> <span class="n">images</span><span class="p">,</span> <span class="n">labels</span></div>
+
+
+<div class="viewcode-block" id="extract_liberty_style_patches"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.ingest_helpers.extract_liberty_style_patches">[docs]</a><span class="k">def</span> <span class="nf">extract_liberty_style_patches</span><span class="p">(</span><span class="n">ds_path</span><span class="p">,</span> <span class="n">pairs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    CommandLine:</span>
+<span class="sd">        python -m wbia_cnn.ingest_data --test-grab_cached_liberty_data --show</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">product</span>
+    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+    <span class="kn">from</span> <span class="nn">PIL</span> <span class="kn">import</span> <span class="n">Image</span>
+    <span class="kn">import</span> <span class="nn">subprocess</span>
+
+    <span class="n">patch_x</span> <span class="o">=</span> <span class="mi">64</span>
+    <span class="n">patch_y</span> <span class="o">=</span> <span class="mi">64</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="mi">16</span>
+    <span class="n">cols</span> <span class="o">=</span> <span class="mi">16</span>
+
+    <span class="k">def</span> <span class="nf">_available_patches</span><span class="p">(</span><span class="n">ds_path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Number of patches in _dataset_ (a path).</span>
+
+<span class="sd">        Only available through the line count</span>
+<span class="sd">        in info.txt -- use unix &#39;wc&#39;.</span>
+
+<span class="sd">        _path_ is supposed to be a path to</span>
+<span class="sd">        a directory with bmp patchsets.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">fname</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="n">ds_path</span><span class="p">,</span> <span class="s1">&#39;info.txt&#39;</span><span class="p">)</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span>
+            <span class="p">[</span><span class="s1">&#39;wc&#39;</span><span class="p">,</span> <span class="s1">&#39;-l&#39;</span><span class="p">,</span> <span class="n">fname</span><span class="p">],</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span>
+        <span class="p">)</span>
+        <span class="n">result</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">communicate</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="c1"># def read_patch_ids():</span>
+    <span class="c1">#    pass</span>
+
+    <span class="k">def</span> <span class="nf">matches</span><span class="p">(</span><span class="n">ds_path</span><span class="p">,</span> <span class="n">pairs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return _pairs_ many match/non-match pairs for _dataset_.</span>
+<span class="sd">        _dataset_ is one of &quot;liberty&quot;, &quot;yosemite&quot;, &quot;notredame&quot;.</span>
+<span class="sd">        Every dataset has a number of match-files, that</span>
+<span class="sd">        have _pairs_ many matches and non-matches (always</span>
+<span class="sd">        the same number).</span>
+<span class="sd">        The naming of these files is confusing, e.g. if there are 500 matching</span>
+<span class="sd">        pairs and 500 non-matching pairs the file name is</span>
+<span class="sd">        &#39;m50_1000_1000_0.txt&#39; -- in total 1000 patch-ids are used for matches,</span>
+<span class="sd">        and 1000 patch-ids for non-matches. These patch-ids need not be</span>
+<span class="sd">        unique.</span>
+
+<span class="sd">        Also returns the used patch ids in a list.</span>
+
+<span class="sd">        Extract all matching and non matching pairs from _fname_.</span>
+<span class="sd">        Every line in the matchfile looks like:</span>
+<span class="sd">            patchID1 3DpointID1 unused1 patchID2 3DpointID2 unused2</span>
+<span class="sd">        &#39;matches&#39; have the same 3DpointID.</span>
+
+<span class="sd">        Every file has the same number of matches and non-matches.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># pairs = 500</span>
+        <span class="n">match_fname</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s1">&#39;m50_&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">pairs</span><span class="p">),</span> <span class="s1">&#39;_&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">pairs</span><span class="p">),</span> <span class="s1">&#39;_0.txt&#39;</span><span class="p">])</span>
+        <span class="n">match_fpath</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="n">ds_path</span><span class="p">,</span> <span class="n">match_fname</span><span class="p">)</span>
+
+        <span class="c1"># print(pairs, &quot;pairs each (matching/non_matching) from&quot;, match_fpath)</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">match_fpath</span><span class="p">)</span> <span class="k">as</span> <span class="n">match_file</span><span class="p">:</span>
+            <span class="c1"># collect patches (id), and match/non-match pairs</span>
+            <span class="n">patch_ids</span><span class="p">,</span> <span class="n">match</span><span class="p">,</span> <span class="n">non_match</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">match_file</span><span class="p">:</span>
+                <span class="n">match_info</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+                <span class="n">p1_id</span><span class="p">,</span> <span class="n">p1_3d</span><span class="p">,</span> <span class="n">p2_id</span><span class="p">,</span> <span class="n">p2_3d</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="nb">int</span><span class="p">(</span><span class="n">match_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                    <span class="nb">int</span><span class="p">(</span><span class="n">match_info</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+                    <span class="nb">int</span><span class="p">(</span><span class="n">match_info</span><span class="p">[</span><span class="mi">3</span><span class="p">]),</span>
+                    <span class="nb">int</span><span class="p">(</span><span class="n">match_info</span><span class="p">[</span><span class="mi">4</span><span class="p">]),</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">p1_3d</span> <span class="o">==</span> <span class="n">p2_3d</span><span class="p">:</span>
+                    <span class="n">match</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">p1_id</span><span class="p">,</span> <span class="n">p2_id</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">non_match</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">p1_id</span><span class="p">,</span> <span class="n">p2_id</span><span class="p">))</span>
+                <span class="n">patch_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p1_id</span><span class="p">)</span>
+                <span class="n">patch_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p2_id</span><span class="p">)</span>
+
+            <span class="n">patch_ids</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">patch_ids</span><span class="p">))</span>
+            <span class="n">patch_ids</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">match</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span>
+                <span class="n">non_match</span>
+            <span class="p">),</span> <span class="s1">&#39;Different number of matches and non-matches.&#39;</span>
+
+        <span class="k">return</span> <span class="n">match</span><span class="p">,</span> <span class="n">non_match</span><span class="p">,</span> <span class="n">patch_ids</span>
+
+    <span class="k">def</span> <span class="nf">_crop_to_numpy</span><span class="p">(</span><span class="n">patchfile</span><span class="p">,</span> <span class="n">requested_indicies</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert _patchfile_ to a numpy array with patches per row.</span>
+<span class="sd">        A _patchfile_ is a .bmp file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">pil_img</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">patchfile</span><span class="p">)</span>
+        <span class="n">ptch_iter</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">pil_img</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">col</span> <span class="o">*</span> <span class="n">patch_x</span><span class="p">,</span> <span class="n">row</span> <span class="o">*</span> <span class="n">patch_y</span><span class="p">,</span> <span class="p">(</span><span class="n">col</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">patch_x</span><span class="p">,</span> <span class="p">(</span><span class="n">row</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">patch_y</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">product</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">rows</span><span class="p">),</span> <span class="nb">range</span><span class="p">(</span><span class="n">cols</span><span class="p">)))</span>
+            <span class="k">if</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">requested_indicies</span>
+        <span class="p">)</span>
+        <span class="n">patches</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ptch</span><span class="p">)</span> <span class="k">for</span> <span class="n">ptch</span> <span class="ow">in</span> <span class="n">ptch_iter</span><span class="p">]</span>
+        <span class="n">pil_img</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">patches</span>
+
+    <span class="n">num_patch_per_bmp</span> <span class="o">=</span> <span class="n">rows</span> <span class="o">*</span> <span class="n">cols</span>
+    <span class="n">total_num_patches</span> <span class="o">=</span> <span class="n">_available_patches</span><span class="p">(</span><span class="n">ds_path</span><span class="p">)</span>
+    <span class="n">num_bmp_files</span><span class="p">,</span> <span class="n">mod</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">total_num_patches</span><span class="p">,</span> <span class="n">num_patch_per_bmp</span><span class="p">)</span>
+
+    <span class="n">patchfile_list</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">join</span><span class="p">(</span><span class="n">ds_path</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s1">&#39;patches&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">4</span><span class="p">),</span> <span class="s1">&#39;.bmp&#39;</span><span class="p">]))</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_bmp_files</span><span class="p">)</span>
+    <span class="p">]</span>
+
+    <span class="c1"># Build matching labels</span>
+    <span class="n">match_pairs</span><span class="p">,</span> <span class="n">non_match_pairs</span><span class="p">,</span> <span class="n">all_requested_patch_ids</span> <span class="o">=</span> <span class="n">matches</span><span class="p">(</span><span class="n">ds_path</span><span class="p">,</span> <span class="n">pairs</span><span class="p">)</span>
+    <span class="n">all_requested_patch_ids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">all_requested_patch_ids</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="s1">&#39;len(match_pairs) = </span><span class="si">%r</span><span class="s1">&#39;</span>
+        <span class="o">%</span> <span class="p">(</span>
+            <span class="nb">len</span><span class="p">(</span>
+                <span class="n">match_pairs</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="s1">&#39;len(non_match_pairs) = </span><span class="si">%r</span><span class="s1">&#39;</span>
+        <span class="o">%</span> <span class="p">(</span>
+            <span class="nb">len</span><span class="p">(</span>
+                <span class="n">non_match_pairs</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="s1">&#39;len(all_requested_patch_ids) = </span><span class="si">%r</span><span class="s1">&#39;</span>
+        <span class="o">%</span> <span class="p">(</span>
+            <span class="nb">len</span><span class="p">(</span>
+                <span class="n">all_requested_patch_ids</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">match_pairs</span><span class="p">)</span> <span class="o">+</span> <span class="n">ut</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">non_match_pairs</span><span class="p">))))</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span>
+        <span class="n">all_requested_patch_ids</span>
+    <span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">max</span><span class="p">(</span><span class="n">all_requested_patch_ids</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">total_num_patches</span>
+
+    <span class="c1"># Read all patches out of the bmp file store</span>
+    <span class="n">all_patches</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">pfx</span><span class="p">,</span> <span class="n">patchfile</span> <span class="ow">in</span> <span class="n">ut</span><span class="o">.</span><span class="n">ProgressIter</span><span class="p">(</span>
+        <span class="nb">list</span><span class="p">(</span><span class="nb">enumerate</span><span class="p">(</span><span class="n">patchfile_list</span><span class="p">)),</span> <span class="n">lbl</span><span class="o">=</span><span class="s1">&#39;Reading Patches&#39;</span><span class="p">,</span> <span class="n">adjust</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">):</span>
+        <span class="n">patch_id_offset</span> <span class="o">=</span> <span class="n">pfx</span> <span class="o">*</span> <span class="n">num_patch_per_bmp</span>
+        <span class="c1"># get local patch ids in this bmp file</span>
+        <span class="n">patch_ids_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_patch_per_bmp</span><span class="p">)</span> <span class="o">+</span> <span class="n">patch_id_offset</span>
+        <span class="n">requested_patch_ids_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">intersect1d</span><span class="p">(</span><span class="n">patch_ids_</span><span class="p">,</span> <span class="n">all_requested_patch_ids</span><span class="p">)</span>
+        <span class="n">requested_indicies</span> <span class="o">=</span> <span class="n">requested_patch_ids_</span> <span class="o">-</span> <span class="n">patch_id_offset</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">requested_indicies</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">patches</span> <span class="o">=</span> <span class="n">_crop_to_numpy</span><span class="p">(</span><span class="n">patchfile</span><span class="p">,</span> <span class="n">requested_indicies</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">patch</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">requested_patch_ids_</span><span class="p">,</span> <span class="n">patches</span><span class="p">):</span>
+            <span class="n">all_patches</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">patch</span>
+
+    <span class="c1"># Read the last patches</span>
+    <span class="k">if</span> <span class="n">mod</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">pfx</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">patch_id_offset</span> <span class="o">=</span> <span class="n">pfx</span> <span class="o">*</span> <span class="n">num_patch_per_bmp</span>
+        <span class="n">patchfile</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span>
+            <span class="n">ds_path</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s1">&#39;patches&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">num_bmp_files</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">4</span><span class="p">),</span> <span class="s1">&#39;.bmp&#39;</span><span class="p">])</span>
+        <span class="p">)</span>
+        <span class="n">patch_ids_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">mod</span><span class="p">)</span> <span class="o">+</span> <span class="n">patch_id_offset</span>
+        <span class="n">requested_patch_ids_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">intersect1d</span><span class="p">(</span><span class="n">patch_ids_</span><span class="p">,</span> <span class="n">all_requested_patch_ids</span><span class="p">)</span>
+        <span class="n">requested_indicies</span> <span class="o">=</span> <span class="n">requested_patch_ids_</span> <span class="o">-</span> <span class="n">patch_id_offset</span>
+        <span class="n">patches</span> <span class="o">=</span> <span class="n">_crop_to_numpy</span><span class="p">(</span><span class="n">patchfile</span><span class="p">,</span> <span class="n">requested_indicies</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">patch</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">requested_patch_ids_</span><span class="p">,</span> <span class="n">patches</span><span class="p">):</span>
+            <span class="n">all_patches</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">patch</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;read </span><span class="si">%d</span><span class="s1"> patches &#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">all_patches</span><span class="p">)))</span>
+    <span class="c1"># patches_list += [patches]</span>
+
+    <span class="c1"># all_patches = np.concatenate(patches_list, axis=0)</span>
+
+    <span class="n">matching_patches1</span> <span class="o">=</span> <span class="p">[</span><span class="n">all_patches</span><span class="p">[</span><span class="n">idx1</span><span class="p">]</span> <span class="k">for</span> <span class="n">idx1</span><span class="p">,</span> <span class="n">idx2</span> <span class="ow">in</span> <span class="n">match_pairs</span><span class="p">]</span>
+    <span class="n">matching_patches2</span> <span class="o">=</span> <span class="p">[</span><span class="n">all_patches</span><span class="p">[</span><span class="n">idx2</span><span class="p">]</span> <span class="k">for</span> <span class="n">idx1</span><span class="p">,</span> <span class="n">idx2</span> <span class="ow">in</span> <span class="n">match_pairs</span><span class="p">]</span>
+    <span class="n">nonmatching_patches1</span> <span class="o">=</span> <span class="p">[</span><span class="n">all_patches</span><span class="p">[</span><span class="n">idx1</span><span class="p">]</span> <span class="k">for</span> <span class="n">idx1</span><span class="p">,</span> <span class="n">idx2</span> <span class="ow">in</span> <span class="n">non_match_pairs</span><span class="p">]</span>
+    <span class="n">nonmatching_patches2</span> <span class="o">=</span> <span class="p">[</span><span class="n">all_patches</span><span class="p">[</span><span class="n">idx2</span><span class="p">]</span> <span class="k">for</span> <span class="n">idx1</span><span class="p">,</span> <span class="n">idx2</span> <span class="ow">in</span> <span class="n">non_match_pairs</span><span class="p">]</span>
+
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="p">([</span><span class="kc">True</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">matching_patches1</span><span class="p">))</span> <span class="o">+</span> <span class="p">([</span><span class="kc">False</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">nonmatching_patches1</span><span class="p">))</span>
+    <span class="p">)</span>
+    <span class="n">warped_patch1_list</span> <span class="o">=</span> <span class="n">matching_patches1</span> <span class="o">+</span> <span class="n">nonmatching_patches1</span>
+    <span class="n">warped_patch2_list</span> <span class="o">=</span> <span class="n">matching_patches2</span> <span class="o">+</span> <span class="n">nonmatching_patches2</span>
+
+    <span class="n">img_list</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">warped_patch1_list</span><span class="p">,</span> <span class="n">warped_patch2_list</span><span class="p">)))</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">img_list</span><span class="p">)</span>
+    <span class="k">del</span> <span class="n">img_list</span>
+    <span class="c1"># data_per_label = 2</span>
+    <span class="k">assert</span> <span class="n">labels</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">//</span> <span class="mi">2</span>
+    <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">labels</span></div>
+
+
+<div class="viewcode-block" id="convert_category_to_siam_data"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.ingest_helpers.convert_category_to_siam_data">[docs]</a><span class="k">def</span> <span class="nf">convert_category_to_siam_data</span><span class="p">(</span><span class="n">category_data</span><span class="p">,</span> <span class="n">category_labels</span><span class="p">):</span>
+    <span class="c1"># CONVERT CATEGORY LABELS TO PAIR LABELS</span>
+    <span class="c1"># Make genuine imposter pairs</span>
+    <span class="kn">import</span> <span class="nn">vtool</span> <span class="k">as</span> <span class="nn">vt</span>
+
+    <span class="n">unique_labels</span><span class="p">,</span> <span class="n">groupxs_list</span> <span class="o">=</span> <span class="n">vt</span><span class="o">.</span><span class="n">group_indices</span><span class="p">(</span><span class="n">category_labels</span><span class="p">)</span>
+
+    <span class="n">num_categories</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">unique_labels</span><span class="p">)</span>
+
+    <span class="n">num_geninue</span> <span class="o">=</span> <span class="mi">10000</span> <span class="o">*</span> <span class="n">num_categories</span>
+    <span class="n">num_imposter</span> <span class="o">=</span> <span class="mi">10000</span> <span class="o">*</span> <span class="n">num_categories</span>
+
+    <span class="n">num_gen_per_category</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">num_geninue</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">unique_labels</span><span class="p">))</span>
+    <span class="n">num_imp_per_category</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">num_imposter</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">unique_labels</span><span class="p">))</span>
+
+    <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">groupxs</span> <span class="o">=</span> <span class="n">groupxs_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">find_fix_flags</span><span class="p">(</span><span class="n">pairxs</span><span class="p">):</span>
+        <span class="n">is_dup</span> <span class="o">=</span> <span class="n">vt</span><span class="o">.</span><span class="n">nonunique_row_flags</span><span class="p">(</span><span class="n">pairxs</span><span class="p">)</span>
+        <span class="n">is_eye</span> <span class="o">=</span> <span class="n">pairxs</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">pairxs</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">needs_fix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_or</span><span class="p">(</span><span class="n">is_dup</span><span class="p">,</span> <span class="n">is_eye</span><span class="p">)</span>
+        <span class="c1"># print(pairxs[needs_fix])</span>
+        <span class="k">return</span> <span class="n">needs_fix</span>
+
+    <span class="k">def</span> <span class="nf">swap_undirected</span><span class="p">(</span><span class="n">pairxs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; ensure left indicies are lower &quot;&quot;&quot;</span>
+        <span class="n">needs_swap</span> <span class="o">=</span> <span class="n">pairxs</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">pairxs</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">arr</span> <span class="o">=</span> <span class="n">pairxs</span><span class="p">[</span><span class="n">needs_swap</span><span class="p">]</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">arr</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">arr</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">arr</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">arr</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">tmp</span>
+        <span class="n">pairxs</span><span class="p">[</span><span class="n">needs_swap</span><span class="p">]</span> <span class="o">=</span> <span class="n">arr</span>
+        <span class="k">return</span> <span class="n">pairxs</span>
+
+    <span class="k">def</span> <span class="nf">sample_pairs</span><span class="p">(</span><span class="n">left_list</span><span class="p">,</span> <span class="n">right_list</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+        <span class="c1"># Sample initial random left and right indices</span>
+        <span class="n">_index1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">left_list</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">_index2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">right_list</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># stack</span>
+        <span class="n">_pairxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">_index1</span><span class="p">,</span> <span class="n">_index2</span><span class="p">))</span><span class="o">.</span><span class="n">T</span>
+        <span class="c1"># make undiractional</span>
+        <span class="n">_pairxs</span> <span class="o">=</span> <span class="n">swap_undirected</span><span class="p">(</span><span class="n">_pairxs</span><span class="p">)</span>
+        <span class="c1"># iterate until feasible</span>
+        <span class="n">needs_fix</span> <span class="o">=</span> <span class="n">find_fix_flags</span><span class="p">(</span><span class="n">_pairxs</span><span class="p">)</span>
+        <span class="k">while</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">needs_fix</span><span class="p">):</span>
+            <span class="n">num_fix</span> <span class="o">=</span> <span class="n">needs_fix</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;fixing: </span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">num_fix</span><span class="p">)</span>
+            <span class="n">_pairxs</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">needs_fix</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span>
+                <span class="n">right_list</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">num_fix</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)</span>
+            <span class="n">_pairxs</span> <span class="o">=</span> <span class="n">swap_undirected</span><span class="p">(</span><span class="n">_pairxs</span><span class="p">)</span>
+            <span class="n">needs_fix</span> <span class="o">=</span> <span class="n">find_fix_flags</span><span class="p">(</span><span class="n">_pairxs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_pairxs</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;sampling genuine pairs&#39;</span><span class="p">)</span>
+    <span class="n">genuine_pairx_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">groupxs</span> <span class="ow">in</span> <span class="n">groupxs_list</span><span class="p">:</span>
+        <span class="n">left_list</span> <span class="o">=</span> <span class="n">groupxs</span>
+        <span class="n">right_list</span> <span class="o">=</span> <span class="n">groupxs</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="n">num_gen_per_category</span>
+        <span class="n">_pairxs</span> <span class="o">=</span> <span class="n">sample_pairs</span><span class="p">(</span><span class="n">left_list</span><span class="p">,</span> <span class="n">right_list</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+        <span class="n">genuine_pairx_list</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_pairxs</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;sampling imposter pairs&#39;</span><span class="p">)</span>
+    <span class="n">imposter_pairx_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">groupxs_list</span><span class="p">)):</span>
+        <span class="c1"># Pick random pairs of false matches</span>
+        <span class="n">groupxs</span> <span class="o">=</span> <span class="n">groupxs_list</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+        <span class="n">bar_groupxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">groupxs_list</span><span class="p">[:</span><span class="n">index</span><span class="p">]</span> <span class="o">+</span> <span class="n">groupxs_list</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:])</span>
+        <span class="n">left_list</span> <span class="o">=</span> <span class="n">groupxs</span>
+        <span class="n">right_list</span> <span class="o">=</span> <span class="n">bar_groupxs</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="n">num_imp_per_category</span>
+        <span class="n">_pairxs</span> <span class="o">=</span> <span class="n">sample_pairs</span><span class="p">(</span><span class="n">left_list</span><span class="p">,</span> <span class="n">right_list</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+        <span class="n">imposter_pairx_list</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_pairxs</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+
+    <span class="c1"># We might have added duplicate imposters, just remove them for now</span>
+    <span class="n">imposter_pairx_list</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">take</span><span class="p">(</span>
+        <span class="n">imposter_pairx_list</span><span class="p">,</span> <span class="n">vt</span><span class="o">.</span><span class="n">unique_row_indexes</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">imposter_pairx_list</span><span class="p">))</span>
+    <span class="p">)</span>
+
+    <span class="c1"># structure data for output</span>
+    <span class="n">flat_data_pairxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">genuine_pairx_list</span> <span class="o">+</span> <span class="n">imposter_pairx_list</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">flat_data_pairxs</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">flat_data_pairxs</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">assert</span> <span class="n">find_fix_flags</span><span class="p">(</span><span class="n">flat_data_pairxs</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span>
+    <span class="c1"># TODO: batch should use indicies into data</span>
+    <span class="n">flat_index_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="n">ut</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">flat_data_pairxs</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">flat_data_pairxs</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">])))</span>
+    <span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">category_data</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">flat_index_list</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="p">[</span><span class="kc">True</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">genuine_pairx_list</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="kc">False</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">imposter_pairx_list</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">labels</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    CommandLine:</span>
+<span class="sd">        python -m wbia_cnn.ingest_helpers</span>
+<span class="sd">        python -m wbia_cnn.ingest_helpers --allexamples</span>
+<span class="sd">        python -m wbia_cnn.ingest_helpers --allexamples --noface --nosrc</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">multiprocessing</span>
+
+    <span class="n">multiprocessing</span><span class="o">.</span><span class="n">freeze_support</span><span class="p">()</span>  <span class="c1"># for win32</span>
+    <span class="kn">import</span> <span class="nn">utool</span> <span class="k">as</span> <span class="nn">ut</span>  <span class="c1"># NOQA</span>
+
+    <span class="n">ut</span><span class="o">.</span><span class="n">doctest_funcs</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">wbia-cnn</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../wbia_cnn.html">wbia_cnn package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  <li><a href="../wbia_cnn.html">wbia_cnn</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Wild Me.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

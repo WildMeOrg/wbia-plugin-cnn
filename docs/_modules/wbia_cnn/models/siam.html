@@ -1,0 +1,1355 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>wbia_cnn.models.siam &#8212; wbia-cnn 3.3.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for wbia_cnn.models.siam</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Siamese based models</span>
+
+<span class="sd">References:</span>
+<span class="sd">    http://yann.lecun.com/exdb/publis/pdf/hadsell-chopra-lecun-06.pdf</span>
+<span class="sd">    https://github.com/BVLC/caffe/pull/959</span>
+<span class="sd">    http://yann.lecun.com/exdb/publis/pdf/chopra-05.pdf</span>
+<span class="sd">    http://www.commendo.at/references/files/paperCVWW08.pdf</span>
+<span class="sd">    https://tspace.library.utoronto.ca/bitstream/1807/43097/3/Liu_Chen_201311_MASc_thesis.pdf</span>
+<span class="sd">    http://arxiv.org/pdf/1412.6622.pdf</span>
+<span class="sd">    http://papers.nips.cc/paper/4314-extracting-speaker-specific-information-with-a-regularized-siamese-deep-network.pdf</span>
+<span class="sd">    http://machinelearning.wustl.edu/mlpapers/paper_files/NIPS2005_265.pdf</span>
+<span class="sd">    http://vision.ia.ac.cn/zh/senimar/reports/Siamese-Network-Architecture-and-Applications-in-Computer-Vision.pdf</span>
+
+<span class="sd">    https://groups.google.com/forum/#!topic/caffe-users/D-7sRDw9v8c</span>
+<span class="sd">    http://caffe.berkeleyvision.org/gathered/examples/siamese.html</span>
+<span class="sd">    https://groups.google.com/forum/#!topic/lasagne-users/N9zDNvNkyWY</span>
+<span class="sd">    http://www.cs.nyu.edu/~sumit/research/research.html</span>
+<span class="sd">    https://github.com/Lasagne/Lasagne/issues/168</span>
+<span class="sd">    https://groups.google.com/forum/#!topic/lasagne-users/7JX_8zKfDI0</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span>
+<span class="kn">from</span> <span class="nn">Lasagne</span> <span class="kn">import</span> <span class="n">lasagne</span>  <span class="c1"># NOQA</span>
+<span class="kn">from</span> <span class="nn">Lasagne.lasagne</span> <span class="kn">import</span> <span class="n">init</span><span class="p">,</span> <span class="n">layers</span><span class="p">,</span> <span class="n">nonlinearities</span>
+<span class="kn">import</span> <span class="nn">functools</span>
+<span class="kn">import</span> <span class="nn">six</span>
+<span class="kn">from</span> <span class="nn">theano</span> <span class="kn">import</span> <span class="n">tensor</span> <span class="k">as</span> <span class="n">T</span>  <span class="c1"># NOQA</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">wbia_cnn.models</span> <span class="kn">import</span> <span class="n">abstract_models</span>
+<span class="kn">import</span> <span class="nn">utool</span> <span class="k">as</span> <span class="nn">ut</span>
+<span class="kn">from</span> <span class="nn">wbia_cnn</span> <span class="kn">import</span> <span class="n">augment</span>
+
+<span class="nb">print</span><span class="p">,</span> <span class="n">rrr</span><span class="p">,</span> <span class="n">profile</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">inject2</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="AbstractSiameseModel"><a class="viewcode-back" href="../../../wbia_cnn.models.html#wbia_cnn.models.siam.AbstractSiameseModel">[docs]</a><span class="nd">@six</span><span class="o">.</span><span class="n">add_metaclass</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">ReloadingMetaclass</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">AbstractSiameseModel</span><span class="p">(</span><span class="n">abstract_models</span><span class="o">.</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">AbstractSiameseModel</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="c1"># bad name, says that this network will take</span>
+        <span class="c1"># 2*N images in a batch and N labels that map to</span>
+        <span class="c1"># two images a piece</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">data_per_label_input</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">data_per_label_output</span> <span class="o">=</span> <span class="mi">2</span>
+
+<div class="viewcode-block" id="AbstractSiameseModel.augment"><a class="viewcode-back" href="../../../wbia_cnn.models.html#wbia_cnn.models.siam.AbstractSiameseModel.augment">[docs]</a>    <span class="k">def</span> <span class="nf">augment</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">Xb</span><span class="p">,</span> <span class="n">yb</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">Xb_</span><span class="p">,</span> <span class="n">yb_</span> <span class="o">=</span> <span class="n">augment</span><span class="o">.</span><span class="n">augment_siamese_patches2</span><span class="p">(</span><span class="n">Xb</span><span class="p">,</span> <span class="n">yb</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Xb_</span><span class="p">,</span> <span class="n">yb_</span></div></div>
+
+
+<div class="viewcode-block" id="SiameseL2"><a class="viewcode-back" href="../../../wbia_cnn.models.html#wbia_cnn.models.siam.SiameseL2">[docs]</a><span class="nd">@six</span><span class="o">.</span><span class="n">add_metaclass</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">ReloadingMetaclass</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">SiameseL2</span><span class="p">(</span><span class="n">AbstractSiameseModel</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Model for individual identification</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="n">model</span><span class="p">,</span>
+        <span class="n">autoinit</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>
+        <span class="n">data_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="n">arch_tag</span><span class="o">=</span><span class="s1">&#39;siaml2&#39;</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
+        <span class="c1"># if data_shape is not None:</span>
+        <span class="c1">#    input_shape = (batch_size, data_shape[2], data_shape[0], data_shape[1])</span>
+        <span class="c1"># if input_shape is None:</span>
+        <span class="c1">#    (batch_size, 3, 64, 64)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SiameseL2</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">data_shape</span><span class="o">=</span><span class="n">data_shape</span><span class="p">,</span> <span class="n">arch_tag</span><span class="o">=</span><span class="n">arch_tag</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span>
+        <span class="c1"># model.network_layers = None</span>
+        <span class="c1"># model.batch_size = batch_size</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">output_dims</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">arch_tag</span>
+        <span class="c1"># bad name, says that this network will take</span>
+        <span class="c1"># 2*N images in a batch and N labels that map to</span>
+        <span class="c1"># two images a piece</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">data_per_label_input</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">data_per_label_output</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="c1"># model.arch_tag = arch_tag</span>
+        <span class="k">if</span> <span class="n">autoinit</span><span class="p">:</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">init_arch</span><span class="p">()</span>
+
+<div class="viewcode-block" id="SiameseL2.get_siaml2_def"><a class="viewcode-back" href="../../../wbia_cnn.models.html#wbia_cnn.models.siam.SiameseL2.get_siaml2_def">[docs]</a>    <span class="k">def</span> <span class="nf">get_siaml2_def</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Notes:</span>
+<span class="sd">            (ix) siam-2stream-l2 consists of one central and one surround</span>
+<span class="sd">                branch of siam-2stream.</span>
+
+<span class="sd">                C0(96, 7, 3) - ReLU - P0(2, 2) - C1(192, 5, 1) - ReLU - P1(2, 2) - C2(256, 3, 1)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_P</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span>
+
+        <span class="n">leaky_kw</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">nonlinearity</span><span class="o">=</span><span class="n">nonlinearities</span><span class="o">.</span><span class="n">LeakyRectify</span><span class="p">(</span><span class="n">leakiness</span><span class="o">=</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="mf">10.0</span><span class="p">)))</span>
+        <span class="c1"># orthog_kw = dict(W=init.Orthogonal())</span>
+        <span class="c1"># hidden_initkw = ut.merge_dicts(orthog_kw, leaky_kw)</span>
+        <span class="n">hidden_initkw</span> <span class="o">=</span> <span class="n">leaky_kw</span>
+
+        <span class="c1"># ReshapeLayer = layers.ReshapeLayer</span>
+
+        <span class="kn">from</span> <span class="nn">wbia_cnn</span> <span class="kn">import</span> <span class="n">custom_layers</span>
+
+        <span class="n">Conv2DLayer</span> <span class="o">=</span> <span class="n">custom_layers</span><span class="o">.</span><span class="n">Conv2DLayer</span>
+        <span class="n">MaxPool2DLayer</span> <span class="o">=</span> <span class="n">custom_layers</span><span class="o">.</span><span class="n">MaxPool2DLayer</span>
+
+        <span class="n">network_layers_def</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">InputLayer</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">input_shape</span><span class="p">),</span>
+            <span class="c1"># TODO: Stack Inputs by making a 2 Channel Layer</span>
+            <span class="c1"># caffenet.get_conv2d_layer(0, trainable=False, **leaky),</span>
+            <span class="n">_P</span><span class="p">(</span>
+                <span class="n">Conv2DLayer</span><span class="p">,</span>
+                <span class="n">num_filters</span><span class="o">=</span><span class="mi">96</span><span class="p">,</span>
+                <span class="n">filter_size</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span>
+                <span class="n">stride</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;C0&#39;</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">hidden_initkw</span>
+            <span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">DropoutLayer</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="mf">0.3</span><span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">MaxPool2DLayer</span><span class="p">,</span> <span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">stride</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;P0&#39;</span><span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span>
+                <span class="n">Conv2DLayer</span><span class="p">,</span>
+                <span class="n">num_filters</span><span class="o">=</span><span class="mi">192</span><span class="p">,</span>
+                <span class="n">filter_size</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;C1&#39;</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">hidden_initkw</span>
+            <span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">DropoutLayer</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="mf">0.3</span><span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">MaxPool2DLayer</span><span class="p">,</span> <span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">stride</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;P1&#39;</span><span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span>
+                <span class="n">Conv2DLayer</span><span class="p">,</span>
+                <span class="n">num_filters</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+                <span class="n">filter_size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;C2&#39;</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">hidden_initkw</span>
+            <span class="p">),</span>
+            <span class="c1"># _P(custom_layers.SiameseConcatLayer, axis=1, data_per_label=2, name=&#39;concat&#39;),  # 2 when CenterSurroundIsOn but two channel network</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">FlattenLayer</span><span class="p">,</span> <span class="n">outdim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;flatten&#39;</span><span class="p">),</span>
+            <span class="c1"># _P(custom_layers.L2NormalizeLayer, axis=2),</span>
+            <span class="c1"># TODO: L2 distance layer</span>
+            <span class="c1"># _P(custom_layers.SiameseConcatLayer, data_per_label=2),</span>
+        <span class="p">]</span>
+        <span class="c1"># raise NotImplementedError(&#39;The 2-channel part is not yet implemented&#39;)</span>
+        <span class="k">return</span> <span class="n">network_layers_def</span></div>
+
+<div class="viewcode-block" id="SiameseL2.get_siaml2_128_def"><a class="viewcode-back" href="../../../wbia_cnn.models.html#wbia_cnn.models.siam.SiameseL2.get_siaml2_128_def">[docs]</a>    <span class="k">def</span> <span class="nf">get_siaml2_128_def</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Notes:</span>
+<span class="sd">            (ix) siam-2stream-l2 consists of one central and one surround</span>
+<span class="sd">                branch of siam-2stream.</span>
+
+<span class="sd">                C0(96, 7, 3) - ReLU - P0(2, 2) - C1(192, 5, 1) - ReLU - P1(2, 2) - C2(256, 3, 1)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_P</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span>
+
+        <span class="n">leaky_kw</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">nonlinearity</span><span class="o">=</span><span class="n">nonlinearities</span><span class="o">.</span><span class="n">LeakyRectify</span><span class="p">(</span><span class="n">leakiness</span><span class="o">=</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="mf">10.0</span><span class="p">)))</span>
+        <span class="c1"># orthog_kw = dict(W=init.Orthogonal())</span>
+        <span class="c1"># hidden_initkw = ut.merge_dicts(orthog_kw, leaky_kw)</span>
+        <span class="n">hidden_initkw</span> <span class="o">=</span> <span class="n">leaky_kw</span>
+
+        <span class="c1"># ReshapeLayer = layers.ReshapeLayer</span>
+
+        <span class="kn">from</span> <span class="nn">wbia_cnn</span> <span class="kn">import</span> <span class="n">custom_layers</span>
+
+        <span class="n">Conv2DLayer</span> <span class="o">=</span> <span class="n">custom_layers</span><span class="o">.</span><span class="n">Conv2DLayer</span>
+        <span class="n">MaxPool2DLayer</span> <span class="o">=</span> <span class="n">custom_layers</span><span class="o">.</span><span class="n">MaxPool2DLayer</span>
+
+        <span class="n">network_layers_def</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">InputLayer</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">input_shape</span><span class="p">),</span>
+            <span class="c1"># TODO: Stack Inputs by making a 2 Channel Layer</span>
+            <span class="c1"># caffenet.get_conv2d_layer(0, trainable=False, **leaky),</span>
+            <span class="n">_P</span><span class="p">(</span>
+                <span class="n">Conv2DLayer</span><span class="p">,</span>
+                <span class="n">num_filters</span><span class="o">=</span><span class="mi">96</span><span class="p">,</span>
+                <span class="n">filter_size</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span>
+                <span class="n">stride</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;C0&#39;</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">hidden_initkw</span>
+            <span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">DropoutLayer</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="mf">0.3</span><span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">MaxPool2DLayer</span><span class="p">,</span> <span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">stride</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;P0&#39;</span><span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span>
+                <span class="n">Conv2DLayer</span><span class="p">,</span>
+                <span class="n">num_filters</span><span class="o">=</span><span class="mi">192</span><span class="p">,</span>
+                <span class="n">filter_size</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;C1&#39;</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">hidden_initkw</span>
+            <span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">DropoutLayer</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="mf">0.3</span><span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">MaxPool2DLayer</span><span class="p">,</span> <span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">stride</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;P1&#39;</span><span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span>
+                <span class="n">Conv2DLayer</span><span class="p">,</span>
+                <span class="n">num_filters</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>
+                <span class="n">filter_size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;C2_128&#39;</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">hidden_initkw</span>
+            <span class="p">),</span>
+            <span class="c1"># _P(custom_layers.SiameseConcatLayer, axis=1, data_per_label=2, name=&#39;concat&#39;),  # 2 when CenterSurroundIsOn but two channel network</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">FlattenLayer</span><span class="p">,</span> <span class="n">outdim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;flatten128&#39;</span><span class="p">),</span>
+            <span class="c1"># _P(custom_layers.L2NormalizeLayer, axis=2),</span>
+            <span class="c1"># TODO: L2 distance layer</span>
+            <span class="c1"># _P(custom_layers.SiameseConcatLayer, data_per_label=2),</span>
+        <span class="p">]</span>
+        <span class="c1"># raise NotImplementedError(&#39;The 2-channel part is not yet implemented&#39;)</span>
+        <span class="k">return</span> <span class="n">network_layers_def</span></div>
+
+<div class="viewcode-block" id="SiameseL2.get_siam_deepfaceish_def"><a class="viewcode-back" href="../../../wbia_cnn.models.html#wbia_cnn.models.siam.SiameseL2.get_siam_deepfaceish_def">[docs]</a>    <span class="k">def</span> <span class="nf">get_siam_deepfaceish_def</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        CommandLine:</span>
+<span class="sd">            python -m wbia_cnn --tf  SiameseL2.init_arch --archtag siam_deepfaceish --datashape=128,256,1 --verbose  --show</span>
+<span class="sd">            python -m wbia_cnn --tf  SiameseL2.init_arch --archtag siam_deepface --datashape=152,152,3 --verbose  --show</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_P</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span>
+
+        <span class="n">leaky_kw</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">nonlinearity</span><span class="o">=</span><span class="n">nonlinearities</span><span class="o">.</span><span class="n">LeakyRectify</span><span class="p">(</span><span class="n">leakiness</span><span class="o">=</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="mf">10.0</span><span class="p">)))</span>
+        <span class="c1"># orthog_kw = dict(W=init.Orthogonal())</span>
+        <span class="c1"># hidden_initkw = ut.merge_dicts(orthog_kw, leaky_kw)</span>
+        <span class="n">hidden_initkw</span> <span class="o">=</span> <span class="n">leaky_kw</span>
+
+        <span class="c1"># ReshapeLayer = layers.ReshapeLayer</span>
+
+        <span class="n">_tmp</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="kn">from</span> <span class="nn">wbia_cnn</span> <span class="kn">import</span> <span class="n">custom_layers</span>
+
+        <span class="n">Conv2DLayer</span> <span class="o">=</span> <span class="n">custom_layers</span><span class="o">.</span><span class="n">Conv2DLayer</span>
+        <span class="n">MaxPool2DLayer</span> <span class="o">=</span> <span class="n">custom_layers</span><span class="o">.</span><span class="n">MaxPool2DLayer</span>
+
+        <span class="k">def</span> <span class="nf">CDP_layer</span><span class="p">(</span>
+            <span class="n">num_filters</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+            <span class="n">conv_size</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+            <span class="n">conv_stride</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+            <span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+            <span class="n">pool_stride</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+            <span class="n">drop_p</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="n">num</span> <span class="o">=</span> <span class="n">_tmp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">_tmp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">return</span> <span class="p">[</span>
+                <span class="n">_P</span><span class="p">(</span>
+                    <span class="n">Conv2DLayer</span><span class="p">,</span>
+                    <span class="n">num_filters</span><span class="o">=</span><span class="n">num_filters</span><span class="p">,</span>
+                    <span class="n">filter_size</span><span class="o">=</span><span class="n">conv_size</span><span class="p">,</span>
+                    <span class="n">stride</span><span class="o">=</span><span class="n">conv_stride</span><span class="p">,</span>
+                    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;C&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">num</span><span class="p">),</span>
+                    <span class="o">**</span><span class="n">hidden_initkw</span>
+                <span class="p">),</span>
+                <span class="n">_P</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">DropoutLayer</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">drop_p</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;D&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">num</span><span class="p">)),</span>
+                <span class="n">_P</span><span class="p">(</span>
+                    <span class="n">MaxPool2DLayer</span><span class="p">,</span>
+                    <span class="n">pool_size</span><span class="o">=</span><span class="n">pool_size</span><span class="p">,</span>
+                    <span class="n">stride</span><span class="o">=</span><span class="n">pool_stride</span><span class="p">,</span>
+                    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;P&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">num</span><span class="p">),</span>
+                <span class="p">),</span>
+            <span class="p">]</span>
+
+        <span class="k">def</span> <span class="nf">CD_layer</span><span class="p">(</span><span class="n">num_filters</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">conv_size</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">conv_stride</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">drop_p</span><span class="o">=</span><span class="mf">0.3</span><span class="p">):</span>
+            <span class="n">num</span> <span class="o">=</span> <span class="n">_tmp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">_tmp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">return</span> <span class="p">[</span>
+                <span class="n">_P</span><span class="p">(</span>
+                    <span class="n">Conv2DLayer</span><span class="p">,</span>
+                    <span class="n">num_filters</span><span class="o">=</span><span class="n">num_filters</span><span class="p">,</span>
+                    <span class="n">filter_size</span><span class="o">=</span><span class="n">conv_size</span><span class="p">,</span>
+                    <span class="n">stride</span><span class="o">=</span><span class="n">conv_stride</span><span class="p">,</span>
+                    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;C&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">num</span><span class="p">),</span>
+                    <span class="o">**</span><span class="n">hidden_initkw</span>
+                <span class="p">),</span>
+                <span class="n">_P</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">DropoutLayer</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">drop_p</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;D&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">num</span><span class="p">)),</span>
+            <span class="p">]</span>
+
+        <span class="n">network_layers_def</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">[</span><span class="n">_P</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">InputLayer</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">input_shape</span><span class="p">)]</span>
+            <span class="o">+</span> <span class="n">CDP_layer</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">11</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+            <span class="o">+</span> <span class="n">CD_layer</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">9</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+            <span class="o">+</span> <span class="n">CD_layer</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">9</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="o">+</span> <span class="n">CD_layer</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">9</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="o">+</span> <span class="n">CD_layer</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">9</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+            <span class="o">+</span> <span class="n">CD_layer</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">9</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+            <span class="o">+</span> <span class="p">[</span>
+                <span class="n">_P</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">DenseLayer</span><span class="p">,</span> <span class="n">num_units</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;F1&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">hidden_initkw</span><span class="p">),</span>
+                <span class="n">_P</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">DenseLayer</span><span class="p">,</span> <span class="n">num_units</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;F2&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">hidden_initkw</span><span class="p">),</span>
+                <span class="c1"># _P(layers.DenseLayer, num_units=64, name=&#39;F3&#39;,  **hidden_initkw),</span>
+            <span class="p">]</span>
+            <span class="c1"># CD_layer(128, (3, 3), (2, 2)) +</span>
+            <span class="c1"># CD_layer(96, (2, 2), (1, 1)) +</span>
+            <span class="c1"># CD_layer(64, (2, 2), (1, 1)) +</span>
+            <span class="c1"># CD_layer(64, (1, 1), (1, 1)) +</span>
+            <span class="c1"># CD_layer(64, (2, 1), (2, 2)) +</span>
+            <span class="o">+</span> <span class="p">[</span>
+                <span class="c1"># _P(Conv2DLayer, num_filters=128, filter_size=(3, 3), name=&#39;C3_128&#39;, **hidden_initkw),</span>
+                <span class="c1"># _P(Conv2DLayer, num_filters=64, filter_size=(3, 3), name=&#39;C4_128&#39;, **hidden_initkw),</span>
+                <span class="c1"># _P(Conv2DLayer, num_filters=64, filter_size=(2, 1), stride=(2, 2), name=&#39;C4_128&#39;, **hidden_initkw),</span>
+                <span class="c1"># _P(layers.FlattenLayer, outdim=2, name=&#39;flatten128&#39;),</span>
+                <span class="n">_P</span><span class="p">(</span><span class="n">custom_layers</span><span class="o">.</span><span class="n">L2NormalizeLayer</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="c1"># raise NotImplementedError(&#39;The 2-channel part is not yet implemented&#39;)</span>
+        <span class="k">return</span> <span class="n">network_layers_def</span></div>
+
+<div class="viewcode-block" id="SiameseL2.get_siaml2_partmatch_def"><a class="viewcode-back" href="../../../wbia_cnn.models.html#wbia_cnn.models.siam.SiameseL2.get_siaml2_partmatch_def">[docs]</a>    <span class="k">def</span> <span class="nf">get_siaml2_partmatch_def</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        CommandLine:</span>
+<span class="sd">            python -m wbia_cnn --tf  SiameseL2.init_arch --archtag siaml2_partmatch --datashape=128,256,1 --verbose  --show</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_P</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span>
+
+        <span class="n">leaky_kw</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">nonlinearity</span><span class="o">=</span><span class="n">nonlinearities</span><span class="o">.</span><span class="n">LeakyRectify</span><span class="p">(</span><span class="n">leakiness</span><span class="o">=</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="mf">10.0</span><span class="p">)))</span>
+        <span class="c1"># orthog_kw = dict(W=init.Orthogonal())</span>
+        <span class="c1"># hidden_initkw = ut.merge_dicts(orthog_kw, leaky_kw)</span>
+        <span class="n">hidden_initkw</span> <span class="o">=</span> <span class="n">leaky_kw</span>
+
+        <span class="c1"># ReshapeLayer = layers.ReshapeLayer</span>
+
+        <span class="n">_tmp</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="kn">from</span> <span class="nn">wbia_cnn</span> <span class="kn">import</span> <span class="n">custom_layers</span>
+
+        <span class="n">Conv2DLayer</span> <span class="o">=</span> <span class="n">custom_layers</span><span class="o">.</span><span class="n">Conv2DLayer</span>
+        <span class="n">MaxPool2DLayer</span> <span class="o">=</span> <span class="n">custom_layers</span><span class="o">.</span><span class="n">MaxPool2DLayer</span>
+
+        <span class="k">def</span> <span class="nf">CDP_layer</span><span class="p">(</span>
+            <span class="n">num_filters</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+            <span class="n">conv_size</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+            <span class="n">conv_stride</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+            <span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+            <span class="n">pool_stride</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+            <span class="n">drop_p</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="n">num</span> <span class="o">=</span> <span class="n">_tmp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">_tmp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">return</span> <span class="p">[</span>
+                <span class="n">_P</span><span class="p">(</span>
+                    <span class="n">Conv2DLayer</span><span class="p">,</span>
+                    <span class="n">num_filters</span><span class="o">=</span><span class="n">num_filters</span><span class="p">,</span>
+                    <span class="n">filter_size</span><span class="o">=</span><span class="n">conv_size</span><span class="p">,</span>
+                    <span class="n">stride</span><span class="o">=</span><span class="n">conv_stride</span><span class="p">,</span>
+                    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;C&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">num</span><span class="p">),</span>
+                    <span class="o">**</span><span class="n">hidden_initkw</span>
+                <span class="p">),</span>
+                <span class="n">_P</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">DropoutLayer</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">drop_p</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;D&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">num</span><span class="p">)),</span>
+                <span class="n">_P</span><span class="p">(</span>
+                    <span class="n">MaxPool2DLayer</span><span class="p">,</span>
+                    <span class="n">pool_size</span><span class="o">=</span><span class="n">pool_size</span><span class="p">,</span>
+                    <span class="n">stride</span><span class="o">=</span><span class="n">pool_stride</span><span class="p">,</span>
+                    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;P&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">num</span><span class="p">),</span>
+                <span class="p">),</span>
+            <span class="p">]</span>
+
+        <span class="k">def</span> <span class="nf">CD_layer</span><span class="p">(</span><span class="n">num_filters</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">conv_size</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">conv_stride</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">drop_p</span><span class="o">=</span><span class="mf">0.3</span><span class="p">):</span>
+            <span class="n">num</span> <span class="o">=</span> <span class="n">_tmp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">_tmp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">return</span> <span class="p">[</span>
+                <span class="n">_P</span><span class="p">(</span>
+                    <span class="n">Conv2DLayer</span><span class="p">,</span>
+                    <span class="n">num_filters</span><span class="o">=</span><span class="n">num_filters</span><span class="p">,</span>
+                    <span class="n">filter_size</span><span class="o">=</span><span class="n">conv_size</span><span class="p">,</span>
+                    <span class="n">stride</span><span class="o">=</span><span class="n">conv_stride</span><span class="p">,</span>
+                    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;C&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">num</span><span class="p">),</span>
+                    <span class="o">**</span><span class="n">hidden_initkw</span>
+                <span class="p">),</span>
+                <span class="n">_P</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">DropoutLayer</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">drop_p</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;D&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">num</span><span class="p">)),</span>
+            <span class="p">]</span>
+
+        <span class="n">network_layers_def</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">[</span><span class="n">_P</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">InputLayer</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">input_shape</span><span class="p">)]</span>
+            <span class="o">+</span> <span class="n">CDP_layer</span><span class="p">(</span><span class="mi">96</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="mf">0.1</span><span class="p">)</span>
+            <span class="o">+</span> <span class="n">CDP_layer</span><span class="p">(</span><span class="mi">192</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="mf">0.1</span><span class="p">)</span>
+            <span class="o">+</span> <span class="n">CD_layer</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+            <span class="o">+</span> <span class="n">CD_layer</span><span class="p">(</span><span class="mi">96</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="o">+</span> <span class="n">CD_layer</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="o">+</span> <span class="n">CD_layer</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="c1"># CD_layer(64, (2, 1), (2, 2)) +</span>
+            <span class="o">+</span> <span class="p">[</span>
+                <span class="c1"># _P(Conv2DLayer, num_filters=128, filter_size=(3, 3), name=&#39;C3_128&#39;, **hidden_initkw),</span>
+                <span class="c1"># _P(Conv2DLayer, num_filters=64, filter_size=(3, 3), name=&#39;C4_128&#39;, **hidden_initkw),</span>
+                <span class="c1"># _P(Conv2DLayer, num_filters=64, filter_size=(2, 1), stride=(2, 2), name=&#39;C4_128&#39;, **hidden_initkw),</span>
+                <span class="n">_P</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">FlattenLayer</span><span class="p">,</span> <span class="n">outdim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;flatten128&#39;</span><span class="p">),</span>
+                <span class="n">_P</span><span class="p">(</span><span class="n">custom_layers</span><span class="o">.</span><span class="n">L2NormalizeLayer</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="c1"># raise NotImplementedError(&#39;The 2-channel part is not yet implemented&#39;)</span>
+        <span class="k">return</span> <span class="n">network_layers_def</span></div>
+
+<div class="viewcode-block" id="SiameseL2.get_siam2streaml2_def"><a class="viewcode-back" href="../../../wbia_cnn.models.html#wbia_cnn.models.siam.SiameseL2.get_siam2streaml2_def">[docs]</a>    <span class="k">def</span> <span class="nf">get_siam2streaml2_def</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Notes:</span>
+<span class="sd">            (ix) siam-2stream-l2 consists of one central and one surround</span>
+<span class="sd">                branch of siam-2stream.</span>
+
+<span class="sd">                C0(96, 7, 3) - ReLU - P0(2, 2) - C1(192, 5, 1) - ReLU - P1(2, 2) - C2(256, 3, 1)</span>
+
+<span class="sd">        CommandLine:</span>
+<span class="sd">            python -m wbia_cnn --tf  SiameseL2.init_arch --archtag siam2streaml2 --datashape=64,64,1 --verbose  --show</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_P</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span>
+
+        <span class="n">leaky_kw</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">nonlinearity</span><span class="o">=</span><span class="n">nonlinearities</span><span class="o">.</span><span class="n">LeakyRectify</span><span class="p">(</span><span class="n">leakiness</span><span class="o">=</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="mf">10.0</span><span class="p">)))</span>
+        <span class="c1"># orthog_kw = dict(W=init.Orthogonal())</span>
+        <span class="c1"># hidden_initkw = ut.merge_dicts(orthog_kw, leaky_kw)</span>
+        <span class="n">hidden_initkw</span> <span class="o">=</span> <span class="n">leaky_kw</span>
+
+        <span class="c1"># ReshapeLayer = layers.ReshapeLayer</span>
+
+        <span class="kn">from</span> <span class="nn">wbia_cnn</span> <span class="kn">import</span> <span class="n">custom_layers</span>
+
+        <span class="n">Conv2DLayer</span> <span class="o">=</span> <span class="n">custom_layers</span><span class="o">.</span><span class="n">Conv2DLayer</span>
+        <span class="n">MaxPool2DLayer</span> <span class="o">=</span> <span class="n">custom_layers</span><span class="o">.</span><span class="n">MaxPool2DLayer</span>
+
+        <span class="n">network_layers_def</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">InputLayer</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">input_shape</span><span class="p">),</span>
+            <span class="c1"># TODO: Stack Inputs by making a 2 Channel Layer</span>
+            <span class="c1"># caffenet.get_conv2d_layer(0, trainable=False, **leaky),</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">custom_layers</span><span class="o">.</span><span class="n">CenterSurroundLayer</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;CentSuround&#39;</span><span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span>
+                <span class="n">Conv2DLayer</span><span class="p">,</span>
+                <span class="n">num_filters</span><span class="o">=</span><span class="mi">96</span><span class="p">,</span>
+                <span class="n">filter_size</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+                <span class="n">stride</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;C0&#39;</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">hidden_initkw</span>
+            <span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">DropoutLayer</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="mf">0.3</span><span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">MaxPool2DLayer</span><span class="p">,</span> <span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">stride</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;P0&#39;</span><span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span>
+                <span class="n">Conv2DLayer</span><span class="p">,</span>
+                <span class="n">num_filters</span><span class="o">=</span><span class="mi">192</span><span class="p">,</span>
+                <span class="n">filter_size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;C1&#39;</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">hidden_initkw</span>
+            <span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">DropoutLayer</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="mf">0.3</span><span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">MaxPool2DLayer</span><span class="p">,</span> <span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">stride</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;P0&#39;</span><span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span>
+                <span class="n">Conv2DLayer</span><span class="p">,</span>
+                <span class="n">num_filters</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+                <span class="n">filter_size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;C2&#39;</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">hidden_initkw</span>
+            <span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">DropoutLayer</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="mf">0.3</span><span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">MaxPool2DLayer</span><span class="p">,</span> <span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">stride</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;P0&#39;</span><span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span>
+                <span class="n">Conv2DLayer</span><span class="p">,</span>
+                <span class="n">num_filters</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+                <span class="n">filter_size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;C3&#39;</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">hidden_initkw</span>
+            <span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span>
+                <span class="n">custom_layers</span><span class="o">.</span><span class="n">SiameseConcatLayer</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">data_per_label</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;concat&#39;</span>
+            <span class="p">),</span>  <span class="c1"># 2 when CenterSurroundIsOn but two channel network</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">FlattenLayer</span><span class="p">,</span> <span class="n">outdim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;flatten&#39;</span><span class="p">),</span>
+            <span class="c1"># _P(custom_layers.L2NormalizeLayer, axis=2),</span>
+            <span class="c1"># TODO: L2 distance layer</span>
+            <span class="c1"># _P(custom_layers.SiameseConcatLayer, data_per_label=2),</span>
+        <span class="p">]</span>
+        <span class="c1"># raise NotImplementedError(&#39;The 2-channel part is not yet implemented&#39;)</span>
+        <span class="k">return</span> <span class="n">network_layers_def</span></div>
+
+<div class="viewcode-block" id="SiameseL2.get_mnist_siaml2_def"><a class="viewcode-back" href="../../../wbia_cnn.models.html#wbia_cnn.models.siam.SiameseL2.get_mnist_siaml2_def">[docs]</a>    <span class="k">def</span> <span class="nf">get_mnist_siaml2_def</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        python -m wbia_cnn --tf  SiameseL2.init_arch --archtag mnist_siaml2 --datashape=28,28,1 --verbose  --show</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_P</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span>
+
+        <span class="n">leaky_kw</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">nonlinearity</span><span class="o">=</span><span class="n">nonlinearities</span><span class="o">.</span><span class="n">LeakyRectify</span><span class="p">(</span><span class="n">leakiness</span><span class="o">=</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="mf">10.0</span><span class="p">)))</span>
+        <span class="c1"># orthog_kw = dict(W=init.Orthogonal())</span>
+        <span class="c1"># hidden_initkw = ut.merge_dicts(orthog_kw, leaky_kw)</span>
+        <span class="n">hidden_initkw</span> <span class="o">=</span> <span class="n">leaky_kw</span>
+
+        <span class="kn">from</span> <span class="nn">wbia_cnn</span> <span class="kn">import</span> <span class="n">custom_layers</span>
+
+        <span class="n">Conv2DLayer</span> <span class="o">=</span> <span class="n">custom_layers</span><span class="o">.</span><span class="n">Conv2DLayer</span>
+        <span class="n">MaxPool2DLayer</span> <span class="o">=</span> <span class="n">custom_layers</span><span class="o">.</span><span class="n">MaxPool2DLayer</span>
+
+        <span class="n">network_layers_def</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="c1"># _P(layers.InputLayer, shape=model.input_shape),</span>
+            <span class="c1"># _P(Conv2DLayer, num_filters=96, filter_size=(7, 7), stride=(1, 1), name=&#39;C0&#39;, **hidden_initkw),</span>
+            <span class="c1"># _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name=&#39;P0&#39;),</span>
+            <span class="c1"># _P(Conv2DLayer, num_filters=192, filter_size=(5, 5), name=&#39;C1&#39;, **hidden_initkw),</span>
+            <span class="c1"># _P(MaxPool2DLayer, pool_size=(2, 2), stride=(2, 2), name=&#39;P1&#39;),</span>
+            <span class="c1"># _P(Conv2DLayer, num_filters=256, filter_size=(4, 4), name=&#39;C2&#39;, **hidden_initkw),</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">InputLayer</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">input_shape</span><span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span>
+                <span class="n">Conv2DLayer</span><span class="p">,</span>
+                <span class="n">num_filters</span><span class="o">=</span><span class="mi">96</span><span class="p">,</span>
+                <span class="n">filter_size</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+                <span class="n">stride</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;C0&#39;</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">hidden_initkw</span>
+            <span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">MaxPool2DLayer</span><span class="p">,</span> <span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">stride</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;P0&#39;</span><span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span>
+                <span class="n">Conv2DLayer</span><span class="p">,</span>
+                <span class="n">num_filters</span><span class="o">=</span><span class="mi">192</span><span class="p">,</span>
+                <span class="n">filter_size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;C1&#39;</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">hidden_initkw</span>
+            <span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">MaxPool2DLayer</span><span class="p">,</span> <span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">stride</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;P2&#39;</span><span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span>
+                <span class="n">Conv2DLayer</span><span class="p">,</span>
+                <span class="n">num_filters</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>
+                <span class="n">filter_size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;C2&#39;</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">hidden_initkw</span>
+            <span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">MaxPool2DLayer</span><span class="p">,</span> <span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">stride</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;P3&#39;</span><span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span>
+                <span class="n">Conv2DLayer</span><span class="p">,</span>
+                <span class="n">num_filters</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>
+                <span class="n">filter_size</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;C2&#39;</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">hidden_initkw</span>
+            <span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">MaxPool2DLayer</span><span class="p">,</span> <span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">stride</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;P3&#39;</span><span class="p">),</span>
+            <span class="c1"># _P(layers.ReshapeLayer, shape=(-1, 128))</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">FlattenLayer</span><span class="p">,</span> <span class="n">outdim</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+            <span class="c1"># _P(Conv2DLayer, num_filters=256, filter_size=(2, 2), name=&#39;C3&#39;, **hidden_initkw),</span>
+        <span class="p">]</span>
+        <span class="k">return</span> <span class="n">network_layers_def</span></div>
+
+<div class="viewcode-block" id="SiameseL2.init_arch"><a class="viewcode-back" href="../../../wbia_cnn.models.html#wbia_cnn.models.siam.SiameseL2.init_arch">[docs]</a>    <span class="k">def</span> <span class="nf">init_arch</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">ut</span><span class="o">.</span><span class="n">VERBOSE</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Notes:</span>
+<span class="sd">            http://arxiv.org/pdf/1504.03641.pdf</span>
+
+<span class="sd">        CommandLine:</span>
+<span class="sd">            python -m wbia_cnn.models.siam --test-SiameseL2.init_arch --verbcnn --show</span>
+<span class="sd">            python -m wbia_cnn --tf  SiameseL2.init_arch --verbcnn --show</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; # ENABLE_DOCTEST</span>
+<span class="sd">            &gt;&gt;&gt; from wbia_cnn.models.siam import *  # NOQA</span>
+<span class="sd">            &gt;&gt;&gt; verbose = True</span>
+<span class="sd">            &gt;&gt;&gt; arch_tag = ut.get_argval(&#39;--archtag&#39;, default=&#39;siaml2&#39;)</span>
+<span class="sd">            &gt;&gt;&gt; data_shape = tuple(ut.get_argval(&#39;--datashape&#39;, type_=list, default=(64, 64, 3)))</span>
+<span class="sd">            &gt;&gt;&gt; model = SiameseL2(batch_size=128, data_shape=data_shape, arch_tag=arch_tag)</span>
+<span class="sd">            &gt;&gt;&gt; output_layer = model.init_arch()</span>
+<span class="sd">            &gt;&gt;&gt; model.print_model_info_str()</span>
+<span class="sd">            &gt;&gt;&gt; ut.quit_if_noshow()</span>
+<span class="sd">            &gt;&gt;&gt; model.show_arch()</span>
+<span class="sd">            &gt;&gt;&gt; ut.show_if_requested()</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># TODO: remove output dims</span>
+        <span class="c1"># _P = functools.partial</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[model] init_arch&#39;</span><span class="p">)</span>
+        <span class="c1"># (_, input_channels, input_width, input_height) = model.input_shape</span>
+        <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">input_channels</span><span class="p">,</span> <span class="n">input_height</span><span class="p">,</span> <span class="n">input_width</span><span class="p">)</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">input_shape</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[model] Initialize center siamese l2 model architecture&#39;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[model]   * batch_size     = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[model]   * input_width    = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">input_width</span><span class="p">,))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[model]   * input_height   = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">input_height</span><span class="p">,))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[model]   * input_channels = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">input_channels</span><span class="p">,))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[model]   * output_dims    = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">output_dims</span><span class="p">,))</span>
+
+        <span class="c1"># network_layers_def = model.get_mnist_siaml2_def(verbose=verbose, **kwargs)</span>
+        <span class="n">network_layers_def</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s1">&#39;get_&#39;</span> <span class="o">+</span> <span class="n">model</span><span class="o">.</span><span class="n">arch_tag</span> <span class="o">+</span> <span class="s1">&#39;_def&#39;</span><span class="p">)(</span>
+            <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span>
+        <span class="c1"># if model.arch_tag == &#39;siam2streaml2&#39;:</span>
+        <span class="c1">#    network_layers_def = model.get_siam2streaml2_def(verbose=verbose, **kwargs)</span>
+        <span class="c1"># elif model.arch_tag == &#39;siaml2&#39;:</span>
+        <span class="c1">#    network_layers_def = model.get_siaml2_def(verbose=verbose, **kwargs)</span>
+        <span class="c1"># elif model.arch_tag == &#39;siaml2_128&#39;:</span>
+        <span class="c1">#    network_layers_def = model.get_siaml2_128_def(verbose=verbose, **kwargs)</span>
+        <span class="c1"># elif model.arch_tag == &#39;mnist_siaml2&#39;:</span>
+        <span class="c1">#    network_layers_def = model.get_mnist_siaml2_def(verbose=verbose, **kwargs)</span>
+        <span class="c1"># connect and record layers</span>
+        <span class="kn">from</span> <span class="nn">wbia_cnn</span> <span class="kn">import</span> <span class="n">custom_layers</span>
+
+        <span class="n">network_layers</span> <span class="o">=</span> <span class="n">custom_layers</span><span class="o">.</span><span class="n">evaluate_layer_list</span><span class="p">(</span>
+            <span class="n">network_layers_def</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span>
+        <span class="p">)</span>
+        <span class="c1"># model.network_layers = network_layers</span>
+        <span class="n">output_layer</span> <span class="o">=</span> <span class="n">network_layers</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">output_layer</span> <span class="o">=</span> <span class="n">output_layer</span>
+        <span class="k">return</span> <span class="n">output_layer</span></div>
+
+<div class="viewcode-block" id="SiameseL2.loss_function"><a class="viewcode-back" href="../../../wbia_cnn.models.html#wbia_cnn.models.siam.SiameseL2.loss_function">[docs]</a>    <span class="k">def</span> <span class="nf">loss_function</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">network_output</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Implements the contrastive loss term from (Hasdel, Chopra, LeCun 06)</span>
+
+<span class="sd">        CommandLine:</span>
+<span class="sd">            python -m wbia_cnn.models.siam --test-SiameseL2.loss_function --show</span>
+
+<span class="sd">        Example1:</span>
+<span class="sd">            &gt;&gt;&gt; # ENABLE_DOCTEST</span>
+<span class="sd">            &gt;&gt;&gt; from wbia_cnn.models import *  # NOQA</span>
+<span class="sd">            &gt;&gt;&gt; network_output, labels = testdata_siam_desc()</span>
+<span class="sd">            &gt;&gt;&gt; verbose = False</span>
+<span class="sd">            &gt;&gt;&gt; T = np</span>
+<span class="sd">            &gt;&gt;&gt; func = SiameseL2.loss_function</span>
+<span class="sd">            &gt;&gt;&gt; loss, dist_l2 = ut.exec_func_src(func, globals(), locals(), [&#39;loss&#39;, &#39;dist_l2&#39;])</span>
+<span class="sd">            &gt;&gt;&gt; ut.quit_if_noshow()</span>
+<span class="sd">            &gt;&gt;&gt; dist0_l2 = dist_l2[labels]</span>
+<span class="sd">            &gt;&gt;&gt; dist1_l2 = dist_l2[~labels]</span>
+<span class="sd">            &gt;&gt;&gt; loss0 = loss[labels]</span>
+<span class="sd">            &gt;&gt;&gt; loss1 = loss[~labels]</span>
+<span class="sd">            &gt;&gt;&gt; import plottool as pt</span>
+<span class="sd">            &gt;&gt;&gt; pt.plot2(dist0_l2, loss0, &#39;x&#39;, color=pt.TRUE_BLUE, label=&#39;imposter_loss&#39;, y_label=&#39;loss&#39;)</span>
+<span class="sd">            &gt;&gt;&gt; pt.plot2(dist1_l2, loss1, &#39;x&#39;, color=pt.FALSE_RED, label=&#39;genuine_loss&#39;, y_label=&#39;loss&#39;)</span>
+<span class="sd">            &gt;&gt;&gt; pt.legend()</span>
+<span class="sd">            &gt;&gt;&gt; ut.show_if_requested()</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[model] Build SiameseL2 loss function&#39;</span><span class="p">)</span>
+        <span class="n">vecs1</span> <span class="o">=</span> <span class="n">network_output</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">vecs2</span> <span class="o">=</span> <span class="n">network_output</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">margin</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="n">dist_l2</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(((</span><span class="n">vecs1</span> <span class="o">-</span> <span class="n">vecs2</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">constrastive_loss</span><span class="p">(</span><span class="n">dist_l2</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">margin</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">)</span>
+        <span class="c1"># Ignore the hardest cases</span>
+        <span class="c1"># num_ignore = 3</span>
+        <span class="c1"># loss = ignore_hardest_cases(loss, labels, num_ignore=num_ignore, T=T)</span>
+        <span class="k">return</span> <span class="n">loss</span></div>
+
+<div class="viewcode-block" id="SiameseL2.learn_encoder"><a class="viewcode-back" href="../../../wbia_cnn.models.html#wbia_cnn.models.siam.SiameseL2.learn_encoder">[docs]</a>    <span class="k">def</span> <span class="nf">learn_encoder</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">scores</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="kn">import</span> <span class="nn">vtool</span> <span class="k">as</span> <span class="nn">vt</span>
+
+        <span class="n">encoder</span> <span class="o">=</span> <span class="n">vt</span><span class="o">.</span><span class="n">ScoreNormalizer</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">encoder</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="s1">&#39;[model] learned encoder accuracy = </span><span class="si">%r</span><span class="s1">&#39;</span>
+            <span class="o">%</span> <span class="p">(</span><span class="n">encoder</span><span class="o">.</span><span class="n">get_accuracy</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">labels</span><span class="p">))</span>
+        <span class="p">)</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">encoder</span> <span class="o">=</span> <span class="n">encoder</span>
+        <span class="k">return</span> <span class="n">encoder</span></div></div>
+
+
+<div class="viewcode-block" id="ignore_hardest_cases"><a class="viewcode-back" href="../../../wbia_cnn.models.html#wbia_cnn.models.siam.ignore_hardest_cases">[docs]</a><span class="k">def</span> <span class="nf">ignore_hardest_cases</span><span class="p">(</span><span class="n">loss</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">num_ignore</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Args:</span>
+<span class="sd">        loss (theano.Tensor):</span>
+<span class="sd">        labels (theano.Tensor):</span>
+<span class="sd">        num_ignore (int): (default = 3)</span>
+<span class="sd">        T (module): (default = theano.tensor)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        theano.Tensor: loss</span>
+
+<span class="sd">    CommandLine:</span>
+<span class="sd">        python -m wbia_cnn.models.siam --test-ignore_hardest_cases:0</span>
+<span class="sd">        python -m wbia_cnn.models.siam --test-ignore_hardest_cases:1</span>
+<span class="sd">        python -m wbia_cnn.models.siam --test-ignore_hardest_cases:2</span>
+
+<span class="sd">    Example0:</span>
+<span class="sd">        &gt;&gt;&gt; # ENABLE_DOCTEST</span>
+<span class="sd">        &gt;&gt;&gt; # Test numpy version</span>
+<span class="sd">        &gt;&gt;&gt; from wbia_cnn.models.siam import *  # NOQA</span>
+<span class="sd">        &gt;&gt;&gt; loss_arr   = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8], dtype=np.int32)</span>
+<span class="sd">        &gt;&gt;&gt; labels_arr = np.array([1, 0, 0, 1, 1, 1, 1, 1, 0], dtype=np.int32)</span>
+<span class="sd">        &gt;&gt;&gt; loss   = loss_arr</span>
+<span class="sd">        &gt;&gt;&gt; labels = labels_arr</span>
+<span class="sd">        &gt;&gt;&gt; num_ignore = 2</span>
+<span class="sd">        &gt;&gt;&gt; T = np</span>
+<span class="sd">        &gt;&gt;&gt; ignored_loss_arr = ignore_hardest_cases(loss, labels, num_ignore, T)</span>
+<span class="sd">        &gt;&gt;&gt; result = (&#39;ignored_loss_arr = %s&#39; % (ut.numpy_str(ignored_loss_arr),))</span>
+<span class="sd">        &gt;&gt;&gt; print(result)</span>
+<span class="sd">        ignored_loss = np.array([0, 1, 0, 3, 4, 5, 0, 0, 0], dtype=np.int32)</span>
+
+<span class="sd">     Example1:</span>
+<span class="sd">        &gt;&gt;&gt; # ENABLE_DOCTEST</span>
+<span class="sd">        &gt;&gt;&gt; # Test theano version</span>
+<span class="sd">        &gt;&gt;&gt; from wbia_cnn.models.siam import *  # NOQA</span>
+<span class="sd">        &gt;&gt;&gt; import theano.tensor</span>
+<span class="sd">        &gt;&gt;&gt; loss_arr   = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8], dtype=np.int32)</span>
+<span class="sd">        &gt;&gt;&gt; labels_arr = np.array([1, 0, 0, 1, 1, 1, 1, 1, 0], dtype=np.int32)</span>
+<span class="sd">        &gt;&gt;&gt; T = theano.tensor</span>
+<span class="sd">        &gt;&gt;&gt; loss = T.ivector(name=&#39;loss&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; labels = T.ivector(name=&#39;labels&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; num_ignore = 2</span>
+<span class="sd">        &gt;&gt;&gt; ignored_loss = ignore_hardest_cases(loss, labels, num_ignore, T)</span>
+<span class="sd">        &gt;&gt;&gt; ignored_loss_arr = ignored_loss.eval({loss: loss_arr, labels: labels_arr})</span>
+<span class="sd">        &gt;&gt;&gt; result = (&#39;ignored_loss = %s&#39; % (ut.numpy_str(ignored_loss_arr),))</span>
+<span class="sd">        &gt;&gt;&gt; print(result)</span>
+<span class="sd">        ignored_loss = np.array([0, 1, 0, 3, 4, 5, 0, 0, 0], dtype=np.int32)</span>
+
+<span class="sd">    Example2:</span>
+<span class="sd">        &gt;&gt;&gt; # ENABLE_DOCTEST</span>
+<span class="sd">        &gt;&gt;&gt; # Test version compatiblity</span>
+<span class="sd">        &gt;&gt;&gt; from wbia_cnn.models.siam import *  # NOQA</span>
+<span class="sd">        &gt;&gt;&gt; import wbia_cnn.theano_ext as theano_ext</span>
+<span class="sd">        &gt;&gt;&gt; import theano.tensor</span>
+<span class="sd">        &gt;&gt;&gt; loss_arr   = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8], dtype=np.int32)</span>
+<span class="sd">        &gt;&gt;&gt; labels_arr = np.array([1, 0, 0, 1, 1, 1, 1, 1, 0], dtype=np.int32)</span>
+<span class="sd">        &gt;&gt;&gt; loss = T.ivector(name=&#39;loss&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; labels = T.ivector(name=&#39;labels&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; num_ignore = 2</span>
+<span class="sd">        &gt;&gt;&gt; # build numpy targets</span>
+<span class="sd">        &gt;&gt;&gt; numpy_locals = {&#39;np&#39;: np, &#39;T&#39;: np, &#39;loss&#39;: loss_arr, &#39;labels&#39;: labels_arr, &#39;num_ignore&#39;: num_ignore}</span>
+<span class="sd">        &gt;&gt;&gt; func = ignore_hardest_cases</span>
+<span class="sd">        &gt;&gt;&gt; numpy_vars = ut.exec_func_src(func, {}, numpy_locals, None)</span>
+<span class="sd">        &gt;&gt;&gt; numpy_targets = ut.delete_dict_keys(numpy_vars, [&#39;__doc__&#39;, &#39;T&#39;, &#39;np&#39;, &#39;num_ignore&#39;])</span>
+<span class="sd">        &gt;&gt;&gt; # build theano functions</span>
+<span class="sd">        &gt;&gt;&gt; theano_locals = {&#39;np&#39;: np, &#39;T&#39;: theano.tensor, &#39;loss&#39;: loss, &#39;labels&#39;: labels, &#39;num_ignore&#39;: num_ignore}</span>
+<span class="sd">        &gt;&gt;&gt; func = ignore_hardest_cases</span>
+<span class="sd">        &gt;&gt;&gt; theano_vars = ut.exec_func_src(func, {}, theano_locals, None)</span>
+<span class="sd">        &gt;&gt;&gt; theano_symbols = ut.delete_dict_keys(theano_vars, [&#39;__doc__&#39;, &#39;T&#39;, &#39;np&#39;, &#39;num_ignore&#39;])</span>
+<span class="sd">        &gt;&gt;&gt; inputs_to_value = {loss: loss_arr, labels: labels_arr}</span>
+<span class="sd">        &gt;&gt;&gt; # Evalute and test consistency</span>
+<span class="sd">        &gt;&gt;&gt; key_order = sorted(list(theano_symbols.keys()))</span>
+<span class="sd">        &gt;&gt;&gt; theano_values = {}</span>
+<span class="sd">        &gt;&gt;&gt; noerror = True</span>
+<span class="sd">        &gt;&gt;&gt; for key in key_order:</span>
+<span class="sd">        ...     symbol = theano_symbols[key]</span>
+<span class="sd">        ...     print(&#39;key=%r&#39; % (key,))</span>
+<span class="sd">        ...     theano_value = theano_ext.eval_symbol(symbol, inputs_to_value)</span>
+<span class="sd">        ...     theano_values[key] = theano_value</span>
+<span class="sd">        ...     prefix = &#39;  * &#39;</span>
+<span class="sd">        ...     if not np.all(theano_values[key] == numpy_targets[key]):</span>
+<span class="sd">        ...         prefix = &#39; !!! &#39;</span>
+<span class="sd">        ...         noerror = False</span>
+<span class="sd">        ...     # Cast to compatible dtype</span>
+<span class="sd">        ...     numpy_value = numpy_targets[key]</span>
+<span class="sd">        ...     result_dtype = np.result_type(numpy_value, theano_value)</span>
+<span class="sd">        ...     numpy_value = numpy_value.astype(result_dtype)</span>
+<span class="sd">        ...     theano_value = theano_value.astype(result_dtype)</span>
+<span class="sd">        ...     numpy_targets[key] = numpy_value</span>
+<span class="sd">        ...     theano_values[key] = theano_value</span>
+<span class="sd">        ...     print(prefix + &#39;numpy_value  = %r&#39; % (numpy_value,))</span>
+<span class="sd">        ...     print(prefix + &#39;theano_value = %r&#39; % (theano_value,))</span>
+<span class="sd">        &gt;&gt;&gt; print(&#39;numpy_targets = &#39; + ut.dict_str(numpy_targets, align=True))</span>
+<span class="sd">        &gt;&gt;&gt; print(&#39;theano_values = &#39; + ut.dict_str(theano_values, align=True))</span>
+<span class="sd">        &gt;&gt;&gt; assert noerror, &#39;There was an error&#39;</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">T</span> <span class="ow">is</span> <span class="n">np</span><span class="p">:</span>
+        <span class="n">T</span><span class="o">.</span><span class="n">eq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">equal</span>
+        <span class="n">T</span><span class="o">.</span><span class="n">le</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">less_equal</span>
+
+    <span class="n">hardest_sortx_</span> <span class="o">=</span> <span class="n">loss</span><span class="o">.</span><span class="n">argsort</span><span class="p">()</span>
+    <span class="n">hardest_sortx</span> <span class="o">=</span> <span class="n">hardest_sortx_</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">invert_sortx</span> <span class="o">=</span> <span class="n">hardest_sortx</span><span class="o">.</span><span class="n">argsort</span><span class="p">()</span>
+
+    <span class="n">hardest_labels</span> <span class="o">=</span> <span class="n">labels</span><span class="p">[</span><span class="n">hardest_sortx</span><span class="p">]</span>
+
+    <span class="n">hardest_istrue</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="n">hardest_labels</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">hardest_isfalse</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="n">hardest_labels</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="n">cumsum_istrue</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">hardest_istrue</span><span class="p">)</span>
+    <span class="n">cumsum_isfalse</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">hardest_isfalse</span><span class="p">)</span>
+
+    <span class="n">inrange_true</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">le</span><span class="p">(</span><span class="n">cumsum_istrue</span><span class="p">,</span> <span class="n">num_ignore</span><span class="p">)</span>
+    <span class="n">inrange_false</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">le</span><span class="p">(</span><span class="n">cumsum_isfalse</span><span class="p">,</span> <span class="n">num_ignore</span><span class="p">)</span>
+
+    <span class="n">hardest_false_mask</span> <span class="o">=</span> <span class="n">inrange_false</span> <span class="o">*</span> <span class="n">hardest_isfalse</span>
+    <span class="n">hardest_true_mask</span> <span class="o">=</span> <span class="n">inrange_true</span> <span class="o">*</span> <span class="n">hardest_istrue</span>
+    <span class="n">true_mask</span> <span class="o">=</span> <span class="n">hardest_true_mask</span><span class="p">[</span><span class="n">invert_sortx</span><span class="p">]</span>
+    <span class="n">false_mask</span> <span class="o">=</span> <span class="n">hardest_false_mask</span><span class="p">[</span><span class="n">invert_sortx</span><span class="p">]</span>
+
+    <span class="n">keep_mask</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="n">true_mask</span> <span class="o">+</span> <span class="n">false_mask</span><span class="p">)</span>
+
+    <span class="n">ignored_loss</span> <span class="o">=</span> <span class="n">keep_mask</span> <span class="o">*</span> <span class="n">loss</span>
+
+    <span class="c1"># CHECK = False</span>
+    <span class="c1"># if CHECK:</span>
+    <span class="c1">#    hardest_trues  = T.nonzero(hardest_labels)[0][0:num_ignore]</span>
+    <span class="c1">#    hardest_falses = T.nonzero(1 - hardest_labels)[0][0:num_ignore]</span>
+    <span class="c1">#    hardest_true_sortx  = hardest_sortx[hardest_trues]</span>
+    <span class="c1">#    hardest_false_sortx = hardest_sortx[hardest_falses]</span>
+    <span class="c1">#    hardest_true_sortx.sort()</span>
+    <span class="c1">#    hardest_false_sortx.sort()</span>
+    <span class="c1">#    assert np.all(np.where(false_mask)[0] == hardest_false_sortx)</span>
+    <span class="c1">#    assert np.all(np.where(true_mask)[0] == hardest_true_sortx)</span>
+    <span class="c1">#    ignored_loss_ = loss.copy()</span>
+    <span class="c1">#    ignored_loss_[hardest_true_sortx] = 0</span>
+    <span class="c1">#    ignored_loss_[hardest_false_sortx] = 0</span>
+
+    <span class="k">if</span> <span class="n">T</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">np</span><span class="p">:</span>
+        <span class="n">ignored_loss</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;ignored_&#39;</span> <span class="o">+</span> <span class="n">loss</span><span class="o">.</span><span class="n">name</span>
+    <span class="k">return</span> <span class="n">ignored_loss</span></div>
+
+
+<div class="viewcode-block" id="constrastive_loss"><a class="viewcode-back" href="../../../wbia_cnn.models.html#wbia_cnn.models.siam.constrastive_loss">[docs]</a><span class="k">def</span> <span class="nf">constrastive_loss</span><span class="p">(</span><span class="n">dist_l2</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">margin</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    LaTeX:</span>
+<span class="sd">        $(y E)^2 + ((1 - y) max(m - E, 0)^2)$</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        dist_l2 (ndarray): energy of a training example (l2 distance of descriptor pairs)</span>
+<span class="sd">        labels (ndarray): 1 if genuine pair, 0 if imposter pair</span>
+<span class="sd">        margin (float): positive number</span>
+<span class="sd">        T (module): (default = theano.tensor)</span>
+
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ndarray: loss</span>
+
+<span class="sd">    Notes:</span>
+<span class="sd">        Carefull, you need to pass the the euclidean distance in here here, NOT</span>
+<span class="sd">        the squared euclidean distance otherwise you end up with</span>
+<span class="sd">        T.maximum(0, (m ** 2 - 2 * m * d + d ** 2)),</span>
+<span class="sd">        which still requires the square root operation</span>
+
+<span class="sd">    CommandLine:</span>
+<span class="sd">        python -m wbia_cnn.models.siam --test-constrastive_loss --show</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; # DISABLE_DOCTEST</span>
+<span class="sd">        &gt;&gt;&gt; from wbia_cnn.models.siam import *  # NOQA</span>
+<span class="sd">        &gt;&gt;&gt; dist_l2 = np.linspace(0, 2.5, 200)</span>
+<span class="sd">        &gt;&gt;&gt; labels = np.tile([True, False], 100)</span>
+<span class="sd">        &gt;&gt;&gt; # margin, T = 1.25, np</span>
+<span class="sd">        &gt;&gt;&gt; margin, T = 1.25, np</span>
+<span class="sd">        &gt;&gt;&gt; loss = constrastive_loss(dist_l2, labels, margin, T)</span>
+<span class="sd">        &gt;&gt;&gt; ut.quit_if_noshow()</span>
+<span class="sd">        &gt;&gt;&gt; import plottool as pt</span>
+<span class="sd">        &gt;&gt;&gt; xdat_genuine, ydat_genuine = dist_l2[labels], loss[labels] * 2.0</span>
+<span class="sd">        &gt;&gt;&gt; xdat_imposter, ydat_imposter = dist_l2[~labels], loss[~labels] * 2.0</span>
+<span class="sd">        &gt;&gt;&gt; #pt.presetup_axes(x_label=&#39;Energy (D_w)&#39;, y_label=&#39;Loss (L)&#39;, equal_aspect=False)</span>
+<span class="sd">        &gt;&gt;&gt; pt.presetup_axes(x_label=&#39;Energy (E)&#39;, y_label=&#39;Loss (L)&#39;, equal_aspect=False)</span>
+<span class="sd">        &gt;&gt;&gt; pt.plot(xdat_genuine, ydat_genuine, &#39;--&#39;, lw=2, color=pt.TRUE, label=&#39;Correct training pairs&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; pt.plot(xdat_imposter, ydat_imposter, &#39;-&#39;, lw=2, color=pt.FALSE,  label=&#39;Incorrect training pairs&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; pt.pad_axes(.03, ylim=(0, 3.5))</span>
+<span class="sd">        &gt;&gt;&gt; pt.postsetup_axes()</span>
+<span class="sd">        &gt;&gt;&gt; ut.show_if_requested()</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># if __debug__:</span>
+    <span class="c1">#    assert margin &gt; 0</span>
+    <span class="c1">#    assert set(labels).issubset({0, 1})</span>
+    <span class="n">loss_genuine</span> <span class="o">=</span> <span class="p">(</span><span class="n">labels</span> <span class="o">*</span> <span class="n">dist_l2</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="n">loss_imposter</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">labels</span><span class="p">)</span> <span class="o">*</span> <span class="n">T</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">margin</span> <span class="o">-</span> <span class="n">dist_l2</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="n">loss</span> <span class="o">=</span> <span class="p">(</span><span class="n">loss_genuine</span> <span class="o">+</span> <span class="n">loss_imposter</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span>
+    <span class="k">if</span> <span class="n">T</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">np</span><span class="p">:</span>
+        <span class="n">loss</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;contrastive_loss&#39;</span>
+    <span class="k">return</span> <span class="n">loss</span></div>
+
+
+<div class="viewcode-block" id="SiameseCenterSurroundModel"><a class="viewcode-back" href="../../../wbia_cnn.models.html#wbia_cnn.models.siam.SiameseCenterSurroundModel">[docs]</a><span class="nd">@six</span><span class="o">.</span><span class="n">add_metaclass</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">ReloadingMetaclass</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">SiameseCenterSurroundModel</span><span class="p">(</span><span class="n">AbstractSiameseModel</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Model for individual identification</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="n">model</span><span class="p">,</span>
+        <span class="n">autoinit</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>
+        <span class="n">input_shape</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">data_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="n">data_shape</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">input_shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">data_shape</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">data_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">data_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">input_shape</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SiameseCenterSurroundModel</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">input_shape</span><span class="o">=</span><span class="n">input_shape</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span>
+        <span class="c1"># model.network_layers = None</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">input_shape</span> <span class="o">=</span> <span class="n">input_shape</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">output_dims</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="c1"># bad name, says that this network will take</span>
+        <span class="c1"># 2*N images in a batch and N labels that map to</span>
+        <span class="c1"># two images a piece</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">data_per_label_input</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">data_per_label_output</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">autoinit</span><span class="p">:</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">init_arch</span><span class="p">()</span>
+
+<div class="viewcode-block" id="SiameseCenterSurroundModel.init_arch"><a class="viewcode-back" href="../../../wbia_cnn.models.html#wbia_cnn.models.siam.SiameseCenterSurroundModel.init_arch">[docs]</a>    <span class="k">def</span> <span class="nf">init_arch</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Notes:</span>
+<span class="sd">            http://arxiv.org/pdf/1504.03641.pdf</span>
+
+<span class="sd">        CommandLine:</span>
+<span class="sd">            python -m wbia_cnn.models.siam --test-SiameseCenterSurroundModel.init_arch</span>
+<span class="sd">            python -m wbia_cnn.models.siam --test-SiameseCenterSurroundModel.init_arch --verbcnn</span>
+<span class="sd">            python -m wbia_cnn.models.siam --test-SiameseCenterSurroundModel.init_arch --verbcnn --show</span>
+<span class="sd">            python -m wbia_cnn.train --test-pz_patchmatch --vtd --max-examples=5 --batch_size=128 --learning_rate .0000001 --verbcnn</span>
+<span class="sd">            python -m wbia_cnn.train --test-pz_patchmatch --vtd</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; # ENABLE_DOCTEST</span>
+<span class="sd">            &gt;&gt;&gt; from wbia_cnn.models import *  # NOQA</span>
+<span class="sd">            &gt;&gt;&gt; # build test data</span>
+<span class="sd">            &gt;&gt;&gt; batch_size = 128</span>
+<span class="sd">            &gt;&gt;&gt; input_shape = (batch_size, 3, 64, 64)</span>
+<span class="sd">            &gt;&gt;&gt; verbose = True</span>
+<span class="sd">            &gt;&gt;&gt; model = SiameseCenterSurroundModel(batch_size=batch_size, input_shape=input_shape)</span>
+<span class="sd">            &gt;&gt;&gt; # execute function</span>
+<span class="sd">            &gt;&gt;&gt; output_layer = model.init_arch()</span>
+<span class="sd">            &gt;&gt;&gt; model.print_model_info_str()</span>
+<span class="sd">            &gt;&gt;&gt; result = str(output_layer)</span>
+<span class="sd">            &gt;&gt;&gt; print(result)</span>
+<span class="sd">            &gt;&gt;&gt; ut.quit_if_noshow()</span>
+<span class="sd">            &gt;&gt;&gt; import plottool as pt</span>
+<span class="sd">            &gt;&gt;&gt; model.show_arch()</span>
+<span class="sd">            &gt;&gt;&gt; ut.show_if_requested()</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[model] init_arch&#39;</span><span class="p">)</span>
+        <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">input_channels</span><span class="p">,</span> <span class="n">input_width</span><span class="p">,</span> <span class="n">input_height</span><span class="p">)</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">input_shape</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[model] Initialize center surround siamese model architecture&#39;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[model]   * batch_size     = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[model]   * input_width    = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">input_width</span><span class="p">,))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[model]   * input_height   = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">input_height</span><span class="p">,))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[model]   * input_channels = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">input_channels</span><span class="p">,))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[model]   * output_dims    = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">output_dims</span><span class="p">,))</span>
+        <span class="n">network_layers_def</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_siam2stream_def</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="c1"># connect and record layers</span>
+        <span class="kn">from</span> <span class="nn">wbia_cnn</span> <span class="kn">import</span> <span class="n">custom_layers</span>
+
+        <span class="n">network_layers</span> <span class="o">=</span> <span class="n">custom_layers</span><span class="o">.</span><span class="n">evaluate_layer_list</span><span class="p">(</span><span class="n">network_layers_def</span><span class="p">)</span>
+        <span class="c1"># model.network_layers = network_layers</span>
+        <span class="n">output_layer</span> <span class="o">=</span> <span class="n">network_layers</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">output_layer</span> <span class="o">=</span> <span class="n">output_layer</span>
+        <span class="k">return</span> <span class="n">output_layer</span></div>
+
+<div class="viewcode-block" id="SiameseCenterSurroundModel.loss_function"><a class="viewcode-back" href="../../../wbia_cnn.models.html#wbia_cnn.models.siam.SiameseCenterSurroundModel.loss_function">[docs]</a>    <span class="k">def</span> <span class="nf">loss_function</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">network_output</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        CommandLine:</span>
+<span class="sd">            python -m wbia_cnn.models.siam --test-loss_function</span>
+<span class="sd">            python -m wbia_cnn.models.siam --test-loss_function:1 --show</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; # ENABLE_DOCTEST</span>
+<span class="sd">            &gt;&gt;&gt; from wbia_cnn.models import *  # NOQA</span>
+<span class="sd">            &gt;&gt;&gt; from wbia_cnn import ingest_data</span>
+<span class="sd">            &gt;&gt;&gt; from wbia_cnn import batch_processing as batch</span>
+<span class="sd">            &gt;&gt;&gt; data, labels = ingest_data.testdata_patchmatch()</span>
+<span class="sd">            &gt;&gt;&gt; model = SiameseCenterSurroundModel(autoinit=True, input_shape=(128,) + (data.shape[1:]))</span>
+<span class="sd">            &gt;&gt;&gt; theano_forward = batch.create_unbuffered_network_output_func(model)</span>
+<span class="sd">            &gt;&gt;&gt; batch_size = model.batch_size</span>
+<span class="sd">            &gt;&gt;&gt; Xb, yb = data[0:batch_size * model.data_per_label_input], labels[0:batch_size]</span>
+<span class="sd">            &gt;&gt;&gt; network_output = theano_forward(Xb)[0]</span>
+<span class="sd">            &gt;&gt;&gt; network_output = network_output</span>
+<span class="sd">            &gt;&gt;&gt; Y = yb</span>
+<span class="sd">            &gt;&gt;&gt; T = np</span>
+<span class="sd">            &gt;&gt;&gt; # execute function</span>
+<span class="sd">            &gt;&gt;&gt; verbose = True</span>
+<span class="sd">            &gt;&gt;&gt; avg_loss = model.loss_function(network_output, Y, T=T)</span>
+<span class="sd">            &gt;&gt;&gt; result = str(avg_loss)</span>
+<span class="sd">            &gt;&gt;&gt; print(result)</span>
+
+<span class="sd">        Example1:</span>
+<span class="sd">            &gt;&gt;&gt; # ENABLE_DOCTEST</span>
+<span class="sd">            &gt;&gt;&gt; from wbia_cnn.models import *  # NOQA</span>
+<span class="sd">            &gt;&gt;&gt; network_output = np.linspace(-2, 2, 128)</span>
+<span class="sd">            &gt;&gt;&gt; Y0 = np.zeros(len(network_output), np.float32)</span>
+<span class="sd">            &gt;&gt;&gt; Y1 = np.ones(len(network_output), np.float32)</span>
+<span class="sd">            &gt;&gt;&gt; verbose = False</span>
+<span class="sd">            &gt;&gt;&gt; T = np</span>
+<span class="sd">            &gt;&gt;&gt; Y = Y0</span>
+<span class="sd">            &gt;&gt;&gt; func = SiameseCenterSurroundModel.loss_function</span>
+<span class="sd">            &gt;&gt;&gt; loss0, Y0_ = ut.exec_func_src(func, globals(), locals(), [&#39;loss&#39;, &#39;Y_&#39;])</span>
+<span class="sd">            &gt;&gt;&gt; Y = Y1</span>
+<span class="sd">            &gt;&gt;&gt; loss1, Y1_ = ut.exec_func_src(func, globals(), locals(), [&#39;loss&#39;, &#39;Y_&#39;])</span>
+<span class="sd">            &gt;&gt;&gt; assert np.all(Y1 == 1) and np.all(Y1_ == 1), &#39;bad label mapping&#39;</span>
+<span class="sd">            &gt;&gt;&gt; assert np.all(Y0 == 0) and np.all(Y0_ == -1), &#39;bad label mapping&#39;</span>
+<span class="sd">            &gt;&gt;&gt; ut.quit_if_noshow()</span>
+<span class="sd">            &gt;&gt;&gt; import plottool as pt</span>
+<span class="sd">            &gt;&gt;&gt; pt.plot2(network_output, loss0, &#39;-&#39;, color=pt.TRUE_BLUE, label=&#39;imposter_loss&#39;, y_label=&#39;network output&#39;)</span>
+<span class="sd">            &gt;&gt;&gt; pt.plot2(network_output, loss1, &#39;-&#39;, color=pt.FALSE_RED, label=&#39;genuine_loss&#39;, y_label=&#39;network output&#39;)</span>
+<span class="sd">            &gt;&gt;&gt; pt.legend()</span>
+<span class="sd">            &gt;&gt;&gt; ut.show_if_requested()</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[model] Build SiameseCenterSurroundModel loss function&#39;</span><span class="p">)</span>
+        <span class="c1"># make y_i in {-1, 1} where -1 denotes non-matching and +1 denotes matching</span>
+        <span class="c1"># Y_ = (1 - (2 * Y))</span>
+        <span class="n">Y_</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Y</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="c1"># Hinge-loss objective from Zagoruyko and Komodakis</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="n">Y_</span> <span class="o">*</span> <span class="n">network_output</span><span class="o">.</span><span class="n">T</span><span class="p">))</span>
+        <span class="n">avg_loss</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">T</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">np</span><span class="p">:</span>
+            <span class="n">loss</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;loss&#39;</span>
+            <span class="n">avg_loss</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;avg_loss&#39;</span>
+        <span class="k">return</span> <span class="n">avg_loss</span></div>
+
+<div class="viewcode-block" id="SiameseCenterSurroundModel.learn_encoder"><a class="viewcode-back" href="../../../wbia_cnn.models.html#wbia_cnn.models.siam.SiameseCenterSurroundModel.learn_encoder">[docs]</a>    <span class="k">def</span> <span class="nf">learn_encoder</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">scores</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="kn">import</span> <span class="nn">vtool</span> <span class="k">as</span> <span class="nn">vt</span>
+
+        <span class="n">encoder</span> <span class="o">=</span> <span class="n">vt</span><span class="o">.</span><span class="n">ScoreNormalizer</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">encoder</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="s1">&#39;[model] learned encoder accuracy = </span><span class="si">%r</span><span class="s1">&#39;</span>
+            <span class="o">%</span> <span class="p">(</span><span class="n">encoder</span><span class="o">.</span><span class="n">get_accuracy</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">labels</span><span class="p">))</span>
+        <span class="p">)</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">encoder</span> <span class="o">=</span> <span class="n">encoder</span>
+        <span class="k">return</span> <span class="n">encoder</span></div>
+
+<div class="viewcode-block" id="SiameseCenterSurroundModel.get_2ch2stream_def"><a class="viewcode-back" href="../../../wbia_cnn.models.html#wbia_cnn.models.siam.SiameseCenterSurroundModel.get_2ch2stream_def">[docs]</a>    <span class="k">def</span> <span class="nf">get_2ch2stream_def</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Notes:</span>
+<span class="sd">            (i) 2ch-2stream consists of two branches</span>
+<span class="sd">                C(95, 5, 1)- ReLU- P(2, 2)- C(96, 3, 1)- ReLU- P(2, 2)- C(192, 3, 1)-</span>
+<span class="sd">                  ReLU- C(192, 3, 1)- ReLU,</span>
+<span class="sd">                one for central and one for surround parts, followed by</span>
+<span class="sd">                F(768)- ReLU- F(1)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;The 2-channel part is not yet implemented&#39;</span><span class="p">)</span>
+        <span class="n">_P</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span>
+        <span class="n">leaky_kw</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">nonlinearity</span><span class="o">=</span><span class="n">nonlinearities</span><span class="o">.</span><span class="n">LeakyRectify</span><span class="p">(</span><span class="n">leakiness</span><span class="o">=</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="mf">10.0</span><span class="p">)))</span>
+        <span class="n">orthog_kw</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">W</span><span class="o">=</span><span class="n">init</span><span class="o">.</span><span class="n">Orthogonal</span><span class="p">())</span>
+        <span class="n">hidden_initkw</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">merge_dicts</span><span class="p">(</span><span class="n">orthog_kw</span><span class="p">,</span> <span class="n">leaky_kw</span><span class="p">)</span>
+
+        <span class="kn">from</span> <span class="nn">wbia_cnn</span> <span class="kn">import</span> <span class="n">custom_layers</span>
+
+        <span class="n">Conv2DLayer</span> <span class="o">=</span> <span class="n">custom_layers</span><span class="o">.</span><span class="n">Conv2DLayer</span>
+        <span class="n">MaxPool2DLayer</span> <span class="o">=</span> <span class="n">custom_layers</span><span class="o">.</span><span class="n">MaxPool2DLayer</span>
+
+        <span class="n">network_layers_def</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">InputLayer</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">input_shape</span><span class="p">),</span>
+            <span class="c1"># TODO: Stack Inputs by making a 2 Channel Layer</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">custom_layers</span><span class="o">.</span><span class="n">CenterSurroundLayer</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;CentSur&#39;</span><span class="p">),</span>
+            <span class="c1"># layers.GaussianNoiseLayer,</span>
+            <span class="c1"># caffenet.get_conv2d_layer(0, trainable=False, **leaky),</span>
+            <span class="c1"># lasagne_ext.freeze_params,</span>
+            <span class="n">_P</span><span class="p">(</span>
+                <span class="n">Conv2DLayer</span><span class="p">,</span>
+                <span class="n">num_filters</span><span class="o">=</span><span class="mi">96</span><span class="p">,</span>
+                <span class="n">filter_size</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+                <span class="n">stride</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;C0&#39;</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">hidden_initkw</span>
+            <span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">MaxPool2DLayer</span><span class="p">,</span> <span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">stride</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;P0&#39;</span><span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span>
+                <span class="n">Conv2DLayer</span><span class="p">,</span>
+                <span class="n">num_filters</span><span class="o">=</span><span class="mi">96</span><span class="p">,</span>
+                <span class="n">filter_size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;C1&#39;</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">hidden_initkw</span>
+            <span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">MaxPool2DLayer</span><span class="p">,</span> <span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">stride</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;P1&#39;</span><span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span>
+                <span class="n">Conv2DLayer</span><span class="p">,</span>
+                <span class="n">num_filters</span><span class="o">=</span><span class="mi">192</span><span class="p">,</span>
+                <span class="n">filter_size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;C2&#39;</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">hidden_initkw</span>
+            <span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span>
+                <span class="n">Conv2DLayer</span><span class="p">,</span>
+                <span class="n">num_filters</span><span class="o">=</span><span class="mi">192</span><span class="p">,</span>
+                <span class="n">filter_size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;C3&#39;</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">hidden_initkw</span>
+            <span class="p">),</span>
+            <span class="c1"># _P(custom_layers.L2NormalizeLayer, axis=2),</span>
+            <span class="n">_P</span><span class="p">(</span>
+                <span class="n">custom_layers</span><span class="o">.</span><span class="n">SiameseConcatLayer</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">data_per_label</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Concat&#39;</span>
+            <span class="p">),</span>  <span class="c1"># 4 when CenterSurroundIsOn</span>
+            <span class="c1"># _P(custom_layers.SiameseConcatLayer, data_per_label=2),</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">DenseLayer</span><span class="p">,</span> <span class="n">num_units</span><span class="o">=</span><span class="mi">768</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;F1&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">hidden_initkw</span><span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">DropoutLayer</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="mf">0.5</span><span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">DenseLayer</span><span class="p">,</span> <span class="n">num_units</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;F2&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">hidden_initkw</span><span class="p">),</span>
+        <span class="p">]</span>
+        <span class="k">return</span> <span class="n">network_layers_def</span></div>
+
+<div class="viewcode-block" id="SiameseCenterSurroundModel.get_siam2stream_def"><a class="viewcode-back" href="../../../wbia_cnn.models.html#wbia_cnn.models.siam.SiameseCenterSurroundModel.get_siam2stream_def">[docs]</a>    <span class="k">def</span> <span class="nf">get_siam2stream_def</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Notes:</span>
+<span class="sd">            (viii) siam-2stream has 4 branches</span>
+<span class="sd">                C(96, 4, 2)- ReLU- P(2, 2)- C(192, 3, 1)- ReLU- C(256, 3, 1)- ReLU- C(256, 3, 1)-</span>
+<span class="sd">                  ReLU</span>
+<span class="sd">                (coupled in pairs for central and surround streams, and decision layer)</span>
+<span class="sd">                F(512)-ReLU- F(1)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_P</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span>
+
+        <span class="kn">from</span> <span class="nn">wbia_cnn</span> <span class="kn">import</span> <span class="n">custom_layers</span>
+
+        <span class="n">Conv2DLayer</span> <span class="o">=</span> <span class="n">custom_layers</span><span class="o">.</span><span class="n">Conv2DLayer</span>
+        <span class="n">MaxPool2DLayer</span> <span class="o">=</span> <span class="n">custom_layers</span><span class="o">.</span><span class="n">MaxPool2DLayer</span>
+
+        <span class="n">leaky_kw</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">nonlinearity</span><span class="o">=</span><span class="n">nonlinearities</span><span class="o">.</span><span class="n">LeakyRectify</span><span class="p">(</span><span class="n">leakiness</span><span class="o">=</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="mf">10.0</span><span class="p">)))</span>
+        <span class="n">orthog_kw</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">W</span><span class="o">=</span><span class="n">init</span><span class="o">.</span><span class="n">Orthogonal</span><span class="p">())</span>
+        <span class="n">hidden_initkw</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">merge_dicts</span><span class="p">(</span><span class="n">orthog_kw</span><span class="p">,</span> <span class="n">leaky_kw</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;fresh_model&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+            <span class="c1"># FIXME: figure out better way of encoding that Orthogonal</span>
+            <span class="c1"># Initialization doesnt need to happen. Or do initialization of</span>
+            <span class="c1"># weights after the network has been built.</span>
+            <span class="c1"># don&#39;t do fancy initializating unless training from scratch</span>
+            <span class="k">del</span> <span class="n">hidden_initkw</span><span class="p">[</span><span class="s1">&#39;W&#39;</span><span class="p">]</span>
+
+        <span class="n">network_layers_def</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">InputLayer</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">input_shape</span><span class="p">),</span>
+            <span class="c1"># TODO: Stack Inputs by making a 2 Channel Layer</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">custom_layers</span><span class="o">.</span><span class="n">CenterSurroundLayer</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;CS&#39;</span><span class="p">),</span>
+            <span class="n">layers</span><span class="o">.</span><span class="n">GaussianNoiseLayer</span><span class="p">,</span>
+            <span class="c1"># caffenet.get_conv2d_layer(0, trainable=False, **leaky),</span>
+            <span class="n">_P</span><span class="p">(</span>
+                <span class="n">Conv2DLayer</span><span class="p">,</span>
+                <span class="n">num_filters</span><span class="o">=</span><span class="mi">96</span><span class="p">,</span>
+                <span class="n">filter_size</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;C0&#39;</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">hidden_initkw</span>
+            <span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">MaxPool2DLayer</span><span class="p">,</span> <span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">stride</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;P0&#39;</span><span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span>
+                <span class="n">Conv2DLayer</span><span class="p">,</span>
+                <span class="n">num_filters</span><span class="o">=</span><span class="mi">192</span><span class="p">,</span>
+                <span class="n">filter_size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;C2&#39;</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">hidden_initkw</span>
+            <span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span>
+                <span class="n">Conv2DLayer</span><span class="p">,</span>
+                <span class="n">num_filters</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+                <span class="n">filter_size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;C3&#39;</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">hidden_initkw</span>
+            <span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span>
+                <span class="n">Conv2DLayer</span><span class="p">,</span>
+                <span class="n">num_filters</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+                <span class="n">filter_size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;C4&#39;</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">hidden_initkw</span>
+            <span class="p">),</span>
+            <span class="c1"># _P(custom_layers.L2NormalizeLayer, axis=2),</span>
+            <span class="n">_P</span><span class="p">(</span>
+                <span class="n">custom_layers</span><span class="o">.</span><span class="n">SiameseConcatLayer</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">data_per_label</span><span class="o">=</span><span class="mi">4</span>
+            <span class="p">),</span>  <span class="c1"># 4 when CenterSurroundIsOn</span>
+            <span class="c1"># _P(custom_layers.SiameseConcatLayer, data_per_label=2),</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">DenseLayer</span><span class="p">,</span> <span class="n">num_units</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;F1&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">hidden_initkw</span><span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">DropoutLayer</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="mf">0.5</span><span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">DenseLayer</span><span class="p">,</span> <span class="n">num_units</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;F2&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">hidden_initkw</span><span class="p">),</span>
+        <span class="p">]</span>
+        <span class="c1"># raise NotImplementedError(&#39;The 2-channel part is not yet implemented&#39;)</span>
+        <span class="k">return</span> <span class="n">network_layers_def</span></div>
+
+<div class="viewcode-block" id="SiameseCenterSurroundModel.get_siam2stream_l2_def"><a class="viewcode-back" href="../../../wbia_cnn.models.html#wbia_cnn.models.siam.SiameseCenterSurroundModel.get_siam2stream_l2_def">[docs]</a>    <span class="k">def</span> <span class="nf">get_siam2stream_l2_def</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Notes:</span>
+<span class="sd">            (ix) siam-2stream-l2 consists of one central and one surround</span>
+<span class="sd">                branch of siam-2stream.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Need to implement L2 distance layer&#39;</span><span class="p">)</span>
+        <span class="n">_P</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span>
+
+        <span class="kn">from</span> <span class="nn">wbia_cnn</span> <span class="kn">import</span> <span class="n">custom_layers</span>
+
+        <span class="n">Conv2DLayer</span> <span class="o">=</span> <span class="n">custom_layers</span><span class="o">.</span><span class="n">Conv2DLayer</span>
+        <span class="n">MaxPool2DLayer</span> <span class="o">=</span> <span class="n">custom_layers</span><span class="o">.</span><span class="n">MaxPool2DLayer</span>
+
+        <span class="n">leaky_kw</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">nonlinearity</span><span class="o">=</span><span class="n">nonlinearities</span><span class="o">.</span><span class="n">LeakyRectify</span><span class="p">(</span><span class="n">leakiness</span><span class="o">=</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="mf">10.0</span><span class="p">)))</span>
+        <span class="n">orthog_kw</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">W</span><span class="o">=</span><span class="n">init</span><span class="o">.</span><span class="n">Orthogonal</span><span class="p">())</span>
+        <span class="n">hidden_initkw</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">merge_dicts</span><span class="p">(</span><span class="n">orthog_kw</span><span class="p">,</span> <span class="n">leaky_kw</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;fresh_model&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+            <span class="c1"># FIXME: figure out better way of encoding that Orthogonal</span>
+            <span class="c1"># Initialization doesnt need to happen. Or do initialization of</span>
+            <span class="c1"># weights after the network has been built.</span>
+            <span class="c1"># don&#39;t do fancy initializating unless training from scratch</span>
+            <span class="k">del</span> <span class="n">hidden_initkw</span><span class="p">[</span><span class="s1">&#39;W&#39;</span><span class="p">]</span>
+
+        <span class="n">network_layers_def</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">InputLayer</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">input_shape</span><span class="p">),</span>
+            <span class="c1"># TODO: Stack Inputs by making a 2 Channel Layer</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">custom_layers</span><span class="o">.</span><span class="n">CenterSurroundLayer</span><span class="p">),</span>
+            <span class="n">layers</span><span class="o">.</span><span class="n">GaussianNoiseLayer</span><span class="p">,</span>
+            <span class="c1"># caffenet.get_conv2d_layer(0, trainable=False, **leaky),</span>
+            <span class="n">_P</span><span class="p">(</span>
+                <span class="n">Conv2DLayer</span><span class="p">,</span>
+                <span class="n">num_filters</span><span class="o">=</span><span class="mi">96</span><span class="p">,</span>
+                <span class="n">filter_size</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;C0&#39;</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">hidden_initkw</span>
+            <span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span><span class="n">MaxPool2DLayer</span><span class="p">,</span> <span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">stride</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;P0&#39;</span><span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span>
+                <span class="n">Conv2DLayer</span><span class="p">,</span>
+                <span class="n">num_filters</span><span class="o">=</span><span class="mi">192</span><span class="p">,</span>
+                <span class="n">filter_size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;C2&#39;</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">hidden_initkw</span>
+            <span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span>
+                <span class="n">Conv2DLayer</span><span class="p">,</span>
+                <span class="n">num_filters</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+                <span class="n">filter_size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;C3&#39;</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">hidden_initkw</span>
+            <span class="p">),</span>
+            <span class="n">_P</span><span class="p">(</span>
+                <span class="n">Conv2DLayer</span><span class="p">,</span>
+                <span class="n">num_filters</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+                <span class="n">filter_size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;C4&#39;</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">hidden_initkw</span>
+            <span class="p">),</span>
+            <span class="c1"># _P(custom_layers.L2NormalizeLayer, axis=2),</span>
+            <span class="n">_P</span><span class="p">(</span>
+                <span class="n">custom_layers</span><span class="o">.</span><span class="n">SiameseConcatLayer</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">data_per_label</span><span class="o">=</span><span class="mi">4</span>
+            <span class="p">),</span>  <span class="c1"># 4 when CenterSurroundIsOn</span>
+            <span class="c1"># TODO: L2 distance layer</span>
+            <span class="c1"># _P(custom_layers.SiameseConcatLayer, data_per_label=2),</span>
+        <span class="p">]</span>
+        <span class="c1"># raise NotImplementedError(&#39;The 2-channel part is not yet implemented&#39;)</span>
+        <span class="k">return</span> <span class="n">network_layers_def</span></div></div>
+
+
+<div class="viewcode-block" id="predict"><a class="viewcode-back" href="../../../wbia_cnn.models.html#wbia_cnn.models.siam.predict">[docs]</a><span class="k">def</span> <span class="nf">predict</span><span class="p">():</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="testdata_siam_desc"><a class="viewcode-back" href="../../../wbia_cnn.models.html#wbia_cnn.models.siam.testdata_siam_desc">[docs]</a><span class="k">def</span> <span class="nf">testdata_siam_desc</span><span class="p">(</span><span class="n">num_data</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">desc_dim</span><span class="o">=</span><span class="mi">8</span><span class="p">):</span>
+    <span class="kn">import</span> <span class="nn">vtool</span> <span class="k">as</span> <span class="nn">vt</span>
+
+    <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">network_output</span> <span class="o">=</span> <span class="n">vt</span><span class="o">.</span><span class="n">normalize_rows</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">num_data</span><span class="p">,</span> <span class="n">desc_dim</span><span class="p">))</span>
+    <span class="n">vecs1</span> <span class="o">=</span> <span class="n">network_output</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">vecs2</span> <span class="o">=</span> <span class="n">network_output</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span>
+    <span class="c1"># roll vecs2 so it is essentially translated</span>
+    <span class="n">vecs2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">vecs1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">network_output</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">vecs2</span>
+    <span class="c1"># Every other pair is an imposter match</span>
+    <span class="n">network_output</span><span class="p">[::</span><span class="mi">4</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">vt</span><span class="o">.</span><span class="n">normalize_rows</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="n">desc_dim</span><span class="p">))</span>
+    <span class="c1"># data_per_label = 2</span>
+
+    <span class="n">vecs1</span> <span class="o">=</span> <span class="n">network_output</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">vecs2</span> <span class="o">=</span> <span class="n">network_output</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">true_dist_metric</span><span class="p">(</span><span class="n">vecs1</span><span class="p">,</span> <span class="n">vecs2</span><span class="p">):</span>
+        <span class="n">g1_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">vecs1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">dist</span> <span class="o">=</span> <span class="n">vt</span><span class="o">.</span><span class="n">L2</span><span class="p">(</span><span class="n">g1_</span><span class="p">,</span> <span class="n">vecs2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">dist</span>
+
+    <span class="c1"># l2dist = vt.L2(vecs1, vecs2)</span>
+    <span class="n">true_dist</span> <span class="o">=</span> <span class="n">true_dist_metric</span><span class="p">(</span><span class="n">vecs1</span><span class="p">,</span> <span class="n">vecs2</span><span class="p">)</span>
+
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">true_dist</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="n">network_output</span><span class="p">,</span> <span class="n">labels</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    CommandLine:</span>
+<span class="sd">        python -m wbia_cnn.models.siam</span>
+<span class="sd">        python -m wbia_cnn.models.siam --allexamples</span>
+<span class="sd">        python -m wbia_cnn.models.siam --allexamples --noface --nosrc</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">multiprocessing</span>
+
+    <span class="n">multiprocessing</span><span class="o">.</span><span class="n">freeze_support</span><span class="p">()</span>  <span class="c1"># for win32</span>
+    <span class="kn">import</span> <span class="nn">utool</span> <span class="k">as</span> <span class="nn">ut</span>  <span class="c1"># NOQA</span>
+
+    <span class="n">ut</span><span class="o">.</span><span class="n">doctest_funcs</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">wbia-cnn</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../wbia_cnn.html">wbia_cnn package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  <li><a href="../../wbia_cnn.html">wbia_cnn</a><ul>
+  <li><a href="../models.html">wbia_cnn.models</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Wild Me.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -677,6 +677,8 @@ try:
         def get_data_shape(pmcfg):
             channels = 1 if pmcfg['colorspace'] == 'gray' else 3
             return (pmcfg['patch_size'], pmcfg['patch_size'], channels)
+
+
 except ImportError:
     PartMatchDataConfig = None
     PatchMetricDataConfig = None
@@ -927,6 +929,7 @@ def get_aidpairs_and_matches(
         >>>     pt.update()
         >>> ut.show_if_requested()
     """
+
     def get_query_results():
         if acfg_name is not None:
             print('NEW WAY OF FILTERING')

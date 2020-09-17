@@ -26,8 +26,6 @@ def check_external_training_paths():
 
     from six.moves import cPickle as pickle
     from wbia_cnn import abstract_models
-    from wbia_cnn.abstract_models import *
-    from os.path import *
 
     model_fpaths = ut.glob(checkpoints_dir, '*.pkl', recursive=True)
     tmp_model_list = []

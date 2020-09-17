@@ -1,45 +1,93 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function
-from utool import util_setup
-from setuptools import setup, find_packages
 import sys
-import utool as ut
+from os.path import exists
+from collections import OrderedDict
 
-(print, rrr, profile) = ut.inject2(__name__)
+from setuptools import find_packages
+from skbuild import setup
 
 
-CHMOD_PATTERNS = [
-    'run_tests.sh',
-]
+def native_mb_python_tag(plat_impl=None, version_info=None):
+    """
+    Example:
+        >>> print(native_mb_python_tag())
+        >>> print(native_mb_python_tag('PyPy', (2, 7)))
+        >>> print(native_mb_python_tag('CPython', (3, 8)))
+    """
+    if plat_impl is None:
+        import platform
 
-PROJECT_DIRS = [
-    'wbia_cnn',
-]
+        plat_impl = platform.python_implementation()
 
-CLUTTER_PATTERNS = [
-    "'",
-    '*.dump.txt',
-    '*.prof',
-    '*.prof.txt',
-    '*.lprof',
-    '*.ln.pkg',
-    'timeings.txt',
-]
+    if version_info is None:
+        import sys
 
-CLUTTER_DIRS = [
-    'logs/',
-    'dist/',
-    'testsuite',
-    '__pycache__/',
-]
+        version_info = sys.version_info
 
-"""
-Need special theano
-References:
-    http://lasagne.readthedocs.org/en/latest/user/installation.html
-    pip install -r https://raw.githubusercontent.com/Lasagne/Lasagne/v0.1/requirements.txt
-"""
+    major, minor = version_info[0:2]
+    ver = '{}{}'.format(major, minor)
+
+    if plat_impl == 'CPython':
+        # TODO: get if cp27m or cp27mu
+        impl = 'cp'
+        if ver == '27':
+            IS_27_BUILT_WITH_UNICODE = True  # how to determine this?
+            if IS_27_BUILT_WITH_UNICODE:
+                abi = 'mu'
+            else:
+                abi = 'm'
+        else:
+            if ver == '38':
+                # no abi in 38?
+                abi = ''
+            else:
+                abi = 'm'
+        mb_tag = '{impl}{ver}-{impl}{ver}{abi}'.format(**locals())
+    elif plat_impl == 'PyPy':
+        abi = ''
+        impl = 'pypy'
+        ver = '{}{}'.format(major, minor)
+        mb_tag = '{impl}-{ver}'.format(**locals())
+    else:
+        raise NotImplementedError(plat_impl)
+    return mb_tag
+
+
+def parse_version(fpath='wbia_cnn/__init__.py'):
+    """
+    Statically parse the version number from a python file
+
+
+    """
+    import ast
+
+    if not exists(fpath):
+        raise ValueError('fpath={!r} does not exist'.format(fpath))
+    with open(fpath, 'r') as file_:
+        sourcecode = file_.read()
+    pt = ast.parse(sourcecode)
+
+    class VersionVisitor(ast.NodeVisitor):
+        def visit_Assign(self, node):
+            for target in node.targets:
+                if getattr(target, 'id', None) == '__version__':
+                    self.version = node.value.s
+
+    visitor = VersionVisitor()
+    visitor.visit(pt)
+    return visitor.version
+
+
+def parse_long_description(fpath='README.rst'):
+    """
+    Reads README text, but doesn't break if README does not exist.
+    """
+    if exists(fpath):
+        with open(fpath, 'r') as file:
+            return file.read()
+    return ''
 
 
 def parse_requirements(fname='requirements.txt', with_version=True):
@@ -49,7 +97,7 @@ def parse_requirements(fname='requirements.txt', with_version=True):
 
     Args:
         fname (str): path to requirements file
-        with_version (bool, default=True): if true include version specs
+        with_version (bool, default=False): if true include version specs
 
     Returns:
         List[str]: list of requirements items
@@ -74,7 +122,7 @@ def parse_requirements(fname='requirements.txt', with_version=True):
                 yield info
         else:
             info = {'line': line}
-            if line.startswith('-e ') or line.startswith('git+'):
+            if line.startswith('-e '):
                 info['package'] = line.split('#egg=')[1]
             else:
                 # Remove versioning from the package
@@ -121,41 +169,72 @@ def parse_requirements(fname='requirements.txt', with_version=True):
     return packages
 
 
-if __name__ == '__main__':
-    print('[setup] Entering IBEIS setup')
-    kwargs = dict(
-        setup_fpath=__file__,
-        name='wbia_cnn',
-        # author='Hendrik Weideman, Jason Parham, and Jon Crall',
-        # author_email='erotemic@gmail.com',
-        packages=util_setup.find_packages() + find_packages(where='Lasagne'),
-        package_dir={'lasagne': 'Lasagne/lasagne'},
-        # --- VERSION ---
-        # The following settings retreive the version from git.
-        # See https://github.com/pypa/setuptools_scm/ for more information
-        setup_requires=['setuptools_scm'],
-        use_scm_version={
-            'write_to': 'wbia_cnn/_version.py',
-            'write_to_template': '__version__ = "{version}"',
-            'tag_regex': '^(?P<prefix>v)?(?P<version>[^\\+]+)(?P<suffix>.*)?$',
-            'local_scheme': 'dirty-tag',
-        },
-        license=util_setup.read_license('LICENSE'),
-        long_description=util_setup.parse_readme('README.md'),
-        ext_modules=util_setup.find_ext_modules(),
-        cmdclass=util_setup.get_cmdclass(),
-        project_dirs=PROJECT_DIRS,
-        chmod_patterns=CHMOD_PATTERNS,
-        clutter_patterns=CLUTTER_PATTERNS,
-        clutter_dirs=CLUTTER_DIRS,
-        install_requires=parse_requirements('requirements/runtime.txt'),
-        extras_require={
-            'all': parse_requirements('requirements.txt'),
-            'build': parse_requirements('requirements/build.txt'),
-            'runtime': parse_requirements('requirements/runtime.txt'),
-        },
-        # cython_files=CYTHON_FILES,
-    )
+NAME = 'wbia-cnn'
 
-    print('kwargs = %s' % (ut.dict_str(kwargs),))
-    setup(**kwargs)
+
+MB_PYTHON_TAG = native_mb_python_tag()  # NOQA
+
+AUTHORS = [
+    'Jon Crall',
+    'Jason Parham',
+    'WildMe Developers',
+]
+AUTHOR_EMAIL = 'dev@wildme.org'
+URL = 'https://github.com/WildbookOrg/wbia-plugin-cnn'
+LICENSE = 'BSD'
+DESCRIPTION = 'WBIA CNN - Convolutional Neural Network (CNN) plug-in for WBIA'
+
+
+KWARGS = OrderedDict(
+    name=NAME,
+    author=', '.join(AUTHORS),
+    author_email=AUTHOR_EMAIL,
+    description=DESCRIPTION,
+    long_description=parse_long_description('README.rst'),
+    long_description_content_type='text/x-rst',
+    url=URL,
+    license=LICENSE,
+    install_requires=parse_requirements('requirements/runtime.txt'),
+    extras_require={
+        'all': parse_requirements('requirements.txt'),
+        'tests': parse_requirements('requirements/tests.txt'),
+        'build': parse_requirements('requirements/build.txt'),
+        'runtime': parse_requirements('requirements/runtime.txt'),
+    },
+    # --- VERSION ---
+    # The following settings retreive the version from git.
+    # See https://github.com/pypa/setuptools_scm/ for more information
+    setup_requires=['setuptools_scm'],
+    use_scm_version={
+        'write_to': 'wbia_cnn/_version.py',
+        'write_to_template': '__version__ = "{version}"',
+        'tag_regex': '^(?P<prefix>v)?(?P<version>[^\\+]+)(?P<suffix>.*)?$',
+        'local_scheme': 'dirty-tag',
+    },
+    packages=find_packages() + find_packages(where='Lasagne'),
+    package_dir={'lasagne': 'Lasagne/lasagne', 'wbia_cnn': 'wbia_cnn'},
+    include_package_data=False,
+    # List of classifiers available at:
+    # https://pypi.python.org/pypi?%3Aaction=list_classifiers
+    classifiers=[
+        'Development Status :: 6 - Mature',
+        'License :: OSI Approved :: BSD License',
+        'Intended Audience :: Developers',
+        'Intended Audience :: Science/Research',
+        'Operating System :: MacOS :: MacOS X',
+        'Operating System :: Unix',
+        'Topic :: Software Development :: Libraries :: Python Modules',
+        'Topic :: Utilities',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+    ],
+)
+
+if __name__ == '__main__':
+    """
+    python -c "import wbia_cnn; print(wbia_cnn.__file__)"
+    """
+    setup(**KWARGS)

@@ -1,0 +1,502 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>wbia_cnn.netrun &#8212; wbia-cnn 3.3.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for wbia_cnn.netrun</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">FIXME:</span>
+<span class="sd">    sometimes you have to chown -R user:user ~/.theano or run with sudo the</span>
+<span class="sd">    first time after roboot, otherwise you get errors</span>
+
+<span class="sd">CommandLineHelp:</span>
+<span class="sd">    python -m wbia_cnn --tf netrun &lt;networkmodel&gt;</span>
+
+<span class="sd">    --dataset, --ds = &lt;dstag&gt;:&lt;subtag&gt;</span>
+<span class="sd">        dstag is the main dataset name (eg PZ_MTEST), subtag are parameters to</span>
+<span class="sd">        modify (max_examples=3)</span>
+
+<span class="sd">    --weights, -w = |new|&lt;checkpoint_tag&gt;|&lt;dstag&gt;:&lt;checkpoint_tag&gt; (default: &lt;checkpoint_tag&gt;)</span>
+<span class="sd">        new will initialize clean weights.</span>
+<span class="sd">        a checkpoint tag will try to to match a saved model state in the history.</span>
+<span class="sd">        can load weights from an external dataset.</span>
+<span class="sd">        &lt;checkpoint_tag&gt; defaults to current</span>
+
+<span class="sd">    --arch, -a = &lt;archtag&gt;</span>
+<span class="sd">        model architecture tag (eg siaml2_128, siam2stream, viewpoint)</span>
+
+<span class="sd">    --device = &lt;processor&gt;</span>
+<span class="sd">       sets theano device flag to a processor like gpu0, gpu1, or cpu0</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span>
+<span class="kn">from</span> <span class="nn">wbia_cnn</span> <span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span> <span class="nn">wbia_cnn</span> <span class="kn">import</span> <span class="n">ingest_data</span>
+<span class="kn">from</span> <span class="nn">wbia_cnn</span> <span class="kn">import</span> <span class="n">experiments</span>
+<span class="kn">import</span> <span class="nn">utool</span> <span class="k">as</span> <span class="nn">ut</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="nb">print</span><span class="p">,</span> <span class="n">rrr</span><span class="p">,</span> <span class="n">profile</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">inject2</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="c1"># This is more of a history tag</span>
+<span class="n">CHECKPOINT_TAG_ALIAS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;current&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="s1">&#39;&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c1"># second level of alias indirection</span>
+<span class="c1"># This is more of a dataset tag</span>
+<span class="n">DS_TAG_ALIAS2</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;flankhack&#39;</span><span class="p">:</span> <span class="s2">&quot;dict(acfg_name=&#39;ctrl:pername=None,excluderef=False,contributor_contains=FlankHack&#39;, colorspace=&#39;gray&#39;, db=&#39;PZ_Master1&#39;)&quot;</span><span class="p">,</span>
+    <span class="s1">&#39;pzmtest-bgr&#39;</span><span class="p">:</span> <span class="s2">&quot;PZ_MTEST;dict(colorspace=&#39;bgr&#39;, controlled=True, max_examples=None, num_top=None)&quot;</span><span class="p">,</span>  <span class="c1"># NOQA</span>
+    <span class="s1">&#39;pzmtest&#39;</span><span class="p">:</span> <span class="s2">&quot;PZ_MTEST;dict(colorspace=&#39;gray&#39;, controlled=True, max_examples=None, num_top=None)&quot;</span><span class="p">,</span>  <span class="c1"># NOQA</span>
+    <span class="s1">&#39;gz-gray&#39;</span><span class="p">:</span> <span class="s2">&quot;GZ_ALL;dict(colorspace=&#39;gray&#39;, controlled=False, max_examples=None, num_top=None)&quot;</span><span class="p">,</span>  <span class="c1"># NOQA</span>
+    <span class="s1">&#39;liberty&#39;</span><span class="p">:</span> <span class="s2">&quot;liberty;dict(detector=&#39;dog&#39;, pairs=250000)&quot;</span><span class="p">,</span>
+    <span class="s1">&#39;combo&#39;</span><span class="p">:</span> <span class="s1">&#39;combo_vdsujffw&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;timectrl_pzmaster1&#39;</span><span class="p">:</span> <span class="s2">&quot;PZ_Master1;dict(acfg_name=&#39;timectrl&#39;, colorspace=&#39;gray&#39;, min_featweight=0.8)&quot;</span><span class="p">,</span>  <span class="c1"># NOQA</span>
+    <span class="s1">&#39;pzm2&#39;</span><span class="p">:</span> <span class="s2">&quot;PZ_Master1;dict(acfg_name=&#39;timectrl:pername=None&#39;, colorspace=&#39;gray&#39;, min_featweight=0.8)&quot;</span><span class="p">,</span>  <span class="c1"># NOQA</span>
+    <span class="s1">&#39;pzm3&#39;</span><span class="p">:</span> <span class="s2">&quot;PZ_Master1;dict(acfg_name=None, colorspace=&#39;gray&#39;, controlled=True, min_featweight=0.8)&quot;</span><span class="p">,</span>
+    <span class="c1">#&#39;pzm3&#39;    : &quot;PZ_Master1;dict(acfg_name=&#39;default:is_known=True,qmin_pername=2,view=primary,species=primary,minqual=ok&#39;, colorspace=&#39;gray&#39;, min_featweight=0.8)&quot;,  # NOQA</span>
+    <span class="s1">&#39;pzm4&#39;</span><span class="p">:</span> <span class="s2">&quot;PZ_Master1;dict(acfg_name=&#39;default:is_known=True,qmin_pername=2,view=primary,species=primary,minqual=ok&#39;, colorspace=&#39;gray&#39;, min_featweight=0.8)&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="netrun"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.netrun.netrun">[docs]</a><span class="k">def</span> <span class="nf">netrun</span><span class="p">():</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    CommandLine:</span>
+<span class="sd">        # --- UTILITY</span>
+<span class="sd">        python -m wbia_cnn --tf get_juction_dpath --show</span>
+
+<span class="sd">        # --- DATASET BUILDING ---</span>
+<span class="sd">        # Build Dataset Aliases</span>
+<span class="sd">        python -m wbia_cnn --tf netrun --db PZ_MTEST --acfg ctrl --ensuredata --show</span>
+<span class="sd">        python -m wbia_cnn --tf netrun --db PZ_Master1 --acfg timectrl --ensuredata</span>
+<span class="sd">        python -m wbia_cnn --tf netrun --db PZ_Master1 --acfg timectrl:pername=None --ensuredata</span>
+<span class="sd">        python -m wbia_cnn --tf netrun --db PZ_Master1 --acfg timectrl:pername=None --ensuredata</span>
+<span class="sd">        python -m wbia_cnn --tf netrun --db mnist --ensuredata --show</span>
+<span class="sd">        python -m wbia_cnn --tf netrun --db mnist --ensuredata --show --datatype=category</span>
+<span class="sd">        python -m wbia_cnn --tf netrun --db mnist --ensuredata --show --datatype=siam-patch</span>
+
+<span class="sd">        python -m wbia_cnn --tf netrun --db PZ_Master1 --acfg ctrl:pername=None,excluderef=False,contributor_contains=FlankHack --ensuredata --show --datatype=siam-part</span>
+
+<span class="sd">        # Parts based datasets</span>
+<span class="sd">        python -m wbia_cnn --tf netrun --db PZ_MTEST --acfg ctrl --datatype=siam-part --ensuredata --show</span>
+
+<span class="sd">        % Patch based dataset (big one)</span>
+<span class="sd">        python -m wbia_cnn --tf netrun --db PZ_Master1 --acfg default:is_known=True,qmin_pername=2,view=primary,species=primary,minqual=ok --ensuredata --show --vtd</span>
+<span class="sd">        python -m wbia_cnn --tf netrun --ds pzm4 --weights=new --arch=siaml2_128 --train --monitor</span>
+<span class="sd">        python -m wbia_cnn --tf netrun --ds pzm4 --arch=siaml2_128 --test</span>
+<span class="sd">        python -m wbia_cnn --tf netrun --ds pzm4 --arch=siaml2_128 --veryverbose --no-flask</span>
+
+<span class="sd">        # --- TRAINING ---</span>
+<span class="sd">        python -m wbia_cnn --tf netrun --db PZ_Master1 --acfg default:is_known=True,qmin_pername=2,view=primary,species=primary,minqual=ok --weights=new --arch=siaml2_128 --train --monitor</span>
+
+<span class="sd">        python -m wbia_cnn --tf netrun --ds timectrl_pzmaster1 --acfg ctrl:pername=None,excluderef=False,contributor_contains=FlankHack --train --weights=new --arch=siaml2_128  --monitor  # NOQA</span>
+<span class="sd">        python -m wbia_cnn --tf netrun --ds timectrl_pzmaster1 --acfg ctrl:pername=None,excluderef=False --train --weights=new --arch=siaml2_128  --monitor  # NOQA</span>
+<span class="sd">        python -m wbia_cnn --tf netrun --ds pzmtest --weights=new --arch=siaml2_128 --train --monitor --DEBUG_AUGMENTATION</span>
+<span class="sd">        python -m wbia_cnn --tf netrun --ds pzmtest --weights=new --arch=siaml2_128 --train --monitor</span>
+
+<span class="sd">        python -m wbia_cnn --tf netrun --ds flankhack --weights=new --arch=siaml2_partmatch --train --monitor --learning_rate=.00001</span>
+<span class="sd">        python -m wbia_cnn --tf netrun --ds flankhack --weights=new --arch=siam_deepfaceish --train --monitor --learning_rate=.00001</span>
+
+<span class="sd">        # Different ways to train mnist</span>
+<span class="sd">        python -m wbia_cnn --tf netrun --db mnist --weights=new --arch=mnist_siaml2 --train --monitor --datatype=siam-patch</span>
+<span class="sd">        python -m wbia_cnn --tf netrun --db mnist --weights=new --arch=mnist-category --train --monitor --datatype=category</span>
+
+<span class="sd">        # --- INITIALIZED-TRAINING ---</span>
+<span class="sd">        python -m wbia_cnn --tf netrun --ds pzmtest --arch=siaml2_128 --weights=gz-gray:current --train --monitor</span>
+
+<span class="sd">        # --- TESTING ---</span>
+<span class="sd">        python -m wbia_cnn --tf netrun --db liberty --weights=liberty:current --arch=siaml2_128 --test</span>
+<span class="sd">        python -m wbia_cnn --tf netrun --db PZ_Master0 --weights=combo:current --arch=siaml2_128 --testall</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; # DISABLE_DOCTEST</span>
+<span class="sd">        &gt;&gt;&gt; from wbia_cnn.netrun import *  # NOQA</span>
+<span class="sd">        &gt;&gt;&gt; netrun()</span>
+<span class="sd">        &gt;&gt;&gt; ut.show_if_requested()</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ut</span><span class="o">.</span><span class="n">colorprint</span><span class="p">(</span><span class="s1">&#39;[netrun] NET RUN&#39;</span><span class="p">,</span> <span class="s1">&#39;red&#39;</span><span class="p">)</span>
+
+    <span class="n">requests</span><span class="p">,</span> <span class="n">hyperparams</span><span class="p">,</span> <span class="n">tags</span> <span class="o">=</span> <span class="n">parse_args</span><span class="p">()</span>
+    <span class="n">ds_tag</span> <span class="o">=</span> <span class="n">tags</span><span class="p">[</span><span class="s1">&#39;ds_tag&#39;</span><span class="p">]</span>
+    <span class="n">datatype</span> <span class="o">=</span> <span class="n">tags</span><span class="p">[</span><span class="s1">&#39;datatype&#39;</span><span class="p">]</span>
+    <span class="n">extern_ds_tag</span> <span class="o">=</span> <span class="n">tags</span><span class="p">[</span><span class="s1">&#39;extern_ds_tag&#39;</span><span class="p">]</span>
+    <span class="n">arch_tag</span> <span class="o">=</span> <span class="n">tags</span><span class="p">[</span><span class="s1">&#39;arch_tag&#39;</span><span class="p">]</span>
+    <span class="n">checkpoint_tag</span> <span class="o">=</span> <span class="n">tags</span><span class="p">[</span><span class="s1">&#39;checkpoint_tag&#39;</span><span class="p">]</span>
+
+    <span class="c1"># ----------------------------</span>
+    <span class="c1"># Choose the main dataset</span>
+    <span class="n">ut</span><span class="o">.</span><span class="n">colorprint</span><span class="p">(</span><span class="s1">&#39;[netrun] Ensuring Dataset&#39;</span><span class="p">,</span> <span class="s1">&#39;yellow&#39;</span><span class="p">)</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">ingest_data</span><span class="o">.</span><span class="n">grab_dataset</span><span class="p">(</span><span class="n">ds_tag</span><span class="p">,</span> <span class="n">datatype</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">extern_ds_tag</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">extern_dpath</span> <span class="o">=</span> <span class="n">ingest_data</span><span class="o">.</span><span class="n">get_extern_training_dpath</span><span class="p">(</span><span class="n">extern_ds_tag</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">extern_dpath</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;dataset.training_dpath = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">training_dpath</span><span class="p">,))</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Dataset Alias Key: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">alias_key</span><span class="p">,))</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="s1">&#39;Current Dataset Tag: </span><span class="si">%r</span><span class="s1">&#39;</span>
+        <span class="o">%</span> <span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">invert_dict</span><span class="p">(</span><span class="n">DS_TAG_ALIAS2</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">alias_key</span><span class="p">,</span> <span class="kc">None</span><span class="p">),)</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">requests</span><span class="p">[</span><span class="s1">&#39;ensuredata&#39;</span><span class="p">]:</span>
+        <span class="c1"># Print alias key that maps to this particular dataset</span>
+        <span class="k">if</span> <span class="n">ut</span><span class="o">.</span><span class="n">show_was_requested</span><span class="p">():</span>
+            <span class="n">interact_</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">interact</span><span class="p">()</span>  <span class="c1"># NOQA</span>
+            <span class="k">return</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;...exiting&#39;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># ----------------------------</span>
+    <span class="c1"># Choose model architecture</span>
+    <span class="c1"># TODO: data will need to return info about number of labels in viewpoint models</span>
+    <span class="c1"># Specify model archichitecture</span>
+    <span class="n">ut</span><span class="o">.</span><span class="n">colorprint</span><span class="p">(</span><span class="s1">&#39;[netrun] Architecture Specification&#39;</span><span class="p">,</span> <span class="s1">&#39;yellow&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">arch_tag</span> <span class="o">==</span> <span class="s1">&#39;siam2stream&#39;</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">SiameseCenterSurroundModel</span><span class="p">(</span>
+            <span class="n">data_shape</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">data_shape</span><span class="p">,</span>
+            <span class="n">training_dpath</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">training_dpath</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">hyperparams</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">arch_tag</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;siam&#39;</span><span class="p">):</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">SiameseL2</span><span class="p">(</span>
+            <span class="n">data_shape</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">data_shape</span><span class="p">,</span>
+            <span class="n">arch_tag</span><span class="o">=</span><span class="n">arch_tag</span><span class="p">,</span>
+            <span class="n">training_dpath</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">training_dpath</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">hyperparams</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">arch_tag</span> <span class="o">==</span> <span class="s1">&#39;mnist-category&#39;</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">MNISTModel</span><span class="p">(</span>
+            <span class="n">data_shape</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">data_shape</span><span class="p">,</span>
+            <span class="n">output_dims</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">output_dims</span><span class="p">,</span>
+            <span class="n">arch_tag</span><span class="o">=</span><span class="n">arch_tag</span><span class="p">,</span>
+            <span class="n">training_dpath</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">training_dpath</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">hyperparams</span>
+        <span class="p">)</span>
+        <span class="k">pass</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Unknown arch_tag=</span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">arch_tag</span><span class="p">,))</span>
+
+    <span class="n">ut</span><span class="o">.</span><span class="n">colorprint</span><span class="p">(</span><span class="s1">&#39;[netrun] Initialize archchitecture&#39;</span><span class="p">,</span> <span class="s1">&#39;yellow&#39;</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">init_arch</span><span class="p">()</span>
+
+    <span class="c1"># ----------------------------</span>
+    <span class="c1"># Choose weight initialization</span>
+    <span class="n">ut</span><span class="o">.</span><span class="n">colorprint</span><span class="p">(</span><span class="s1">&#39;[netrun] Setting weights&#39;</span><span class="p">,</span> <span class="s1">&#39;yellow&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">checkpoint_tag</span> <span class="o">==</span> <span class="s1">&#39;new&#39;</span><span class="p">:</span>
+        <span class="n">ut</span><span class="o">.</span><span class="n">colorprint</span><span class="p">(</span><span class="s1">&#39;[netrun] * Initializing new weights&#39;</span><span class="p">,</span> <span class="s1">&#39;lightgray&#39;</span><span class="p">)</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">reinit_weights</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">checkpoint_tag</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">resolve_fuzzy_checkpoint_pattern</span><span class="p">(</span>
+            <span class="n">checkpoint_tag</span><span class="p">,</span> <span class="n">extern_dpath</span>
+        <span class="p">)</span>
+        <span class="n">ut</span><span class="o">.</span><span class="n">colorprint</span><span class="p">(</span>
+            <span class="s1">&#39;[netrun] * Resolving weights checkpoint_tag=</span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">checkpoint_tag</span><span class="p">,),</span>
+            <span class="s1">&#39;lightgray&#39;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">extern_dpath</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">load_extern_weights</span><span class="p">(</span><span class="n">dpath</span><span class="o">=</span><span class="n">extern_dpath</span><span class="p">,</span> <span class="n">checkpoint_tag</span><span class="o">=</span><span class="n">checkpoint_tag</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">model</span><span class="o">.</span><span class="n">has_saved_state</span><span class="p">(</span><span class="n">checkpoint_tag</span><span class="o">=</span><span class="n">checkpoint_tag</span><span class="p">):</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">load_model_state</span><span class="p">(</span><span class="n">checkpoint_tag</span><span class="o">=</span><span class="n">checkpoint_tag</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">model_state_fpath</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_model_state_fpath</span><span class="p">(</span><span class="n">checkpoint_tag</span><span class="o">=</span><span class="n">checkpoint_tag</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;model_state_fpath = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">model_state_fpath</span><span class="p">,))</span>
+            <span class="n">ut</span><span class="o">.</span><span class="n">checkpath</span><span class="p">(</span><span class="n">model_state_fpath</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Known checkpoints are: &#39;</span> <span class="o">+</span> <span class="n">ut</span><span class="o">.</span><span class="n">repr3</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">list_saved_checkpoints</span><span class="p">()))</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="p">(</span><span class="s1">&#39;Unresolved weight init: &#39;</span> <span class="s1">&#39;checkpoint_tag=</span><span class="si">%r</span><span class="s1">, extern_ds_tag=</span><span class="si">%r</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="o">%</span> <span class="p">(</span>
+                    <span class="n">checkpoint_tag</span><span class="p">,</span>
+                    <span class="n">extern_ds_tag</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+    <span class="c1"># print(&#39;Model State:&#39;)</span>
+    <span class="c1"># print(model.get_state_str())</span>
+    <span class="c1"># ----------------------------</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">model</span><span class="o">.</span><span class="n">is_train_state_initialized</span><span class="p">():</span>
+        <span class="n">ut</span><span class="o">.</span><span class="n">colorprint</span><span class="p">(</span><span class="s1">&#39;[netrun] Need to initialize training state&#39;</span><span class="p">,</span> <span class="s1">&#39;yellow&#39;</span><span class="p">)</span>
+        <span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">subset</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">)</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">ensure_data_params</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+
+    <span class="c1"># Run Actions</span>
+    <span class="k">if</span> <span class="n">requests</span><span class="p">[</span><span class="s1">&#39;train&#39;</span><span class="p">]:</span>
+        <span class="n">ut</span><span class="o">.</span><span class="n">colorprint</span><span class="p">(</span><span class="s1">&#39;[netrun] Training Requested&#39;</span><span class="p">,</span> <span class="s1">&#39;yellow&#39;</span><span class="p">)</span>
+        <span class="c1"># parse training arguments</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">argparse_dict</span><span class="p">(</span>
+            <span class="nb">dict</span><span class="p">(</span>
+                <span class="n">era_size</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span>
+                <span class="n">max_epochs</span><span class="o">=</span><span class="mi">1200</span><span class="p">,</span>
+                <span class="n">rate_decay</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">monitor_config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">config</span><span class="p">)</span>
+        <span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">subset</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">)</span>
+        <span class="n">X_valid</span><span class="p">,</span> <span class="n">y_valid</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">subset</span><span class="p">(</span><span class="s1">&#39;valid&#39;</span><span class="p">)</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">X_valid</span><span class="o">=</span><span class="n">X_valid</span><span class="p">,</span> <span class="n">y_valid</span><span class="o">=</span><span class="n">y_valid</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">requests</span><span class="p">[</span><span class="s1">&#39;test&#39;</span><span class="p">]:</span>
+        <span class="c1"># assert model.best_results[&#39;epoch&#39;] is not None</span>
+        <span class="n">ut</span><span class="o">.</span><span class="n">colorprint</span><span class="p">(</span><span class="s1">&#39;[netrun] Test Requested&#39;</span><span class="p">,</span> <span class="s1">&#39;yellow&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">requests</span><span class="p">[</span><span class="s1">&#39;testall&#39;</span><span class="p">]:</span>
+            <span class="n">ut</span><span class="o">.</span><span class="n">colorprint</span><span class="p">(</span><span class="s1">&#39;[netrun]  * Testing on all data&#39;</span><span class="p">,</span> <span class="s1">&#39;lightgray&#39;</span><span class="p">)</span>
+            <span class="n">X_test</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">subset</span><span class="p">(</span><span class="s1">&#39;all&#39;</span><span class="p">)</span>
+            <span class="n">flat_metadata</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">subset_metadata</span><span class="p">(</span><span class="s1">&#39;all&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ut</span><span class="o">.</span><span class="n">colorprint</span><span class="p">(</span><span class="s1">&#39;[netrun]  * Testing on test subset&#39;</span><span class="p">,</span> <span class="s1">&#39;lightgray&#39;</span><span class="p">)</span>
+            <span class="n">X_test</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">subset</span><span class="p">(</span><span class="s1">&#39;test&#39;</span><span class="p">)</span>
+            <span class="n">flat_metadata</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">subset_metadata</span><span class="p">(</span><span class="s1">&#39;test&#39;</span><span class="p">)</span>
+        <span class="n">data</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_test</span>
+        <span class="n">dataname</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">alias_key</span>
+        <span class="n">experiments</span><span class="o">.</span><span class="n">test_siamese_performance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">flat_metadata</span><span class="p">,</span> <span class="n">dataname</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ut</span><span class="o">.</span><span class="n">get_argflag</span><span class="p">(</span><span class="s1">&#39;--cmd&#39;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;nothing here. need to train or test&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">requests</span><span class="p">[</span><span class="s1">&#39;publish&#39;</span><span class="p">]:</span>
+        <span class="n">ut</span><span class="o">.</span><span class="n">colorprint</span><span class="p">(</span><span class="s1">&#39;[netrun] Publish Requested&#39;</span><span class="p">,</span> <span class="s1">&#39;yellow&#39;</span><span class="p">)</span>
+        <span class="n">publish_dpath</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">truepath</span><span class="p">(</span><span class="s1">&#39;~/Dropbox/IBEIS&#39;</span><span class="p">)</span>
+        <span class="n">published_model_state</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">unixjoin</span><span class="p">(</span>
+            <span class="n">publish_dpath</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">arch_tag</span> <span class="o">+</span> <span class="s1">&#39;_model_state.pkl&#39;</span>
+        <span class="p">)</span>
+        <span class="n">ut</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">get_model_state_fpath</span><span class="p">(),</span> <span class="n">published_model_state</span><span class="p">)</span>
+        <span class="n">ut</span><span class="o">.</span><span class="n">view_directory</span><span class="p">(</span><span class="n">publish_dpath</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="s1">&#39;You need to get the dropbox link and &#39;</span>
+            <span class="s1">&#39;register it into the appropriate file&#39;</span>
+        <span class="p">)</span>
+        <span class="c1"># pip install dropbox</span>
+        <span class="c1"># https://www.dropbox.com/developers/core/start/python</span>
+        <span class="c1"># import dropbox  # need oauth</span>
+        <span class="c1"># client.share(&#39;/myfile.txt&#39;, short_url=False)</span>
+        <span class="c1"># https://wildbookiarepository.azureedge.net/models/siaml2_128_model_state.pkl</span>
+
+    <span class="k">if</span> <span class="n">ut</span><span class="o">.</span><span class="n">get_argflag</span><span class="p">(</span><span class="s1">&#39;--cmd&#39;</span><span class="p">):</span>
+        <span class="n">ut</span><span class="o">.</span><span class="n">embed</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="parse_args"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.netrun.parse_args">[docs]</a><span class="k">def</span> <span class="nf">parse_args</span><span class="p">():</span>
+    <span class="n">ds_default</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">arch_default</span> <span class="o">=</span> <span class="s1">&#39;siaml2_128&#39;</span>
+    <span class="n">weights_tag_default</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Test values</span>
+    <span class="k">if</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="n">ds_default</span> <span class="o">=</span> <span class="s1">&#39;liberty&#39;</span>
+        <span class="n">weights_tag_default</span> <span class="o">=</span> <span class="s1">&#39;current&#39;</span>
+        <span class="k">assert</span> <span class="n">ut</span><span class="o">.</span><span class="n">inIPython</span><span class="p">()</span>
+
+    <span class="c1"># Parse commandline args</span>
+    <span class="n">ds_tag</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">get_argval</span><span class="p">((</span><span class="s1">&#39;--dataset&#39;</span><span class="p">,</span> <span class="s1">&#39;--ds&#39;</span><span class="p">),</span> <span class="n">type_</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">ds_default</span><span class="p">)</span>
+    <span class="n">datatype</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">get_argval</span><span class="p">((</span><span class="s1">&#39;--datatype&#39;</span><span class="p">,</span> <span class="s1">&#39;--dt&#39;</span><span class="p">),</span> <span class="n">type_</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;siam-patch&#39;</span><span class="p">)</span>
+    <span class="n">arch_tag</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">get_argval</span><span class="p">((</span><span class="s1">&#39;--arch&#39;</span><span class="p">,</span> <span class="s1">&#39;-a&#39;</span><span class="p">),</span> <span class="n">default</span><span class="o">=</span><span class="n">arch_default</span><span class="p">)</span>
+    <span class="n">weights_tag</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">get_argval</span><span class="p">(</span>
+        <span class="p">(</span><span class="s1">&#39;--weights&#39;</span><span class="p">,</span> <span class="s1">&#39;+w&#39;</span><span class="p">),</span> <span class="n">type_</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">weights_tag_default</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Incorporate new config stuff?</span>
+    <span class="c1"># NEW = False</span>
+    <span class="c1"># if NEW:</span>
+    <span class="c1">#    default_dstag_cfg = {</span>
+    <span class="c1">#        &#39;ds&#39;: &#39;PZ_MTEST&#39;,</span>
+    <span class="c1">#        &#39;mode&#39;: &#39;patches&#39;,</span>
+    <span class="c1">#        &#39;arch&#39;: arch_default</span>
+    <span class="c1">#    }</span>
+    <span class="c1">#    named_defaults_dict = {</span>
+    <span class="c1">#        &#39;&#39;: default_dstag_cfg</span>
+    <span class="c1">#    }</span>
+    <span class="c1">#    ut.parse_argv_cfg(&#39;dstag&#39;, named_defaults_dict=named_defaults_dict)</span>
+
+    <span class="n">hyperparams</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">argparse_dict</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="c1">#&#39;batch_size&#39;: 128,</span>
+            <span class="s1">&#39;batch_size&#39;</span><span class="p">:</span> <span class="mi">256</span><span class="p">,</span>
+            <span class="c1">#&#39;learning_rate&#39;: .0005,</span>
+            <span class="s1">&#39;learning_rate&#39;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span>
+            <span class="s1">&#39;momentum&#39;</span><span class="p">:</span> <span class="mf">0.9</span><span class="p">,</span>
+            <span class="c1">#&#39;weight_decay&#39;: 0.0005,</span>
+            <span class="s1">&#39;weight_decay&#39;</span><span class="p">:</span> <span class="mf">0.0001</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="n">alias_dict</span><span class="o">=</span><span class="p">{</span>
+            <span class="s1">&#39;weight_decay&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;decay&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;learning_rate&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;learn_rate&#39;</span><span class="p">],</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">requests</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">argparse_dict</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s1">&#39;train&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="s1">&#39;test&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="s1">&#39;testall&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="s1">&#39;publish&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="s1">&#39;ensuredata&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+    <span class="n">requests</span><span class="p">[</span><span class="s1">&#39;test&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">requests</span><span class="p">[</span><span class="s1">&#39;test&#39;</span><span class="p">]</span> <span class="ow">or</span> <span class="n">requests</span><span class="p">[</span><span class="s1">&#39;testall&#39;</span><span class="p">]</span>
+
+    <span class="c1"># breakup weights tag into extern_ds and checkpoint</span>
+    <span class="k">if</span> <span class="n">weights_tag</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s1">&#39;:&#39;</span> <span class="ow">in</span> <span class="n">weights_tag</span><span class="p">:</span>
+        <span class="n">extern_ds_tag</span><span class="p">,</span> <span class="n">checkpoint_tag</span> <span class="o">=</span> <span class="n">weights_tag</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">extern_ds_tag</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">checkpoint_tag</span> <span class="o">=</span> <span class="n">weights_tag</span>
+    <span class="c1"># resolve aliases</span>
+    <span class="n">ds_tag</span> <span class="o">=</span> <span class="n">DS_TAG_ALIAS2</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ds_tag</span><span class="p">,</span> <span class="n">ds_tag</span><span class="p">)</span>
+    <span class="n">extern_ds_tag</span> <span class="o">=</span> <span class="n">DS_TAG_ALIAS2</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">extern_ds_tag</span><span class="p">,</span> <span class="n">extern_ds_tag</span><span class="p">)</span>
+    <span class="n">checkpoint_tag</span> <span class="o">=</span> <span class="n">CHECKPOINT_TAG_ALIAS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">checkpoint_tag</span><span class="p">,</span> <span class="n">checkpoint_tag</span><span class="p">)</span>
+    <span class="n">tags</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;ds_tag&#39;</span><span class="p">:</span> <span class="n">ds_tag</span><span class="p">,</span>
+        <span class="s1">&#39;extern_ds_tag&#39;</span><span class="p">:</span> <span class="n">extern_ds_tag</span><span class="p">,</span>
+        <span class="s1">&#39;checkpoint_tag&#39;</span><span class="p">:</span> <span class="n">checkpoint_tag</span><span class="p">,</span>
+        <span class="s1">&#39;arch_tag&#39;</span><span class="p">:</span> <span class="n">arch_tag</span><span class="p">,</span>
+        <span class="s1">&#39;datatype&#39;</span><span class="p">:</span> <span class="n">datatype</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">ut</span><span class="o">.</span><span class="n">colorprint</span><span class="p">(</span><span class="s1">&#39;[netrun] * ds_tag=</span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">ds_tag</span><span class="p">,),</span> <span class="s1">&#39;lightgray&#39;</span><span class="p">)</span>
+    <span class="n">ut</span><span class="o">.</span><span class="n">colorprint</span><span class="p">(</span><span class="s1">&#39;[netrun] * arch_tag=</span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">arch_tag</span><span class="p">,),</span> <span class="s1">&#39;lightgray&#39;</span><span class="p">)</span>
+    <span class="n">ut</span><span class="o">.</span><span class="n">colorprint</span><span class="p">(</span><span class="s1">&#39;[netrun] * extern_ds_tag=</span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">extern_ds_tag</span><span class="p">,),</span> <span class="s1">&#39;lightgray&#39;</span><span class="p">)</span>
+    <span class="n">ut</span><span class="o">.</span><span class="n">colorprint</span><span class="p">(</span><span class="s1">&#39;[netrun] * checkpoint_tag=</span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">checkpoint_tag</span><span class="p">,),</span> <span class="s1">&#39;lightgray&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">requests</span><span class="p">,</span> <span class="n">hyperparams</span><span class="p">,</span> <span class="n">tags</span></div>
+
+
+<div class="viewcode-block" id="merge_ds_tags"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.netrun.merge_ds_tags">[docs]</a><span class="k">def</span> <span class="nf">merge_ds_tags</span><span class="p">(</span><span class="n">ds_alias_list</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    CommandLine:</span>
+<span class="sd">        python -m wbia_cnn --tf merge_ds_tags --alias-list gz-gray girm pzmtest nnp</span>
+
+<span class="sd">    TODO:</span>
+<span class="sd">        http://stackoverflow.com/questions/18492273/combining-hdf5-files</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; # ENABLE_DOCTEST</span>
+<span class="sd">        &gt;&gt;&gt; from wbia_cnn.train import *  # NOQA</span>
+<span class="sd">        &gt;&gt;&gt; ds_alias_list = ut.get_argval(&#39;--alias-list&#39;, type_=list, default=[])</span>
+<span class="sd">        &gt;&gt;&gt; result = merge_ds_tags(ds_alias_list)</span>
+<span class="sd">        &gt;&gt;&gt; print(result)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ds_tag_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">DS_TAG_ALIAS2</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ds_tag</span><span class="p">,</span> <span class="n">ds_tag</span><span class="p">)</span> <span class="k">for</span> <span class="n">ds_tag</span> <span class="ow">in</span> <span class="n">ds_alias_list</span><span class="p">]</span>
+    <span class="n">dataset_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">ingest_data</span><span class="o">.</span><span class="n">grab_siam_dataset</span><span class="p">(</span><span class="n">ds_tag</span><span class="p">)</span> <span class="k">for</span> <span class="n">ds_tag</span> <span class="ow">in</span> <span class="n">ds_tag_list</span><span class="p">]</span>
+    <span class="n">merged_dataset</span> <span class="o">=</span> <span class="n">ingest_data</span><span class="o">.</span><span class="n">merge_datasets</span><span class="p">(</span><span class="n">dataset_list</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">merged_dataset</span><span class="o">.</span><span class="n">alias_key</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">merged_dataset</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    CommandLine:</span>
+<span class="sd">        python -m wbia_cnn.train</span>
+<span class="sd">        python -m wbia_cnn.train --allexamples</span>
+<span class="sd">        python -m wbia_cnn.train --allexamples --noface --nosrc</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># train_pz()</span>
+    <span class="kn">import</span> <span class="nn">multiprocessing</span>
+
+    <span class="n">multiprocessing</span><span class="o">.</span><span class="n">freeze_support</span><span class="p">()</span>  <span class="c1"># for win32</span>
+    <span class="kn">import</span> <span class="nn">utool</span> <span class="k">as</span> <span class="nn">ut</span>  <span class="c1"># NOQA</span>
+
+    <span class="c1"># import warnings</span>
+    <span class="c1"># with warnings.catch_warnings():</span>
+    <span class="c1">#    # Cause all warnings to always be triggered.</span>
+    <span class="c1">#    warnings.filterwarnings(&quot;error&quot;, &quot;.*get_all_non_bias_params.*&quot;)</span>
+    <span class="n">ut</span><span class="o">.</span><span class="n">doctest_funcs</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">wbia-cnn</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../wbia_cnn.html">wbia_cnn package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  <li><a href="../wbia_cnn.html">wbia_cnn</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Wild Me.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
