@@ -5,10 +5,8 @@ import six
 import numpy as np
 import utool as ut
 from wbia_cnn import ingest_data
-from wbia_cnn.__LASAGNE__ import layers
-from wbia_cnn.__LASAGNE__ import nonlinearities
-from wbia_cnn.__LASAGNE__ import init
-from wbia_cnn.__THEANO__ import tensor as T  # NOQA
+from Lasagne.lasagne import init, layers, nonlinearities
+from theano import tensor as T  # NOQA
 from wbia_cnn.models import abstract_models
 from os.path import exists  # NOQA
 import cv2
@@ -17,7 +15,11 @@ print, rrr, profile = ut.inject2(__name__)
 
 
 def augment_parallel(X, y, w):
-    return augment_wrapper([X], None if y is None else [y], None if w is None else [w],)
+    return augment_wrapper(
+        [X],
+        None if y is None else [y],
+        None if w is None else [w],
+    )
 
 
 def augment_wrapper(Xb, yb=None, wb=None):
@@ -251,8 +253,7 @@ class AoI2Model(abstract_models.AbstractCategoricalModel):
         return network_layers_def
 
     def init_arch(model, verbose=ut.VERBOSE, **kwargs):
-        r"""
-        """
+        r""""""
         (_, input_channels, input_width, input_height) = model.input_shape
         if verbose or True:
             print('[model] Initialize aoi2 model architecture')

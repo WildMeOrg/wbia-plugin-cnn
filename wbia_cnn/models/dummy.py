@@ -31,14 +31,15 @@ class DummyModel(abstract_models.AbstractCategoricalModel):
             >>> model.show_arch()
             >>> ut.show_if_requested()
         """
-        import wbia_cnn.__LASAGNE__ as lasange
+        from Lasagne import lasange
         from wbia_cnn import custom_layers
 
         if verbose:
             print('init arch')
 
         bundles = custom_layers.make_bundles(
-            nonlinearity=lasange.nonlinearities.rectify, batch_norm=False,
+            nonlinearity=lasange.nonlinearities.rectify,
+            batch_norm=False,
         )
         b = ut.DynStruct(copy_dict=bundles)
 

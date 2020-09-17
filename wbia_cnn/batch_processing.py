@@ -381,7 +381,10 @@ def batch_iterator(
             Xb = Xb / 255.0
         if augment_on:
             # Apply defined transformations
-            Xb, yb, = augment_batch(model, Xb, yb, batch_index, verbose, num_batches)
+            (
+                Xb,
+                yb,
+            ) = augment_batch(model, Xb, yb, batch_index, verbose, num_batches)
         if do_whitening:
             # Center the batch data in the range (-1.0, 1.0)
             Xb = (Xb - ceneter_mean01) / (center_std01)

@@ -5,10 +5,8 @@ import six
 import numpy as np
 import utool as ut
 from wbia_cnn import ingest_data
-from wbia_cnn.__LASAGNE__ import layers
-from wbia_cnn.__LASAGNE__ import nonlinearities
-from wbia_cnn.__LASAGNE__ import init
-from wbia_cnn.__THEANO__ import tensor as T  # NOQA
+from Lasagne.lasagne import init, layers, nonlinearities
+from theano import tensor as T  # NOQA
 from wbia_cnn.models import abstract_models, pretrained
 import cv2
 
@@ -204,8 +202,7 @@ class LabelerModel(abstract_models.AbstractCategoricalModel):
         return network_layers_def
 
     def init_arch(model, verbose=ut.VERBOSE, **kwargs):
-        r"""
-        """
+        r""""""
         (_, input_channels, input_width, input_height) = model.input_shape
         if verbose:
             print('[model] Initialize labeler model architecture')

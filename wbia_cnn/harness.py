@@ -67,6 +67,13 @@ def _clean(model, theano_forward, X_list, y_list, min_conf=0.95):
     print('[_clean] Cleaned Data... [ %d / %d ] ( %0.04f )' % args)
     for src in sorted(switched.keys()):
         for dst in sorted(switched[src].keys()):
-            print('[_clean] \t%r -> %r : %d' % (src, dst, switched[src][dst],))
+            print(
+                '[_clean] \t%r -> %r : %d'
+                % (
+                    src,
+                    dst,
+                    switched[src][dst],
+                )
+            )
 
     return y_list

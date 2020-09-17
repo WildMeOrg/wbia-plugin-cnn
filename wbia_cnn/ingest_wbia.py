@@ -1393,10 +1393,6 @@ def get_background_training_patches2(
         train_gid_set = list(train_gid_set)
         random.shuffle(train_gid_set)
 
-    if shuffle:
-        train_gid_set = list(train_gid_set)
-        random.shuffle(train_gid_set)
-
     aids_list = ibs.get_image_aids(train_gid_set)
     if tiles:
         bboxes_list = [
@@ -1455,7 +1451,13 @@ def get_background_training_patches2(
                     'turtle_sea+head',
                 ]
                 if species not in turtle_sea_species_list:
-                    print('Skipping aid %r (bad species: %s)' % (aid, species,))
+                    print(
+                        'Skipping aid %r (bad species: %s)'
+                        % (
+                            aid,
+                            species,
+                        )
+                    )
                     continue
             elif target_species == 'wild_dog':
                 wild_dog_species_list = [
@@ -1468,10 +1470,22 @@ def get_background_training_patches2(
                     'wild_dog_tan',
                 ]
                 if species not in wild_dog_species_list:
-                    print('Skipping aid %r (bad species: %s)' % (aid, species,))
+                    print(
+                        'Skipping aid %r (bad species: %s)'
+                        % (
+                            aid,
+                            species,
+                        )
+                    )
                     continue
             elif species != target_species:
-                print('Skipping aid %r (bad species: %s)' % (aid, species,))
+                print(
+                    'Skipping aid %r (bad species: %s)'
+                    % (
+                        aid,
+                        species,
+                    )
+                )
                 continue
 
             if aid is not None:
@@ -1668,7 +1682,10 @@ def get_background_training_patches2(
             global_negatives += negatives
 
         if canvas is not None:
-            canvas_filename = 'background_gid_%s_species_%s.png' % (gid, target_species,)
+            canvas_filename = 'background_gid_%s_species_%s.png' % (
+                gid,
+                target_species,
+            )
             canvas_filepath = join(visualize_path, canvas_filename)
             image = resize_target(canvas, target_width=1000)
             cv2.imwrite(canvas_filepath, canvas)
@@ -2158,7 +2175,10 @@ def get_cnn_classifier_cameratrap_binary_training_images(
         patch_filepath = join(raw_path, patch_filename)
         cv2.imwrite(patch_filepath, image_)
 
-        label = '%s,%s' % (patch_filename, category,)
+        label = '%s,%s' % (
+            patch_filename,
+            category,
+        )
         label_list.append(label)
 
     with open(join(labels_path, 'labels.csv'), 'a') as labels:
@@ -2249,7 +2269,10 @@ def get_cnn_classifier_binary_training_images(
         patch_filepath = join(raw_path, patch_filename)
         cv2.imwrite(patch_filepath, image_)
 
-        label = '%s,%s' % (patch_filename, category,)
+        label = '%s,%s' % (
+            patch_filename,
+            category,
+        )
         label_list.append(label)
 
     with open(join(labels_path, 'labels.csv'), 'a') as labels:
@@ -2344,7 +2367,10 @@ def get_cnn_classifier2_training_images(
             cv2.imwrite(patch_filepath, image_)
 
             category = ';'.join(category_list_)
-            label = '%s,%s' % (patch_filename, category,)
+            label = '%s,%s' % (
+                patch_filename,
+                category,
+            )
             label_list.append(label)
 
         with open(join(labels_path, 'labels.csv'), 'a') as labels:
@@ -2427,12 +2453,22 @@ def get_cnn_labeler_training_images(
     tup_list = list(zip(aid_list, species_list, yaw_list))
     old_len = len(tup_list)
     tup_list = [
-        (aid, species, viewpoint_mapping.get(species, {}).get(yaw, yaw),)
+        (
+            aid,
+            species,
+            viewpoint_mapping.get(species, {}).get(yaw, yaw),
+        )
         for aid, species, yaw in tup_list
         if species in category_set
     ]
     new_len = len(tup_list)
-    print('Filtered annotations: keep %d / original %d' % (new_len, old_len,))
+    print(
+        'Filtered annotations: keep %d / original %d'
+        % (
+            new_len,
+            old_len,
+        )
+    )
 
     # Skip any annotations that are of the wanted category and don't have a specified viewpoint
     counter = 0
@@ -2507,7 +2543,10 @@ def get_cnn_labeler_training_images(
             if yaw is None:
                 skipped_yaw += 1
                 continue
-            category = '%s:%s' % (species, yaw,)
+            category = '%s:%s' % (
+                species,
+                yaw,
+            )
         elif species in valid_seen_set:
             category = '%s' % (species,)
         else:
@@ -2515,8 +2554,20 @@ def get_cnn_labeler_training_images(
             continue
         tup_list_.append((tup, category))
         aid_list_.append(aid)
-    print('Skipped Yaw:  skipped %d / total %d' % (skipped_yaw, len(tup_list),))
-    print('Skipped Seen: skipped %d / total %d' % (skipped_seen, len(tup_list),))
+    print(
+        'Skipped Yaw:  skipped %d / total %d'
+        % (
+            skipped_yaw,
+            len(tup_list),
+        )
+    )
+    print(
+        'Skipped Seen: skipped %d / total %d'
+        % (
+            skipped_seen,
+            len(tup_list),
+        )
+    )
 
     # Precompute chips
     ibs.compute_all_chips(aid_list_)
@@ -2547,7 +2598,10 @@ def get_cnn_labeler_training_images(
         cv2.imwrite(patch_filepath, image_)
 
         # Compute label
-        label = '%s,%s' % (patch_filename, category,)
+        label = '%s,%s' % (
+            patch_filename,
+            category,
+        )
         label_list.append(label)
 
     print('Using labels for labeler training:')
@@ -2616,7 +2670,10 @@ def get_cnn_qualifier_training_images(ibs, dest_path=None, image_size=128, purge
         cv2.imwrite(patch_filepath, image_)
 
         category = quality.lower()
-        label = '%s,%s' % (patch_filename, category,)
+        label = '%s,%s' % (
+            patch_filename,
+            category,
+        )
         label_list.append(label)
 
     with open(join(labels_path, 'labels.csv'), 'a') as labels:
@@ -2702,7 +2759,11 @@ def extract_orientation_chips(ibs, gid_list, image_size=128, training=True, verb
 
                 global_theta_list.append(theta / (2.0 * np.pi))
 
-                tag = '%s_chip_gid_%s_aid_%s' % (dbname, gid, aid,)
+                tag = '%s_chip_gid_%s_aid_%s' % (
+                    dbname,
+                    gid,
+                    aid,
+                )
                 global_tag_list.append(tag)
 
     return global_chip_list, global_theta_list, global_tag_list

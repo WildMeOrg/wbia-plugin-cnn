@@ -4,11 +4,10 @@ import functools
 import six
 import numpy as np
 import utool as ut
-import wbia_cnn.__LASAGNE__ as lasagne
 from wbia_cnn import ingest_data
-from wbia_cnn.__LASAGNE__ import layers
-from wbia_cnn.__LASAGNE__ import nonlinearities
-from wbia_cnn.__THEANO__ import tensor as T  # NOQA
+from Lasagne import lasagne
+from Lasagne.lasagne import layers, nonlinearities
+from theano import tensor as T  # NOQA
 from wbia_cnn.models import abstract_models
 
 print, rrr, profile = ut.inject2(__name__)
@@ -16,7 +15,7 @@ print, rrr, profile = ut.inject2(__name__)
 
 class NonlinearityLayerSpatial(lasagne.layers.NonlinearityLayer):
     def __init__(self, incoming, nonlinearity=nonlinearities.rectify, **kwargs):
-        """ The spatial version of a nonlinearity as applied accross all spatial
+        """The spatial version of a nonlinearity as applied accross all spatial
         dimensions of a network's output.
         """
         super(NonlinearityLayerSpatial, self).__init__(incoming, **kwargs)
@@ -138,8 +137,7 @@ class BackgroundModel(abstract_models.AbstractCategoricalModel):
         return network_layers_def
 
     def init_arch(model, verbose=ut.VERBOSE, **kwargs):
-        r"""
-        """
+        r""""""
         (_, input_channels, input_width, input_height) = model.input_shape
         if verbose:
             print('[model] Initialize background model architecture')
@@ -218,7 +216,11 @@ def train_background(output_path, data_fpath, labels_fpath):
     ut.colorprint('[netrun] Training Requested', 'yellow')
     # parse training arguments
     config = ut.argparse_dict(
-        dict(era_size=era_size, max_epochs=max_epochs, show_confusion=False,)
+        dict(
+            era_size=era_size,
+            max_epochs=max_epochs,
+            show_confusion=False,
+        )
     )
     model.monitor_config.update(**config)
     X_train, y_train = dataset.subset('train')

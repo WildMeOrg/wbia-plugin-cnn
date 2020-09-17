@@ -1,4 +1,17 @@
 # -*- coding: utf-8 -*-
+from wbia_cnn import custom_layers
+from Lasagne.lasagne import init, layers, nonlinearities
+from theano import tensor as T  # NOQA
+from wbia_cnn import lasagne_ext
+from wbia_cnn.models.abstract_models import BaseModel
+from wbia_cnn.models.pretrained import PretrainedNetwork
+from wbia_cnn.custom_layers import evaluate_layer_list
+import functools
+import numpy as np
+import random
+
+Conv2DLayer = custom_layers.Conv2DLayer
+MaxPool2DLayer = custom_layers.MaxPool2DLayer
 
 
 class SiameseCenterSurroundModel(BaseModel):
@@ -341,8 +354,8 @@ class SiameseCenterSurroundModel(BaseModel):
         #    maxpool_ =  _P(MaxPool2DLayer, pool_size=pool_size, stride=stride)
         #    return [conv_, maxpool_]
         # ] +
-        ##conv_pool(num_filters=16, filter_size=(6, 6), pool_size=(2, 2), stride=(2, 2)) +
-        ##conv_pool(num_filters=32, filter_size=(3, 3), pool_size=(2, 2), stride=(2, 2)) +
+        # #conv_pool(num_filters=16, filter_size=(6, 6), pool_size=(2, 2), stride=(2, 2)) +
+        # #conv_pool(num_filters=32, filter_size=(3, 3), pool_size=(2, 2), stride=(2, 2)) +
         # [
 
         # network_layers_def = (
@@ -491,7 +504,7 @@ class SiameseModel(BaseModel):
 
         # num_filters=32,
         # filter_size=(3, 3),
-        ## nonlinearity=nonlinearities.rectify,
+        # # nonlinearity=nonlinearities.rectify,
         # nonlinearity=nonlinearities.LeakyRectify(leakiness=(1. / 10.)),
 
         # rlu_glorot = dict(nonlinearity=nonlinearities.rectify, W=init.GlorotUniform())
@@ -538,5 +551,5 @@ class SiameseModel(BaseModel):
     def loss_function(self, G, Y_padded, T=T, verbose=True):
         if verbose:
             print('[model] Build center surround siamese loss function')
-        avg_loss = lasange_ext.siamese_loss(G, Y_padded, data_per_label=2)
+        avg_loss = lasagne_ext.siamese_loss(G, Y_padded, data_per_label=2)
         return avg_loss

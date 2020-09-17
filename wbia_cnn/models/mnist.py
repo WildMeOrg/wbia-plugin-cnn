@@ -191,7 +191,7 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         python -m wbia_cnn MNISTModel.init_arch --verbcnn --name=mnist --show
         python -m wbia_cnn.models.mnist MNISTModel.fit:0 --name=mnist --vd --monitor
         """
-        import wbia_cnn.__LASAGNE__ as lasagne
+        from Lasagne import lasagne
         from wbia_cnn import custom_layers
 
         batch_norm = False
@@ -219,7 +219,7 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         python -m wbia_cnn MNISTModel.init_arch --verbcnn --name=lenet --show
         python -m wbia_cnn.models.mnist MNISTModel.fit:0 --name=lenet --vd --monitor
         """
-        import wbia_cnn.__LASAGNE__ as lasagne
+        from Lasagne import lasagne
         from wbia_cnn import custom_layers
 
         batch_norm = model.batch_norm
@@ -228,7 +228,9 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         W = lasagne.init.Orthogonal('relu')
 
         bundles = custom_layers.make_bundles(
-            nonlinearity=lasagne.nonlinearities.rectify, batch_norm=batch_norm, W=W,
+            nonlinearity=lasagne.nonlinearities.rectify,
+            batch_norm=batch_norm,
+            W=W,
         )
         b = ut.DynStruct(copy_dict=bundles)
 
@@ -257,7 +259,7 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         python -m wbia_cnn MNISTModel.init_arch --verbcnn --name=resnet --show
         python -m wbia_cnn.models.mnist MNISTModel.fit:0 --name=resnet --vd --monitor
         """
-        import wbia_cnn.__LASAGNE__ as lasagne
+        from Lasagne import lasagne
         from wbia_cnn import custom_layers
 
         batch_norm = model.batch_norm
@@ -295,7 +297,7 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         python -m wbia_cnn.models.mnist MNISTModel.fit:0 --name=resnet --vd --monitor
 
         """
-        import wbia_cnn.__LASAGNE__ as lasagne
+        from Lasagne import lasagne
         from wbia_cnn import custom_layers
 
         batch_norm = model.batch_norm
@@ -305,7 +307,8 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
             dropout = model.dropout
 
         bundles = custom_layers.make_bundles(
-            nonlinearity=lasagne.nonlinearities.rectify, batch_norm=batch_norm,
+            nonlinearity=lasagne.nonlinearities.rectify,
+            batch_norm=batch_norm,
         )
         b = ut.DynStruct(copy_dict=bundles)
 

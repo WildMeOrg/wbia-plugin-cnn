@@ -6,32 +6,44 @@ import utool as ut
 (print, rrr, profile) = ut.inject2(__name__)
 
 
-def wbia_cnn_main():
-    ignore_prefix = []
-    ignore_suffix = []
-    import utool as ut
+# -*- coding: utf-8 -*-
+def main():  # nocover
+    import wbia_cnn
+
+    print('Looks like the imports worked')
+    print('wbia_cnn = {!r}'.format(wbia_cnn))
+    print('wbia_cnn.__file__ = {!r}'.format(wbia_cnn.__file__))
+    print('wbia_cnn.__version__ = {!r}'.format(wbia_cnn.__version__))
+
+    import wbia
+
+    print('wbia = {!r}'.format(wbia))
+
+    import theano
+
+    print('theano = {!r}'.format(theano))
+    print('theano.__file__ = {!r}'.format(theano.__file__))
+    print('theano.__version__ = {!r}'.format(theano.__version__))
+
+    from Lasagne import lasagne
+
+    print('lasagne = {!r}'.format(lasagne))
+    print('lasagne.__file__ = {!r}'.format(lasagne.__file__))
+    print('lasagne.__version__ = {!r}'.format(lasagne.__version__))
 
     try:
-        print('[wbia_cnn] Importing wbia_cnn')
-        import wbia_cnn  # NOQA
+        import cv2
 
-        print('[wbia_cnn] Importing ibeis')
-        import wbia  # NOQA
-
-        print('[wbia_cnn] Importing wbia_cnn._plugin')
-        import wbia_cnn._plugin  # NOQA
-
-        print('[wbia_cnn] Done importing for __main__')
-    except ImportError:
-        raise
-        pass
-    # allow for --tf flags
-    ut.main_function_tester('wbia_cnn', ignore_prefix, ignore_suffix)
+        print('cv2 = {!r}'.format(cv2))
+        print('cv2.__file__ = {!r}'.format(cv2.__file__))
+        print('cv2.__version__ = {!r}'.format(cv2.__version__))
+    except Exception:
+        print('OpenCV (cv2) failed to import')
 
 
 if __name__ == '__main__':
-    import multiprocessing
-
-    multiprocessing.freeze_support()  # for win32
-    print('Checking wbia_cnn main')
-    wbia_cnn_main()
+    """
+    CommandLine:
+       python -m vtool
+    """
+    main()

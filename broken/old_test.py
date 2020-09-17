@@ -5,8 +5,8 @@ from ibeis_cnn import models
 from ibeis_cnn import net_strs
 from ibeis_cnn import batch_processing as batch
 
-from six.moves import cPickle as pickle
-from wbia_cnn.__LASAGNE__ import layers
+from six.moves import cPickle as pickle  # NOQA
+from Lasagne.lasagne import layers
 
 import theano
 import time
@@ -43,9 +43,6 @@ def test_data(X_test, y_test, model, weights_fpath, results_dpath=None, **kwargs
         >>> # DISABLE_DOCTEST
         >>> from ibeis_cnn.test import *  # NOQA
     """
-
-    ######################################################################################
-
     # Load the pretrained model if specified
     print('[model] loading pretrained weights from %s' % (weights_fpath))
     pretrained_weights = None
@@ -114,7 +111,13 @@ def test_data(X_test, y_test, model, weights_fpath, results_dpath=None, **kwargs
             batch.output_confusion_matrix(
                 X_test, results_dpath, test_results, model=model, **kwargs
             )
-        print('Test accuracy for %d examples: %0.2f' % (len(X_test), accu_test,))
+        print(
+            'Test accuracy for %d examples: %0.2f'
+            % (
+                len(X_test),
+                accu_test,
+            )
+        )
 
     # End timer
     t1 = time.time()
@@ -132,9 +135,6 @@ def display_caffe_model(weights_model_path, results_path, **kwargs):
         model (?):
         weights_fpath (?):
     """
-
-    ######################################################################################
-
     # Load the pretrained model if specified
     print('[model] loading pretrained weights and model from %s' % (weights_model_path))
     pretrained_weights = None
@@ -163,7 +163,10 @@ def review_labels(id_path, data_fpath, labels_fpath, model, weights_fpath, **kwa
     for y, label, id_, image in zip(y_test, label_list, ids_test, X_test):
         print(y, label, id_)
         if y != label:
-            title = 'K: %s - S: %s' % (y, label,)
+            title = 'K: %s - S: %s' % (
+                y,
+                label,
+            )
             key = None
             cv2.imshow(title, image)
             while key not in ['k', 's']:
@@ -178,7 +181,13 @@ def review_labels(id_path, data_fpath, labels_fpath, model, weights_fpath, **kwa
             else:
                 raise IOError('Specified an illegal character (can never happen)')
         new_y_test.append(y)
-        new_csv.append('%s,%s' % (id_, y,))
+        new_csv.append(
+            '%s,%s'
+            % (
+                id_,
+                y,
+            )
+        )
 
     new_y_test = np.hstack(new_y_test)
     np.save('y.npy', new_y_test)
@@ -188,53 +197,53 @@ def review_labels(id_path, data_fpath, labels_fpath, model, weights_fpath, **kwa
         csv_file.write(new_csv)
 
 
-def test_viewpoint_pz():
-    r"""
-    CommandLine:
-        python -m ibeis_cnn.test --test-test_viewpoint_pz
+# def test_viewpoint_pz():
+#     r"""
+#     CommandLine:
+#         python -m ibeis_cnn.test --test-test_viewpoint_pz
 
-    Example:
-        >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.test import *  # NOQA
-        >>> test_viewpoint_pz()
-    """
-    project_name = 'viewpoint_pz'
-    model = models.ViewpointModel()
-    root = abspath(join('..', 'data'))
+#     Example:
+#         >>> # DISABLE_DOCTEST
+#         >>> from ibeis_cnn.test import *  # NOQA
+#         >>> test_viewpoint_pz()
+#     """
+#     project_name = 'viewpoint_pz'
+#     model = models.ViewpointModel()
+#     root = abspath(join('..', 'data'))
 
-    test_data_fpath = join(root, 'numpy', project_name, 'X.npy')
-    test_labels_fpath = join(root, 'numpy', project_name, 'y.npy')
-    results_dpath = join(root, 'results', project_name)
-    weights_fpath = join(root, 'nets', project_name, 'ibeis_cnn_weights.pickle')
-    config = {}
-    test(
-        test_data_fpath, model, weights_fpath, results_dpath, test_labels_fpath, **config
-    )
+#     test_data_fpath = join(root, 'numpy', project_name, 'X.npy')
+#     test_labels_fpath = join(root, 'numpy', project_name, 'y.npy')
+#     results_dpath = join(root, 'results', project_name)
+#     weights_fpath = join(root, 'nets', project_name, 'ibeis_cnn_weights.pickle')
+#     config = {}
+#     test(
+#         test_data_fpath, model, weights_fpath, results_dpath, test_labels_fpath, **config
+#     )
 
 
-def test_viewpoint():
-    r"""
-    CommandLine:
-        python -m ibeis_cnn.test --test-test_viewpoint
+# def test_viewpoint():
+#     r"""
+#     CommandLine:
+#         python -m ibeis_cnn.test --test-test_viewpoint
 
-    Example:
-        >>> # DISABLE_DOCTEST
-        >>> from ibeis_cnn.test import *  # NOQA
-        >>> test_viewpoint()
-    """
-    project_name = 'viewpoint'
-    model = models.ViewpointModel()
-    root = abspath(join('..', 'data'))
+#     Example:
+#         >>> # DISABLE_DOCTEST
+#         >>> from ibeis_cnn.test import *  # NOQA
+#         >>> test_viewpoint()
+#     """
+#     project_name = 'viewpoint'
+#     model = models.ViewpointModel()
+#     root = abspath(join('..', 'data'))
 
-    test_data_fpath = join(root, 'numpy', project_name, 'X.npy')
-    test_labels_fpath = join(root, 'numpy', project_name, 'y.npy')
-    results_dpath = join(root, 'results', project_name)
-    weights_fpath = join(root, 'nets', project_name, 'ibeis_cnn_weights.pickle')
-    config = {}
+#     test_data_fpath = join(root, 'numpy', project_name, 'X.npy')
+#     test_labels_fpath = join(root, 'numpy', project_name, 'y.npy')
+#     results_dpath = join(root, 'results', project_name)
+#     weights_fpath = join(root, 'nets', project_name, 'ibeis_cnn_weights.pickle')
+#     config = {}
 
-    test(
-        test_data_fpath, model, weights_fpath, results_dpath, test_labels_fpath, **config
-    )
+#     test(
+#         test_data_fpath, model, weights_fpath, results_dpath, test_labels_fpath, **config
+#     )
 
 
 def test_review():

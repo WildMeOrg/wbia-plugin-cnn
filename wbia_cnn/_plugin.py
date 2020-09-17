@@ -25,7 +25,7 @@ try:
     from wbia.constants import VIEWTEXT_TO_YAW_RADIANS
 
     CLASS_INJECT_KEY, register_ibs_method = make_ibs_register_decorator(__name__)
-except ImportError as ex:
+except ImportError:
     register_ibs_method = ut.identity
     raise
 
@@ -1059,7 +1059,7 @@ def test_convolutional(
     confidence_thresh=0.5,
     **kwargs
 ):
-    """ Using a network, test an entire image full convolutionally
+    """Using a network, test an entire image full convolutionally
 
     This function will test an entire image full convolutionally (or a close
     approximation of full convolutionally).  The CUDA framework and driver is a
@@ -1657,13 +1657,28 @@ def detect_image_cnn(ibs, gid, confidence=0.90, extraction='bing'):
         if conf < confidence:
             skipped += 1
             continue
-        print('%r Found %s (%s, %s) at %s' % (candidate, pred, species, viewpoint, conf,))
+        print(
+            '%r Found %s (%s, %s) at %s'
+            % (
+                candidate,
+                pred,
+                species,
+                viewpoint,
+                conf,
+            )
+        )
         color = color_dict[species]
         cv2.rectangle(rects, (x0, y0), (x1, y1), color)
         # mx = int((x1 - x0) * 0.5)
         # my = int((y1 - y0) * 0.5)
         # cv2.circle(rects, (x0 + mx, y0 + my), 5, color, -1)
-    print('Skipped [ %d / %d ]' % (skipped, len(values),))
+    print(
+        'Skipped [ %d / %d ]'
+        % (
+            skipped,
+            len(values),
+        )
+    )
 
     cv2.imshow('', rects)
     cv2.waitKey(0)

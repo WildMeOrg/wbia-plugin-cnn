@@ -67,7 +67,7 @@ def draw_neural_net(ax, left, right, bottom, top, layer_sizes):
     # Nodes
     for n, layer_size in enumerate(layer_sizes):
         layer_top = v_spacing * (layer_size - 1) / 2.0 + (top + bottom) / 2.0
-        for m in xrange(layer_size):
+        for m in range(layer_size):
             circle = plt.Circle(
                 (n * h_spacing + left, layer_top - m * v_spacing),
                 v_spacing / 4.0,
@@ -126,7 +126,7 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
     """
     import networkx as nx
     import plottool as pt
-    import wbia_cnn.__LASAGNE__ as lasagne
+    from Lasagne import lasagne
 
     # from matplotlib import offsetbox
     # import matplotlib as mpl
@@ -153,7 +153,9 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
     edge_attrs = ut.ddict(dict)
 
     # Make layer ids (ensure no duplicates)
-    layer_to_id = {l: repr(l) if l.name is None else l.name for l in set(layers)}
+    layer_to_id = {
+        layer: repr(layer) if layer.name is None else layer.name for layer in set(layers)
+    }
     keys_ = layer_to_id.keys()
     dups = ut.find_duplicate_items(layer_to_id.values())
     for dupval, dupidxs in dups.items():
@@ -200,10 +202,10 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
 
         # append node
         is_main_layer = len(layer.params) > 0
-        # is_main_layer = len(lasange.layers.get_all_params(layer, trainable=True)) > 0
-        if layer_info['classname'] in lasange.layers.normalization.__all__:
+        # is_main_layer = len(lasagne.layers.get_all_params(layer, trainable=True)) > 0
+        if layer_info['classname'] in lasagne.layers.normalization.__all__:
             is_main_layer = False
-        if layer_info['classname'] in lasange.layers.special.__all__:
+        if layer_info['classname'] in lasagne.layers.special.__all__:
             is_main_layer = False
         if layer_info['classname'].startswith('BatchNorm'):
             is_main_layer = False
@@ -450,7 +452,7 @@ def pydot_to_image(pydot_graph):
 # def make_architecture_image(layers, **kwargs):
 #    """
 #    Args:
-#        layers (list): List of the layers, as obtained from lasange.layers.get_all_layers
+#        layers (list): List of the layers, as obtained from lasagne.layers.get_all_layers
 
 #    Kwargs:
 #        see docstring of make_architecture_pydot_graph for other options
@@ -488,7 +490,7 @@ def pydot_to_image(pydot_graph):
 #    Draws a network diagram to a file
 
 #    Args:
-#        layers (list): List of the layers, as obtained from lasange.layers.get_all_layers
+#        layers (list): List of the layers, as obtained from lasagne.layers.get_all_layers
 #        fpath (str): The fpath to save output to.
 
 #        Kwargs:
@@ -552,7 +554,7 @@ def occlusion_heatmap(net, x, target, square_length=7):
       probability of the correct class if the image is occluded by a
       square with center (i, j).
     """
-    from wbia_cnn.__LASAGNE__.layers import get_output_shape
+    from Lasagne.lasagne.layers import get_output_shape
 
     if (x.ndim != 4) or x.shape[0] != 1:
         raise ValueError(
@@ -662,14 +664,14 @@ def plot_occlusion(net, Xb, target, square_length=7, figsize=(9, None)):
 def plot_saliency(net, Xb, figsize=(9, None)):
     def saliency_map(input, output, pred, Xb):
         import theano.tensor as T
-        from wbia_cnn.__LASAGNE__.objectives import binary_crossentropy
+        from Lasagne.lasagne.objectives import binary_crossentropy
 
         score = -binary_crossentropy(output[:, pred], np.array([1])).sum()
         heat_map_ = np.abs(T.grad(score, input).eval({input: Xb}))
         return heat_map_
 
     def saliency_map_net(net, Xb):
-        from wbia_cnn.__LASAGNE__.layers import get_output
+        from Lasagne.lasagne.layers import get_output
 
         input = net.layers_[0].input_var
         output = get_output(net.layers_[-1])
@@ -725,7 +727,7 @@ class Dream(object):
         dpath = '.'
 
         import theano.tensor as T
-        import wbia_cnn.__LASAGNE__ as lasagne
+        from Lasagne import lasagne
         import vtool as vt
         import theano
 
@@ -789,8 +791,8 @@ class Dream(object):
         dream.step_fn = None
 
     def make_class_images(dream, target_labels):
-        import wbia_cnn.__THEANO__ as theano
-        from wbia_cnn.__THEANO__ import tensor as T  # NOQA
+        import theano
+        from theano import tensor as T  # NOQA
         import utool as ut
 
         was_scalar = not ut.isiterable(target_labels)
@@ -893,16 +895,16 @@ class Dream(object):
         return initial_state
 
     def _make_objective(dream, shared_images, target_labels):
-        """
+        r"""
         The goal is to optimize
         S_c = score of class c before softmax nonlinearity
         argmax_{I} S_c(I) - \lambda \elltwo{I}
         max(S_c(I) - lambda * norm(I, 2))
         """
-        import wbia_cnn.__LASAGNE__ as lasagne
+        from Lasagne import lasagne
         import copy
-        import wbia_cnn.__THEANO__ as theano
-        from wbia_cnn.__THEANO__ import tensor as T  # NOQA
+        import theano
+        from theano import tensor as T  # NOQA
 
         print('Making dream objective')
         # Get the final layer and remove the softmax nonlinearity to access the
@@ -985,8 +987,8 @@ class Dream(object):
         ut.startfile('dynamic_images.mp4')
         plt.show()
         """
-        import wbia_cnn.__THEANO__ as theano
-        from wbia_cnn.__THEANO__ import tensor as T  # NOQA
+        import theano
+        from theano import tensor as T  # NOQA
         import utool as ut
 
         input_shape = dream.model.input_shape
@@ -1095,7 +1097,7 @@ def show_convolutional_weights(
         >>> # ENABLE_DOCTEST
         >>> from wbia_cnn.draw_net import *  # NOQA
         >>> from wbia_cnn import models
-        >>> from wbia_cnn.__LASAGNE__ import layers
+        >>> from Lasagne.lasagne import layers
         >>> model = models.SiameseCenterSurroundModel(autoinit=True)
         >>> output_layer = model.get_output_layer()
         >>> nn_layers = layers.get_all_layers(output_layer)

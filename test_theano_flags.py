@@ -32,6 +32,6 @@ theano_flags['enable_initial_driver_test'] = False
 write_theano_flags(theano_flags)
 
 with ut.Timer():
-    import theano
+    import theano  # NOQA
 
 print(ut.get_memstats_str())

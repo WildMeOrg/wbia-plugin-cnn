@@ -21,13 +21,11 @@ References:
     https://groups.google.com/forum/#!topic/lasagne-users/7JX_8zKfDI0
 """
 from __future__ import absolute_import, division, print_function
-import wbia_cnn.__LASAGNE__ as lasagne  # NOQA
-from wbia_cnn.__LASAGNE__ import layers
-from wbia_cnn.__LASAGNE__ import nonlinearities
-from wbia_cnn.__LASAGNE__ import init
+from Lasagne import lasagne  # NOQA
+from Lasagne.lasagne import init, layers, nonlinearities
 import functools
 import six
-from wbia_cnn.__THEANO__ import tensor as T  # NOQA
+from theano import tensor as T  # NOQA
 import numpy as np
 from wbia_cnn.models import abstract_models
 import utool as ut
@@ -285,13 +283,12 @@ class SiameseL2(AbstractSiameseModel):
                 _P(layers.DenseLayer, num_units=64, name='F2', **hidden_initkw),
                 # _P(layers.DenseLayer, num_units=64, name='F3',  **hidden_initkw),
             ]
-            +
             # CD_layer(128, (3, 3), (2, 2)) +
             # CD_layer(96, (2, 2), (1, 1)) +
             # CD_layer(64, (2, 2), (1, 1)) +
             # CD_layer(64, (1, 1), (1, 1)) +
             # CD_layer(64, (2, 1), (2, 2)) +
-            [
+            + [
                 # _P(Conv2DLayer, num_filters=128, filter_size=(3, 3), name='C3_128', **hidden_initkw),
                 # _P(Conv2DLayer, num_filters=64, filter_size=(3, 3), name='C4_128', **hidden_initkw),
                 # _P(Conv2DLayer, num_filters=64, filter_size=(2, 1), stride=(2, 2), name='C4_128', **hidden_initkw),
@@ -374,9 +371,8 @@ class SiameseL2(AbstractSiameseModel):
             + CD_layer(96, (2, 2), (1, 1))
             + CD_layer(64, (2, 2), (1, 1))
             + CD_layer(64, (1, 1), (1, 1))
-            +
             # CD_layer(64, (2, 1), (2, 2)) +
-            [
+            + [
                 # _P(Conv2DLayer, num_filters=128, filter_size=(3, 3), name='C3_128', **hidden_initkw),
                 # _P(Conv2DLayer, num_filters=64, filter_size=(3, 3), name='C4_128', **hidden_initkw),
                 # _P(Conv2DLayer, num_filters=64, filter_size=(2, 1), stride=(2, 2), name='C4_128', **hidden_initkw),

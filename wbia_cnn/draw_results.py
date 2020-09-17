@@ -359,7 +359,11 @@ def make_InteractSiamPatches(*args, **kwargs):
 
                         if self.ibs is not None:
                             options += inspect_gui.get_aidpair_context_menu_options(
-                                self.ibs, aid1, aid2, None, qreq_=self.qreq_,
+                                self.ibs,
+                                aid1,
+                                aid2,
+                                None,
+                                qreq_=self.qreq_,
                             )
                             # update_callback=update_callback,
                             # backend_callback=backend_callback, aid_list=aid_list)

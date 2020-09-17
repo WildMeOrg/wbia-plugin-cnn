@@ -48,7 +48,7 @@ def get_gpu_memory():
         >>> result = get_gpu_memory()
         >>> print(result)
     """
-    import wbia_cnn.__THEANO__ as theano
+    import theano
 
     return theano.sandbox.cuda.cuda_ndarray.cuda_ndarray.mem_info()
 
@@ -172,8 +172,8 @@ def convert_theano_images_to_cv2_images(data, *args):
 
 def evaluate_symbolic_layer(get_output_for, inputdata_, input_type=None, **kwargs):
     """ helper for testing lasagne layers """
-    import wbia_cnn.__THEANO__ as theano
-    from wbia_cnn.__THEANO__ import tensor as T  # NOQA
+    import theano
+    from theano import tensor as T  # NOQA
 
     if input_type is None:
         input_type = T.tensor4
@@ -275,15 +275,15 @@ def load(data_fpath, labels_fpath=None):
     #    data = ut.load_hdf5(data_fpath)
     # else:
     #    data = np.load(data_fpath, mmap_mode='r')
-    ## Load y vector (labels)
+    # # Load y vector (labels)
     # labels = None
     # if labels_fpath is not None:
     #    if splitext(labels_fpath)[1] == '.hdf5':
     #        labels = ut.load_hdf5(labels_fpath)
     #    else:
     #        labels = np.load(labels_fpath, mmap_mode='r')
-    ## TODO: This should be part of data preprocessing
-    ## Ensure that data is 4-dimensional
+    # # TODO: This should be part of data preprocessing
+    # # Ensure that data is 4-dimensional
     if len(data.shape) == 3:
         # add channel dimension for implicit grayscale
         data.shape = data.shape + (1,)
@@ -551,7 +551,7 @@ def slice_data_labels(
 
 
 def multinomial_nll(x, t):
-    from wbia_cnn.__THEANO__ import tensor as T  # NOQA
+    from theano import tensor as T  # NOQA
 
     # coding_dist=x, true_dist=t
     return T.nnet.categorical_crossentropy(x, t)
@@ -648,7 +648,7 @@ def save_model(kwargs, weights_file):
 
 def shock_network(output_layer, voltage=0.10):
     print('[model] shocking the network with voltage: %0.2f%%' % (voltage,))
-    from wbia_cnn.__LASAGNE__ import layers
+    from Lasagne.lasagne import layers
 
     current_weights = layers.get_all_param_values(output_layer)
     for index in range(len(current_weights)):
@@ -701,7 +701,7 @@ def save_pretrained_weights_slice(pretrained_weights, weights_path, slice_=slice
 
 
 def extract_patches_stride(image, patch_size, stride):
-    """ Using the input image, take a strided sampling of patches from the image
+    """Using the input image, take a strided sampling of patches from the image
 
     The patches are extracted (cropped copies) using the patch_size and stride.
     If the patch size and stride do not evenly cover the source image in width

@@ -5,8 +5,8 @@ import warnings
 import six
 import theano
 import functools
-from wbia_cnn.__THEANO__ import tensor as T  # NOQA
-import wbia_cnn.__LASAGNE__ as lasagne
+from theano import tensor as T  # NOQA
+import Lasagne as lasagne
 from wbia_cnn import utils
 import utool as ut
 
@@ -31,12 +31,12 @@ try:
 
     if conv_impl == 'cuda_convnet':
         # cannot handle non-square images (pylearn2 module)
-        # import lasagne.layers.cuda_convnet
+        import lasagne.layers.cuda_convnet
 
         Conv2DLayer = lasagne.layers.cuda_convnet.Conv2DCCLayer
         MaxPool2DLayer = lasagne.layers.cuda_convnet.MaxPool2DCCLayer
     elif conv_impl == 'cuDNN':
-        # import lasagne.layers.dnn
+        import lasagne.layers.dnn
 
         Conv2DLayer = lasagne.layers.dnn.Conv2DDNNLayer
         MaxPool2DLayer = lasagne.layers.dnn.MaxPool2DDNNLayer
@@ -53,7 +53,7 @@ try:
         """
     elif conv_impl == 'gemm':
         # Dont use gemm
-        # import lasagne.layers.corrmm
+        import lasagne.layers.corrmm
 
         Conv2DLayer = lasagne.layers.corrmm.Conv2DLayer
         MaxPool2DLayer = lasagne.layers.corrmm.Conv2DLayer
@@ -73,7 +73,9 @@ except (Exception, ImportError) as ex:
         ut.printex(ex, 'WARNING: GPU seems unavailable', iswarning=True)
 
 if utils.VERBOSE_CNN:
-    print('lasagne.__version__ = %r' % getattr(lasagne, '__version__', None),)
+    print(
+        'lasagne.__version__ = %r' % getattr(lasagne, '__version__', None),
+    )
     print('lasagne.__file__ = %r' % (getattr(lasagne, '__file__', None),))
     print('theano.__version__ = %r' % (getattr(theano, '__version__', None),))
     print('theano.__file__ = %r' % (getattr(theano, '__file__', None),))
@@ -782,7 +784,7 @@ def load_json_arch_def(arch_json_fpath):
     arch_json_fpath = '/media/raid/work/WS_ALL/_ibsdb/_ibeis_cache/nets/injur-shark_10056_224x224x3_auqbfhle/models/arch_injur-shark_o2_d11_c688_acioqbst/saved_sessions/fit_session_2016-08-26T173854+5/fit_arch_info.json'
     """
     from wbia_cnn import custom_layers
-    # import lasagne.layers.dnn
+    import lasagne.layers.dnn
 
     # FIXME: Need to redo the saved arch json file.
     # Need to give layers identifiers and specify their inputs / outputs
@@ -852,7 +854,11 @@ def evaluate_layer_list(network_layers_def, verbose=None):
                 if verbose:
                     print(
                         'Evaluating layer %d/%d (%s) '
-                        % (count, total, ut.get_funcname(layer_fn),)
+                        % (
+                            count,
+                            total,
+                            ut.get_funcname(layer_fn),
+                        )
                     )
                 with ut.Timer(verbose=False) as tt:
                     layer = layer_fn(*next_args)
@@ -896,7 +902,7 @@ def make_bundles(
 ):
 
     # FIXME; dropout is a pre-operation
-    import wbia_cnn.__LASAGNE__ as lasagne
+    import Lasagne as lasagne
     import itertools
     import six
 
@@ -1420,18 +1426,26 @@ def make_bundles(
     @register_bundle
     class GlobalPool(Bundle):
         def __call__(
-            self, incoming,
+            self,
+            incoming,
         ):
-            outgoing = lasagne.layers.GlobalPoolLayer(incoming, name='GP' + self.name,)
+            outgoing = lasagne.layers.GlobalPoolLayer(
+                incoming,
+                name='GP' + self.name,
+            )
             outgoing._is_main_layer = True
             return outgoing
 
     @register_bundle
     class AveragePool(Bundle):
         def __call__(
-            self, incoming,
+            self,
+            incoming,
         ):
-            outgoing = lasagne.layers.GlobalPoolLayer(incoming, name='AP' + self.name,)
+            outgoing = lasagne.layers.GlobalPoolLayer(
+                incoming,
+                name='AP' + self.name,
+            )
             outgoing._is_main_layer = True
             return outgoing
 

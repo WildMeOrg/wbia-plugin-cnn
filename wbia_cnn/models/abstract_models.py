@@ -96,45 +96,45 @@ def delayed_import():
     global lasagne
     global theano
     global T
-    import wbia_cnn.__LASAGNE__ as lasagne
-    import wbia_cnn.__THEANO__ as theano
-    from wbia_cnn.__THEANO__ import tensor as T  # NOQA
+    from Lasagne import lasagne
+    import theano
+    from theano import tensor as T  # NOQA
 
 
-def testdata_model_with_history():
-    model = BaseModel()
-    # make a dummy history
-    X_train, y_train = [1, 2, 3], [0, 0, 1]
-    rng = np.random.RandomState(0)
+# def testdata_model_with_history():
+#     model = BaseModel()
+#     # make a dummy history
+#     X_train, y_train = [1, 2, 3], [0, 0, 1]
+#     rng = np.random.RandomState(0)
 
-    def dummy_epoch_dict(num):
-        epoch_info = {
-            'epoch': num,
-            'loss': 1 / np.exp(num / 10) + rng.rand() / 100,
-            'train_loss': 1 / np.exp(num / 10) + rng.rand() / 100,
-            'train_loss_regularized': (
-                1 / np.exp(num / 10) + np.exp(rng.rand() * num) + rng.rand() / 100
-            ),
-            'valid_loss': 1 / np.exp(num / 10) - rng.rand() / 100,
-            'param_update_mags': {
-                'C0': (rng.normal() ** 2, rng.rand()),
-                'F1': (rng.normal() ** 2, rng.rand()),
-            },
-        }
-        return epoch_info
+#     def dummy_epoch_dict(num):
+#         epoch_info = {
+#             'epoch': num,
+#             'loss': 1 / np.exp(num / 10) + rng.rand() / 100,
+#             'train_loss': 1 / np.exp(num / 10) + rng.rand() / 100,
+#             'train_loss_regularized': (
+#                 1 / np.exp(num / 10) + np.exp(rng.rand() * num) + rng.rand() / 100
+#             ),
+#             'valid_loss': 1 / np.exp(num / 10) - rng.rand() / 100,
+#             'param_update_mags': {
+#                 'C0': (rng.normal() ** 2, rng.rand()),
+#                 'F1': (rng.normal() ** 2, rng.rand()),
+#             },
+#         }
+#         return epoch_info
 
-    count = 0
-    for era_length in [4, 4, 4]:
-        alias_key = 'dummy_alias_key'
-        model.start_new_era(X_train, y_train, X_train, y_train, alias_key)
-        for count in range(count, count + era_length):
-            model.record_epoch(dummy_epoch_dict(count))
-    # model.record_epoch({'epoch': 1, 'valid_loss': .8, 'train_loss': .9})
-    # model.record_epoch({'epoch': 2, 'valid_loss': .5, 'train_loss': .7})
-    # model.record_epoch({'epoch': 3, 'valid_loss': .3, 'train_loss': .6})
-    # model.record_epoch({'epoch': 4, 'valid_loss': .2, 'train_loss': .3})
-    # model.record_epoch({'epoch': 5, 'valid_loss': .1, 'train_loss': .2})
-    return model
+#     count = 0
+#     for era_length in [4, 4, 4]:
+#         alias_key = 'dummy_alias_key'
+#         model.start_new_era(X_train, y_train, X_train, y_train, alias_key)
+#         for count in range(count, count + era_length):
+#             model.record_epoch(dummy_epoch_dict(count))
+#     # model.record_epoch({'epoch': 1, 'valid_loss': .8, 'train_loss': .9})
+#     # model.record_epoch({'epoch': 2, 'valid_loss': .5, 'train_loss': .7})
+#     # model.record_epoch({'epoch': 3, 'valid_loss': .3, 'train_loss': .6})
+#     # model.record_epoch({'epoch': 4, 'valid_loss': .2, 'train_loss': .3})
+#     # model.record_epoch({'epoch': 5, 'valid_loss': .1, 'train_loss': .2})
+#     return model
 
 
 if 'theano' in sys.modules:
@@ -362,7 +362,7 @@ class LearnState(ut.DictLike):
 
     def setitem(self, key, value):
         if self._isinit:
-            import wbia_cnn.__THEANO__ as theano
+            import theano
 
             print('[model] setting %s to %.9r' % (key, value))
             _shared = self._shared_state[key]
@@ -435,7 +435,7 @@ class _ModelFitter(object):
             'max_epochs': None,
             'rate_schedule': 0.9,
             'stopping_patience': 100,
-            #'class_weight': None,
+            # 'class_weight': None,
             'class_weight': 'balanced',
             'random_seed': None,
             'learning_rate': 0.005,
@@ -971,7 +971,9 @@ class _ModelFitter(object):
             }
 
             model._fit_session.update(
-                **{'prog_dirs': prog_dirs,}
+                **{
+                    'prog_dirs': prog_dirs,
+                }
             )
 
             # for dpath in prog_dirs.values():
@@ -1145,7 +1147,7 @@ class _ModelFitter(object):
         Ignore:
             >>> from wbia_cnn.models.abstract_models import *  # NOQA
             >>> from wbia_cnn.models import mnist
-            >>> import wbia_cnn.__THEANO__ as theano
+            >>> import theano
             >>> model, dataset = mnist.testdata_mnist(dropout=.5)
             >>> model.monitor_config['monitor'] = False
             >>> model.monitor_config['showprog'] = True
@@ -1814,7 +1816,7 @@ class _ModelBackend(object):
         Ignore:
             >>> from wbia_cnn.models.abstract_models import *  # NOQA
             >>> from wbia_cnn.models import mnist
-            >>> import wbia_cnn.__THEANO__ as theano
+            >>> import theano
             >>> model, dataset = mnist.testdata_mnist(dropout=.5)
             >>> model.init_arch()
             >>> batch_size = 16
@@ -1959,7 +1961,7 @@ class _ModelBackend(object):
         Ignore:
             >>> from wbia_cnn.models.abstract_models import *  # NOQA
             >>> from wbia_cnn.models import mnist
-            >>> import wbia_cnn.__THEANO__ as theano
+            >>> import theano
             >>> model, dataset = mnist.testdata_mnist(dropout=.5)
             >>> model._init_compile_vars({})  # reset state
             >>> model.init_arch()
@@ -2030,8 +2032,8 @@ class _ModelBackend(object):
                     'loss_reg': loss_reg,
                     'loss_determ': loss_determ,
                     'loss': loss,
-                    #'loss_std': loss_std,
-                    #'loss_std_determ': loss_std_determ,
+                    # 'loss_std': loss_std,
+                    # 'loss_std_determ': loss_std_determ,
                     'loss_item': loss_item,
                     'loss_item_determ': loss_item,
                 }
@@ -2218,8 +2220,8 @@ class _ModelVisualization(object):
         dataset = ut.search_stack_for_localvar('dataset')
         X_test, y_test = dataset.subset('valid')
 
-        import wbia_cnn.__THEANO__ as theano
-        from wbia_cnn.__THEANO__ import tensor as T  # NOQA
+        import theano
+        from theano import tensor as T  # NOQA
         import utool as ut
 
         num = 64
@@ -2409,7 +2411,17 @@ class _ModelVisualization(object):
             ut.flatten(
                 [
                     [
-                        (('%s_%s_%d' % (t, m, y,)), type_styles[t])
+                        (
+                            (
+                                '%s_%s_%d'
+                                % (
+                                    t,
+                                    m,
+                                    y,
+                                )
+                            ),
+                            type_styles[t],
+                        )
                         for t in types
                         for m in measures
                     ]
@@ -2422,7 +2434,21 @@ class _ModelVisualization(object):
         colors = ut.odict(
             ut.flatten(
                 [
-                    [(('%s_%s_%d' % (t, m, y,)), color) for t in types for m in measures]
+                    [
+                        (
+                            (
+                                '%s_%s_%d'
+                                % (
+                                    t,
+                                    m,
+                                    y,
+                                )
+                            ),
+                            color,
+                        )
+                        for t in types
+                        for m in measures
+                    ]
                     for (y, color) in zip(class_idxs, class_colors)
                 ]
             )
@@ -2433,7 +2459,20 @@ class _ModelVisualization(object):
                 ut.flatten(
                     [
                         [
-                            ('%s_%s_%d' % (t, m, y,), '%s %s %s' % (t, m, category,))
+                            (
+                                '%s_%s_%d'
+                                % (
+                                    t,
+                                    m,
+                                    y,
+                                ),
+                                '%s %s %s'
+                                % (
+                                    t,
+                                    m,
+                                    category,
+                                ),
+                            )
                             for t in types
                             for m in measures
                         ]
@@ -2448,7 +2487,12 @@ class _ModelVisualization(object):
                     [
                         [
                             (
-                                '%s_%s_%d' % (t, m, y,),
+                                '%s_%s_%d'
+                                % (
+                                    t,
+                                    m,
+                                    y,
+                                ),
                                 np.array(ut.take_column(epochs, '%s_%s' % (t, m)))[:, y],
                             )
                             for t in types
@@ -2782,8 +2826,7 @@ class _ModelVisualization(object):
 
 @ut.reloadable_class
 class _ModelStrings(object):
-    """
-    """
+    """"""
 
     def get_state_str(model, other_override_reprs={}):
         era_history_str = ut.list_str(
@@ -2793,7 +2836,7 @@ class _ModelStrings(object):
 
         override_reprs = {
             'best_results': ut.repr3(model.best_results),
-            #'best_weights': ut.truncate_str(str(model.best_weights)),
+            # 'best_weights': ut.truncate_str(str(model.best_weights)),
             'data_params': ut.repr2(model.data_params, truncate=True),
             'learn_state': ut.repr3(model.learn_state),
             'era_history': era_history_str,
@@ -2834,21 +2877,21 @@ class _ModelStrings(object):
         if False:
             raw_json = ut.to_json(json_dict, pretty=True)
             lines = raw_json.split('\n')
-            levels = np.array([ut.get_indentation(l) for l in lines]) / 4
+            levels = np.array([ut.get_indentation(line) for line in lines]) / 4
             # Collapse newlines past indent 4
             nl = 4
             newlines = []
             prev = False
-            for l, v in zip(lines, levels):
-                if v >= nl:
+            for line, level in zip(lines, levels):
+                if level >= nl:
                     if prev:
-                        l = l.lstrip(' ')
-                        newlines[-1] += '' + l
+                        line = line.lstrip(' ')
+                        newlines[-1] += '' + line
                     else:
-                        newlines.append(l)
+                        newlines.append(line)
                         prev = True
                 else:
-                    newlines.append(l)
+                    newlines.append(line)
                     prev = False
             json_str = '\n'.join(newlines)
         else:
@@ -2941,7 +2984,9 @@ class _ModelStrings(object):
         print('\n---- Layer Info')
         model.print_layer_info()
         print('\n---- Arch HashID')
-        print('arch_hashid=%r' % (model.get_arch_hashid()),)
+        print(
+            'arch_hashid=%r' % (model.get_arch_hashid()),
+        )
         print('----')
 
 
@@ -3345,20 +3390,20 @@ class _ModelIO(object):
 
 class _ModelUtility(object):
     def set_all_param_values(model, weights_list):
-        import wbia_cnn.__LASAGNE__ as lasagne
+        from Lasagne import lasagne
 
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', '.*topo.*')
             lasagne.layers.set_all_param_values(model.output_layer, weights_list)
 
     def get_all_param_values(model):
-        import wbia_cnn.__LASAGNE__ as lasagne
+        from Lasagne import lasagne
 
         weights_list = lasagne.layers.get_all_param_values(model.output_layer)
         return weights_list
 
     def get_all_params(model, **tags):
-        import wbia_cnn.__LASAGNE__ as lasagne
+        from Lasagne import lasagne
 
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', '.*topo.*')
@@ -3369,7 +3414,7 @@ class _ModelUtility(object):
         return [net_strs.get_layer_info(layer) for layer in model.get_all_layers()]
 
     def get_all_layers(model, with_noise=True, with_weightless=True):
-        import wbia_cnn.__LASAGNE__ as lasagne
+        from Lasagne import lasagne
 
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', '.*topo.*')
@@ -3536,7 +3581,7 @@ class BaseModel(
         """
         fpath = ut.truepath('~/Desktop/manually_saved/arch_injur-shark-resnet_o2_d27_c2942_jzuddodd/model_state_arch_jzuddodd.pkl')
         """
-        # import wbia_cnn.__LASAGNE__ as lasagne
+        # from Lasagne import lasagne
         # arch_dpath = dirname(fpath)
         from wbia_cnn import custom_layers
 
@@ -3568,7 +3613,7 @@ class BaseModel(
         """
         initailizes weights after the architecture has been defined.
         """
-        import wbia_cnn.__LASAGNE__ as lasagne
+        from Lasagne import lasagne
 
         if W is None:
             W = 'orthogonal'
@@ -3627,14 +3672,14 @@ class AbstractCategoricalModel(BaseModel):
 
     def loss_function(model, network_output, truth):
         # https://en.wikipedia.org/wiki/Loss_functions_for_classification
-        from wbia_cnn.__THEANO__ import tensor as T  # NOQA
+        from theano import tensor as T  # NOQA
 
         # categorical cross-entropy between predictions and targets
         # L_i = -\sum_{j} t_{i,j} \log{p_{i, j}}
         return T.nnet.categorical_crossentropy(network_output, truth)
 
     def custom_unlabeled_outputs(model, network_output):
-        from wbia_cnn.__THEANO__ import tensor as T  # NOQA
+        from theano import tensor as T  # NOQA
 
         # Network outputs define category probabilities
         probs = network_output
@@ -3646,7 +3691,7 @@ class AbstractCategoricalModel(BaseModel):
         return unlabeled_outputs
 
     def custom_labeled_outputs(model, network_output, y_batch):
-        from wbia_cnn.__THEANO__ import tensor as T  # NOQA
+        from theano import tensor as T  # NOQA
 
         probs = network_output
         preds = T.argmax(probs, axis=1)
@@ -3683,16 +3728,16 @@ class AbstractVectorModel(BaseModel):
         print('[model] model.output_dims = %r' % (model.output_dims,))
 
     # def loss_function(model, network_output, truth):
-    #     from wbia_cnn.__THEANO__ import tensor as T  # NOQA
+    #     from theano import tensor as T  # NOQA
     #     return T.nnet.binary_crossentropy(network_output, truth)
 
     def loss_function(model, network_output, truth):
-        from wbia_cnn.__THEANO__ import tensor as T  # NOQA
+        from theano import tensor as T  # NOQA
 
         return T.nnet.binary_crossentropy(network_output, truth)
 
     def custom_unlabeled_outputs(model, network_output):
-        from wbia_cnn.__THEANO__ import tensor as T  # NOQA
+        from theano import tensor as T  # NOQA
 
         # Network outputs define category probabilities
         probs = network_output
@@ -3704,7 +3749,7 @@ class AbstractVectorModel(BaseModel):
         return unlabeled_outputs
 
     def custom_labeled_outputs(model, network_output, y_batch):
-        from wbia_cnn.__THEANO__ import tensor as T  # NOQA
+        from theano import tensor as T  # NOQA
 
         probs = network_output
         preds = probs.clip(0.0, 1.0).round()
@@ -3733,7 +3778,7 @@ class AbstractVectorVectorModel(AbstractVectorModel):
         super(this_class_now, model).__init__(**kwargs)
 
     def custom_labeled_outputs(model, network_output, y_batch):
-        from wbia_cnn.__THEANO__ import tensor as T  # NOQA
+        from theano import tensor as T  # NOQA
 
         probs = network_output
         preds = probs.round()

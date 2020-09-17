@@ -5,8 +5,6 @@ from __future__ import absolute_import, division, print_function
 import utool as ut
 
 ut.noinject(__name__, '[wbia_cnn.__init__]')
-from wbia_cnn import __THEANO__
-from wbia_cnn import __LASAGNE__
 from wbia_cnn import models
 from wbia_cnn import process
 from wbia_cnn import netrun

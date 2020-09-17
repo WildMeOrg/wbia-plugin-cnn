@@ -1,6 +1,15 @@
 # -*- coding: utf-8 -*-
+from wbia_cnn import custom_layers
+from Lasagne.lasagne import init, layers, nonlinearities
+from theano import tensor as T  # NOQA
+from wbia_cnn import lasagne_ext
+from wbia_cnn.models import abstract_models
+import functools
+import random
 
-from ibeis_cnn import lasange_ext
+
+Conv2DLayer = custom_layers.Conv2DLayer
+MaxPool2DLayer = custom_layers.MaxPool2DLayer
 
 
 class ViewpointModel(abstract_models.AbstractCategoricalModel):
@@ -52,7 +61,10 @@ class ViewpointModel(abstract_models.AbstractCategoricalModel):
         category_mapping = {}
         for index, species in enumerate(species_list):
             for viewpoint, value in viewpoint_mapping.items():
-                key = '%s:%s' % (species, viewpoint,)
+                key = '%s:%s' % (
+                    species,
+                    viewpoint,
+                )
                 base = viewpoints * index
                 category_mapping[key] = base + value
         return category_mapping
@@ -73,7 +85,9 @@ class ViewpointModel(abstract_models.AbstractCategoricalModel):
             shape=(None, input_channels, input_width, input_height)
         )
 
-        l_noise = layers.GaussianNoiseLayer(l_in,)
+        l_noise = layers.GaussianNoiseLayer(
+            l_in,
+        )
 
         l_conv0 = Conv2DLayer(
             l_noise,
@@ -95,7 +109,11 @@ class ViewpointModel(abstract_models.AbstractCategoricalModel):
             W=_CaffeNet.get_pretrained_layer(2),
         )
 
-        l_pool1 = MaxPool2DLayer(l_conv1, pool_size=(2, 2), stride=(2, 2),)
+        l_pool1 = MaxPool2DLayer(
+            l_conv1,
+            pool_size=(2, 2),
+            stride=(2, 2),
+        )
 
         l_conv2_dropout = layers.DropoutLayer(l_pool1, p=0.10)
 
@@ -108,7 +126,11 @@ class ViewpointModel(abstract_models.AbstractCategoricalModel):
             W=init.Orthogonal(),
         )
 
-        l_pool2 = MaxPool2DLayer(l_conv2, pool_size=(2, 2), stride=(2, 2),)
+        l_pool2 = MaxPool2DLayer(
+            l_conv2,
+            pool_size=(2, 2),
+            stride=(2, 2),
+        )
 
         l_conv3_dropout = layers.DropoutLayer(l_pool2, p=0.30)
 
@@ -121,7 +143,11 @@ class ViewpointModel(abstract_models.AbstractCategoricalModel):
             W=init.Orthogonal(),
         )
 
-        l_pool3 = MaxPool2DLayer(l_conv3, pool_size=(2, 2), stride=(2, 2),)
+        l_pool3 = MaxPool2DLayer(
+            l_conv3,
+            pool_size=(2, 2),
+            stride=(2, 2),
+        )
 
         l_conv4_dropout = layers.DropoutLayer(l_pool3, p=0.30)
 
@@ -134,7 +160,11 @@ class ViewpointModel(abstract_models.AbstractCategoricalModel):
             W=init.Orthogonal(),
         )
 
-        l_pool4 = MaxPool2DLayer(l_conv4, pool_size=(2, 2), stride=(2, 2),)
+        l_pool4 = MaxPool2DLayer(
+            l_conv4,
+            pool_size=(2, 2),
+            stride=(2, 2),
+        )
 
         l_hidden1 = layers.DenseLayer(
             l_pool4,
@@ -144,7 +174,10 @@ class ViewpointModel(abstract_models.AbstractCategoricalModel):
             W=init.Orthogonal(),
         )
 
-        l_hidden1_maxout = layers.FeaturePoolLayer(l_hidden1, pool_size=2,)
+        l_hidden1_maxout = layers.FeaturePoolLayer(
+            l_hidden1,
+            pool_size=2,
+        )
 
         l_hidden1_dropout = layers.DropoutLayer(l_hidden1_maxout, p=0.5)
 
@@ -156,7 +189,10 @@ class ViewpointModel(abstract_models.AbstractCategoricalModel):
             W=init.Orthogonal(),
         )
 
-        l_hidden2_maxout = layers.FeaturePoolLayer(l_hidden2, pool_size=2,)
+        l_hidden2_maxout = layers.FeaturePoolLayer(
+            l_hidden2,
+            pool_size=2,
+        )
 
         l_hidden2_dropout = layers.DropoutLayer(l_hidden2_maxout, p=0.5)
 
@@ -201,7 +237,9 @@ class QualityModel(abstract_models.AbstractCategoricalModel):
             shape=(None, input_channels, input_width, input_height)
         )
 
-        l_noise = layers.GaussianNoiseLayer(l_in,)
+        l_noise = layers.GaussianNoiseLayer(
+            l_in,
+        )
 
         l_conv0 = Conv2DLayer(
             l_noise,
@@ -223,7 +261,11 @@ class QualityModel(abstract_models.AbstractCategoricalModel):
             W=_CaffeNet.get_pretrained_layer(2),
         )
 
-        l_pool1 = MaxPool2DLayer(l_conv1, pool_size=(2, 2), stride=(2, 2),)
+        l_pool1 = MaxPool2DLayer(
+            l_conv1,
+            pool_size=(2, 2),
+            stride=(2, 2),
+        )
 
         l_conv2_dropout = layers.DropoutLayer(l_pool1, p=0.10)
 
@@ -236,7 +278,11 @@ class QualityModel(abstract_models.AbstractCategoricalModel):
             W=init.Orthogonal(),
         )
 
-        l_pool2 = MaxPool2DLayer(l_conv2, pool_size=(2, 2), stride=(2, 2),)
+        l_pool2 = MaxPool2DLayer(
+            l_conv2,
+            pool_size=(2, 2),
+            stride=(2, 2),
+        )
 
         l_conv3_dropout = layers.DropoutLayer(l_pool2, p=0.30)
 
@@ -249,7 +295,11 @@ class QualityModel(abstract_models.AbstractCategoricalModel):
             W=init.Orthogonal(),
         )
 
-        l_pool3 = MaxPool2DLayer(l_conv3, pool_size=(2, 2), stride=(2, 2),)
+        l_pool3 = MaxPool2DLayer(
+            l_conv3,
+            pool_size=(2, 2),
+            stride=(2, 2),
+        )
 
         l_conv4_dropout = layers.DropoutLayer(l_pool3, p=0.30)
 
@@ -262,7 +312,11 @@ class QualityModel(abstract_models.AbstractCategoricalModel):
             W=init.Orthogonal(),
         )
 
-        l_pool4 = MaxPool2DLayer(l_conv4, pool_size=(2, 2), stride=(2, 2),)
+        l_pool4 = MaxPool2DLayer(
+            l_conv4,
+            pool_size=(2, 2),
+            stride=(2, 2),
+        )
 
         l_hidden1 = layers.DenseLayer(
             l_pool4,
@@ -272,7 +326,10 @@ class QualityModel(abstract_models.AbstractCategoricalModel):
             W=init.Orthogonal(),
         )
 
-        l_hidden1_maxout = layers.FeaturePoolLayer(l_hidden1, pool_size=2,)
+        l_hidden1_maxout = layers.FeaturePoolLayer(
+            l_hidden1,
+            pool_size=2,
+        )
 
         l_hidden1_dropout = layers.DropoutLayer(l_hidden1_maxout, p=0.5)
 
@@ -284,7 +341,10 @@ class QualityModel(abstract_models.AbstractCategoricalModel):
             W=init.Orthogonal(),
         )
 
-        l_hidden2_maxout = layers.FeaturePoolLayer(l_hidden2, pool_size=2,)
+        l_hidden2_maxout = layers.FeaturePoolLayer(
+            l_hidden2,
+            pool_size=2,
+        )
 
         l_hidden2_dropout = layers.DropoutLayer(l_hidden2_maxout, p=0.5)
 
@@ -392,5 +452,5 @@ class SiameseModel(abstract_models.BaseModel):
     def loss_function(self, G, Y_padded, T=T, verbose=True):
         if verbose:
             print('[model] Build center surround siamese loss function')
-        avg_loss = lasange_ext.siamese_loss(G, Y_padded, data_per_label=2)
+        avg_loss = lasagne_ext.siamese_loss(G, Y_padded, data_per_label=2)
         return avg_loss

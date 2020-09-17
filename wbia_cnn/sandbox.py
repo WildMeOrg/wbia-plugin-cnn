@@ -111,7 +111,7 @@ def theano_gradient_funtimes():
     import theano
     import numpy as np
     import theano.tensor as T
-    import wbia_cnn.__LASAGNE__ as lasagne
+    from Lasagne import lasagne
     import wbia_cnn.theano_ext as theano_ext
 
     TEST = True
@@ -176,14 +176,32 @@ def theano_gradient_funtimes():
             theano.pp(gs)
             inputs_to_value = {X: x_data[0:16], y: y_data[0:16]}
             result = theano_ext.eval_symbol(gs, inputs_to_value)
-            print('%s = %r' % (gs.name, result,))
+            print(
+                '%s = %r'
+                % (
+                    gs.name,
+                    result,
+                )
+            )
             inputs_to_value = {X: x_data[16:32], y: y_data[16:32]}
             result = theano_ext.eval_symbol(gs, inputs_to_value)
-            print('%s = %r' % (gs.name, result,))
+            print(
+                '%s = %r'
+                % (
+                    gs.name,
+                    result,
+                )
+            )
 
         for grad in gradients_regularized:
             result = theano_ext.eval_symbol(grad, inputs_to_value)
-            print('%s = %r' % (grad.name, result,))
+            print(
+                '%s = %r'
+                % (
+                    grad.name,
+                    result,
+                )
+            )
 
         grad_on_losses = theano.grad(losses, parameters, add_names=True)
 
@@ -200,7 +218,10 @@ def theano_gradient_funtimes():
         inputs=[theano.Param(X_batch), theano.Param(y_batch)],
         outputs=[network_output, losses],
         # updates=updates,
-        givens={X: X_batch, y: y_batch,},
+        givens={
+            X: X_batch,
+            y: y_batch,
+        },
     )
 
     y_predict_batch, loss_batch = func(inputs_to_value[X], inputs_to_value[y])

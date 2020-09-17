@@ -5,16 +5,19 @@ import six
 import numpy as np
 import utool as ut
 from wbia_cnn import ingest_data
-from wbia_cnn.__LASAGNE__ import layers
-from wbia_cnn.__LASAGNE__ import nonlinearities
-from wbia_cnn.__THEANO__ import tensor as T  # NOQA
+from Lasagne.lasagne import layers, nonlinearities
+from theano import tensor as T  # NOQA
 from wbia_cnn.models import abstract_models
 
 print, rrr, profile = ut.inject2(__name__)
 
 
 def augment_parallel(X, y, w):
-    return augment_wrapper([X], None if y is None else [y], None if w is None else [w],)
+    return augment_wrapper(
+        [X],
+        None if y is None else [y],
+        None if w is None else [w],
+    )
 
 
 def augment_wrapper(Xb, yb=None, wb=None):
@@ -86,7 +89,13 @@ class AoIModel(abstract_models.AbstractVectorVectorModel):
 
         (_, input_size) = model.input_shape
         network_layers_def = [
-            _P(layers.InputLayer, shape=(None, input_size,)),
+            _P(
+                layers.InputLayer,
+                shape=(
+                    None,
+                    input_size,
+                ),
+            ),
             _P(layers.DenseLayer, num_units=1024, name='F0', **hidden_initkw),
             _P(layers.FeaturePoolLayer, pool_size=2, name='FP0'),
             _P(layers.DropoutLayer, p=0.5, name='D0'),
@@ -109,8 +118,7 @@ class AoIModel(abstract_models.AbstractVectorVectorModel):
         return network_layers_def
 
     def init_arch(model, verbose=True, **kwargs):
-        r"""
-        """
+        r""""""
         (_, input_size) = model.input_shape
         if verbose:
             print('[model] Initialize aoi model architecture')
@@ -192,7 +200,11 @@ def train_aoi(output_path, data_fpath, labels_fpath):
     ut.colorprint('[netrun] Training Requested', 'yellow')
     # parse training arguments
     config = ut.argparse_dict(
-        dict(era_size=era_size, max_epochs=max_epochs, show_confusion=False,)
+        dict(
+            era_size=era_size,
+            max_epochs=max_epochs,
+            show_confusion=False,
+        )
     )
     model.monitor_config.update(**config)
 

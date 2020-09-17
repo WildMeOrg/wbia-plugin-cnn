@@ -80,7 +80,7 @@ def make_layer_json_dict(layer, layer_info, layer_to_id, extra=True):
         json_dict['input_layer'] = get_mrp_id(layer.input_layer)
     if hasattr(layer, 'input_layers'):
         # json_dict['input_layers'] = [l.name for l in layer.input_layers]
-        json_dict['input_layers'] = [layer_to_id[l] for l in layer.input_layers]
+        json_dict['input_layers'] = [layer_to_id[layer] for layer in layer.input_layers]
 
     json_dict.update(**layer_info['layer_attrs'])
     nonlin = layer_info.get('nonlinearity', None)
@@ -125,7 +125,7 @@ def print_pretrained_weights(pretrained_weights, lbl=''):
 
 
 def count_bytes(output_layer):
-    import wbia_cnn.__LASAGNE__ as lasagne
+    from Lasagne import lasagne
 
     layers = lasagne.layers.get_all_layers(output_layer)
     info_list = [get_layer_info(layer) for layer in layers]
@@ -187,7 +187,7 @@ def get_layer_info(layer):
         >>>     print(ut.repr3(layer_info, nl=1))
     """
     import operator
-    import wbia_cnn.__LASAGNE__ as lasagne
+    from Lasagne import lasagne
 
     # Information that contributes to RAM usage
     import numpy as np
@@ -452,7 +452,7 @@ def get_layer_info_str(output_layer, batch_size=128):
         >>> result = '\n'.join([x.rstrip() for x in result.split('\n')])
         >>> print(result)
     """
-    import wbia_cnn.__LASAGNE__ as lasagne
+    from Lasagne import lasagne
 
     info_lines = []
     _print = info_lines.append
@@ -536,7 +536,13 @@ def get_layer_info_str(output_layer, batch_size=128):
                 str_ = fmtstr.format(*row)
                 _print(str_)
             except TypeError:
-                print('Error printing %r with args %r' % (fmtstr, row,))
+                print(
+                    'Error printing %r with args %r'
+                    % (
+                        fmtstr,
+                        row,
+                    )
+                )
 
         total_bytes = count_bytes(output_layer)
         num_params = lasagne.layers.count_params(output_layer)

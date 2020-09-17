@@ -67,7 +67,7 @@ class PretrainedNetwork(object):
         return (height, width)
 
     def get_conv2d_layer(self, layer_index, name=None, **kwargs):
-        """ Assumes requested layer is convolutional
+        """Assumes requested layer is convolutional
 
         Returns:
             lasange.layers.Layer: Layer
@@ -102,7 +102,7 @@ class PretrainedNetwork(object):
         return Layer
 
     def get_pretrained_layer(self, layer_index, rand=False):
-        import wbia_cnn.__LASAGNE__ as lasagne
+        from Lasagne import lasagne
 
         assert layer_index <= len(
             self.pretrained_weights
@@ -126,19 +126,25 @@ class PretrainedNetwork(object):
                     pretrained_weights = pt.pretrained_layer[: shape[0]]
                 else:
                     is_conv = len(shape) == 4
-                    assert len(shape) == len(pt.pretrained_layer.shape), (
-                        'Layer shape mismatch. Expected %r got %r'
-                        % (pt.pretrained_layer.shape, shape)
+                    assert len(shape) == len(
+                        pt.pretrained_layer.shape
+                    ), 'Layer shape mismatch. Expected %r got %r' % (
+                        pt.pretrained_layer.shape,
+                        shape,
                     )
                     fanout, fanin = shape[:2]
                     fanout_, fanin_ = pt.pretrained_layer.shape[:2]
-                    assert fanout <= fanout_, (
-                        'Cannot increase weight fan-out dimension from %d to %d'
-                        % (fanout, fanout_,)
+                    assert (
+                        fanout <= fanout_
+                    ), 'Cannot increase weight fan-out dimension from %d to %d' % (
+                        fanout,
+                        fanout_,
                     )  # NOQA
-                    assert fanin <= fanin_, (
-                        'Cannot increase weight fan-in dimension from %d to %d'
-                        % (fanin, fanin_,)
+                    assert (
+                        fanin <= fanin_
+                    ), 'Cannot increase weight fan-in dimension from %d to %d' % (
+                        fanin,
+                        fanin_,
                     )  # NOQA
                     if is_conv:
                         height, width = shape[2:]

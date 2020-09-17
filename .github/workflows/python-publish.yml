@@ -30,6 +30,7 @@ jobs:
           # Build and test for cpython >= 3.6 on x86_64 architecture
           CIBW_BUILD: cp3?-*
           CIBW_SKIP: cp35-* *-win32 *-win_amd64 *-manylinux_i686 *-manylinux_aarch64 *-manylinux_ppc64le *-manylinux_s390x
+          CIBW_TEST_COMMAND: python -c "import wbia_cnn; from wbia_cnn.__main__ import wbia_cnn; wbia_cnn()"
         run: |
           python -m pip install cibuildwheel==1.4.2
           python -m cibuildwheel --output-dir wheelhouse

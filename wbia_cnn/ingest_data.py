@@ -20,7 +20,7 @@ def testdata_dataset():
 
 def testdata_patchmatch():
     """
-        >>> from wbia_cnn.ingest_data import *  # NOQA
+    >>> from wbia_cnn.ingest_data import *  # NOQA
     """
     dataset = get_wbia_patch_siam_dataset(max_examples=5)
     data_fpath = dataset.data_fpath
@@ -32,7 +32,7 @@ def testdata_patchmatch():
 
 def testdata_patchmatch2():
     """
-        >>> from wbia_cnn.ingest_data import *  # NOQA
+    >>> from wbia_cnn.ingest_data import *  # NOQA
     """
     dataset = get_wbia_patch_siam_dataset(max_examples=5)
     data_fpath = dataset.data_fpath
@@ -74,9 +74,12 @@ def merge_datasets(dataset_list):
         past_values = defaultdict(lambda: None)
 
         def consensus_check(value, key):
-            assert past_values[key] is None or past_values[key] == value, (
-                'key=%r with value=%r does not agree with past_value=%r'
-                % (key, value, past_values[key])
+            assert (
+                past_values[key] is None or past_values[key] == value
+            ), 'key=%r with value=%r does not agree with past_value=%r' % (
+                key,
+                value,
+                past_values[key],
             )
             past_values[key] = value
             return value
@@ -314,7 +317,9 @@ def grab_mnist_siam_dataset():
     """
     training_dpath = ut.ensure_app_resource_dir('wbia_cnn', 'training')
     dataset = DataSet(
-        name='mnist_pairs', training_dpath=training_dpath, data_shape=(28, 28, 1),
+        name='mnist_pairs',
+        training_dpath=training_dpath,
+        data_shape=(28, 28, 1),
     )
     try:
         dataset.load()
@@ -647,8 +652,7 @@ def get_wbia_part_siam_dataset(**kwargs):
 
 
 def get_numpy_dataset(data_fpath, labels_fpath, training_dpath):
-    """
-    """
+    """"""
     import numpy as np
 
     # hack for caching num_labels
@@ -675,8 +679,7 @@ def get_numpy_dataset(data_fpath, labels_fpath, training_dpath):
 
 
 def get_numpy_dataset2(name, data_fpath, labels_fpath, training_dpath, cache=True):
-    """
-    """
+    """"""
     import numpy as np
 
     # hack for caching num_labels
@@ -686,7 +689,11 @@ def get_numpy_dataset2(name, data_fpath, labels_fpath, training_dpath, cache=Tru
     num_labels = len(labels)
     metadata = None
 
-    dataset = DataSet(name=name, training_dpath=training_dpath, data_shape=data_shape,)
+    dataset = DataSet(
+        name=name,
+        training_dpath=training_dpath,
+        data_shape=data_shape,
+    )
     error = False
     try:
         dataset.load()

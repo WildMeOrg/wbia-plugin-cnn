@@ -216,7 +216,10 @@ def test_siamese_performance(model, data, labels, flat_metadata, dataname=''):
     # Visualize
     ut.colorprint('[siam_perf] Visualize Encoders', 'white')
     viz_kw = dict(
-        with_scores=False, with_postbayes=False, with_prebayes=False, target_tpr=0.95,
+        with_scores=False,
+        with_postbayes=False,
+        with_prebayes=False,
+        target_tpr=0.95,
     )
     inter_cnn = cnn_encoder.visualize(
         figtitle=dataname + ' CNN scores. #data=' + str(len(data)),

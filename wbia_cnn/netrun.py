@@ -205,7 +205,10 @@ def netrun():
             print('Known checkpoints are: ' + ut.repr3(model.list_saved_checkpoints()))
             raise ValueError(
                 ('Unresolved weight init: ' 'checkpoint_tag=%r, extern_ds_tag=%r')
-                % (checkpoint_tag, extern_ds_tag,)
+                % (
+                    checkpoint_tag,
+                    extern_ds_tag,
+                )
             )
 
     # print('Model State:')
@@ -220,7 +223,13 @@ def netrun():
     if requests['train']:
         ut.colorprint('[netrun] Training Requested', 'yellow')
         # parse training arguments
-        config = ut.argparse_dict(dict(era_size=15, max_epochs=1200, rate_decay=0.8,))
+        config = ut.argparse_dict(
+            dict(
+                era_size=15,
+                max_epochs=1200,
+                rate_decay=0.8,
+            )
+        )
         model.monitor_config.update(**config)
         X_train, y_train = dataset.subset('train')
         X_valid, y_valid = dataset.subset('valid')
@@ -307,7 +316,10 @@ def parse_args():
             #'weight_decay': 0.0005,
             'weight_decay': 0.0001,
         },
-        alias_dict={'weight_decay': ['decay'], 'learning_rate': ['learn_rate'],},
+        alias_dict={
+            'weight_decay': ['decay'],
+            'learning_rate': ['learn_rate'],
+        },
     )
     requests = ut.argparse_dict(
         {

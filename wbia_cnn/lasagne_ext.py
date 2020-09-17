@@ -2,15 +2,15 @@
 from __future__ import absolute_import, division, print_function
 import warnings
 import utool as ut
-from wbia_cnn.__LASAGNE__ import layers
-from wbia_cnn.__THEANO__ import tensor as T
-from wbia_cnn import __THEANO__ as theano
+from Lasagne.lasagne import layers
+import theano
+from theano import tensor as T
 
 (print, rrr, profile) = ut.inject2(__name__)
 
 
 def l1(layer, include_biases=False):
-    """ custom should move to regulariztion.lasange.l1
+    """custom should move to regulariztion.lasange.l1
 
     NOT WORKING
 

@@ -241,9 +241,30 @@ def extract_liberty_style_patches(ds_path, pairs):
     # Build matching labels
     match_pairs, non_match_pairs, all_requested_patch_ids = matches(ds_path, pairs)
     all_requested_patch_ids = np.array(all_requested_patch_ids)
-    print('len(match_pairs) = %r' % (len(match_pairs,)))
-    print('len(non_match_pairs) = %r' % (len(non_match_pairs,)))
-    print('len(all_requested_patch_ids) = %r' % (len(all_requested_patch_ids,)))
+    print(
+        'len(match_pairs) = %r'
+        % (
+            len(
+                match_pairs,
+            )
+        )
+    )
+    print(
+        'len(non_match_pairs) = %r'
+        % (
+            len(
+                non_match_pairs,
+            )
+        )
+    )
+    print(
+        'len(all_requested_patch_ids) = %r'
+        % (
+            len(
+                all_requested_patch_ids,
+            )
+        )
+    )
 
     assert len(list(set(ut.flatten(match_pairs) + ut.flatten(non_match_pairs)))) == len(
         all_requested_patch_ids

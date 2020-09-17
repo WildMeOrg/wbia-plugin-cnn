@@ -233,10 +233,19 @@ class DataSet(ut.NiceRepr):
         print('[dataset] Dataset Info: ')
         print('[dataset] * Data:')
         print('[dataset]     %s_data(shape=%r, dtype=%r)' % (key, data.shape, data.dtype))
-        print('[dataset]     %s_memory(data) = %r' % (key, ut.get_object_size_str(data),))
+        print(
+            '[dataset]     %s_memory(data) = %r'
+            % (
+                key,
+                ut.get_object_size_str(data),
+            )
+        )
         print(
             '[dataset]     %s_stats(data) = %s'
-            % (key, ut.repr2(stats_dict, precision=2),)
+            % (
+                key,
+                ut.repr2(stats_dict, precision=2),
+            )
         )
         print('[dataset] * Labels:')
         print(
