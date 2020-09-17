@@ -25,7 +25,7 @@ def main():  # nocover
     print('theano.__file__ = {!r}'.format(theano.__file__))
     print('theano.__version__ = {!r}'.format(theano.__version__))
 
-    from Lasagne import lasagne
+    import lasagne
 
     print('lasagne = {!r}'.format(lasagne))
     print('lasagne.__file__ = {!r}'.format(lasagne.__file__))

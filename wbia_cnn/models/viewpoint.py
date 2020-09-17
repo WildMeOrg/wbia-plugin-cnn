@@ -2,7 +2,7 @@
 from __future__ import absolute_import, division, print_function
 import six
 import random
-from Lasagne.lasagne import layers, nonlinearities
+from lasagne import layers, nonlinearities
 
 from wbia_cnn.models import abstract_models
 import utool as ut

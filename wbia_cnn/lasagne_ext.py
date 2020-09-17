@@ -2,7 +2,7 @@
 from __future__ import absolute_import, division, print_function
 import warnings
 import utool as ut
-from Lasagne.lasagne import layers
+from lasagne import layers
 import theano
 from theano import tensor as T  # NOQA
 

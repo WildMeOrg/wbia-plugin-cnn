@@ -31,7 +31,7 @@ class DummyModel(abstract_models.AbstractCategoricalModel):
             >>> model.show_arch()
             >>> ut.show_if_requested()
         """
-        from Lasagne import lasagne
+        import lasagne
         from wbia_cnn import custom_layers
 
         if verbose:

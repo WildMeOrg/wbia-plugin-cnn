@@ -125,7 +125,7 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
     """
     import networkx as nx
     import plottool as pt
-    from Lasagne import lasagne
+    import lasagne
 
     # from matplotlib import offsetbox
     # import matplotlib as mpl
@@ -553,7 +553,7 @@ def occlusion_heatmap(net, x, target, square_length=7):
       probability of the correct class if the image is occluded by a
       square with center (i, j).
     """
-    from Lasagne.lasagne.layers import get_output_shape
+    from lasagne.layers import get_output_shape
 
     if (x.ndim != 4) or x.shape[0] != 1:
         raise ValueError(
@@ -663,14 +663,14 @@ def plot_occlusion(net, Xb, target, square_length=7, figsize=(9, None)):
 def plot_saliency(net, Xb, figsize=(9, None)):
     def saliency_map(input, output, pred, Xb):
         import theano.tensor as T
-        from Lasagne.lasagne.objectives import binary_crossentropy
+        from lasagne.objectives import binary_crossentropy
 
         score = -binary_crossentropy(output[:, pred], np.array([1])).sum()
         heat_map_ = np.abs(T.grad(score, input).eval({input: Xb}))
         return heat_map_
 
     def saliency_map_net(net, Xb):
-        from Lasagne.lasagne.layers import get_output
+        from lasagne.layers import get_output
 
         input = net.layers_[0].input_var
         output = get_output(net.layers_[-1])
@@ -726,7 +726,7 @@ class Dream(object):
         dpath = '.'
 
         import theano.tensor as T
-        from Lasagne import lasagne
+        import lasagne
         import vtool as vt
         import theano
 
@@ -900,7 +900,7 @@ class Dream(object):
         argmax_{I} S_c(I) - \lambda \elltwo{I}
         max(S_c(I) - lambda * norm(I, 2))
         """
-        from Lasagne import lasagne
+        import lasagne
         import copy
         import theano
         from theano import tensor as T  # NOQA
@@ -1096,7 +1096,7 @@ def show_convolutional_weights(
         >>> # ENABLE_DOCTEST
         >>> from wbia_cnn.draw_net import *  # NOQA
         >>> from wbia_cnn import models
-        >>> from Lasagne.lasagne import layers
+        >>> from lasagne import layers
         >>> model = models.SiameseCenterSurroundModel(autoinit=True)
         >>> output_layer = model.get_output_layer()
         >>> nn_layers = layers.get_all_layers(output_layer)

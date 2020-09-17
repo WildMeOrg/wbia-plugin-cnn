@@ -6,8 +6,8 @@ import six
 import theano
 import functools
 from theano import tensor as T  # NOQA
-import Lasagne as lasagne
-from Lasagne.lasagne import init, layers, nonlinearities
+import lasagne
+from lasagne import init, layers, nonlinearities
 from wbia_cnn import utils
 import utool as ut
 

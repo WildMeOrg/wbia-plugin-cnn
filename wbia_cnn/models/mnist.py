@@ -191,7 +191,7 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         python -m wbia_cnn MNISTModel.init_arch --verbcnn --name=mnist --show
         python -m wbia_cnn.models.mnist MNISTModel.fit:0 --name=mnist --vd --monitor
         """
-        from Lasagne import lasagne
+        import lasagne
         from wbia_cnn import custom_layers
 
         batch_norm = False
@@ -219,7 +219,7 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         python -m wbia_cnn MNISTModel.init_arch --verbcnn --name=lenet --show
         python -m wbia_cnn.models.mnist MNISTModel.fit:0 --name=lenet --vd --monitor
         """
-        from Lasagne import lasagne
+        import lasagne
         from wbia_cnn import custom_layers
 
         batch_norm = model.batch_norm
@@ -259,7 +259,7 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         python -m wbia_cnn MNISTModel.init_arch --verbcnn --name=resnet --show
         python -m wbia_cnn.models.mnist MNISTModel.fit:0 --name=resnet --vd --monitor
         """
-        from Lasagne import lasagne
+        import lasagne
         from wbia_cnn import custom_layers
 
         batch_norm = model.batch_norm
@@ -297,7 +297,7 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         python -m wbia_cnn.models.mnist MNISTModel.fit:0 --name=resnet --vd --monitor
 
         """
-        from Lasagne import lasagne
+        import lasagne
         from wbia_cnn import custom_layers
 
         batch_norm = model.batch_norm

@@ -21,8 +21,8 @@ References:
     https://groups.google.com/forum/#!topic/lasagne-users/7JX_8zKfDI0
 """
 from __future__ import absolute_import, division, print_function
-from Lasagne import lasagne  # NOQA
-from Lasagne.lasagne import init, layers, nonlinearities
+import lasagne  # NOQA
+from lasagne import init, layers, nonlinearities
 import functools
 import six
 from theano import tensor as T  # NOQA

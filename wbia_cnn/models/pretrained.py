@@ -102,7 +102,7 @@ class PretrainedNetwork(object):
         return Layer
 
     def get_pretrained_layer(self, layer_index, rand=False):
-        from Lasagne import lasagne
+        import lasagne
 
         assert layer_index <= len(
             self.pretrained_weights

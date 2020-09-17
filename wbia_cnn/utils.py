@@ -651,7 +651,7 @@ def save_model(kwargs, weights_file):
 
 def shock_network(output_layer, voltage=0.10):
     print('[model] shocking the network with voltage: %0.2f%%' % (voltage,))
-    from Lasagne.lasagne import layers
+    from lasagne import layers
 
     current_weights = layers.get_all_param_values(output_layer)
     for index in range(len(current_weights)):

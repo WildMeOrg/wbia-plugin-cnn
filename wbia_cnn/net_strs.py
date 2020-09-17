@@ -125,7 +125,7 @@ def print_pretrained_weights(pretrained_weights, lbl=''):
 
 
 def count_bytes(output_layer):
-    from Lasagne import lasagne
+    import lasagne
 
     layers = lasagne.layers.get_all_layers(output_layer)
     info_list = [get_layer_info(layer) for layer in layers]
@@ -187,7 +187,7 @@ def get_layer_info(layer):
         >>>     print(ut.repr3(layer_info, nl=1))
     """
     import operator
-    from Lasagne import lasagne
+    import lasagne
 
     # Information that contributes to RAM usage
     import numpy as np
@@ -452,7 +452,7 @@ def get_layer_info_str(output_layer, batch_size=128):
         >>> result = '\n'.join([x.rstrip() for x in result.split('\n')])
         >>> print(result)
     """
-    from Lasagne import lasagne
+    import lasagne
 
     info_lines = []
     _print = info_lines.append

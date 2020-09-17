@@ -5,8 +5,8 @@ import six
 import numpy as np
 import utool as ut
 from wbia_cnn import ingest_data
-from Lasagne import lasagne
-from Lasagne.lasagne import layers, nonlinearities
+import lasagne
+from lasagne import layers, nonlinearities
 from theano import tensor as T  # NOQA
 from wbia_cnn.models import abstract_models
 

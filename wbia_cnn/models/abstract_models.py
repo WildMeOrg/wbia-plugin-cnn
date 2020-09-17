@@ -96,7 +96,7 @@ def delayed_import():
     global lasagne
     global theano
     global T
-    from Lasagne import lasagne
+    import lasagne
     import theano
     from theano import tensor as T  # NOQA
 
@@ -3390,20 +3390,20 @@ class _ModelIO(object):
 
 class _ModelUtility(object):
     def set_all_param_values(model, weights_list):
-        from Lasagne import lasagne
+        import lasagne
 
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', '.*topo.*')
             lasagne.layers.set_all_param_values(model.output_layer, weights_list)
 
     def get_all_param_values(model):
-        from Lasagne import lasagne
+        import lasagne
 
         weights_list = lasagne.layers.get_all_param_values(model.output_layer)
         return weights_list
 
     def get_all_params(model, **tags):
-        from Lasagne import lasagne
+        import lasagne
 
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', '.*topo.*')
@@ -3414,7 +3414,7 @@ class _ModelUtility(object):
         return [net_strs.get_layer_info(layer) for layer in model.get_all_layers()]
 
     def get_all_layers(model, with_noise=True, with_weightless=True):
-        from Lasagne import lasagne
+        import lasagne
 
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', '.*topo.*')
@@ -3581,7 +3581,7 @@ class BaseModel(
         """
         fpath = ut.truepath('~/Desktop/manually_saved/arch_injur-shark-resnet_o2_d27_c2942_jzuddodd/model_state_arch_jzuddodd.pkl')
         """
-        # from Lasagne import lasagne
+        # import lasagne
         # arch_dpath = dirname(fpath)
         from wbia_cnn import custom_layers
 
@@ -3613,7 +3613,7 @@ class BaseModel(
         """
         initailizes weights after the architecture has been defined.
         """
-        from Lasagne import lasagne
+        import lasagne
 
         if W is None:
             W = 'orthogonal'
