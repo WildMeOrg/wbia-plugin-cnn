@@ -1,11 +1,9 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 tests a test set of data using a specified, pre-trained model and weights
 
 python -c "import wbia_cnn"
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
 from wbia_cnn import models
 from wbia_cnn import _plugin_grabmodels as grabmodels
 import utool as ut
