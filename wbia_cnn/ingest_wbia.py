@@ -7,6 +7,8 @@ import six
 import itertools
 from six.moves import zip, map, range
 from functools import partial
+from wbia import dtool
+
 from wbia_cnn import draw_results  # NOQA
 
 print, rrr, profile = ut.inject2(__name__)
@@ -629,8 +631,6 @@ def estimate_data_bytes(num_data, item_shape):
 #    def kw(self):
 #        return ut.KwargsWrapper(self)
 
-
-from wbia import dtool
 
 class PartMatchDataConfig(dtool.Config):
     _param_info_list = [
