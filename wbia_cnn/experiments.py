@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
+import logging
 import numpy as np
 import functools
 from wbia_cnn import draw_results
 import utool as ut
 
 print, rrr, profile = ut.inject2(__name__)
+logger = logging.getLogger()
 
 
 def sift_dataset_separability(dataset):
@@ -88,7 +90,7 @@ def sift_dataset_separability(dataset):
 #        # TODO use dataset to infer data colorspace
 #        data = vt.convert_image_list_colorspace(data, 'GRAY', src_colorspace='BGR')
 #    patch_list = data
-#    print('Extract SIFT descr')
+#    logger.info('Extract SIFT descr')
 #    vecs_list = pyhesaff.extract_desc_from_patches(patch_list)
 #    return vecs_list
 
@@ -109,9 +111,9 @@ def test_sift_patchmatch_scores(data, labels):
         # TODO use dataset to infer data colorspace
         data = vt.convert_image_list_colorspace(data, 'GRAY', src_colorspace='BGR')
     patch_list = data
-    print('Extract SIFT descr')
+    logger.info('Extract SIFT descr')
     vecs_list = pyhesaff.extract_desc_from_patches(patch_list)
-    print('Compute SIFT dist')
+    logger.info('Compute SIFT dist')
     sqrddist = (
         (vecs_list[0::2].astype(np.float32) - vecs_list[1::2].astype(np.float32)) ** 2
     ).sum(axis=1)
@@ -289,7 +291,7 @@ def test_siamese_performance(model, data, labels, flat_metadata, dataname=''):
             # vt.imwrite(dataname + '_' + 'sift_fp_img.png', (sift_fp_img))
             # vt.imwrite(dataname + '_' + 'sift_fn_img.png', (sift_fn_img))
         else:
-            print('Drawing TP FP TN FN')
+            logger.info('Drawing TP FP TN FN')
             fnum = fnum_gen()
             pnum_gen = pt.make_pnum_nextgen(4, 2)
             fig = pt.figure(fnum)
@@ -377,12 +379,12 @@ def test_siamese_thresholds(network_output, y_test, **kwargs):
     tp_support = network_output_.T[0][y_test.astype(np.bool)].astype(np.float64)
     tn_support = network_output_.T[0][~(y_test.astype(np.bool))].astype(np.float64)
     if tp_support.mean() < tn_support.mean():
-        print('need to invert scores')
+        logger.info('need to invert scores')
         tp_support *= -1
         tn_support *= -1
     bottom = min(tn_support.min(), tp_support.min())
     if bottom < 0:
-        print('need to subtract from scores')
+        logger.info('need to subtract from scores')
         tn_support -= bottom
         tp_support -= bottom
 

@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
+import logging
 import warnings
 import six
 import functools
 import utool as ut
 
 print, rrr, profile = ut.inject2(__name__)
+logger = logging.getLogger()
 
 
 def make_layer_str(layer, with_name=True):
@@ -113,10 +115,10 @@ def print_pretrained_weights(pretrained_weights, lbl=''):
         pretrained_weights (list of ndarrays): represents layer weights
         lbl (str): label
     """
-    print('Initialization network: %r' % (lbl))
-    print('Total memory: %s' % (ut.get_object_size_str(pretrained_weights)))
+    logger.info('Initialization network: %r' % (lbl))
+    logger.info('Total memory: %s' % (ut.get_object_size_str(pretrained_weights)))
     for index, layer_ in enumerate(pretrained_weights):
-        print(
+        logger.info(
             ' layer {:2}: shape={:<18}, memory={}'.format(
                 index, layer_.shape, ut.get_object_size_str(layer_)
             )
@@ -129,8 +131,8 @@ def count_bytes(output_layer):
     layers = lasagne.layers.get_all_layers(output_layer)
     info_list = [get_layer_info(layer) for layer in layers]
     total_bytes = sum([info['total_bytes'] for info in info_list])
-    # print('total_bytes = %s' % (ut.byte_str2(total_bytes),))
-    # print(ut.repr2(info_list, nl=2, hack_liststr=True))
+    # logger.info('total_bytes = %s' % (ut.byte_str2(total_bytes),))
+    # logger.info(ut.repr2(info_list, nl=2, hack_liststr=True))
     return total_bytes
 
 
@@ -242,7 +244,7 @@ def get_layer_info(layer):
             return spec
 
         if hasattr(layer, '_initializers'):
-            # print('layer = %r' % (layer,))
+            # logger.info('layer = %r' % (layer,))
             initclass = layer._initializers[param]
             spec = initializer_info(initclass)
             param_info['init'] = spec
@@ -353,10 +355,10 @@ def get_layer_info(layer):
     #    ut.embed()
     DEBUG = True
     if DEBUG and len(missing_keys) > 0:
-        print('---')
-        print(' * ' + classname)
-        print(' * missing keys: %r' % (missing_keys,))
-        print(' * has keys: %r' % (attr_key_list,))
+        logger.info('---')
+        logger.info(' * ' + classname)
+        logger.info(' * missing keys: %r' % (missing_keys,))
+        logger.info(' * has keys: %r' % (attr_key_list,))
         if True:
             # import utool
             # with utool.embed_on_exception_context:
@@ -535,7 +537,7 @@ def get_layer_info_str(output_layer, batch_size=128):
                 str_ = fmtstr.format(*row)
                 _print(str_)
             except TypeError:
-                print(
+                logger.info(
                     'Error printing %r with args %r'
                     % (
                         fmtstr,
@@ -566,7 +568,7 @@ def get_layer_info_str(output_layer, batch_size=128):
 def print_layer_info(output_layer):
     str_ = get_layer_info_str(output_layer)
     str_ = ut.indent('[info] ' + str_)
-    print('\n' + str_)
+    logger.info('\n' + str_)
 
 
 if __name__ == '__main__':

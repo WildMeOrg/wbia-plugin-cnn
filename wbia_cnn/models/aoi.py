@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 import functools
 import six
 import numpy as np
@@ -9,6 +10,7 @@ from theano import tensor as T  # NOQA
 from wbia_cnn.models import abstract_models
 
 print, rrr, profile = ut.inject2(__name__)
+logger = logging.getLogger()
 
 
 def augment_parallel(X, y, w):
@@ -120,10 +122,10 @@ class AoIModel(abstract_models.AbstractVectorVectorModel):
         r""""""
         (_, input_size) = model.input_shape
         if verbose:
-            print('[model] Initialize aoi model architecture')
-            print('[model]   * batch_size     = %r' % (model.batch_size,))
-            print('[model]   * input_width    = %r' % (input_size,))
-            print('[model]   * output_dims    = %r' % (model.output_dims,))
+            logger.info('[model] Initialize aoi model architecture')
+            logger.info('[model]   * batch_size     = %r' % (model.batch_size,))
+            logger.info('[model]   * input_width    = %r' % (input_size,))
+            logger.info('[model]   * output_dims    = %r' % (model.output_dims,))
 
         network_layers_def = model.get_aoi_def(verbose=verbose, **kwargs)
         # connect and record layers
@@ -172,7 +174,7 @@ def train_aoi(output_path, data_fpath, labels_fpath):
     dataset = ingest_data.get_numpy_dataset2('aoi', data_fpath, labels_fpath, output_path)
     X_train, y_train = dataset.subset('train')
     X_valid, y_valid = dataset.subset('valid')
-    print('dataset.training_dpath = %r' % (dataset.training_dpath,))
+    logger.info('dataset.training_dpath = %r' % (dataset.training_dpath,))
 
     input_shape = (
         batch_size,
@@ -207,7 +209,7 @@ def train_aoi(output_path, data_fpath, labels_fpath):
     )
     model.monitor_config.update(**config)
 
-    print('\n[netrun] Model Info')
+    logger.info('\n[netrun] Model Info')
     model.print_layer_info()
 
     ut.colorprint('[netrun] Begin training', 'yellow')

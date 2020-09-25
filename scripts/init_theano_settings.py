@@ -6,11 +6,13 @@ References:
 Check Settings:
     python -c 'import theano; print theano.config' | less
 """
+import logging
 import utool as ut
 import os
 from os.path import join
 
 (print, rrr, profile) = ut.inject2(__name__)
+logger = logging.getLogger()
 
 """
 CommandLine:

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 import numpy as np
 import warnings
 import six
@@ -11,6 +12,7 @@ from wbia_cnn import utils
 import utool as ut
 
 (print, rrr, profile) = ut.inject2(__name__)
+logger = logging.getLogger()
 
 
 FORCE_CPU = False  # ut.get_argflag('--force-cpu')
@@ -66,19 +68,19 @@ except (Exception, ImportError) as ex:
     MaxPool2DLayer = layers.MaxPool2DLayer
 
     if utils.VERBOSE_CNN:
-        print('Conv2DLayer = %r' % (Conv2DLayer,))
-        print('MaxPool2DLayer = %r' % (MaxPool2DLayer,))
+        logger.info('Conv2DLayer = %r' % (Conv2DLayer,))
+        logger.info('MaxPool2DLayer = %r' % (MaxPool2DLayer,))
 
     if theano.config.device != 'cpu':
         ut.printex(ex, 'WARNING: GPU seems unavailable', iswarning=True)
 
 if utils.VERBOSE_CNN:
-    print(
+    logger.info(
         'lasagne.__version__ = %r' % getattr(lasagne, '__version__', None),
     )
-    print('lasagne.__file__ = %r' % (getattr(lasagne, '__file__', None),))
-    print('theano.__version__ = %r' % (getattr(theano, '__version__', None),))
-    print('theano.__file__ = %r' % (getattr(theano, '__file__', None),))
+    logger.info('lasagne.__file__ = %r' % (getattr(lasagne, '__file__', None),))
+    logger.info('theano.__version__ = %r' % (getattr(theano, '__version__', None),))
+    logger.info('theano.__file__ = %r' % (getattr(theano, '__file__', None),))
 
 
 class L1NormalizeLayer(layers.Layer):
@@ -844,7 +846,7 @@ def evaluate_layer_list(network_layers_def, verbose=None):
     total = len(network_layers_def)
     network_layers = []
     if verbose:
-        print('Evaluting List of %d Layers' % (total,))
+        logger.info('Evaluting List of %d Layers' % (total,))
     layer_fn_iter = iter(network_layers_def)
     layer = None
     try:
@@ -852,7 +854,7 @@ def evaluate_layer_list(network_layers_def, verbose=None):
             next_args = tuple()
             for count, layer_fn in enumerate(layer_fn_iter, start=1):
                 if verbose:
-                    print(
+                    logger.info(
                         'Evaluating layer %d/%d (%s) '
                         % (
                             count,
@@ -865,13 +867,13 @@ def evaluate_layer_list(network_layers_def, verbose=None):
                 next_args = (layer,)
                 network_layers.append(layer)
                 if verbose:
-                    print('  * took %.4fs' % (tt.toc(),))
-                    print('  * layer = %r' % (layer,))
+                    logger.info('  * took %.4fs' % (tt.toc(),))
+                    logger.info('  * layer = %r' % (layer,))
                     if hasattr(layer, 'input_shape'):
-                        print('  * layer.input_shape = %r' % (layer.input_shape,))
+                        logger.info('  * layer.input_shape = %r' % (layer.input_shape,))
                     if hasattr(layer, 'shape'):
-                        print('  * layer.shape = %r' % (layer.shape,))
-                    print('  * layer.output_shape = %r' % (layer.output_shape,))
+                        logger.info('  * layer.shape = %r' % (layer.shape,))
+                    logger.info('  * layer.output_shape = %r' % (layer.output_shape,))
     except Exception as ex:
         keys = [
             'layer_fn',
@@ -929,14 +931,14 @@ def make_bundles(
 
         def debug_layer(self, layer):
             if False:
-                print('layer = %r' % layer)
+                logger.info('layer = %r' % layer)
                 if hasattr(layer, 'name'):
-                    print('  * layer.name = %r' % layer.name)
+                    logger.info('  * layer.name = %r' % layer.name)
                 if hasattr(layer, 'input_shape'):
-                    print('  * layer.input_shape = %r' % (layer.input_shape,))
+                    logger.info('  * layer.input_shape = %r' % (layer.input_shape,))
                 if hasattr(layer, 'shape'):
-                    print('  * layer.shape = %r' % (layer.shape,))
-                print('  * layer.output_shape = %r' % (layer.output_shape,))
+                    logger.info('  * layer.shape = %r' % (layer.shape,))
+                logger.info('  * layer.output_shape = %r' % (layer.output_shape,))
 
         def apply_dropout(self, layer):
             # change name standard
@@ -1226,7 +1228,7 @@ def make_bundles(
             if self.branches is not None:
                 branches = []
                 for b in self.branches:
-                    print(b)
+                    logger.info(b)
                     if b['t'] == 'c':
                         branch = self.conv_branch(
                             in_, b['s'], b['n'], b['r'], b.get('d', 1)
@@ -1234,16 +1236,16 @@ def make_bundles(
                     elif b['t'] == 'p':
                         branch = self.proj_branch(in_, b['s'], b['n'])
                     else:
-                        print('b = %r' % (b,))
+                        logger.info('b = %r' % (b,))
                         assert False
                     branches.append(branch)
             else:
                 # branches = self.inception_v3_A(in_)
                 branches = self.inception_v0(in_)
 
-            # print(branches)
+            # logger.info(branches)
             # for b in branches:
-            #    print(b.output_shape)
+            #    logger.info(b.output_shape)
 
             outgoing = layers.ConcatLayer(branches, name=name + '/cat')
             outgoing._is_main_layer = True

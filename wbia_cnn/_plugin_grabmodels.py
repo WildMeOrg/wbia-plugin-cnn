@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 # -*- coding                                        :utf-8 -*-
+import logging
 import utool as ut
 
 (print, rrr, profile) = ut.inject2(__name__, '[wbia_cnn._plugin_grabmodels]')
+logger = logging.getLogger()
 
 
 # DEFAULT_CNNMODELS_DIR = ut.get_app_resource_dir('wbia_cnn', 'pretrained')

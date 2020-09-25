@@ -4,6 +4,7 @@ tests a test set of data using a specified, pre-trained model and weights
 
 python -c "import wbia_cnn"
 """
+import logging
 from wbia_cnn import models
 from wbia_cnn import _plugin_grabmodels as grabmodels
 import utool as ut
@@ -15,6 +16,7 @@ import wbia.constants as const
 from six.moves import zip, range
 
 print, rrr, profile = ut.inject2(__name__)
+logger = logging.getLogger()
 
 
 try:
@@ -95,14 +97,14 @@ def generate_thumbnail_class_list(
     data_shape = (192, 192, 3)
     batch_size = None
     # Define model and load weights
-    print('\n[wbia_cnn] Loading model...')
+    logger.info('\n[wbia_cnn] Loading model...')
     if nInput is None:
         try:
             nInput = len(thumbnail_list)
         except TypeError:
-            print('Warning passed in generator without specifying nInput hint')
-            print('Explicitly evaluating generator')
-            print('type(chip_list) = %r' % (type(thumbnail_list),))
+            logger.info('Warning passed in generator without specifying nInput hint')
+            logger.info('Explicitly evaluating generator')
+            logger.info('type(chip_list) = %r' % (type(thumbnail_list),))
             thumbnail_list = list(thumbnail_list)
             nInput = len(thumbnail_list)
 
@@ -170,7 +172,7 @@ def generate_thumbnail_class_list(
         raise ValueError('Classifier does not have a valid trained model')
 
     model_state_fpath = model.get_model_state_fpath(fpath=weights_path)
-    print('[model] loading model state from: %s' % (model_state_fpath,))
+    logger.info('[model] loading model state from: %s' % (model_state_fpath,))
     model_state = ut.load_cPkl(model_state_fpath)
 
     model.encoder = model_state.get('encoder', None)
@@ -186,11 +188,11 @@ def generate_thumbnail_class_list(
 
     # Create the Theano primitives
     # create theano symbolic expressions that define the network
-    print('\n[wbia_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---')
-    print('[model] creating Theano primitives...')
+    logger.info('\n[wbia_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---')
+    logger.info('[model] creating Theano primitives...')
     theano_predict = model.build_predict_func()
 
-    print('[wbia_cnn] Performing inference...')
+    logger.info('[wbia_cnn] Performing inference...')
     test_results = model.process_batch(theano_predict, np.array(thumbnail_list))
 
     prediction_list = model.encoder.inverse_transform(test_results['predictions'])
@@ -209,14 +211,14 @@ def generate_thumbnail_class2_list(
     data_shape = (192, 192, 3)
     batch_size = None
     # Define model and load weights
-    print('\n[wbia_cnn] Loading model...')
+    logger.info('\n[wbia_cnn] Loading model...')
     if nInput is None:
         try:
             nInput = len(thumbnail_list)
         except TypeError:
-            print('Warning passed in generator without specifying nInput hint')
-            print('Explicitly evaluating generator')
-            print('type(chip_list) = %r' % (type(thumbnail_list),))
+            logger.info('Warning passed in generator without specifying nInput hint')
+            logger.info('Explicitly evaluating generator')
+            logger.info('type(chip_list) = %r' % (type(thumbnail_list),))
             thumbnail_list = list(thumbnail_list)
             nInput = len(thumbnail_list)
 
@@ -234,7 +236,7 @@ def generate_thumbnail_class2_list(
         raise ValueError('Classifier does not have a valid trained model')
 
     model_state_fpath = model.get_model_state_fpath(fpath=weights_path)
-    print('[model] loading model state from: %s' % (model_state_fpath,))
+    logger.info('[model] loading model state from: %s' % (model_state_fpath,))
     model_state = ut.load_cPkl(model_state_fpath)
 
     category_list = model_state['category_list']
@@ -251,11 +253,11 @@ def generate_thumbnail_class2_list(
 
     # Create the Theano primitives
     # create theano symbolic expressions that define the network
-    print('\n[wbia_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---')
-    print('[model] creating Theano primitives...')
+    logger.info('\n[wbia_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---')
+    logger.info('[model] creating Theano primitives...')
     theano_predict = model.build_predict_func()
 
-    print('[wbia_cnn] Performing inference...')
+    logger.info('[wbia_cnn] Performing inference...')
     test_results = model.process_batch(theano_predict, np.array(thumbnail_list))
 
     confidences_list = test_results['confidences']
@@ -268,7 +270,7 @@ def generate_thumbnail_class2_list(
 
     # zipped = zip(thumbnail_list, confidence_dict_list)
     # for index, (thumbnail, confidence_dict) in enumerate(zipped):
-    #     print(index)
+    #     logger.info(index)
     #     y = []
     #     for key in confidence_dict:
     #         y.append('%s-%0.04f' % (key, confidence_dict[key], ))
@@ -299,14 +301,14 @@ def generate_thumbnail_aoi2_list(
     data_shape = (192, 192, 4)
     batch_size = None
     # Define model and load weights
-    print('\n[wbia_cnn] Loading model...')
+    logger.info('\n[wbia_cnn] Loading model...')
     if nInput is None:
         try:
             nInput = len(thumbnail_list)
         except TypeError:
-            print('Warning passed in generator without specifying nInput hint')
-            print('Explicitly evaluating generator')
-            print('type(chip_list) = %r' % (type(thumbnail_list),))
+            logger.info('Warning passed in generator without specifying nInput hint')
+            logger.info('Explicitly evaluating generator')
+            logger.info('type(chip_list) = %r' % (type(thumbnail_list),))
             thumbnail_list = list(thumbnail_list)
             nInput = len(thumbnail_list)
 
@@ -326,7 +328,7 @@ def generate_thumbnail_aoi2_list(
         raise ValueError('AoI2 does not have a valid trained model')
 
     model_state_fpath = model.get_model_state_fpath(fpath=weights_path)
-    print('[model] loading model state from: %s' % (model_state_fpath,))
+    logger.info('[model] loading model state from: %s' % (model_state_fpath,))
     model_state = ut.load_cPkl(model_state_fpath)
 
     model.encoder = model_state.get('encoder', None)
@@ -342,8 +344,8 @@ def generate_thumbnail_aoi2_list(
 
     # Create the Theano primitives
     # create theano symbolic expressions that define the network
-    print('\n[wbia_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---')
-    print('[model] creating Theano primitives...')
+    logger.info('\n[wbia_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---')
+    logger.info('[model] creating Theano primitives...')
     theano_predict = model.build_predict_func()
 
     mask = np.zeros((192, 192, 1), dtype=np.uint8)
@@ -364,7 +366,7 @@ def generate_thumbnail_aoi2_list(
         data = np.dstack((thumbnail, mask_))
         data_list.append(data)
 
-    print('[wbia_cnn] Performing inference...')
+    logger.info('[wbia_cnn] Performing inference...')
     test_results = model.process_batch(theano_predict, np.array(data_list))
 
     confidence_list = test_results['confidences']
@@ -386,14 +388,14 @@ def generate_chip_label_list(
     data_shape = (128, 128, 3)
     batch_size = None
     # Define model and load weights
-    print('\n[wbia_cnn] Loading model...')
+    logger.info('\n[wbia_cnn] Loading model...')
     if nInput is None:
         try:
             nInput = len(chip_list)
         except TypeError:
-            print('Warning passed in generator without specifying nInput hint')
-            print('Explicitly evaluating generator')
-            print('type(chip_list) = %r' % (type(chip_list),))
+            logger.info('Warning passed in generator without specifying nInput hint')
+            logger.info('Explicitly evaluating generator')
+            logger.info('type(chip_list) = %r' % (type(chip_list),))
             chip_list = list(chip_list)
             nInput = len(chip_list)
 
@@ -423,7 +425,7 @@ def generate_chip_label_list(
         raise ValueError('Labeler does not have a valid trained model')
 
     model_state_fpath = model.get_model_state_fpath(fpath=weights_path)
-    print('[model] loading model state from: %s' % (model_state_fpath,))
+    logger.info('[model] loading model state from: %s' % (model_state_fpath,))
     model_state = ut.load_cPkl(model_state_fpath)
 
     model.encoder = model_state.get('encoder', None)
@@ -440,11 +442,11 @@ def generate_chip_label_list(
 
     # Create the Theano primitives
     # create theano symbolic expressions that define the network
-    print('\n[wbia_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---')
-    print('[model] creating Theano primitives...')
+    logger.info('\n[wbia_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---')
+    logger.info('[model] creating Theano primitives...')
     theano_predict = model.build_predict_func()
 
-    print('[wbia_cnn] Performing inference...')
+    logger.info('[wbia_cnn] Performing inference...')
     test_results = model.process_batch(theano_predict, np.array(chip_list))
 
     class_list = list(model.encoder.classes_)
@@ -512,7 +514,7 @@ def detect_annot_zebra_background_mask(ibs, aid_list, species=None, config2_=Non
         list: mask_list
     """
     # Read the data
-    print('\n[wbia_cnn] Loading chips...')
+    logger.info('\n[wbia_cnn] Loading chips...')
     chip_list = ibs.get_annot_chips(aid_list, verbose=True, config2_=config2_)
     mask_list = list(generate_species_background(ibs, chip_list, species=species))
     return mask_list
@@ -531,7 +533,7 @@ def detect_annot_whale_fluke_background_mask(
         list: mask_list
     """
     # Read the data
-    print('\n[wbia_cnn] Loading chips...')
+    logger.info('\n[wbia_cnn] Loading chips...')
     chip_list = ibs.get_annot_chips(aid_list, verbose=True, config2_=config2_)
     mask_list = list(generate_species_background(ibs, chip_list, species=species))
     return mask_list
@@ -576,7 +578,7 @@ def generate_species_background_mask(ibs, chip_fpath_list, species=None):
         #>>> ut.show_if_requested()
     """
     # Read the data
-    print('\n[wbia_cnn] Loading chips...')
+    logger.info('\n[wbia_cnn] Loading chips...')
     import vtool as vt
 
     nInput = len(chip_fpath_list)
@@ -654,14 +656,14 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
     # Load chips and resize to the target
     data_shape = (256, 256, 3)
     # Define model and load weights
-    print('\n[wbia_cnn] Loading model...')
+    logger.info('\n[wbia_cnn] Loading model...')
     if nInput is None:
         try:
             nInput = len(chip_list)
         except TypeError:
-            print('Warning passed in generator without specifying nInput hint')
-            print('Explicitly evaluating generator')
-            print('type(chip_list) = %r' % (type(chip_list),))
+            logger.info('Warning passed in generator without specifying nInput hint')
+            logger.info('Explicitly evaluating generator')
+            logger.info('type(chip_list) = %r' % (type(chip_list),))
             chip_list = list(chip_list)
             nInput = len(chip_list)
 
@@ -671,7 +673,7 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
     LEGACY = True
     NEW = True
     confidence_thresh = 0.5
-    print(species)
+    logger.info(species)
 
     candidacy_species_list = [
         'giraffe_masai',
@@ -989,7 +991,7 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         model.load_old_weights_kw2(old_weights_fpath)
     else:
         model_state_fpath = model.get_model_state_fpath(fpath=weights_path)
-        print('[model] loading model state from: %s' % (model_state_fpath,))
+        logger.info('[model] loading model state from: %s' % (model_state_fpath,))
         model_state = ut.load_cPkl(model_state_fpath)
 
         model.output_dims = model_state['output_dims']
@@ -1007,11 +1009,11 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
 
     # Create the Theano primitives
     # create theano symbolic expressions that define the network
-    print('\n[wbia_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---')
-    print('[model] creating Theano primitives...')
+    logger.info('\n[wbia_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---')
+    logger.info('[model] creating Theano primitives...')
     model.build_predict_func()
 
-    print('[wbia_cnn] Performing inference...')
+    logger.info('[wbia_cnn] Performing inference...')
 
     _iter = ut.ProgressIter(
         chip_list,
@@ -1130,7 +1132,7 @@ def test_convolutional(
     if verbose:
         # Start timer
         tt = ut.tic()
-        print('[harness] Loading the testing data (convolutional)...')
+        logger.info('[harness] Loading the testing data (convolutional)...')
     # Try to get the image's shape
     h, w = image.shape[:2]
 
@@ -1212,7 +1214,7 @@ def test_convolutional(
         canvas_dict[label] = np.zeros((h, w))  # We want float precision
     # Construct the canvases using the forward inference results
     label_list_ = label_list_[::-1]
-    # print('[harness] Labels: %r' %(label_list_, ))
+    # logger.info('[harness] Labels: %r' %(label_list_, ))
     zipped = list(zip(data_list, coord_list, label_list, confidence_list))
     for label in label_list_:
         for data, coord, label_, confidence in zipped:
@@ -1269,7 +1271,7 @@ def test_convolutional(
     if verbose:
         # End timer
         duration = ut.toc(tt, verbose=False)
-        print('[harness] Interface took %s seconds...' % (duration,))
+        logger.info('[harness] Interface took %s seconds...' % (duration,))
     # Return the canvas dict
     return samples, canvas_dict
 
@@ -1286,7 +1288,7 @@ def fix_annot_species_viewpoint_quality_cnn(ibs, aid_list, min_conf=0.8):
     # Load chips and resize to the target
     data_shape = (96, 96, 3)
     # Define model and load weights
-    print('Loading model...')
+    logger.info('Loading model...')
     batch_size = int(min(128, 2 ** np.floor(np.log2(len(aid_list)))))
     model = models.ViewpointModel(batch_size=batch_size, data_shape=data_shape)
     weights_path = grabmodels.ensure_model('viewpoint', redownload=False)
@@ -1294,9 +1296,9 @@ def fix_annot_species_viewpoint_quality_cnn(ibs, aid_list, min_conf=0.8):
     model.load_old_weights_kw(old_weights_fpath)
     # Read the data
     target = data_shape[0:2]
-    print('Loading chips...')
+    logger.info('Loading chips...')
     chip_list = ibs.get_annot_chips(aid_list, verbose=True)
-    print('Resizing chips...')
+    logger.info('Resizing chips...')
     chip_list_resized = [
         cv2.resize(chip, target, interpolation=cv2.INTER_LANCZOS4)
         for chip in ut.ProgressIter(chip_list, lbl='resizing chips')
@@ -1356,7 +1358,7 @@ def detect_annot_species_viewpoint_cnn(ibs, aid_list):
     # Load chips and resize to the target
     data_shape = (96, 96, 3)
     # Define model and load weights
-    print('Loading model...')
+    logger.info('Loading model...')
     batch_size = int(min(128, 2 ** np.floor(np.log2(len(aid_list)))))
     model = models.ViewpointModel(batch_size=batch_size, data_shape=data_shape)
     weights_path = grabmodels.ensure_model('viewpoint', redownload=False)
@@ -1364,9 +1366,9 @@ def detect_annot_species_viewpoint_cnn(ibs, aid_list):
     model.load_old_weights_kw(old_weights_fpath)
     # Read the data
     target = data_shape[0:2]
-    print('Loading chips...')
+    logger.info('Loading chips...')
     chip_list = ibs.get_annot_chips(aid_list, verbose=True)
-    print('Resizing chips...')
+    logger.info('Resizing chips...')
     chip_list_resized = [
         cv2.resize(chip, target, interpolation=cv2.INTER_LANCZOS4)
         for chip in ut.ProgressIter(chip_list, lbl='resizing chips')
@@ -1415,7 +1417,7 @@ def validate_annot_species_viewpoint_cnn(ibs, aid_list, verbose=False):
         grouped_list = grouped_dict.values()
         regrouped_items = ut.flatten(ut.sortedby(grouped_list, map(len, grouped_list)))
         candidate_aid_list = ut.get_list_column(regrouped_items, 0)
-        print('candidate_aid_list = %r' % (candidate_aid_list,))
+        logger.info('candidate_aid_list = %r' % (candidate_aid_list,))
     """
     # Load chips and metadata
     species_list = ibs.get_annot_species(aid_list)
@@ -1434,12 +1436,12 @@ def validate_annot_species_viewpoint_cnn(ibs, aid_list, verbose=False):
             continue
     # Print bad if verbose
     if verbose:
-        print('Found conflicting species:')
+        logger.info('Found conflicting species:')
         for bad_species in bad_species_list:
-            print('    AID %4d (%r) should be %r' % bad_species)
-        print('Found conflicting viewpoints:')
+            logger.info('    AID %4d (%r) should be %r' % bad_species)
+        logger.info('Found conflicting viewpoints:')
         for bad_viewpoint in bad_viewpoint_list:
-            print('    AID %4d (%r, %r) should be %r' % bad_viewpoint)
+            logger.info('    AID %4d (%r, %r) should be %r' % bad_viewpoint)
     # Return bad
     return bad_species_list, bad_viewpoint_list
 
@@ -1585,21 +1587,21 @@ def detect_image_cnn(ibs, gid, confidence=0.90, extraction='bing'):
     targetx, targety = target
     # gid = gid_list[random.randint(0, len(gid_list))]
     # gid = gid_list[0]
-    print('Detecting with gid=%r...' % (gid,))
+    logger.info('Detecting with gid=%r...' % (gid,))
     image = ibs.get_images(gid)
     rects = np.copy(image)
     h, w, c = image.shape
 
-    print('Querrying for candidate regions...')
+    logger.info('Querrying for candidate regions...')
     image_path = ibs.get_image_paths(gid)
     if extraction == 'random':
         candidate_list = _suggest_random_candidate_regions(ibs, image, (32, 32))
     else:
         candidate_list = _suggest_bing_candidate_regions(ibs, [image_path])[0]
 
-    print('Num candidates: %r' % (len(candidate_list),))
+    logger.info('Num candidates: %r' % (len(candidate_list),))
     chip_list_resized = []
-    print('Extracting candidate regions...')
+    logger.info('Extracting candidate regions...')
     for candidate in candidate_list:
         x0, y0, x1, y1 = candidate
         chip = image[y0:y1, x0:x1]
@@ -1617,10 +1619,10 @@ def detect_image_cnn(ibs, gid, confidence=0.90, extraction='bing'):
     # Build data for network
     X_test = np.array(chip_list_resized, dtype=np.uint8)
     # Define model and load weights
-    print('Loading model...')
+    logger.info('Loading model...')
     data_shape = (96, 96, 3)
     # Define model and load weights
-    print('Loading model...')
+    logger.info('Loading model...')
     # batch_size = int(min(128, 2 ** np.floor(np.log2(len(chip_list_resized)))))
     batch_size = None
     model = models.ViewpointModel(batch_size=batch_size, data_shape=data_shape)
@@ -1638,9 +1640,9 @@ def detect_image_cnn(ibs, gid, confidence=0.90, extraction='bing'):
 
     num_all_candidates = len(conf_list)
     index_list = non_max_suppression_fast(candidate_list, conf_list)
-    print('Surviving candidates: %r' % (index_list,))
+    logger.info('Surviving candidates: %r' % (index_list,))
     num_supressed_candidates = num_all_candidates - len(index_list)
-    print('Supressed: %d candidates' % (num_supressed_candidates,))
+    logger.info('Supressed: %d candidates' % (num_supressed_candidates,))
 
     candidate_list = np.take(candidate_list, index_list, axis=0)
     pred_list = np.take(pred_list, index_list, axis=0)
@@ -1663,7 +1665,7 @@ def detect_image_cnn(ibs, gid, confidence=0.90, extraction='bing'):
         if conf < confidence:
             skipped += 1
             continue
-        print(
+        logger.info(
             '%r Found %s (%s, %s) at %s'
             % (
                 candidate,
@@ -1678,7 +1680,7 @@ def detect_image_cnn(ibs, gid, confidence=0.90, extraction='bing'):
         # mx = int((x1 - x0) * 0.5)
         # my = int((y1 - y0) * 0.5)
         # cv2.circle(rects, (x0 + mx, y0 + my), 5, color, -1)
-    print(
+    logger.info(
         'Skipped [ %d / %d ]'
         % (
             skipped,
@@ -1751,7 +1753,7 @@ def generate_siam_l2_128_feats(ibs, cid_list, config2_=None):
     patch_size = model.input_shape[-1]
     if config2_ is not None:
         # Get config from config2_ object
-        # print('id(config2_) = ' + str(id(config2_)))
+        # logger.info('id(config2_) = ' + str(id(config2_)))
         feat_cfgstr = config2_.get('feat_cfgstr')
         hesaff_params = config2_.get('hesaff_params')
         assert feat_cfgstr is not None
@@ -1763,7 +1765,7 @@ def generate_siam_l2_128_feats(ibs, cid_list, config2_=None):
         feat_cfgstr=feat_cfgstr.replace('siam128', 'sift'),
         hesaff_params=hesaff_params,
     )
-    print('Generating siam128 features for %d chips' % (len(cid_list),))
+    logger.info('Generating siam128 features for %d chips' % (len(cid_list),))
     BATCHED = True
     if BATCHED:
         ibs.get_chip_feat_rowid(cid_list, config2_=hack_config2_, ensure=True)
@@ -1771,13 +1773,13 @@ def generate_siam_l2_128_feats(ibs, cid_list, config2_=None):
             list(ut.ichunks(cid_list, 128)), lbl='siam128 chip chunk'
         ):
             sift_fid_list = ibs.get_chip_feat_rowid(cid_batch, config2_=hack_config2_)
-            print('Reading keypoints')
+            logger.info('Reading keypoints')
             kpts_list = ibs.get_feat_kpts(sift_fid_list)
-            print('Reading chips')
+            logger.info('Reading chips')
             chip_list = vt.convert_image_list_colorspace(
                 ibs.get_chips(cid_batch, ensure=True), colorspace
             )
-            print('Warping patches')
+            logger.info('Warping patches')
             warped_patches_list = [
                 vt.get_warped_patches(chip, kpts, patch_size=patch_size)[0]
                 for chip, kpts in zip(chip_list, kpts_list)
@@ -1797,13 +1799,13 @@ def generate_siam_l2_128_feats(ibs, cid_list, config2_=None):
         sift_fid_list = ibs.get_chip_feat_rowid(
             cid_list, config2_=hack_config2_, ensure=True
         )  # NOQA
-        print('Reading keypoints')
+        logger.info('Reading keypoints')
         kpts_list = ibs.get_feat_kpts(sift_fid_list)
-        print('Reading chips')
+        logger.info('Reading chips')
         chip_list = vt.convert_image_list_colorspace(
             ibs.get_chips(cid_list, ensure=True), colorspace
         )
-        print('Warping patches')
+        logger.info('Warping patches')
         warped_patches_list = [
             vt.get_warped_patches(chip, kpts, patch_size=patch_size)[0]
             for chip, kpts in zip(chip_list, kpts_list)

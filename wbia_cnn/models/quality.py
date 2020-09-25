@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
+import logging
 import utool as ut
 from lasagne import layers, nonlinearities
 
 from wbia_cnn.models import abstract_models
 
 print, rrr, profile = ut.inject2(__name__)
+logger = logging.getLogger()
 
 
 @ut.reloadable_class

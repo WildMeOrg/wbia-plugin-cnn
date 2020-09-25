@@ -5,6 +5,7 @@ fully setup
 """
 # utils.py
 # provides utilities for learning a neural network model
+import logging
 import time
 import numpy as np
 from six.moves import cPickle as pickle  # NOQA
@@ -13,6 +14,7 @@ import six
 from wbia_cnn import net_strs
 
 print, rrr, profile = ut.inject2(__name__)
+logger = logging.getLogger()
 
 
 # VERBOSE_CNN = ut.get_argflag(('--verbose-cnn', '--verbcnn')) or ut.VERBOSE
@@ -355,7 +357,7 @@ def print_header_columns(printcol_info):
     header_line1 = '[info] ' + '|'.join(header_nice_list)
     header_line2 = '[info] ' + '|'.join(header_line_list)
     header_str = '\n' + header_line1 + '\n' + header_line2
-    print(header_str)
+    logger.info(header_str)
 
 
 def print_epoch_info(model, printcol_info, epoch_info):
@@ -416,7 +418,7 @@ def print_epoch_info(model, printcol_info, epoch_info):
     for func in func_list:
         fmttup += func()
     epoch_info_str = data_fmtstr.format(*fmttup)
-    print(epoch_info_str)
+    logger.info(epoch_info_str)
 
 
 def float32(k):
@@ -539,12 +541,12 @@ def slice_data_labels(
             if yb is not None:
                 yb_extra = y[slice(0, extra // data_per_label)]
                 yb = np.concatenate([yb, yb_extra], axis=0)
-            # print('WRAP')
+            # logger.info('WRAP')
     # Get corret dtype for X
     # Xb = Xb.astype(np.float32)
     if verbose:
-        print('[batchiter]   * x_sl = %r' % (x_sl,))
-        print('[batchiter]   * y_sl = %r' % (y_sl,))
+        logger.info('[batchiter]   * x_sl = %r' % (x_sl,))
+        logger.info('[batchiter]   * y_sl = %r' % (y_sl,))
     return Xb, yb
 
 
@@ -642,14 +644,14 @@ def show_image_from_data(data):
 
 
 def save_model(kwargs, weights_file):
-    print('[model] saving best weights to %s' % (weights_file))
+    logger.info('[model] saving best weights to %s' % (weights_file))
     with open(weights_file, 'wb') as pfile:
         pickle.dump(kwargs, pfile, protocol=pickle.HIGHEST_PROTOCOL)
-    print('[model] ...saved\n')
+    logger.info('[model] ...saved\n')
 
 
 def shock_network(output_layer, voltage=0.10):
-    print('[model] shocking the network with voltage: %0.2f%%' % (voltage,))
+    logger.info('[model] shocking the network with voltage: %0.2f%%' % (voltage,))
     from lasagne import layers
 
     current_weights = layers.get_all_param_values(output_layer)
@@ -660,7 +662,7 @@ def shock_network(output_layer, voltage=0.10):
         # Apply shock
         current_weights[index] += temp
     layers.set_all_param_values(output_layer, current_weights)
-    print('[model] ...shocked')
+    logger.info('[model] ...shocked')
 
 
 def save_pretrained_weights_slice(pretrained_weights, weights_path, slice_=slice(None)):

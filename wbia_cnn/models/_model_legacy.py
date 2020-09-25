@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
+import logging
 import utool as ut
 from six.moves import cPickle as pickle  # NOQA
 
 print, rrr, profile = ut.inject2(__name__)
+logger = logging.getLogger()
 
 
 @ut.reloadable_class
@@ -20,7 +22,7 @@ class _ModelLegacy(object):
                 model.data_params['center_mean'] /= 255.0
 
     def load_old_weights_kw(model, old_weights_fpath):
-        print('[model] loading old model state from: %s' % (old_weights_fpath,))
+        logger.info('[model] loading old model state from: %s' % (old_weights_fpath,))
         oldkw = ut.load_cPkl(old_weights_fpath)
         # Model architecture and weight params
         data_shape = oldkw['model_shape'][1:]
@@ -59,7 +61,7 @@ class _ModelLegacy(object):
         model.set_all_param_values(weights_list)
 
     def load_old_weights_kw2(model, old_weights_fpath):
-        print('[model] loading old model state from: %s' % (old_weights_fpath,))
+        logger.info('[model] loading old model state from: %s' % (old_weights_fpath,))
 
         oldkw = ut.load_cPkl(old_weights_fpath, n=None)
         # output_dims = model.best_results['weights'][-1][0]

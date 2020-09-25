@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
+import logging
 from os.path import join
 import numpy as np
 import utool as ut
 from six.moves import range, zip
 
 print, rrr, profile = ut.inject2(__name__)
+logger = logging.getLogger()
 
 
 def load_mnist_images(gz_fpath):
@@ -181,7 +183,7 @@ def extract_liberty_style_patches(ds_path, pairs):
         match_fname = ''.join(['m50_', str(2 * pairs), '_', str(2 * pairs), '_0.txt'])
         match_fpath = join(ds_path, match_fname)
 
-        # print(pairs, "pairs each (matching/non_matching) from", match_fpath)
+        # logger.info(pairs, "pairs each (matching/non_matching) from", match_fpath)
 
         with open(match_fpath) as match_file:
             # collect patches (id), and match/non-match pairs
@@ -240,7 +242,7 @@ def extract_liberty_style_patches(ds_path, pairs):
     # Build matching labels
     match_pairs, non_match_pairs, all_requested_patch_ids = matches(ds_path, pairs)
     all_requested_patch_ids = np.array(all_requested_patch_ids)
-    print(
+    logger.info(
         'len(match_pairs) = %r'
         % (
             len(
@@ -248,7 +250,7 @@ def extract_liberty_style_patches(ds_path, pairs):
             )
         )
     )
-    print(
+    logger.info(
         'len(non_match_pairs) = %r'
         % (
             len(
@@ -256,7 +258,7 @@ def extract_liberty_style_patches(ds_path, pairs):
             )
         )
     )
-    print(
+    logger.info(
         'len(all_requested_patch_ids) = %r'
         % (
             len(
@@ -300,7 +302,7 @@ def extract_liberty_style_patches(ds_path, pairs):
         for idx, patch in zip(requested_patch_ids_, patches):
             all_patches[idx] = patch
 
-    print('read %d patches ' % (len(all_patches)))
+    logger.info('read %d patches ' % (len(all_patches)))
     # patches_list += [patches]
 
     # all_patches = np.concatenate(patches_list, axis=0)
@@ -346,7 +348,7 @@ def convert_category_to_siam_data(category_data, category_labels):
         is_dup = vt.nonunique_row_flags(pairxs)
         is_eye = pairxs.T[0] == pairxs.T[1]
         needs_fix = np.logical_or(is_dup, is_eye)
-        # print(pairxs[needs_fix])
+        # logger.info(pairxs[needs_fix])
         return needs_fix
 
     def swap_undirected(pairxs):
@@ -371,7 +373,7 @@ def convert_category_to_siam_data(category_data, category_labels):
         needs_fix = find_fix_flags(_pairxs)
         while np.any(needs_fix):
             num_fix = needs_fix.sum()
-            print('fixing: %d' % num_fix)
+            logger.info('fixing: %d' % num_fix)
             _pairxs.T[1][needs_fix] = np.random.choice(
                 right_list, size=num_fix, replace=True
             )
@@ -379,7 +381,7 @@ def convert_category_to_siam_data(category_data, category_labels):
             needs_fix = find_fix_flags(_pairxs)
         return _pairxs
 
-    print('sampling genuine pairs')
+    logger.info('sampling genuine pairs')
     genuine_pairx_list = []
     for groupxs in groupxs_list:
         left_list = groupxs
@@ -388,7 +390,7 @@ def convert_category_to_siam_data(category_data, category_labels):
         _pairxs = sample_pairs(left_list, right_list, size)
         genuine_pairx_list.extend(_pairxs.tolist())
 
-    print('sampling imposter pairs')
+    logger.info('sampling imposter pairs')
     imposter_pairx_list = []
     for index in range(len(groupxs_list)):
         # Pick random pairs of false matches

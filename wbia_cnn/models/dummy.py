@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
+import logging
 import utool as ut
 from wbia_cnn.models import abstract_models
 
 print, rrr, profile = ut.inject2(__name__)
+logger = logging.getLogger()
 
 
 @ut.reloadable_class
@@ -34,7 +36,7 @@ class DummyModel(abstract_models.AbstractCategoricalModel):
         from wbia_cnn import custom_layers
 
         if verbose:
-            print('init arch')
+            logger.info('init arch')
 
         bundles = custom_layers.make_bundles(
             nonlinearity=lasagne.nonlinearities.rectify,

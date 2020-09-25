@@ -6,11 +6,13 @@ Core functions for data augmentation
 References:
     https://github.com/benanne/kaggle-ndsb/blob/master/data.py
 """
+import logging
 import functools
 import numpy as np
 import utool as ut
 
 print, rrr, profile = ut.inject2(__name__)
+logger = logging.getLogger()
 
 
 rot_transforms = [functools.partial(np.rot90, k=k) for k in range(1, 4)]
@@ -195,7 +197,7 @@ def test_transforms():
             name = ut.get_partial_func_name(func)
         else:
             name = ut.get_funcname(func)
-        print(name)
+        logger.info(name)
         warped = func(patch)
         orig_list.append(patch)
         name_list.append(name)
@@ -285,10 +287,10 @@ def stacked_img_pairs(Xb, modified_indexes, label_list=None, num=None):
     patch_list2 = Xb[1::2]
     per_row = 1
     cols = int(num / per_row)
-    # print('len(patch_list1) = %r' % (len(patch_list1),))
-    # print('len(patch_list2) = %r' % (len(patch_list2),))
-    # print('len(modified_indexes) = %r' % (len(modified_indexes),))
-    # print('modified_indexes = %r' % ((modified_indexes),))
+    # logger.info('len(patch_list1) = %r' % (len(patch_list1),))
+    # logger.info('len(patch_list2) = %r' % (len(patch_list2),))
+    # logger.info('len(modified_indexes) = %r' % (len(modified_indexes),))
+    # logger.info('modified_indexes = %r' % ((modified_indexes),))
     tup = draw_results.get_patch_sample_img(
         patch_list1, patch_list2, label_list, {}, modified_indexes, (cols, per_row)
     )
@@ -314,7 +316,7 @@ def show_augmented_patches(Xb, Xb_, yb, yb_, data_per_label=1, shadows=None):
     diff = np.abs((sample1 - sample2))
     diff_batches = diff.sum(-1).sum(-1).sum(-1) > 0
     modified_indexes = np.where(diff_batches > 0)[0]
-    print('modified_indexes = %r' % (modified_indexes,))
+    logger.info('modified_indexes = %r' % (modified_indexes,))
     # modified_indexes = np.arange(num_examples)
 
     Xb_old = vt.rectify_to_uint8(Xb_old)
@@ -744,8 +746,8 @@ def augment_gamma(Xb, yb=None, rng=np.random):
         img2 = Xb2[index]
         gamma1 = (rng.rand() * gamma_range) + gamma_min
         gamma2 = (rng.rand() * gamma_range) + gamma_min
-        # print('gamma1 = %r' % (gamma1,))
-        # print('gamma2 = %r' % (gamma2,))
+        # logger.info('gamma1 = %r' % (gamma1,))
+        # logger.info('gamma2 = %r' % (gamma2,))
         Xb1[index] = img1 ** (gamma1)
         Xb2[index] = img2 ** (gamma2)
     assert Xb.max() <= 1.0, 'max/min = %r, %r' % (Xb.min(), Xb.max())

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 from wbia_cnn import utils
 import numpy as np
 import six
@@ -6,6 +7,7 @@ import utool as ut
 
 # import warnings
 print, rrr, profile = ut.inject2(__name__)
+logger = logging.getLogger()
 
 
 VERBOSE_BATCH = ut.get_module_verbosity_flags('batch')[0] or utils.VERBOSE_CNN
@@ -79,7 +81,7 @@ def process_batch(
                   'randomize_batch_order': True, 'time_thresh': .5,
                   }
 
-        print('Testing Unbuffered')
+        logger.info('Testing Unbuffered')
         batch_iter = batch_iterator(model, X, y, lbl=theano_fn.name, **kwargs)
         for Xb, yb in ut.ProgressIter(batch_iter, lbl=':EXEC FG'):
             [ut.is_prime(346373) for _ in range(2)]
@@ -88,11 +90,11 @@ def process_batch(
         # they are in the unbuffered version
         import sys
         sys.stdout.flush()
-        print('Testing Buffered')
+        logger.info('Testing Buffered')
         sys.stdout.flush()
         batch_iter2 = batch_iterator(model, X, y, lbl=theano_fn.name, **kwargs)
         batch_iter2 = ut.buffered_generator(batch_iter2, buffer_size=4)
-        print('Iterating')
+        logger.info('Iterating')
         for Xb, yb in ut.ProgressIter(batch_iter2, lbl=':EXEC FG'):
             [ut.is_prime(346373) for _ in range(2)]
     """
@@ -142,10 +144,10 @@ def process_batch(
 
             if show:
                 # Print the network output for the first batch
-                print('--------------')
-                print(ut.list_str(zip(output_names, batch_output)))
-                print('Correct: ', yb)
-                print('--------------')
+                logger.info('--------------')
+                logger.info(ut.list_str(zip(output_names, batch_output)))
+                logger.info('Correct: ', yb)
+                logger.info('--------------')
                 show = False
 
     # get outputs of each type
@@ -333,15 +335,17 @@ def batch_iterator(
         # 0.079 mnist time fraction
         X, y = utils.data_label_shuffle(X, y, model.data_per_label_input)
     if verbose:
-        print('[batchiter] BEGIN')
-        print('[batchiter] X.shape %r' % (X.shape,))
+        logger.info('[batchiter] BEGIN')
+        logger.info('[batchiter] X.shape %r' % (X.shape,))
         if y is not None:
-            print('[batchiter] y.shape %r' % (y.shape,))
-        print('[batchiter] augment_on %r' % (augment_on,))
-        print('[batchiter] encoder %r' % (encoder,))
-        print('[batchiter] wraparound %r' % (wraparound,))
-        print('[batchiter] model.data_per_label_input %r' % (model.data_per_label_input,))
-        print('[batchiter] needs_convert = %r' % (needs_convert,))
+            logger.info('[batchiter] y.shape %r' % (y.shape,))
+        logger.info('[batchiter] augment_on %r' % (augment_on,))
+        logger.info('[batchiter] encoder %r' % (encoder,))
+        logger.info('[batchiter] wraparound %r' % (wraparound,))
+        logger.info(
+            '[batchiter] model.data_per_label_input %r' % (model.data_per_label_input,)
+        )
+        logger.info('[batchiter] needs_convert = %r' % (needs_convert,))
 
     # FIXME: put in a layer?
     center_mean = None
@@ -402,7 +406,7 @@ def batch_iterator(
             print_batch_info(Xb, yb, verbose, batch_index, num_batches)
         yield Xb, yb
     if verbose:
-        print('[batch] END')
+        logger.info('[batch] END')
 
 
 def augment_batch(model, Xb, yb, batch_index, verbose, num_batches):
@@ -417,7 +421,7 @@ def augment_batch(model, Xb, yb, batch_index, verbose, num_batches):
     """
     if verbose:
         if verbose > 1 or (batch_index + 1) % num_batches <= 1:
-            print('Augmenting Data')
+            logger.info('Augmenting Data')
             # only copy if we have't yet
     Xb, yb = model.augment(Xb, yb)
     # if DEBUG_AUGMENTATION:
@@ -442,11 +446,11 @@ def pad_labels(model, yb):
 
 def print_batch_info(Xb, yb, verbose, batch_index, num_batches):
     if verbose > 1 or (batch_index + 1) % num_batches <= 1:
-        print('[batch] Yielding batch: batch_index = %r ' % (batch_index,))
-        print('[batch]   * Xb.shape = %r, Xb.dtype=%r' % (Xb.shape, Xb.dtype))
+        logger.info('[batch] Yielding batch: batch_index = %r ' % (batch_index,))
+        logger.info('[batch]   * Xb.shape = %r, Xb.dtype=%r' % (Xb.shape, Xb.dtype))
         if yb is not None:
-            print('[batch]   * yb.shape = %r, yb.dtype=%r' % (yb.shape, yb.dtype))
-            print('[batch]   * yb.sum = %r' % (yb.sum(),))
+            logger.info('[batch]   * yb.shape = %r, yb.dtype=%r' % (yb.shape, yb.dtype))
+            logger.info('[batch]   * yb.sum = %r' % (yb.sum(),))
 
 
 def concatenate_hack(sequence, axis=0):
@@ -457,7 +461,7 @@ def concatenate_hack(sequence, axis=0):
     >>> sequence = (np.array([[]]), np.array([[1, 2, 3]]))
     >>> sequence = (np.array([[1, 2, 3]]), np.array([[]]))
     """
-    # print(sequence)
+    # logger.info(sequence)
     if len(sequence) > 1 and len(sequence[1].shape) == 0:
         arr = np.hstack(sequence)
     else:

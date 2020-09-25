@@ -68,6 +68,7 @@ the dataset. Finalized weights should be copied to and loaded from here.
 |   |   |   |-- arch_{archid} *
 ----------------
 """
+import logging
 import six
 import numpy as np
 import utool as ut
@@ -81,6 +82,7 @@ from wbia_cnn import draw_net
 from wbia_cnn.models import _model_legacy
 
 print, rrr, profile = ut.inject2(__name__)
+logger = logging.getLogger()
 
 
 VERBOSE_CNN = ut.get_module_verbosity_flags('cnn')[0] or ut.VERBOSE
@@ -257,7 +259,7 @@ class History(ut.NiceRepr):
 
         learn_hashid = str(model.arch_id) + '_' + y_hashid
         if history.total_epochs > 0 and history.current_era_size == 0:
-            print('Not starting new era (previous era has no epochs)')
+            logger.info('Not starting new era (previous era has no epochs)')
         else:
             _new_era = {
                 'size': 0,
@@ -269,7 +271,7 @@ class History(ut.NiceRepr):
                 'learn_state': model.learn_state.asdict(),
             }
             num_eras = history.total_eras
-            print('starting new era %d' % (num_eras,))
+            logger.info('starting new era %d' % (num_eras,))
             model.current_era = _new_era
             history.era_list.append(_new_era)
             history._start_epoch = history.total_epochs
@@ -363,7 +365,7 @@ class LearnState(ut.DictLike):
         if self._isinit:
             import theano
 
-            print('[model] setting %s to %.9r' % (key, value))
+            logger.info('[model] setting %s to %.9r' % (key, value))
             _shared = self._shared_state[key]
             if value is None and _shared is not None:
                 raise ValueError('Cannot set an initialized shared variable to None.')
@@ -460,7 +462,7 @@ class _ModelFitter(object):
                 class_to_weight = model.data_params['class_to_weight']
                 w = class_to_weight.take(y).astype(np.float32)
             else:
-                # print('no class weights')
+                # logger.info('no class weights')
                 w = np.ones(y.shape).astype(np.float32)
         return w
 
@@ -495,7 +497,7 @@ class _ModelFitter(object):
         """
         from wbia_cnn import utils
 
-        print('\n[train] --- TRAINING LOOP ---')
+        logger.info('\n[train] --- TRAINING LOOP ---')
         ut.update_existing(model.hyperparams, kwargs)
         ut.delete_dict_keys(kwargs, model.hyperparams.keys())
         ut.update_existing(model.monitor_config, kwargs)
@@ -507,7 +509,7 @@ class _ModelFitter(object):
         try:
             model._validate_input(X_train, y_train)
         except Exception:
-            print('[WARNING] Input validation failed...')
+            logger.info('[WARNING] Input validation failed...')
 
         X_learn, y_learn, X_valid, y_valid = model._ensure_learnval_split(
             X_train, y_train, X_valid, y_valid, valid_idx
@@ -519,9 +521,9 @@ class _ModelFitter(object):
         learn_hist = model.encoder.inverse_transform(y_learn) if has_encoder else y_learn
         valid_hist = model.encoder.inverse_transform(y_valid) if has_encoder else y_valid
         if learn_hist.shape[-1] == 1:
-            print('Learn y histogram: ' + ut.repr2(ut.dict_hist(learn_hist)))
+            logger.info('Learn y histogram: ' + ut.repr2(ut.dict_hist(learn_hist)))
         if valid_hist.shape[-1] == 1:
-            print('Valid y histogram: ' + ut.repr2(ut.dict_hist(valid_hist)))
+            logger.info('Valid y histogram: ' + ut.repr2(ut.dict_hist(valid_hist)))
 
         # FIXME: make class weights more ellegant and customizable
         w_learn = model._default_input_weights(X_learn, y_learn)
@@ -532,15 +534,15 @@ class _ModelFitter(object):
         epoch = model.best_results['epoch_num']
         if epoch is None:
             epoch = 0
-            print('Initializng training at epoch=%r' % (epoch,))
+            logger.info('Initializng training at epoch=%r' % (epoch,))
         else:
-            print('Resuming training at epoch=%r' % (epoch,))
+            logger.info('Resuming training at epoch=%r' % (epoch,))
         # Begin training the neural network
-        print('model.monitor_config = %s' % (ut.repr4(model.monitor_config),))
-        print('model.batch_size = %r' % (model.batch_size,))
-        print('model.hyperparams = %s' % (ut.repr4(model.hyperparams),))
-        print('learn_state = %s' % ut.repr4(model.learn_state.asdict()))
-        print('model.arch_id = %r' % (model.arch_id,))
+        logger.info('model.monitor_config = %s' % (ut.repr4(model.monitor_config),))
+        logger.info('model.batch_size = %r' % (model.batch_size,))
+        logger.info('model.hyperparams = %s' % (ut.repr4(model.hyperparams),))
+        logger.info('learn_state = %s' % ut.repr4(model.learn_state.asdict()))
+        logger.info('model.arch_id = %r' % (model.arch_id,))
 
         # create theano symbolic expressions that define the network
         theano_backprop = model.build_backprop_func()
@@ -698,7 +700,7 @@ class _ModelFitter(object):
                         model._dump_case_monitor(X_learn, y_learn, X_valid, y_valid)
 
                 if check_countdown('stop'):
-                    print('Early stopping')
+                    logger.info('Early stopping')
                     break
 
                 # Check if the era is done
@@ -731,15 +733,15 @@ class _ModelFitter(object):
                 # Break on max epochs
                 if model.hyperparams['max_epochs'] is not None:
                     if epoch >= model.hyperparams['max_epochs']:
-                        print('\n[train] maximum number of epochs reached\n')
+                        logger.info('\n[train] maximum number of epochs reached\n')
                         break
                 # Increment the epoch
                 epoch += 1
 
             except KeyboardInterrupt:
-                print('\n[train] Caught CRTL+C')
-                print('model.arch_id = %r' % (model.arch_id,))
-                print('learn_state = %s' % ut.repr4(model.learn_state.asdict()))
+                logger.info('\n[train] Caught CRTL+C')
+                logger.info('model.arch_id = %r' % (model.arch_id,))
+                logger.info('learn_state = %s' % ut.repr4(model.learn_state.asdict()))
                 from six.moves import input
 
                 actions = ut.odict(
@@ -762,13 +764,13 @@ class _ModelFitter(object):
                     ]
                     msg = ut.indentjoin(msg_list, '\n | * ')
                     msg = ''.join([' +-----------', msg, '\n L-----------\n'])
-                    print(msg)
+                    logger.info(msg)
                     #
                     ans = str(input()).strip()
 
                     # We have a resolution
                     if ans in actions['quit'][0]:
-                        print('quit training...')
+                        logger.info('quit training...')
                         return
                     elif ans in actions['resume'][0]:
                         break
@@ -793,7 +795,7 @@ class _ModelFitter(object):
                     else:
                         continue
                     # Handled the resolution
-                    print('resuming training...')
+                    logger.info('resuming training...')
                     break
             except (IndexError, ValueError, Exception) as ex:
                 ut.printex(ex, 'Error Occurred Embedding to enable debugging', tb=True)
@@ -822,7 +824,7 @@ class _ModelFitter(object):
             w_test = model._default_input_weights(X_test, y_test)
             theano_forward = model.build_forward_func()
             info = model._epoch_validate(theano_forward, X_test, y_test, w_test)
-            print('train info = %r' % (info,))
+            logger.info('train info = %r' % (info,))
             model.dump_cases(X_test, y_test, 'test', dpath=model.arch_dpath)
             # model._run_test(X_test, y_test)
 
@@ -830,11 +832,11 @@ class _ModelFitter(object):
     #    # Perform a test on the fitted model
     #    test_outptuts = model._predict(X_test)
     #    y_pred = test_outptuts['predictions']
-    #    print(model.name)
+    #    logger.info(model.name)
     #    report = sklearn.metrics.classification_report(
     #        y_true=y_test, y_pred=y_pred,
     #    )
-    #    print(report)
+    #    logger.info(report)
     #    pass
 
     def _ensure_learnval_split(
@@ -867,7 +869,7 @@ class _ModelFitter(object):
             # Set to crossvalidate hyperparamters
             X_valid = X_train.take(valid_idx, axis=0)
             y_valid = y_train.take(valid_idx, axis=0)
-        # print('\n[train] --- MODEL INFO ---')
+        # logger.info('\n[train] --- MODEL INFO ---')
         # model.print_arch_str()
         # model.print_layer_info()
         return X_learn, y_learn, X_valid, y_valid
@@ -880,7 +882,7 @@ class _ModelFitter(object):
         if model.hyperparams['whiten_on']:
             # Center the data by subtracting the mean
             if 'center_mean' not in model.data_params:
-                print('computing center mean/std. (hacks std=1)')
+                logger.info('computing center mean/std. (hacks std=1)')
                 X_ = X_learn.astype(np.float32)
                 try:
                     if ut.is_int(X_learn):
@@ -888,7 +890,7 @@ class _ModelFitter(object):
                         X_ = X_ / 255
                     ut.assert_inbounds(X_, 0.0, 1.0, eq=True, verbose=ut.VERBOSE)
                 except ValueError:
-                    print('[WARNING] Input bounds check failed...')
+                    logger.info('[WARNING] Input bounds check failed...')
                 # Ensure that the mean is computed on 0-1 normalized data
                 model.data_params['center_mean'] = np.mean(X_, axis=0)
                 model.data_params['center_std'] = 1.0
@@ -899,7 +901,7 @@ class _ModelFitter(object):
             ut.delete_dict_keys(model.data_params, ['center_mean', 'center_std'])
 
         if model.hyperparams['class_weight'] == 'balanced':
-            print('Balancing class weights')
+            logger.info('Balancing class weights')
             import sklearn.utils
 
             unique_classes = np.array(sorted(ut.unique(y_learn)))
@@ -940,7 +942,7 @@ class _ModelFitter(object):
         """
         Starts a model training session
         """
-        print('Starting new fit session')
+        logger.info('Starting new fit session')
         model._fit_session = {
             'start_time': ut.get_timestamp(),
             'max_era_size': model.hyperparams['era_size'],
@@ -1041,12 +1043,12 @@ class _ModelFitter(object):
         try:
             model.dump_cases(X_learn, y_learn, 'learn')
         except Exception:
-            print('WARNING: DUMP CASES HAS FAILED')
+            logger.info('WARNING: DUMP CASES HAS FAILED')
             pass
         try:
             model.dump_cases(X_valid, y_valid, 'valid')
         except Exception:
-            print('WARNING: DUMP CASES HAS FAILED')
+            logger.info('WARNING: DUMP CASES HAS FAILED')
             pass
         if False:
             try:
@@ -1224,9 +1226,9 @@ class _ModelFitter(object):
 
         # If the training loss is nan, the training has diverged
         if np.isnan(learn_info['learn_loss']):
-            print('\n[train] train loss is Nan. training diverged\n')
-            print('learn_outputs = %r' % (learn_outputs,))
-            print('\n[train] train loss is Nan. training diverged\n')
+            logger.info('\n[train] train loss is Nan. training diverged\n')
+            logger.info('learn_outputs = %r' % (learn_outputs,))
+            logger.info('\n[train] train loss is Nan. training diverged\n')
             """
             from wbia_cnn import draw_net
             draw_net.imwrite_theano_symbolic_graph(theano_backprop)
@@ -1333,7 +1335,7 @@ class _ModelFitter(object):
             ]
         )
         num_cleaned = len(np.nonzero(y_general != y_cleaned)[0])
-        print('Cleaned %d instances' % (num_cleaned,))
+        logger.info('Cleaned %d instances' % (num_cleaned,))
         return y_cleaned
 
     def dump_cases(model, X, y, subset_id='unknown', dpath=None):
@@ -1349,7 +1351,7 @@ class _ModelFitter(object):
         import vtool as vt
         import pandas as pd
 
-        print('Dumping %s cases' % (subset_id,))
+        logger.info('Dumping %s cases' % (subset_id,))
         # pd.set_option("display.max_rows", 20)
         # pd.set_option("display.precision", 2)
         # pd.set_option('expand_frame_repr', False)
@@ -1729,10 +1731,10 @@ class _ModelPredicter(object):
         Returns all prediction outputs of the network in a dictionary.
         """
         if ut.VERBOSE:
-            print('\n[train] --- MODEL INFO ---')
+            logger.info('\n[train] --- MODEL INFO ---')
             model.print_arch_str()
             model.print_layer_info()
-            print('\n[test] predict with batch size %0.1f' % (model.batch_size))
+            logger.info('\n[test] predict with batch size %0.1f' % (model.batch_size))
         # create theano symbolic expressions that define the network
         theano_predict = model.build_predict_func()
         # Begin testing with the neural network
@@ -1779,16 +1781,16 @@ class _ModelBackend(object):
         # theano.compile.FAST_RUN
 
     def build(model):
-        print('[model] --- BUILDING SYMBOLIC THEANO FUNCTIONS ---')
+        logger.info('[model] --- BUILDING SYMBOLIC THEANO FUNCTIONS ---')
         model.build_backprop_func()
         model.build_forward_func()
         model.build_predict_func()
-        print('[model] --- FINISHED BUILD ---')
+        logger.info('[model] --- FINISHED BUILD ---')
 
     def build_predict_func(model):
         """ Computes predictions given unlabeled data """
         if model._theano_predict is None:
-            print('[model.build] request_predict')
+            logger.info('[model.build] request_predict')
             netout_exprs = model._get_network_output()
             network_output_determ = netout_exprs['network_output_determ']
             unlabeled_outputs = model._get_unlabeled_outputs()
@@ -1829,7 +1831,7 @@ class _ModelBackend(object):
             >>> loss_batch = loss_item.eval({X_in: Xb, y_in: yb})
         """
         if model._theano_forward is None:
-            print('[model.build] request_forward')
+            logger.info('[model.build] request_forward')
             model.learn_state.init()
             fn_inputs = model._theano_fn_inputs
             X_batch, X_given = ut.take(fn_inputs, ['X_batch', 'X_given'])
@@ -1862,7 +1864,7 @@ class _ModelBackend(object):
         Returns diagnostic information.
         """
         if model._theano_backprop is None:
-            print('[model.build] request_backprop')
+            logger.info('[model.build] request_backprop')
             # Must have an initialized learning state
             model.learn_state.init()
 
@@ -1922,7 +1924,7 @@ class _ModelBackend(object):
             else:
                 w_type = T.vector
 
-            print('[model] Using y_type = %r' % (y_type,))
+            logger.info('[model] Using y_type = %r' % (y_type,))
 
             fn_inputs = {
                 # Data
@@ -1993,7 +1995,7 @@ class _ModelBackend(object):
                 # Loss of each example/item
                 # Record loss standard deviation over batch for diagnostics
 
-                print('Building symbolic loss function')
+                logger.info('Building symbolic loss function')
                 loss_item = model.loss_function(netout_learn, y_batch)
                 loss_item.name = 'loss_item'
                 # loss_std = loss_item.std()
@@ -2003,7 +2005,7 @@ class _ModelBackend(object):
                 )
                 loss.name = 'loss'
 
-                print('Building symbolic loss function (determenistic)')
+                logger.info('Building symbolic loss function (determenistic)')
                 loss_item_determ = model.loss_function(netout_determ, y_batch)
                 loss_item_determ.name = 'loss_item_determ'
                 # loss_std_determ = loss_item_determ.std()
@@ -2661,7 +2663,7 @@ class _ModelVisualization(object):
         yscale='log',
     ):
 
-        # print('Show Era Measure ylabel = %r' % (ylabel,))
+        # logger.info('Show Era Measure ylabel = %r' % (ylabel,))
         import plottool as pt
 
         num_eras = model.history.total_eras
@@ -2966,7 +2968,7 @@ class _ModelStrings(object):
     # --- PRINTING
 
     def print_state_str(model, **kwargs):
-        print(model.get_state_str(**kwargs))
+        logger.info(model.get_state_str(**kwargs))
 
     def print_layer_info(model):
         net_strs.print_layer_info(model.get_all_layers())
@@ -2975,18 +2977,18 @@ class _ModelStrings(object):
         architecture_str = model.get_arch_str(sep=sep)
         if architecture_str is None or architecture_str == '':
             architecture_str = 'UNDEFINED'
-        print('\nArchitecture:' + sep + architecture_str)
+        logger.info('\nArchitecture:' + sep + architecture_str)
 
     def print_model_info_str(model):
-        print('\n---- Arch Str')
+        logger.info('\n---- Arch Str')
         model.print_arch_str(sep='\n')
-        print('\n---- Layer Info')
+        logger.info('\n---- Layer Info')
         model.print_layer_info()
-        print('\n---- Arch HashID')
-        print(
+        logger.info('\n---- Arch HashID')
+        logger.info(
             'arch_hashid=%r' % (model.get_arch_hashid()),
         )
-        print('----')
+        logger.info('----')
 
 
 @ut.reloadable_class
@@ -3117,14 +3119,14 @@ class _ModelIO(object):
             >>> model.print_structure()
 
         """
-        # print(model.model_dpath)
-        print(model.arch_dpath)
-        # print(model.best_dpath)
-        print(model.saved_session_dpath)
-        print(model.checkpoint_dpath)
-        print(model.diagnostic_dpath)
-        print(model.trained_model_dpath)
-        print(model.trained_arch_dpath)
+        # logger.info(model.model_dpath)
+        logger.info(model.arch_dpath)
+        # logger.info(model.best_dpath)
+        logger.info(model.saved_session_dpath)
+        logger.info(model.checkpoint_dpath)
+        logger.info(model.diagnostic_dpath)
+        logger.info(model.trained_model_dpath)
+        logger.info(model.trained_arch_dpath)
 
     @property
     def trained_model_dpath(model):
@@ -3227,7 +3229,7 @@ class _ModelIO(object):
                 )
             else:
                 checkpoint_tag = basename(matching_dpaths[0])
-                print(
+                logger.info(
                     'Resolved checkpoint pattern to checkpoint_tag=%r' % (checkpoint_tag,)
                 )
         return checkpoint_tag
@@ -3286,10 +3288,10 @@ class _ModelIO(object):
             # 'arch_tag': model.arch_tag,
         }
         model_state_fpath = model.get_model_state_fpath(**kwargs)
-        # print('saving model state to: %s' % (model_state_fpath,))
+        # logger.info('saving model state to: %s' % (model_state_fpath,))
         ut.save_cPkl(model_state_fpath, model_state, verbose=False)
-        print('saved model state to %r' % (model_state_fpath,))
-        # print('finished saving')
+        logger.info('saved model state to %r' % (model_state_fpath,))
+        # logger.info('finished saving')
         return model_state_fpath
 
     def save_model_info(model, **kwargs):
@@ -3301,9 +3303,9 @@ class _ModelIO(object):
             'era_history': model.history,
         }
         model_info_fpath = model.get_model_state_fpath(**kwargs)
-        # print('saving model info to: %s' % (model_info_fpath,))
+        # logger.info('saving model info to: %s' % (model_info_fpath,))
         ut.save_cPkl(model_info_fpath, model_info, verbose=False)
-        print('saved model info')
+        logger.info('saved model info')
 
     def load_model_state(model, **kwargs):
         """
@@ -3321,7 +3323,7 @@ class _ModelIO(object):
             >>> model.load_model_state()
         """
         model_state_fpath = model.get_model_state_fpath(**kwargs)
-        print('[model] loading model state from: %s' % (model_state_fpath,))
+        logger.info('[model] loading model state from: %s' % (model_state_fpath,))
         model_state = ut.load_cPkl(model_state_fpath)
         if model.__class__.__name__ != 'BaseModel':
             assert (
@@ -3337,7 +3339,7 @@ class _ModelIO(object):
                 model.data_params = model_state['data_params']
         else:
             # HACK TO LOAD ABSTRACT MODEL FOR DIAGNOSITIC REASONS
-            print('WARNING LOADING ABSTRACT MODEL')
+            logger.info('WARNING LOADING ABSTRACT MODEL')
         model.best_results = model_state['best_results']
         model.input_shape = model_state['input_shape']
         model.output_dims = model_state['output_dims']
@@ -3358,11 +3360,11 @@ class _ModelIO(object):
     def load_extern_weights(model, **kwargs):
         """ load weights from another model """
         model_state_fpath = model.get_model_state_fpath(**kwargs)
-        print('[model] loading extern weights from: %s' % (model_state_fpath,))
+        logger.info('[model] loading extern weights from: %s' % (model_state_fpath,))
         model_state = ut.load_cPkl(model_state_fpath)
         if VERBOSE_CNN:
-            print('External Model State:')
-            print(ut.dict_str(model_state, truncate=True))
+            logger.info('External Model State:')
+            logger.info(ut.dict_str(model_state, truncate=True))
         # check compatibility with this architecture
         assert (
             model_state['input_shape'][1:] == model.input_shape[1:]
@@ -3472,7 +3474,7 @@ class _ModelUtility(object):
         model._validate_labels(X, y, w)
 
     def make_random_testdata(model, num=37, rng=0, cv2_format=False, asint=False):
-        print('made random testdata')
+        logger.info('made random testdata')
         rng = ut.ensure_rng(rng)
         num_labels = num
         num_data = num * model.data_per_label_input
@@ -3619,11 +3621,11 @@ class BaseModel(
         if isinstance(W, six.string_types):
             if W == 'orthogonal':
                 W = lasagne.init.Orthogonal()
-        print('Reinitializing all weights to %r' % (W,))
+        logger.info('Reinitializing all weights to %r' % (W,))
         weights_list = model.get_all_params(regularizable=True, trainable=True)
-        # print(weights_list)
+        # logger.info(weights_list)
         for weights in weights_list:
-            # print(weights)
+            # logger.info(weights)
             shape = weights.get_value().shape
             new_values = W.sample(shape)
             weights.set_value(new_values)
@@ -3661,13 +3663,13 @@ class AbstractCategoricalModel(BaseModel):
         model.requested_headers += ['valid_acc']
 
     def init_encoder(model, labels):
-        print('[model] encoding labels')
+        logger.info('[model] encoding labels')
         from sklearn import preprocessing
 
         model.encoder = preprocessing.LabelEncoder()
         model.encoder.fit(labels)
         model.output_dims = len(list(np.unique(labels)))
-        print('[model] model.output_dims = %r' % (model.output_dims,))
+        logger.info('[model] model.output_dims = %r' % (model.output_dims,))
 
     def loss_function(model, network_output, truth):
         # https://en.wikipedia.org/wiki/Loss_functions_for_classification
@@ -3724,7 +3726,7 @@ class AbstractVectorModel(BaseModel):
 
     def init_output_dims(model, labels):
         model.output_dims = labels.shape[-1]
-        print('[model] model.output_dims = %r' % (model.output_dims,))
+        logger.info('[model] model.output_dims = %r' % (model.output_dims,))
 
     # def loss_function(model, network_output, truth):
     #     from theano import tensor as T  # NOQA
@@ -3793,7 +3795,7 @@ def report_error(msg):
     if False:
         raise ValueError(msg)
     else:
-        print('WARNING:' + msg)
+        logger.info('WARNING:' + msg)
 
 
 # def evaluate_layer_list(network_layers_def, verbose=None):
@@ -3805,29 +3807,29 @@ def report_error(msg):
 #    total = len(network_layers_def)
 #    network_layers = []
 #    if verbose:
-#        print('Evaluting List of %d Layers' % (total,))
+#        logger.info('Evaluting List of %d Layers' % (total,))
 #    layer_fn_iter = iter(network_layers_def)
 #    try:
 #        with ut.Indenter(' ' * 4, enabled=verbose):
 #            next_args = tuple()
 #            for count, layer_fn in enumerate(layer_fn_iter, start=1):
 #                if verbose:
-#                    print('Evaluating layer %d/%d (%s) ' %
+#                    logger.info('Evaluating layer %d/%d (%s) ' %
 #                          (count, total, ut.get_funcname(layer_fn), ))
 #                with ut.Timer(verbose=False) as tt:
 #                    layer = layer_fn(*next_args)
 #                next_args = (layer,)
 #                network_layers.append(layer)
 #                if verbose:
-#                    print('  * took %.4fs' % (tt.toc(),))
-#                    print('  * layer = %r' % (layer,))
+#                    logger.info('  * took %.4fs' % (tt.toc(),))
+#                    logger.info('  * layer = %r' % (layer,))
 #                    if hasattr(layer, 'input_shape'):
-#                        print('  * layer.input_shape = %r' % (
+#                        logger.info('  * layer.input_shape = %r' % (
 #                            layer.input_shape,))
 #                    if hasattr(layer, 'shape'):
-#                        print('  * layer.shape = %r' % (
+#                        logger.info('  * layer.shape = %r' % (
 #                            layer.shape,))
-#                    print('  * layer.output_shape = %r' % (
+#                    logger.info('  * layer.output_shape = %r' % (
 #                        layer.output_shape,))
 #    except Exception as ex:
 #        keys = ['layer_fn', 'layer_fn.func', 'layer_fn.args',

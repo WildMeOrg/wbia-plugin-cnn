@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 import functools
 import numpy as np
 import utool as ut
@@ -6,6 +7,7 @@ from six.moves import cPickle as pickle  # NOQA
 from wbia_cnn import net_strs
 
 print, rrr, profile = ut.inject2(__name__)
+logger = logging.getLogger()
 
 
 class PretrainedNetwork(object):
@@ -79,8 +81,8 @@ class PretrainedNetwork(object):
             assert W.shape[0] == b.shape[0]
         except Exception:
             b = None
-        print(W.shape)
-        print(b.shape)
+        logger.info(W.shape)
+        logger.info(b.shape)
         num_filters = self.get_layer_num_filters(layer_index)
         filter_size = self.get_layer_filter_size(layer_index)
 
@@ -119,7 +121,9 @@ class PretrainedNetwork(object):
                     pt.layer_index,
                     pt.model_key,
                 )
-                print('[pretrained] Sampling layer %d from pretrained model %r' % args)
+                logger.info(
+                    '[pretrained] Sampling layer %d from pretrained model %r' % args
+                )
                 if len(shape) == 1:
                     assert shape[0] <= pt.pretrained_layer.shape[0]
                     pretrained_weights = pt.pretrained_layer[: shape[0]]

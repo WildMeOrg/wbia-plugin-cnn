@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 from wbia_cnn import utils
 from wbia_cnn import ingest_helpers
 from wbia_cnn import ingest_wbia
@@ -7,6 +8,7 @@ from os.path import join, basename, splitext
 import utool as ut
 
 print, rrr, profile = ut.inject2(__name__)
+logger = logging.getLogger()
 
 
 NOCACHE_DATASET = ut.get_argflag(('--nocache-cnn', '--nocache-dataset'))
@@ -110,10 +112,10 @@ def merge_datasets(dataset_list):
     consensus_check = consensus_check_factory()
 
     for dataset in dataset_list:
-        print(ut.get_file_nBytes_str(dataset.data_fpath))
-        print(dataset.data_fpath_dict['full'])
-        print(dataset.num_labels)
-        print(dataset.data_per_label)
+        logger.info(ut.get_file_nBytes_str(dataset.data_fpath))
+        logger.info(dataset.data_fpath_dict['full'])
+        logger.info(dataset.num_labels)
+        logger.info(dataset.data_per_label)
         total_num_labels += dataset.num_labels
         total_num_data += dataset.data_per_label * dataset.num_labels
         # check that all data_dims agree
@@ -482,7 +484,7 @@ def get_wbia_patch_siam_dataset(**kwargs):
     # Nets dir is the root dir for all training on this data
     training_dpath = ibs.get_neuralnet_dir()
     ut.ensuredir(training_dpath)
-    print('\n\n[get_wbia_patch_siam_dataset] START')
+    logger.info('\n\n[get_wbia_patch_siam_dataset] START')
     # log_dir = join(training_dpath, 'logs')
     # ut.start_logging(log_dir=log_dir)
 
@@ -516,7 +518,7 @@ def get_wbia_patch_siam_dataset(**kwargs):
         # Extract and cache the data
         # TODO: metadata
         if ut.get_argflag('--dryrun'):
-            print('exiting due to dry run')
+            logger.info('exiting due to dry run')
             import sys
 
             sys.exit(0)
@@ -531,7 +533,7 @@ def get_wbia_patch_siam_dataset(**kwargs):
             colorspace=colorspace,
         )
         data_fpath, labels_fpath, metadata_fpath, training_dpath, data_shape = tup
-        print('\n[get_wbia_patch_siam_dataset] FINISH\n\n')
+        logger.info('\n[get_wbia_patch_siam_dataset] FINISH\n\n')
 
     # hack for caching num_labels
     labels = ut.load_data(labels_fpath)
@@ -586,7 +588,7 @@ def get_wbia_part_siam_dataset(**kwargs):
     )
 
     datakw.update(kwargs)
-    print('\n\n[get_wbia_part_siam_dataset] START')
+    logger.info('\n\n[get_wbia_part_siam_dataset] START')
 
     alias_key = ut.dict_str(datakw, nl=False, explicit=True)
 
@@ -621,7 +623,7 @@ def get_wbia_part_siam_dataset(**kwargs):
         )
         # Extract and cache the data, labels, and metadata
         if ut.get_argflag('--dryrun'):
-            print('exiting due to dry run')
+            logger.info('exiting due to dry run')
             import sys
 
             sys.exit(0)
@@ -629,7 +631,7 @@ def get_wbia_part_siam_dataset(**kwargs):
             ibs, aid_pairs, label_list, flat_metadata, colorspace=colorspace
         )
         data_fpath, labels_fpath, metadata_fpath, training_dpath, data_shape = tup
-        print('\n[get_wbia_part_siam_dataset] FINISH\n\n')
+        logger.info('\n[get_wbia_part_siam_dataset] FINISH\n\n')
 
     # hack for caching num_labels
     labels = ut.load_data(labels_fpath)
@@ -715,7 +717,7 @@ def get_numpy_dataset2(name, data_fpath, labels_fpath, training_dpath, cache=Tru
         dataset.add_split('train', train_idxs)
         dataset.add_split('valid', valid_idxs)
         dataset.clear_cache()
-        print('LOADING FROM DATASET RAW')
+        logger.info('LOADING FROM DATASET RAW')
 
     dataset.ensure_symlinked()
     return dataset

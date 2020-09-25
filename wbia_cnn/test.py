@@ -3,11 +3,13 @@
 """
 tests a test set of data using a specified, pre0trained model and weights
 """
+import logging
 from wbia_cnn import utils
 import utool as ut
 import six  # NOQA
 
 print, rrr, profile = ut.inject2(__name__)
+logger = logging.getLogger()
 
 
 def test(
@@ -26,8 +28,8 @@ def test(
     ######################################################################################
 
     # Load the data
-    print('\n[data] loading data...')
-    print('data_fpath = %r' % (data_fpath,))
+    logger.info('\n[data] loading data...')
+    logger.info('data_fpath = %r' % (data_fpath,))
     X_test, y_test = utils.load(data_fpath, labels_fpath)
     if len(X_test.shape) == 3:
         # add channel dimension for implicit grayscale
