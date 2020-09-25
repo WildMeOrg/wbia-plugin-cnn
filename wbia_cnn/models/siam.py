@@ -20,7 +20,6 @@ References:
     https://github.com/Lasagne/Lasagne/issues/168
     https://groups.google.com/forum/#!topic/lasagne-users/7JX_8zKfDI0
 """
-from __future__ import absolute_import, division, print_function
 import lasagne  # NOQA
 from lasagne import init, layers, nonlinearities
 import functools

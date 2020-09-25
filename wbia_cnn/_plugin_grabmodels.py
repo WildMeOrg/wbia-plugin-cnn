@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 # -*- coding                                        :utf-8 -*-
-from __future__ import absolute_import, division, print_function
 import utool as ut
 
 (print, rrr, profile) = ut.inject2(__name__, '[wbia_cnn._plugin_grabmodels]')

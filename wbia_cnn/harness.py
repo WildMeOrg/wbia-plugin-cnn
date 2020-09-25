@@ -12,7 +12,6 @@ http://cs231n.github.io/neural-networks-3/#distr
 Pretrained Models:
     https://github.com/fchollet/deep-learning-models
 """
-from __future__ import absolute_import, division, print_function
 from six.moves import input, zip, range  # NOQA
 import utool as ut
 

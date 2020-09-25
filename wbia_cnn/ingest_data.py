@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function
 from wbia_cnn import utils
 from wbia_cnn import ingest_helpers
 from wbia_cnn import ingest_wbia

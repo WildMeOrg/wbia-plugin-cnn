@@ -68,7 +68,6 @@ the dataset. Finalized weights should be copied to and loaded from here.
 |   |   |   |-- arch_{archid} *
 ----------------
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
 import six
 import numpy as np
 import utool as ut
