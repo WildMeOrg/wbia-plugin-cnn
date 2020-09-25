@@ -6,7 +6,6 @@ Core functions for data augmentation
 References:
     https://github.com/benanne/kaggle-ndsb/blob/master/data.py
 """
-from __future__ import absolute_import, division, print_function
 import functools
 import numpy as np
 import utool as ut

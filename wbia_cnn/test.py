@@ -3,7 +3,6 @@
 """
 tests a test set of data using a specified, pre0trained model and weights
 """
-from __future__ import absolute_import, division, print_function
 from wbia_cnn import utils
 import utool as ut
 import six  # NOQA

@@ -25,7 +25,6 @@ CommandLineHelp:
     --device = <processor>
        sets theano device flag to a processor like gpu0, gpu1, or cpu0
 """
-from __future__ import absolute_import, division, print_function
 from wbia_cnn import models
 from wbia_cnn import ingest_data
 from wbia_cnn import experiments

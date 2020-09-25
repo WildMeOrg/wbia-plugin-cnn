@@ -5,7 +5,6 @@ fully setup
 """
 # utils.py
 # provides utilities for learning a neural network model
-from __future__ import absolute_import, division, print_function
 import time
 import numpy as np
 from six.moves import cPickle as pickle  # NOQA

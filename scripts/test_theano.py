@@ -6,7 +6,6 @@ References:
 
 python `python -c "import os, theano; print os.path.dirname(theano.__file__)"`/misc/check_blas.py
 """
-from __future__ import absolute_import, division, print_function
 import theano
 
 # from theano import function, config, shared, sandbox

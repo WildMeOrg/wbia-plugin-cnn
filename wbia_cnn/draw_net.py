@@ -9,7 +9,6 @@ References:
     # TODO:
     https://github.com/dnouri/nolearn/blob/master/nolearn/lasagne/visualize.py
 """
-from __future__ import absolute_import, division, print_function
 from operator import itemgetter
 from os.path import join, exists
 import numpy as np
