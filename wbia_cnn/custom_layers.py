@@ -941,9 +941,7 @@ def make_bundles(
 
         def apply_dropout(self, layer):
             # change name standard
-            outgoing = layers.DropoutLayer(
-                layer, p=self.dropout, name='D' + self.name
-            )
+            outgoing = layers.DropoutLayer(layer, p=self.dropout, name='D' + self.name)
             return outgoing
 
         def apply_batch_norm(self, layer, **kwargs):
@@ -982,9 +980,7 @@ def make_bundles(
         def __call__(self):
             outgoing = layers.InputLayer(shape=self.shape, name='I' + self.name)
             if self.noise:
-                outgoing = layers.GaussianNoiseLayer(
-                    outgoing, name='N' + self.name
-                )
+                outgoing = layers.GaussianNoiseLayer(outgoing, name='N' + self.name)
             return outgoing
 
     @register_bundle
