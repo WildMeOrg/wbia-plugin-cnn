@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 import six
 import random
 from lasagne import layers, nonlinearities
@@ -7,6 +8,7 @@ from wbia_cnn.models import abstract_models
 import utool as ut
 
 print, rrr, profile = ut.inject2(__name__)
+logger = logging.getLogger()
 
 
 @six.add_metaclass(ut.ReloadingMetaclass)

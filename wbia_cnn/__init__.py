@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 ### __init__.py ###
 # flake8: noqa
+import logging
 import utool as ut
 
 ut.noinject(__name__, '[wbia_cnn.__init__]')
@@ -12,6 +13,7 @@ from wbia_cnn import theano_ext
 
 # from wbia_cnn import _plugin
 print, print_, profile = ut.inject2(__name__, '[wbia_cnn]')
+logger = logging.getLogger()
 
 try:
     from wbia_cnn._version import __version__
@@ -26,7 +28,7 @@ def reassign_submodule_attributes(verbose=True):
     import sys
 
     if verbose and '--quiet' not in sys.argv:
-        print('dev reimport')
+        logger.info('dev reimport')
     # Self import
     import wbia_cnn
 
@@ -66,7 +68,7 @@ def reload_subs(verbose=True):
         # hackish way of propogating up the new reloaded submodule attributes
         reassign_submodule_attributes(verbose=verbose)
     except Exception as ex:
-        print(ex)
+        logger.info(ex)
 
 
 rrrr = reload_subs

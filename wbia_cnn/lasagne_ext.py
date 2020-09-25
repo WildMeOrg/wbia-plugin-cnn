@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 import warnings
 import utool as ut
 from lasagne import layers
@@ -6,6 +7,7 @@ import theano
 from theano import tensor as T  # NOQA
 
 (print, rrr, profile) = ut.inject2(__name__)
+logger = logging.getLogger()
 
 
 def l1(layer, include_biases=False):

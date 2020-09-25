@@ -3,12 +3,14 @@
 """
 
 """
+import logging
 from wbia.detecttools.directory import Directory
 from os.path import join, abspath, exists, basename
 import utool as ut
 import numpy as np
 
 (print, rrr, profile) = ut.inject2(__name__)
+logger = logging.getLogger()
 
 
 def process_image_directory(project_name, size, reset=True):
@@ -32,7 +34,7 @@ def process_image_directory(project_name, size, reset=True):
     # Process by resizing the images into the desired shape
     for file_path in direct.files():
         file_name = basename(file_path)
-        print('Processing %r' % (file_name,))
+        logger.info('Processing %r' % (file_name,))
         image = cv2.imread(file_path)
         image = cv2.resize(image, size, interpolation=cv2.INTER_LANCZOS4)
         dest_path = join(project_processed_path, file_name)
@@ -94,7 +96,7 @@ def numpy_processed_directory(
     # Process by loading images into the numpy array for saving
     for index, file_path in enumerate(direct.files()):
         file_name = basename(file_path)
-        print('Processing %r' % (file_name,))
+        logger.info('Processing %r' % (file_name,))
         image = cv2.imread(file_path)
         try:
             label = label_dict[file_name]
@@ -105,7 +107,7 @@ def numpy_processed_directory(
             X.append(image)  # cv2 format
             y.append(label)
         except KeyError:
-            print('Cannot find label...skipping')
+            logger.info('Cannot find label...skipping')
             # raw_input()
 
     ids = np.array(ids)
@@ -114,12 +116,12 @@ def numpy_processed_directory(
     y = np.array(y)
 
     # Save numpy array
-    print('  ids.shape = %r' % (ids.shape,))
-    print('  ids.dtype = %r' % (ids.dtype,))
-    print('  X.shape   = %r' % (X.shape,))
-    print('  X.dtype   = %r' % (X.dtype,))
-    print('  y.shape   = %r' % (y.shape,))
-    print('  y.dtype   = %r' % (y.dtype,))
+    logger.info('  ids.shape = %r' % (ids.shape,))
+    logger.info('  ids.dtype = %r' % (ids.dtype,))
+    logger.info('  X.shape   = %r' % (X.shape,))
+    logger.info('  X.dtype   = %r' % (X.dtype,))
+    logger.info('  y.shape   = %r' % (y.shape,))
+    logger.info('  y.dtype   = %r' % (y.dtype,))
     np.save(project_numpy_ids_file_name, ids)
     np.save(project_numpy_x_file_name, X)
     np.save(project_numpy_y_file_name, y)
@@ -136,7 +138,7 @@ def numpy_processed_directory2(
 ):
     import cv2
 
-    print('Caching images into Numpy files...')
+    logger.info('Caching images into Numpy files...')
 
     raw_path = join(extracted_path, 'raw')
     labels_path = join(extracted_path, 'labels')
@@ -174,7 +176,7 @@ def numpy_processed_directory2(
     for index, file_path in enumerate(direct.files()):
         file_name = basename(file_path)
         if verbose:
-            print('Processing %r' % (file_name,))
+            logger.info('Processing %r' % (file_name,))
         image = cv2.imread(file_path)
         try:
             label = label_dict[file_name]
@@ -185,7 +187,7 @@ def numpy_processed_directory2(
             X.append(image)  # cv2 format
             y.append(label)
         except KeyError:
-            print('Cannot find label...skipping')
+            logger.info('Cannot find label...skipping')
             # raw_input()
 
     ids = np.array(ids)
@@ -194,12 +196,12 @@ def numpy_processed_directory2(
     y = np.array(y)
 
     # Save numpy array
-    print('  ids.shape = %r' % (ids.shape,))
-    print('  ids.dtype = %r' % (ids.dtype,))
-    print('  X.shape   = %r' % (X.shape,))
-    print('  X.dtype   = %r' % (X.dtype,))
-    print('  y.shape   = %r' % (y.shape,))
-    print('  y.dtype   = %r' % (y.dtype,))
+    logger.info('  ids.shape = %r' % (ids.shape,))
+    logger.info('  ids.dtype = %r' % (ids.dtype,))
+    logger.info('  X.shape   = %r' % (X.shape,))
+    logger.info('  X.dtype   = %r' % (X.dtype,))
+    logger.info('  y.shape   = %r' % (y.shape,))
+    logger.info('  y.dtype   = %r' % (y.dtype,))
     np.save(project_numpy_ids_file_name, ids)
     np.save(project_numpy_x_file_name, X)
     np.save(project_numpy_y_file_name, y)
@@ -223,7 +225,7 @@ def numpy_processed_directory3(
 ):
     import cv2
 
-    print('Caching images into Numpy files with category vector...')
+    logger.info('Caching images into Numpy files with category vector...')
 
     raw_path = join(extracted_path, 'raw')
     labels_path = join(extracted_path, 'labels')
@@ -259,7 +261,7 @@ def numpy_processed_directory3(
         count_dict[count] += 1
         label_dict[file_name] = label
 
-    print('count_dict = %s' % (ut.repr3(count_dict),))
+    logger.info('count_dict = %s' % (ut.repr3(count_dict),))
 
     # Get shape for all images
     shape_x = list(cv2.imread(direct.files()[0]).shape)
@@ -279,7 +281,7 @@ def numpy_processed_directory3(
     for index, file_path in enumerate(direct.files()):
         file_name = basename(file_path)
         if verbose:
-            print('Processing %r' % (file_name,))
+            logger.info('Processing %r' % (file_name,))
         image = cv2.imread(file_path)
         try:
             label = np.array(label_dict[file_name])
@@ -290,7 +292,7 @@ def numpy_processed_directory3(
             X.append(image)  # cv2 format
             y.append(label)
         except KeyError:
-            print('Cannot find label...skipping')
+            logger.info('Cannot find label...skipping')
             # raw_input()
 
     ids = np.array(ids)
@@ -299,13 +301,13 @@ def numpy_processed_directory3(
     y = np.vstack(y)
 
     # Save numpy array
-    print('  ids.shape  = %r' % (ids.shape,))
-    print('  ids.dtype  = %r' % (ids.dtype,))
-    print('  X.shape    = %r' % (X.shape,))
-    print('  X.dtype    = %r' % (X.dtype,))
-    print('  y.shape    = %r' % (y.shape,))
-    print('  y.dtype    = %r' % (y.dtype,))
-    print('  categories = %r' % (category_list,))
+    logger.info('  ids.shape  = %r' % (ids.shape,))
+    logger.info('  ids.dtype  = %r' % (ids.dtype,))
+    logger.info('  X.shape    = %r' % (X.shape,))
+    logger.info('  X.dtype    = %r' % (X.dtype,))
+    logger.info('  y.shape    = %r' % (y.shape,))
+    logger.info('  y.dtype    = %r' % (y.dtype,))
+    logger.info('  categories = %r' % (category_list,))
     np.save(project_numpy_ids_file_name, ids)
     np.save(project_numpy_x_file_name, X)
     np.save(project_numpy_y_file_name, y)
@@ -326,7 +328,7 @@ def numpy_processed_directory4(
     reset=True,
     verbose=False,
 ):
-    print('Caching images into Numpy files with category vector...')
+    logger.info('Caching images into Numpy files with category vector...')
 
     raw_path = join(extracted_path, 'raw')
     labels_path = join(extracted_path, 'labels')
@@ -358,7 +360,7 @@ def numpy_processed_directory4(
     for index, file_path in enumerate(direct.files()):
         file_name = basename(file_path)
         if verbose:
-            print('Processing %r' % (file_name,))
+            logger.info('Processing %r' % (file_name,))
 
         with open(file_path, 'r') as file_:
             data = np.load(file_)
@@ -368,19 +370,19 @@ def numpy_processed_directory4(
             X.append(data)
             y.append(label)
         except KeyError:
-            print('Cannot find label...skipping')
+            logger.info('Cannot find label...skipping')
 
     ids = np.array(ids)
     X = np.array(X, dtype=np.float32)
     y = np.array(y)
 
     # Save numpy array
-    print('  ids.shape  = %r' % (ids.shape,))
-    print('  ids.dtype  = %r' % (ids.dtype,))
-    print('  X.shape    = %r' % (X.shape,))
-    print('  X.dtype    = %r' % (X.dtype,))
-    print('  y.shape    = %r' % (y.shape,))
-    print('  y.dtype    = %r' % (y.dtype,))
+    logger.info('  ids.shape  = %r' % (ids.shape,))
+    logger.info('  ids.dtype  = %r' % (ids.dtype,))
+    logger.info('  X.shape    = %r' % (X.shape,))
+    logger.info('  X.dtype    = %r' % (X.dtype,))
+    logger.info('  y.shape    = %r' % (y.shape,))
+    logger.info('  y.dtype    = %r' % (y.dtype,))
     np.save(project_numpy_ids_file_name, ids)
     np.save(project_numpy_x_file_name, X)
     np.save(project_numpy_y_file_name, y)
@@ -403,7 +405,7 @@ def numpy_processed_directory5(
 ):
     import cv2
 
-    print('Caching images into Numpy files with category vector...')
+    logger.info('Caching images into Numpy files with category vector...')
 
     raw_path = join(extracted_path, 'raw')
     labels_path = join(extracted_path, 'labels')
@@ -435,7 +437,7 @@ def numpy_processed_directory5(
     for index, file_path in enumerate(direct.files()):
         file_name = basename(file_path)
         if verbose:
-            print('Processing %r' % (file_name,))
+            logger.info('Processing %r' % (file_name,))
 
         image = cv2.imread(file_path, -1)
         try:
@@ -444,19 +446,19 @@ def numpy_processed_directory5(
             X.append(image)
             y.append(label)
         except KeyError:
-            print('Cannot find label...skipping')
+            logger.info('Cannot find label...skipping')
 
     ids = np.array(ids)
     X = np.array(X, dtype=np.uint8)
     y = np.array(y)
 
     # Save numpy array
-    print('  ids.shape  = %r' % (ids.shape,))
-    print('  ids.dtype  = %r' % (ids.dtype,))
-    print('  X.shape    = %r' % (X.shape,))
-    print('  X.dtype    = %r' % (X.dtype,))
-    print('  y.shape    = %r' % (y.shape,))
-    print('  y.dtype    = %r' % (y.dtype,))
+    logger.info('  ids.shape  = %r' % (ids.shape,))
+    logger.info('  ids.dtype  = %r' % (ids.dtype,))
+    logger.info('  X.shape    = %r' % (X.shape,))
+    logger.info('  X.dtype    = %r' % (X.dtype,))
+    logger.info('  y.shape    = %r' % (y.shape,))
+    logger.info('  y.dtype    = %r' % (y.dtype,))
     np.save(project_numpy_ids_file_name, ids)
     np.save(project_numpy_x_file_name, X)
     np.save(project_numpy_y_file_name, y)
@@ -480,10 +482,10 @@ def view_numpy_data(project_namel, numpy_x_file_name='X.npy', numpy_y_file_name=
     X = np.load(project_numpy_x_file_name)
     y = np.load(project_numpy_y_file_name)
 
-    print('  X.shape = %r' % (X.shape,))
-    print('  X.dtype = %r' % (X.dtype,))
-    print('  y.shape = %r' % (y.shape,))
-    print('  y.dtype = %r' % (y.dtype,))
+    logger.info('  X.shape = %r' % (X.shape,))
+    logger.info('  X.dtype = %r' % (X.dtype,))
+    logger.info('  y.shape = %r' % (y.shape,))
+    logger.info('  y.dtype = %r' % (y.dtype,))
 
 
 if __name__ == '__main__':

@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
+import logging
 import utool as ut
 import numpy as np
 import six
 
 print, rrr, profile = ut.inject2(__name__)
+logger = logging.getLogger()
 
 
 def interact_siamsese_data_patches(labels, data, flat_metadata, **kwargs):
@@ -92,14 +94,14 @@ def interact_patches(
     import vtool as vt
 
     # from wbia.viz import viz_helpers as vh
-    print('Building patch interaction')
+    logger.info('Building patch interaction')
     num_datas = list(map(len, data_lists))
     num_data = num_datas[0]
     ut.assert_all_eq(num_datas)
-    print('num_datas = %r' % (num_data,))
+    logger.info('num_datas = %r' % (num_data,))
     if label_list is not None:
         assert len(label_list) == num_data, 'datas must be corresponding'
-        print('len(label_list) = %r' % (len(label_list),))
+        logger.info('len(label_list) = %r' % (len(label_list),))
 
     # chunck_sizes = (6, 8)
     if chunck_sizes is None:
@@ -107,7 +109,7 @@ def interact_patches(
         # chunck_sizes = (3, 3)
 
     # Check out the score pdfs
-    print('sortby = %r' % (sortby,))
+    logger.info('sortby = %r' % (sortby,))
     if sortby is not None:
         if sortby == 'fs':
             index_list = ut.list_argsort(flat_metadata['fs'])[::-1]
@@ -135,7 +137,7 @@ def interact_patches(
 
                 # FILTER TO ONLY SHOW ONE PER AID
                 if hack_one_per_aid and 'aid_pairs' in flat_metadata:
-                    print('hacking one per aid')
+                    logger.info('hacking one per aid')
                     aid_pairs = flat_metadata['aid_pairs']
                     dataids = vt.get_undirected_edge_ids(aid_pairs)
                     new_idx_lists = []
@@ -202,13 +204,13 @@ def make_InteractSiamPatches(*args, **kwargs):
             self.nCols = chunck_sizes[0]
             if index_list is None:
                 index_list = list(range(label_list))
-            print('len(index_list) = %r' % (len(index_list),))
-            print('len(label_list) = %r' % (len(label_list),))
-            print('chunck_sizes = %r' % (chunck_sizes,))
+            logger.info('len(index_list) = %r' % (len(index_list),))
+            logger.info('len(label_list) = %r' % (len(label_list),))
+            logger.info('chunck_sizes = %r' % (chunck_sizes,))
             self.multi_chunked_indicies = list(
                 ut.iter_multichunks(index_list, chunck_sizes)
             )
-            # print('ut.depth_profile(self.multi_chunked_indicies) = %r' % (ut.depth_profile(self.multi_chunked_indicies),))
+            # logger.info('ut.depth_profile(self.multi_chunked_indicies) = %r' % (ut.depth_profile(self.multi_chunked_indicies),))
             nPages = len(self.multi_chunked_indicies)
             self.data_lists = data_lists
             self.figtitle = figtitle
@@ -226,7 +228,7 @@ def make_InteractSiamPatches(*args, **kwargs):
             else:
                 self.current_pagenum = pagenum
             self.prepare_page()
-            # print('pagenum = %r' % (pagenum,))
+            # logger.info('pagenum = %r' % (pagenum,))
             next_pnum = pt.make_pnum_nextgen(1, self.nCols)
             self.multiindicies = self.multi_chunked_indicies[self.current_pagenum]
             self.offset_lists = []
@@ -249,12 +251,12 @@ def make_InteractSiamPatches(*args, **kwargs):
                 ax = pt.gca()
                 self.ax_list.append(ax)
             if self.figtitle is not None:
-                # print(self.figtitle)
+                # logger.info(self.figtitle)
                 pt.set_figtitle(self.figtitle)
                 pass
 
         def on_click_inside(self, event, ax):
-            print('click inside')
+            logger.info('click inside')
 
             def get_label_index(self, event, ax):
                 """ generalize """
@@ -270,7 +272,7 @@ def make_InteractSiamPatches(*args, **kwargs):
                         [x >= x1_pts, x < x2_pts, y >= y1_pts, y < y2_pts]
                     )
                     valid_idxs = np.where(in_bounds)[0]
-                    # print('valid_idxs = %r' % (valid_idxs,))
+                    # logger.info('valid_idxs = %r' % (valid_idxs,))
                     assert len(valid_idxs) == 1
                     return valid_idxs[0]
 
@@ -289,10 +291,10 @@ def make_InteractSiamPatches(*args, **kwargs):
                     row_index = _subindex % num_rows
                     col_index = _subindex // num_rows
                     label_index = self.multiindicies[plot_index][row_index]
-                    print('_subindex = %r' % (_subindex,))
-                    print('row_index = %r' % (row_index,))
-                    print('col_index = %r' % (col_index,))
-                    print('label_index = %r' % (label_index,))
+                    logger.info('_subindex = %r' % (_subindex,))
+                    logger.info('row_index = %r' % (row_index,))
+                    logger.info('col_index = %r' % (col_index,))
+                    logger.info('label_index = %r' % (label_index,))
                 return label_index
 
             def embed_ipy(self=self, event=event, ax=ax):
@@ -316,7 +318,7 @@ def make_InteractSiamPatches(*args, **kwargs):
 
             if label_index is not None:
                 if self.label_list is not None:
-                    print(
+                    logger.info(
                         'self.label_list[%d] = %r'
                         % (label_index, self.label_list[label_index])
                     )
@@ -324,7 +326,7 @@ def make_InteractSiamPatches(*args, **kwargs):
                 if self.flat_metadata is not None:
                     for key, val in self.flat_metadata.items():
                         if len(val) == len(self.label_list):
-                            print(
+                            logger.info(
                                 'self.flat_metadata[%s][%d] = %r'
                                 % (key, label_index, val[label_index])
                             )
@@ -333,7 +335,7 @@ def make_InteractSiamPatches(*args, **kwargs):
                         aid1, aid2 = self.flat_metadata['aid_pairs'][label_index]
                         from wbia.gui import inspect_gui
 
-                        print(
+                        logger.info(
                             ut.repr3(
                                 self.ibs.get_annot_info(
                                     [aid1],
@@ -344,7 +346,7 @@ def make_InteractSiamPatches(*args, **kwargs):
                                 )
                             )
                         )
-                        print(
+                        logger.info(
                             ut.repr3(
                                 self.ibs.get_annot_info(
                                     [aid2],
@@ -446,7 +448,7 @@ def make_InteractClasses(*args, **kwargs):
             )
 
         def on_click_inside(inter, event, ax):
-            print('click inside')
+            logger.info('click inside')
 
             def get_label_index(inter, event, ax):
                 """ generalize """
@@ -462,7 +464,7 @@ def make_InteractClasses(*args, **kwargs):
                         [x >= x1_pts, x < x2_pts, y >= y1_pts, y < y2_pts]
                     )
                     valid_idxs = np.where(in_bounds)[0]
-                    # print('valid_idxs = %r' % (valid_idxs,))
+                    # logger.info('valid_idxs = %r' % (valid_idxs,))
                     assert len(valid_idxs) == 1
                     return valid_idxs[0]
 
@@ -484,11 +486,11 @@ def make_InteractClasses(*args, **kwargs):
                     row_index = _subindex // num_cols
                     col_index = _subindex % num_cols
                     # label_index = inter.multiindicies[plot_index][row_index]
-                    print('_subindex = %r' % (_subindex,))
-                    print('row_index = %r' % (row_index,))
-                    print('col_index = %r' % (col_index,))
-                    print('px = %r' % (px,))
-                    # print('label_index = %r' % (label_index,))
+                    logger.info('_subindex = %r' % (_subindex,))
+                    logger.info('row_index = %r' % (row_index,))
+                    logger.info('col_index = %r' % (col_index,))
+                    logger.info('px = %r' % (px,))
+                    # logger.info('label_index = %r' % (label_index,))
                     label_index = (px, col_index)
                 return label_index
 
@@ -507,18 +509,18 @@ def make_InteractClasses(*args, **kwargs):
                     aid = flat_metadata['aid'][col_index]
                     if ibs is not None:
                         options += interact_chip.build_annot_context_options(ibs, aid)
-                        print(
+                        logger.info(
                             'Annot Info:'
                             + ut.repr3(inter.ibs.get_annot_info([aid], case_tags=True))
                         )
 
             if event.dblclick:
-                print('Doubleclick')
+                logger.info('Doubleclick')
                 import guitool as gt
 
                 option_dict = gt.make_option_dict(options, shortcuts=False)
-                # print('options = %s' % (ut.repr3(options),))
-                # print('option_dict = %s' % (ut.repr3(option_dict),))
+                # logger.info('options = %s' % (ut.repr3(options),))
+                # logger.info('option_dict = %s' % (ut.repr3(option_dict),))
                 func = option_dict.get('Interact image', None)
                 if func is not None:
                     func()
@@ -804,8 +806,8 @@ def get_patch_chunk(
         for offset, patchsize, sf, text in zip(
             left_offsets, left_patchsizees, left_sfs, patch_texts
         ):
-            # print(offset)
-            # print(s)
+            # logger.info(offset)
+            # logger.info(s)
             import cv2
 
             scaled_offset = np.array(offset) + np.array([thickness + 2, -thickness - 2])

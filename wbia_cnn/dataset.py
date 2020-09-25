@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
+import logging
 from os.path import join, basename, exists
 import six
 import numpy as np
 import utool as ut
 
 print, rrr, profile = ut.inject2(__name__)
+logger = logging.getLogger()
 
 
 @six.add_metaclass(ut.ReloadingMetaclass)
@@ -229,29 +231,31 @@ class DataSet(ut.NiceRepr):
         labelhist = {key: len(val) for key, val in ut.group_items(labels, labels).items()}
         stats_dict = ut.get_stats(data.ravel())
         ut.delete_keys(stats_dict, ['shape', 'nMax', 'nMin'])
-        print('[dataset] Dataset Info: ')
-        print('[dataset] * Data:')
-        print('[dataset]     %s_data(shape=%r, dtype=%r)' % (key, data.shape, data.dtype))
-        print(
+        logger.info('[dataset] Dataset Info: ')
+        logger.info('[dataset] * Data:')
+        logger.info(
+            '[dataset]     %s_data(shape=%r, dtype=%r)' % (key, data.shape, data.dtype)
+        )
+        logger.info(
             '[dataset]     %s_memory(data) = %r'
             % (
                 key,
                 ut.get_object_size_str(data),
             )
         )
-        print(
+        logger.info(
             '[dataset]     %s_stats(data) = %s'
             % (
                 key,
                 ut.repr2(stats_dict, precision=2),
             )
         )
-        print('[dataset] * Labels:')
-        print(
+        logger.info('[dataset] * Labels:')
+        logger.info(
             '[dataset]     %s_labels(shape=%r, dtype=%r)'
             % (key, labels.shape, labels.dtype)
         )
-        print('[dataset]     %s_label histogram = %s' % (key, ut.repr2(labelhist)))
+        logger.info('[dataset]     %s_label histogram = %s' % (key, ut.repr2(labelhist)))
 
     def interact(dataset, key='full', **kwargs):
         """
@@ -314,7 +318,7 @@ class DataSet(ut.NiceRepr):
         for fpath in ut.ls(dataset.split_dpath):
             parsed = parse.parse(fmtstr, basename(fpath))
             if parsed is None:
-                print('WARNING: invalid filename %r' % (fpath,))
+                logger.info('WARNING: invalid filename %r' % (fpath,))
                 continue
             key = parsed['key']
             type_ = parsed['type_']
@@ -362,7 +366,7 @@ class DataSet(ut.NiceRepr):
         ut.save_data(dataset.info_fpath, dataset._info)
 
     def add_split(dataset, key, idxs):
-        print('[dataset] adding split %r' % (key,))
+        logger.info('[dataset] adding split %r' % (key,))
         # Build subset filenames
         ut.ensuredir(dataset.split_dpath)
         ext = dataset._ext
@@ -402,18 +406,18 @@ class DataSet(ut.NiceRepr):
         ut.ensuredir(dataset.split_dpath)
 
     def print_dir_structure(dataset):
-        print(dataset.training_dpath)
-        print(dataset.dataset_dpath)
-        print(dataset.data_fpath)
-        print(dataset.labels_fpath)
-        print(dataset.metadata_fpath)
-        print(dataset.info_fpath)
-        print(dataset.full_dpath)
-        print(dataset.split_dpath)
+        logger.info(dataset.training_dpath)
+        logger.info(dataset.dataset_dpath)
+        logger.info(dataset.data_fpath)
+        logger.info(dataset.labels_fpath)
+        logger.info(dataset.metadata_fpath)
+        logger.info(dataset.info_fpath)
+        logger.info(dataset.full_dpath)
+        logger.info(dataset.split_dpath)
 
     def print_dir_tree(dataset):
         fpaths = ut.glob(dataset.dataset_dpath, '*', recursive=True)
-        print('\n'.join(sorted(fpaths)))
+        logger.info('\n'.join(sorted(fpaths)))
 
     # def build_auxillary_data(dataset):
     #     # Make test train validatation sets

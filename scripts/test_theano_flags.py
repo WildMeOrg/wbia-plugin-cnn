@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
+import logging
 import utool as ut
 
 (print, rrr, profile) = ut.inject2(__name__)
+logger = logging.getLogger()
 
 
 def parse_theano_flags():
@@ -33,4 +35,4 @@ write_theano_flags(theano_flags)
 with ut.Timer():
     import theano  # NOQA
 
-print(ut.get_memstats_str())
+logger.info(ut.get_memstats_str())

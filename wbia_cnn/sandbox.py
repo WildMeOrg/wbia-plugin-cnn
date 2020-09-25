@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 # flake8: noqa
+import logging
 from six.moves import cPickle as pickle
 from wbia_cnn import abstract_models
 from wbia_cnn.abstract_models import *
 
 (print, rrr, profile) = ut.inject2(__name__)
+logger = logging.getLogger()
 
 (print, rrr, profile) = ut.inject2(__name__)
+logger = logging.getLogger()
 
 
 def check_external_training_paths():
@@ -46,13 +49,13 @@ def check_external_training_paths():
 
     for tmp_model in tmp_model_list:
         # tmp_model.checkpoint_save_model_info()
-        print(tmp_model.best_results['train_loss'])
-        print(tmp_model.best_results['valid_loss'])
-        print('----')
+        logger.info(tmp_model.best_results['train_loss'])
+        logger.info(tmp_model.best_results['valid_loss'])
+        logger.info('----')
 
     for tmp_model in ut.InteractiveIter(tmp_model_list):
-        print(fpath)
-        print(sum([len(era['epoch_list']) for era in tmp_model.era_history]))
+        logger.info(fpath)
+        logger.info(sum([len(era['epoch_list']) for era in tmp_model.era_history]))
         tmp_model.show_era_loss(fnum=1)
 
 
@@ -138,7 +141,7 @@ def theano_gradient_funtimes():
 
     if TEST:
         result = theano_ext.eval_symbol(network_output, inputs_to_value)
-        print('network_output = %r' % (result,))
+        logger.info('network_output = %r' % (result,))
 
     loss_function = lasagne.objectives.squared_error
     # def loss_function(network_output, labels):
@@ -147,13 +150,13 @@ def theano_gradient_funtimes():
     losses = loss_function(network_output, y)
     if TEST:
         result = theano_ext.eval_symbol(losses, inputs_to_value)
-        print('losses = %r' % (result,))
+        logger.info('losses = %r' % (result,))
 
     loss = lasagne.objectives.aggregate(losses, mode='mean')
 
     if TEST:
         result = theano_ext.eval_symbol(loss, inputs_to_value)
-        print('loss = %r' % (result,))
+        logger.info('loss = %r' % (result,))
 
     L2 = lasagne.regularization.regularize_network_params(
         l_out, lasagne.regularization.l2
@@ -174,7 +177,7 @@ def theano_gradient_funtimes():
             theano.pp(gs)
             inputs_to_value = {X: x_data[0:16], y: y_data[0:16]}
             result = theano_ext.eval_symbol(gs, inputs_to_value)
-            print(
+            logger.info(
                 '%s = %r'
                 % (
                     gs.name,
@@ -183,7 +186,7 @@ def theano_gradient_funtimes():
             )
             inputs_to_value = {X: x_data[16:32], y: y_data[16:32]}
             result = theano_ext.eval_symbol(gs, inputs_to_value)
-            print(
+            logger.info(
                 '%s = %r'
                 % (
                     gs.name,
@@ -193,7 +196,7 @@ def theano_gradient_funtimes():
 
         for grad in gradients_regularized:
             result = theano_ext.eval_symbol(grad, inputs_to_value)
-            print(
+            logger.info(
                 '%s = %r'
                 % (
                     grad.name,

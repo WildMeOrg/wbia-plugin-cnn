@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 import functools
 import six
 import numpy as np
@@ -9,6 +10,7 @@ from theano import tensor as T  # NOQA
 from wbia_cnn.models import abstract_models, pretrained
 
 print, rrr, profile = ut.inject2(__name__)
+logger = logging.getLogger()
 
 
 def augment_parallel(X, y):
@@ -204,12 +206,12 @@ class LabelerModel(abstract_models.AbstractCategoricalModel):
         r""""""
         (_, input_channels, input_width, input_height) = model.input_shape
         if verbose:
-            print('[model] Initialize labeler model architecture')
-            print('[model]   * batch_size     = %r' % (model.batch_size,))
-            print('[model]   * input_width    = %r' % (input_width,))
-            print('[model]   * input_height   = %r' % (input_height,))
-            print('[model]   * input_channels = %r' % (input_channels,))
-            print('[model]   * output_dims    = %r' % (model.output_dims,))
+            logger.info('[model] Initialize labeler model architecture')
+            logger.info('[model]   * batch_size     = %r' % (model.batch_size,))
+            logger.info('[model]   * input_width    = %r' % (input_width,))
+            logger.info('[model]   * input_height   = %r' % (input_height,))
+            logger.info('[model]   * input_channels = %r' % (input_channels,))
+            logger.info('[model]   * output_dims    = %r' % (model.output_dims,))
 
         network_layers_def = model.get_labeler_def(verbose=verbose, **kwargs)
         # connect and record layers
@@ -259,7 +261,7 @@ def train_labeler(output_path, data_fpath, labels_fpath):
     )
     X_train, y_train = dataset.subset('train')
     X_valid, y_valid = dataset.subset('valid')
-    print('dataset.training_dpath = %r' % (dataset.training_dpath,))
+    logger.info('dataset.training_dpath = %r' % (dataset.training_dpath,))
 
     ut.colorprint('[netrun] Architecture Specification', 'yellow')
     model = LabelerModel(
@@ -303,7 +305,7 @@ def train_labeler(output_path, data_fpath, labels_fpath):
         y_train = np.array([class_list.index(_) for _ in y_train])
         y_valid = np.array([class_list.index(_) for _ in y_valid])
 
-    print('\n[netrun] Model Info')
+    logger.info('\n[netrun] Model Info')
     model.print_layer_info()
 
     ut.colorprint('[netrun] Begin training', 'yellow')

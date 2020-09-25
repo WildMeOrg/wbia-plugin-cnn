@@ -25,6 +25,7 @@ CommandLineHelp:
     --device = <processor>
        sets theano device flag to a processor like gpu0, gpu1, or cpu0
 """
+import logging
 from wbia_cnn import models
 from wbia_cnn import ingest_data
 from wbia_cnn import experiments
@@ -32,6 +33,7 @@ import utool as ut
 import sys
 
 print, rrr, profile = ut.inject2(__name__)
+logger = logging.getLogger()
 
 
 # This is more of a history tag
@@ -130,10 +132,10 @@ def netrun():
     else:
         extern_dpath = None
 
-    print('dataset.training_dpath = %r' % (dataset.training_dpath,))
+    logger.info('dataset.training_dpath = %r' % (dataset.training_dpath,))
 
-    print('Dataset Alias Key: %r' % (dataset.alias_key,))
-    print(
+    logger.info('Dataset Alias Key: %r' % (dataset.alias_key,))
+    logger.info(
         'Current Dataset Tag: %r'
         % (ut.invert_dict(DS_TAG_ALIAS2).get(dataset.alias_key, None),)
     )
@@ -143,7 +145,7 @@ def netrun():
         if ut.show_was_requested():
             interact_ = dataset.interact()  # NOQA
             return
-        print('...exiting')
+        logger.info('...exiting')
         sys.exit(1)
 
     # ----------------------------
@@ -199,9 +201,11 @@ def netrun():
             model.load_model_state(checkpoint_tag=checkpoint_tag)
         else:
             model_state_fpath = model.get_model_state_fpath(checkpoint_tag=checkpoint_tag)
-            print('model_state_fpath = %r' % (model_state_fpath,))
+            logger.info('model_state_fpath = %r' % (model_state_fpath,))
             ut.checkpath(model_state_fpath, verbose=True)
-            print('Known checkpoints are: ' + ut.repr3(model.list_saved_checkpoints()))
+            logger.info(
+                'Known checkpoints are: ' + ut.repr3(model.list_saved_checkpoints())
+            )
             raise ValueError(
                 ('Unresolved weight init: ' 'checkpoint_tag=%r, extern_ds_tag=%r')
                 % (
@@ -210,8 +214,8 @@ def netrun():
                 )
             )
 
-    # print('Model State:')
-    # print(model.get_state_str())
+    # logger.info('Model State:')
+    # logger.info(model.get_state_str())
     # ----------------------------
     if not model.is_train_state_initialized():
         ut.colorprint('[netrun] Need to initialize training state', 'yellow')
@@ -260,7 +264,7 @@ def netrun():
         )
         ut.copy(model.get_model_state_fpath(), published_model_state)
         ut.view_directory(publish_dpath)
-        print(
+        logger.info(
             'You need to get the dropbox link and '
             'register it into the appropriate file'
         )
@@ -373,7 +377,7 @@ def merge_ds_tags(ds_alias_list):
     ds_tag_list = [DS_TAG_ALIAS2.get(ds_tag, ds_tag) for ds_tag in ds_alias_list]
     dataset_list = [ingest_data.grab_siam_dataset(ds_tag) for ds_tag in ds_tag_list]
     merged_dataset = ingest_data.merge_datasets(dataset_list)
-    print(merged_dataset.alias_key)
+    logger.info(merged_dataset.alias_key)
     return merged_dataset
 
 

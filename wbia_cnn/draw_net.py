@@ -9,6 +9,7 @@ References:
     # TODO:
     https://github.com/dnouri/nolearn/blob/master/nolearn/lasagne/visualize.py
 """
+import logging
 from operator import itemgetter
 from os.path import join, exists
 import numpy as np
@@ -16,6 +17,7 @@ import utool as ut
 from wbia_cnn import utils
 
 print, rrr, profile = ut.inject2(__name__)
+logger = logging.getLogger()
 
 
 def imwrite_theano_symbolic_graph(thean_expr):
@@ -316,7 +318,7 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
     key_order = ut.take(layer_to_id, layers)
     node_dict = ut.dict_subset(node_dict, key_order)
 
-    # print('node_dict = ' + ut.repr3(node_dict))
+    # logger.info('node_dict = ' + ut.repr3(node_dict))
 
     # Create the networkx graph structure
     G = nx.DiGraph()
@@ -332,7 +334,7 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
     main_children = ut.odict()
 
     # for n1, n2 in ut.itertwo(main_nodes):
-    #    print('n1, n2 = %r %r' % (n1, n2))
+    #    logger.info('n1, n2 = %r %r' % (n1, n2))
     #    import utool
     #    utool.embed()
     #    children = ut.nx_all_nodes_between(G, n1, n2)
@@ -366,7 +368,7 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
     # Custom positioning
     x = 0
     y = 1000
-    # print('main_children = %s' % (ut.repr3(main_children),))
+    # logger.info('main_children = %s' % (ut.repr3(main_children),))
 
     # main_nodes = ut.isect(list(nx.topological_sort(G)), main_nodes)
     xpad = main_size_[0] * 0.3
@@ -819,7 +821,7 @@ class Dream(object):
         # Optimize objective via backpropogation for a few iterations
         for _ in ut.ProgIter(range(dream.niters), lbl='making class model img', bs=True):
             dream.step_fn()
-            # print('objective = %r' % (objective,))
+            # logger.info('objective = %r' % (objective,))
 
         out = dream._postprocess_class_image(
             dream.shared_images, target_labels, was_scalar
@@ -904,7 +906,7 @@ class Dream(object):
         import theano
         from theano import tensor as T  # NOQA
 
-        print('Making dream objective')
+        logger.info('Making dream objective')
         # Get the final layer and remove the softmax nonlinearity to access the
         # pre-activation. (Softmax encourages minimization of other classes)
         softmax = copy.copy(dream.model.output_layer)
@@ -1002,7 +1004,7 @@ class Dream(object):
         for _ in ut.ProgIter(range(dream.niters), lbl='class dream', bs=True):
             step_fn()
             # objective = step_fn()
-            # print('objective = %r' % (objective,))
+            # logger.info('objective = %r' % (objective,))
             out = dream._postprocess_class_image(shared_images, target_labels, was_scalar)
             yield out
 

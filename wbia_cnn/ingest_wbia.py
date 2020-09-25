@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 import utool as ut
 import numpy as np
 import vtool as vt
@@ -11,6 +12,7 @@ from wbia import dtool
 from wbia_cnn import draw_results  # NOQA
 
 print, rrr, profile = ut.inject2(__name__)
+logger = logging.getLogger()
 
 
 FIX_HASH = True
@@ -38,7 +40,7 @@ def get_aidpairs_partmatch(ibs, acfg_name):
         ...                             default='ctrl:pername=None,excluderef=False,contributor_contains=FlankHack')
         >>> aid_pairs, label_list, flat_metadata = get_aidpairs_partmatch(ibs, acfg_name)
     """
-    print('NEW WAY OF FILTERING')
+    logger.info('NEW WAY OF FILTERING')
     from wbia.expt import experiment_helpers
 
     acfg_list, expanded_aids_list = experiment_helpers.get_annotcfg_list(ibs, [acfg_name])
@@ -54,7 +56,7 @@ def get_aidpairs_partmatch(ibs, acfg_name):
     ibs.print_annotconfig_stats(qaid_list, daid_list, bigstr=True)
 
     # Positive Examples
-    print('Sampling positive examples')
+    logger.info('Sampling positive examples')
     nested_pairs = list(
         map(list, itertools.starmap(ut.iprod, zip(aids1_list, aids2_list)))
     )
@@ -71,10 +73,10 @@ def get_aidpairs_partmatch(ibs, acfg_name):
     pos_aid_pairs = pos_aid_pairs.compress(flag_list, axis=0)
     # pos_aid_pairs = vt.unique_rows(pos_aid_pairs)  # should be unncessary
     assert len(vt.unique_rows(pos_aid_pairs)) == len(pos_aid_pairs)
-    print('pos_aid_pairs.shape = %r' % (pos_aid_pairs.shape,))
+    logger.info('pos_aid_pairs.shape = %r' % (pos_aid_pairs.shape,))
 
     # Hard Negative Examples
-    print('Sampling hard negative examples')
+    logger.info('Sampling hard negative examples')
     num_hard_neg_per_aid = max(1, len(pos_aid_pairs) // len(multiton_aids))
     cfgdict = {
         'affine_invariance': False,
@@ -90,7 +92,7 @@ def get_aidpairs_partmatch(ibs, acfg_name):
 
     # Random Negative Examples
     # TODO: may be able to say not a match from viewpoint?
-    print('Sampling random negative examples')
+    logger.info('Sampling random negative examples')
     num_rand_neg_per_aid = max(1, len(pos_aid_pairs) // len(multiton_aids))
     rng = np.random.RandomState(0)
     randneg_aid_pairs = []
@@ -105,18 +107,18 @@ def get_aidpairs_partmatch(ibs, acfg_name):
     randneg_aid_pairs = np.array(randneg_aid_pairs)
 
     # Concatenate both types of negative examples
-    # print('Building negative examples')
+    # logger.info('Building negative examples')
     # _neg_aid_pairs = np.vstack((hardneg_aid_pairs, randneg_aid_pairs))
     # neg_aid_pairs = vt.unique_rows(_neg_aid_pairs)
 
     # Unsure Examples
     # TODO: use quality and viewoint labelings to determine this
     # as well as metadata from the annotmatch table
-    print('hardneg_aid_pairs.shape = %r' % (hardneg_aid_pairs.shape,))
-    print('randneg_aid_pairs.shape = %r' % (randneg_aid_pairs.shape,))
-    print('pos_aid_pairs.shape = %r' % (pos_aid_pairs.shape,))
+    logger.info('hardneg_aid_pairs.shape = %r' % (hardneg_aid_pairs.shape,))
+    logger.info('randneg_aid_pairs.shape = %r' % (randneg_aid_pairs.shape,))
+    logger.info('pos_aid_pairs.shape = %r' % (pos_aid_pairs.shape,))
 
-    print('Building labels')
+    logger.info('Building labels')
     const = ibs.const
     unflat_pairs = (pos_aid_pairs, hardneg_aid_pairs, randneg_aid_pairs)
     type_labels = (const.REVIEW.MATCH, const.REVIEW.NON_MATCH, const.REVIEW.NON_MATCH)
@@ -130,21 +132,21 @@ def get_aidpairs_partmatch(ibs, acfg_name):
 
     flat_metadata = {'meta_label': ut.flatten(_expand(type_meta_labels))}
 
-    print('Filtering Duplicates')
+    logger.info('Filtering Duplicates')
     nonunique_flags = vt.nonunique_row_flags(_aid_pairs)
-    print('Filtered %d duplicate pairs' % (nonunique_flags.sum()))
-    print('Nonunique stats:')
+    logger.info('Filtered %d duplicate pairs' % (nonunique_flags.sum()))
+    logger.info('Nonunique stats:')
     for key, val in flat_metadata.items():
-        print(ut.dict_hist(ut.compress(val, nonunique_flags)))
+        logger.info(ut.dict_hist(ut.compress(val, nonunique_flags)))
     unique_flags = ~nonunique_flags
     # Do filtering
     aid_pairs = _aid_pairs.compress(unique_flags, axis=0)
     label_list = _labels.compress(unique_flags, axis=0)
     for key, val in flat_metadata.items():
         flat_metadata[key] = ut.compress(val, unique_flags)
-    print('Final Stats')
+    logger.info('Final Stats')
     for key, val in flat_metadata.items():
-        print(ut.dict_hist(val))
+        logger.info(ut.dict_hist(val))
 
     groupsizes = map(len, vt.group_indices(aid_pairs.T[0])[1])
     ut.print_dict(ut.dict_hist(groupsizes), 'groupsize freq')
@@ -211,7 +213,7 @@ def extract_annotpair_training_chips(ibs, aid_pairs, **kwargs):
         annot1 = pair_metadata['annot1']
         annot2 = pair_metadata['annot2']
         aid1, aid2 = annot1['aid'], annot2['aid']
-        print('Computing alignment aidpair=(%r, %r)' % (aid1, aid2))
+        logger.info('Computing alignment aidpair=(%r, %r)' % (aid1, aid2))
         match = wbia.algo.hots.vsone_pipeline.vsone_single(
             aid1, aid2, qreq_, verbose=False
         )
@@ -225,14 +227,14 @@ def extract_annotpair_training_chips(ibs, aid_pairs, **kwargs):
         match_metadata = pair_metadata['match_metadata']
         annot1 = pair_metadata['annot1']
         annot2 = pair_metadata['annot2']
-        print('Warping Chips aidpair=(%r, %r)' % (annot1['aid'], annot2['aid']))
+        logger.info('Warping Chips aidpair=(%r, %r)' % (annot1['aid'], annot2['aid']))
         rchip1 = annot1['rchip']
         rchip2 = annot2['rchip']
         warped = True
         if warped:
             H1 = match_metadata['H_RAT']
             fm = match_metadata['fm']
-            # print('WARPING')
+            # logger.info('WARPING')
             # Initial Warping
             kpts1_m = annot1['kpts'].take(fm.T[0], axis=0)
             kpts2_m = annot2['kpts'].take(fm.T[1], axis=0)
@@ -364,20 +366,20 @@ def get_aidpair_patchmatch_training_data(
         >>> ut.show_if_requested()
     """
     # Flatten to only apply chip operations once
-    print('get_aidpair_patchmatch_training_data num_pairs = %r' % (len(aid1_list)))
+    logger.info('get_aidpair_patchmatch_training_data num_pairs = %r' % (len(aid1_list)))
     assert len(aid1_list) == len(aid2_list)
     assert len(aid1_list) == len(kpts1_m_list)
     assert len(aid1_list) == len(kpts2_m_list)
     assert len(aid1_list) == len(fm_list)
-    print('geting_unflat_chips')
+    logger.info('geting_unflat_chips')
     flat_unique, reconstruct_tup = ut.inverable_unique_two_lists(aid1_list, aid2_list)
-    print('grabbing %d unique chips' % (len(flat_unique)))
+    logger.info('grabbing %d unique chips' % (len(flat_unique)))
     chip_list = ibs.get_annot_chips(flat_unique)  # TODO config2_
     # convert to approprate colorspace
     chip_list = vt.convert_image_list_colorspace(chip_list, colorspace)
     ut.print_object_size(chip_list, 'chip_list')
     chip1_list, chip2_list = ut.uninvert_unique_two_lists(chip_list, reconstruct_tup)
-    print('warping')
+    logger.info('warping')
 
     class PatchExtractCache(object):
         def __init__(self, patch_size):
@@ -452,7 +454,7 @@ def get_aidpair_patchmatch_training_data(
     len1_list = list(map(len, fm_list))
     assert ut.lmap(len, warped_patches1_list) == ut.lmap(len, warped_patches2_list), 'bug'
     assert ut.lmap(len, warped_patches1_list) == len1_list, 'bug'
-    print('flattening')
+    logger.info('flattening')
     aid1_list_ = np.array(
         ut.flatten([[aid1] * len1 for len1, aid1 in zip(len1_list, aid1_list)])
     )
@@ -484,7 +486,7 @@ def flatten_patch_data(
 ):
     # TODO; rectify
     len1_list = list(map(len, fm_list))
-    print('flattening')
+    logger.info('flattening')
     aid1_list_ = np.array(
         ut.flatten([[aid1] * len1 for len1, aid1 in zip(len1_list, aid1_list)])
     )
@@ -612,7 +614,7 @@ def estimate_data_bytes(num_data, item_shape):
     data_per_label = 2
     dtype_bytes = 1
     estimated_bytes = np.prod(item_shape) * num_data * data_per_label * dtype_bytes
-    print('Estimated data size: ' + ut.byte_str2(estimated_bytes))
+    logger.info('Estimated data size: ' + ut.byte_str2(estimated_bytes))
 
 
 # class NewConfigBase(object):
@@ -746,8 +748,8 @@ def cached_part_match_training_data_fpaths(
         ut.assert_eq(data.shape[1], pmcfg['part_chip_height'])
         ut.assert_eq(data.shape[2], pmcfg['part_chip_width'])
         # TODO; save metadata
-        print('[write_part_data] np.shape(data) = %r' % (np.shape(data),))
-        print('[write_part_labels] np.shape(labels) = %r' % (np.shape(labels),))
+        logger.info('[write_part_data] np.shape(data) = %r' % (np.shape(data),))
+        logger.info('[write_part_labels] np.shape(labels) = %r' % (np.shape(labels),))
         # TODO hdf5 for large data
         ut.save_hdf5(data_fpath, data)
         ut.save_hdf5(labels_fpath, labels)
@@ -756,7 +758,7 @@ def cached_part_match_training_data_fpaths(
         # ut.save_cPkl(labels_fpath, labels)
         # ut.save_cPkl(metadata_fpath, flat_metadata)
     else:
-        print('data and labels cache hit')
+        logger.info('data and labels cache hit')
     return data_fpath, labels_fpath, metadata_fpath, training_dpath, data_shape
 
 
@@ -826,8 +828,8 @@ def cached_patchmetric_training_data_fpaths(
         ut.assert_eq(data.shape[1], pmcfg['patch_size'])
         ut.assert_eq(data.shape[2], pmcfg['patch_size'])
         # TODO; save metadata
-        print('[write_data_and_labels] np.shape(data) = %r' % (np.shape(data),))
-        print('[write_data_and_labels] np.shape(labels) = %r' % (np.shape(labels),))
+        logger.info('[write_data_and_labels] np.shape(data) = %r' % (np.shape(data),))
+        logger.info('[write_data_and_labels] np.shape(labels) = %r' % (np.shape(labels),))
         # TODO hdf5 for large data
         ut.save_hdf5(data_fpath, data)
         ut.save_hdf5(labels_fpath, labels)
@@ -836,7 +838,7 @@ def cached_patchmetric_training_data_fpaths(
         # ut.save_cPkl(labels_fpath, labels)
         # ut.save_cPkl(metadata_fpath, flat_metadata)
     else:
-        print('data and labels cache hit')
+        logger.info('data and labels cache hit')
     return data_fpath, labels_fpath, metadata_fpath, training_dpath, data_shape
 
 
@@ -926,7 +928,7 @@ def get_aidpairs_and_matches(
 
     def get_query_results():
         if acfg_name is not None:
-            print('NEW WAY OF FILTERING')
+            logger.info('NEW WAY OF FILTERING')
             from wbia.expt import experiment_helpers
 
             acfg_list, expanded_aids_list = experiment_helpers.get_annotcfg_list(
@@ -936,7 +938,7 @@ def get_aidpairs_and_matches(
             expanded_aids = expanded_aids_list[0]
             qaid_list, daid_list = expanded_aids
         else:
-            print('OLD WAY OF FILTERING')
+            logger.info('OLD WAY OF FILTERING')
             from wbia.other import ibsfuncs
 
             if controlled:
@@ -1047,8 +1049,8 @@ def get_aidpairs_and_matches(
 
             prev_total = sum(map(len, fm_list_all))
             adding = sum(map(len, randneg_fm))
-            print('prev_total = %r' % (prev_total,))
-            print('adding     = %r' % (adding,))
+            logger.info('prev_total = %r' % (prev_total,))
+            logger.info('adding     = %r' % (adding,))
 
             metadata_all = ut.dict_isect_combine(metadata_all, rand_meta)
             fm_list_all = fm_list_all + randneg_fm
@@ -1088,7 +1090,7 @@ def get_aidpairs_and_matches(
         # using case tags
 
         flags_tag = get_badtag_flags(ibs, aid1_list_all, aid2_list_all)
-        print(ut.filtered_infostr(flags_tag, 'annots', 'tag filters'))
+        logger.info(ut.filtered_infostr(flags_tag, 'annots', 'tag filters'))
         flags = ut.and_lists(flags_tag, flags_tag)
         #
         MIN_TD = 5 * 60  # 5 minutes at least
@@ -1097,11 +1099,11 @@ def get_aidpairs_and_matches(
         gf_tdflags = np.logical_or(
             labels_all == ibs.const.REVIEW.MATCH, timedelta_list > MIN_TD
         )
-        print(ut.filtered_infostr(gf_tdflags, 'gf annots', 'timestamp'))
+        logger.info(ut.filtered_infostr(gf_tdflags, 'gf annots', 'timestamp'))
         flags = ut.and_lists(flags, gf_tdflags)
         # Remove small time deltas
         # --
-        print(ut.filtered_infostr(flags, 'total invalid annots'))
+        logger.info(ut.filtered_infostr(flags, 'total invalid annots'))
         isvalid = np.logical_and(np.logical_and(has_gt, nonempty), flags)
         aid1_list_uneq = ut.compress(aid1_list_all, isvalid)
         aid2_list_uneq = ut.compress(aid2_list_all, isvalid)
@@ -1124,7 +1126,7 @@ def get_aidpairs_and_matches(
 
         # min_featweight = None
         if min_featweight is not None:
-            print('filter by featweight')
+            logger.info('filter by featweight')
             # Remove feature matches where the foreground weight is under a threshold
             flags_list = []
             for index in ut.ProgIter(range(len(aid1_list_uneq)), 'filt fw', adjust=True):
@@ -1142,7 +1144,7 @@ def get_aidpairs_and_matches(
                 )
                 flags_list.append(flags)
 
-            print(
+            logger.info(
                 ut.filtered_infostr(ut.flatten(flags_list), 'feat matches', 'featweight')
             )
             fm_list_uneq2 = vt.zipcompress_safe(fm_list_uneq, flags_list, axis=0)
@@ -1159,8 +1161,10 @@ def get_aidpairs_and_matches(
     def equalize_flat_flags(flat_labels, flat_scores):
         labelhist = ut.dict_hist(flat_labels)
         # Print input distribution of labels
-        print('[ingest_wbia] original label histogram = \n' + ut.dict_str(labelhist))
-        print('[ingest_wbia] total = %r' % (sum(list(labelhist.values()))))
+        logger.info(
+            '[ingest_wbia] original label histogram = \n' + ut.dict_str(labelhist)
+        )
+        logger.info('[ingest_wbia] total = %r' % (sum(list(labelhist.values()))))
 
         pref_method = 'rand'
         # pref_method = 'scores'
@@ -1190,8 +1194,8 @@ def get_aidpairs_and_matches(
         true_min_ = min(labelhist.values())
         # Allow for some window around the minimum
         min_ = min(int(true_min_ * allowed_ratio), true_max_)
-        print('Equalizing label distribution with method=%r' % (pref_method,))
-        print('Allowing at most %d labels of a type' % (min_,))
+        logger.info('Equalizing label distribution with method=%r' % (pref_method,))
+        logger.info('Allowing at most %d labels of a type' % (min_,))
         key_list, type_indicies_list = vt.group_indices(flat_labels)
         # type_indicies_list = [np.where(flat_labels == key)[0]
         #                      for key in six.iterkeys(labelhist)]
@@ -1215,7 +1219,7 @@ def get_aidpairs_and_matches(
             fm_list_uneq2,
             metadata_uneq2,
         ) = get_matchdata3()
-        print('flattening')
+        logger.info('flattening')
         # Find out how many examples each source holds
         len1_list = list(map(len, fm_list_uneq2))
         # Expand source labels so one exists for each datapoint
@@ -1258,8 +1262,10 @@ def get_aidpairs_and_matches(
             key: len(val)
             for key, val in six.iteritems(ut.group_items(flat_labels_eq, flat_labels_eq))
         }
-        print('[ingest_wbia] equalized label histogram = \n' + ut.dict_str(labelhist_eq))
-        print('[ingest_wbia] total = %r' % (sum(list(labelhist_eq.values()))))
+        logger.info(
+            '[ingest_wbia] equalized label histogram = \n' + ut.dict_str(labelhist_eq)
+        )
+        logger.info('[ingest_wbia] total = %r' % (sum(list(labelhist_eq.values()))))
         # --
         return aid1_list_eq, aid2_list_eq, fm_list_eq, labels_eq, metadata_eq
 
@@ -1269,7 +1275,7 @@ def get_aidpairs_and_matches(
 
     # Convert annot-vs-annot pairs into raw feature-vs-feature pairs
 
-    print('Building feature indicies')
+    logger.info('Building feature indicies')
 
     fx1_list = [fm.T[0] for fm in fm_list_eq]
     fx2_list = [fm.T[1] for fm in fm_list_eq]
@@ -1288,7 +1294,7 @@ def get_aidpairs_and_matches(
     # Save some memory
     ibs.print_cachestats_str()
     ibs.clear_table_cache(ibs.const.FEATURE_TABLE)
-    print('Taking matching keypoints')
+    logger.info('Taking matching keypoints')
     kpts1_m_list = [kpts1.take(fx1, axis=0) for kpts1, fx1 in zip(kpts1_list, fx1_list)]
     kpts2_m_list = [kpts2.take(fx2, axis=0) for kpts2, fx2 in zip(kpts2_list, fx2_list)]
 
@@ -1378,7 +1384,7 @@ def get_background_training_patches2(
     raw_path = join(name_path, 'raw')
     labels_path = join(name_path, 'labels')
 
-    print(dest_path)
+    logger.info(dest_path)
     if purge:
         ut.delete(dest_path)
     ut.ensuredir(dest_path)
@@ -1423,13 +1429,13 @@ def get_background_training_patches2(
             global_negatives,
             len(label_list),
         )
-        print('Processing GID: %r [ %r / %r = %r]' % args)
-        print('\tAIDS  : %r' % (aid_list,))
-        print('\tBBOXES: %r' % (bbox_list,))
+        logger.info('Processing GID: %r [ %r / %r = %r]' % args)
+        logger.info('\tAIDS  : %r' % (aid_list,))
+        logger.info('\tBBOXES: %r' % (bbox_list,))
 
         if global_limit is not None:
             if global_negatives + global_positives >= global_limit:
-                print('\tHIT GLOBAL LIMIT')
+                logger.info('\tHIT GLOBAL LIMIT')
                 continue
 
         if len(aid_list) == 0 and len(bbox_list) == 0:
@@ -1452,7 +1458,7 @@ def get_background_training_patches2(
                     'turtle_sea+head',
                 ]
                 if species not in turtle_sea_species_list:
-                    print(
+                    logger.info(
                         'Skipping aid %r (bad species: %s)'
                         % (
                             aid,
@@ -1471,7 +1477,7 @@ def get_background_training_patches2(
                     'wild_dog_tan',
                 ]
                 if species not in wild_dog_species_list:
-                    print(
+                    logger.info(
                         'Skipping aid %r (bad species: %s)'
                         % (
                             aid,
@@ -1480,7 +1486,7 @@ def get_background_training_patches2(
                     )
                     continue
             elif species != target_species:
-                print(
+                logger.info(
                     'Skipping aid %r (bad species: %s)'
                     % (
                         aid,
@@ -1497,7 +1503,7 @@ def get_background_training_patches2(
                     cv2.rectangle(canvas, (xtl, ytl), (xbr, ybr), (255, 0, 0))
 
                 if min(w_, h_) / max(w_, h_) <= 0.25:
-                    print('Skipping aid %r (aspect ratio)' % (aid,))
+                    logger.info('Skipping aid %r (aspect ratio)' % (aid,))
                     continue
 
                 modifier = w_ / annot_size
@@ -1519,7 +1525,7 @@ def get_background_training_patches2(
 
                         if inside_boundary:
                             if patch_size_final > w_ or patch_size_final > h_:
-                                print(
+                                logger.info(
                                     'Skipping aid %r (patch_size_final too big)' % (aid,)
                                 )
                                 continue
@@ -1536,10 +1542,10 @@ def get_background_training_patches2(
                         y1 = centery + radius
 
                         if x0 < 0 or x0 >= w or x1 < 0 or x1 >= w:
-                            print('Skipping aid %r (bounds check, width)' % (aid,))
+                            logger.info('Skipping aid %r (bounds check, width)' % (aid,))
                             continue
                         if y0 < 0 or y0 >= w or y1 < 0 or y1 >= w:
-                            print('Skipping aid %r (bounds check, height)' % (aid,))
+                            logger.info('Skipping aid %r (bounds check, height)' % (aid,))
                             continue
 
                         found = True
@@ -1554,7 +1560,7 @@ def get_background_training_patches2(
                         assert x0 >= 0 and x0 < w and x1 >= 0 and x1 < w
                         assert y0 >= 0 and y0 < h and y1 >= 0 and y1 < h
                     except AssertionError:
-                        print('Skipping aid %r (sanity check)' % (aid,))
+                        logger.info('Skipping aid %r (sanity check)' % (aid,))
                         found = False
 
                     if found:
@@ -1587,7 +1593,7 @@ def get_background_training_patches2(
                         label = '%s,%s' % (patch_filename, positive_category)
                         label_list.append(label)
                     else:
-                        print('Skipping aid %r (not found)' % (aid,))
+                        logger.info('Skipping aid %r (not found)' % (aid,))
 
                 positives_ = positives
             else:
@@ -1599,10 +1605,10 @@ def get_background_training_patches2(
 
             delta = global_positives - global_negatives
             if delta >= 2 * patches_per_annotation:
-                print('SUPERCHARGE NEGATIVES')
+                logger.info('SUPERCHARGE NEGATIVES')
                 positives_ = int(positives_ * supercharge_negative_multiplier)
             elif delta <= -2 * patches_per_annotation:
-                print('UNDERCHARGE NEGATIVES')
+                logger.info('UNDERCHARGE NEGATIVES')
                 positives_ = int(positives_ * undercharge_negative_multiplier)
 
             for index in range(positives_):
@@ -1696,7 +1702,7 @@ def get_background_training_patches2(
         global_negatives,
         len(label_list),
     )
-    print('Final Split: [ %r / %r = %r]' % args)
+    logger.info('Final Split: [ %r / %r = %r]' % args)
 
     with open(join(labels_path, 'labels.csv'), 'a') as labels:
         label_str = '\n'.join(label_list) + '\n'
@@ -1772,9 +1778,9 @@ def get_aoi_training_data(ibs, dest_path=None, target_species_list=None, purge=T
         species_list,
         interest_list,
     ) in zipped:
-        print('Processing GID: %r' % (gid,))
-        print('\tAIDS  : %r' % (aid_list,))
-        print('\tBBOXES: %r' % (bbox_list,))
+        logger.info('Processing GID: %r' % (gid,))
+        logger.info('\tAIDS  : %r' % (aid_list,))
+        logger.info('\tBBOXES: %r' % (bbox_list,))
 
         if reviewed in [None, 0]:
             continue
@@ -1853,7 +1859,7 @@ def get_aoi2_training_data(
     labels_path = join(name_path, 'labels')
 
     if cache and exists(name_path):
-        print('Using cached exported data')
+        logger.info('Using cached exported data')
     else:
         if purge:
             ut.delete(name_path)
@@ -1902,9 +1908,9 @@ def get_aoi2_training_data(
             species_list,
             interest_list,
         ) in zipped:
-            print('Processing GID: %r' % (gid,))
-            print('\tAIDS  : %r' % (aid_list,))
-            print('\tBBOXES: %r' % (bbox_list,))
+            logger.info('Processing GID: %r' % (gid,))
+            logger.info('\tAIDS  : %r' % (aid_list,))
+            logger.info('\tBBOXES: %r' % (bbox_list,))
 
             if reviewed in [None, 0]:
                 continue
@@ -2022,9 +2028,9 @@ def get_cnn_detector_training_images(ibs, dest_path=None, image_size=128):
         height, width, channels = image.shape
 
         args = (gid,)
-        print('Processing GID: %r' % args)
-        print('\tAIDS  : %r' % (aid_list,))
-        print('\tBBOXES: %r' % (bbox_list,))
+        logger.info('Processing GID: %r' % args)
+        logger.info('\tAIDS  : %r' % (aid_list,))
+        logger.info('\tBBOXES: %r' % (bbox_list,))
 
         image_ = cv2.resize(
             image, (image_size, image_size), interpolation=cv2.INTER_LANCZOS4
@@ -2136,10 +2142,10 @@ def get_cnn_classifier_cameratrap_binary_training_images(
     label_list = []
     for gid in candidate_gid_set:
         args = (gid,)
-        print('Processing GID: %r' % args)
+        logger.info('Processing GID: %r' % args)
 
         if skip_rate > 0.0 and random.uniform(0.0, 1.0) <= skip_rate:
-            print('\t Skipping - Sampling')
+            logger.info('\t Skipping - Sampling')
             continue
 
         if gid in positive_gid_set:
@@ -2147,7 +2153,7 @@ def get_cnn_classifier_cameratrap_binary_training_images(
         elif gid in negative_gid_set:
             category = 'negative'
         else:
-            print('\t Skipping - No Label')
+            logger.info('\t Skipping - No Label')
             continue
 
         if (
@@ -2155,7 +2161,7 @@ def get_cnn_classifier_cameratrap_binary_training_images(
             and category == 'positive'
             and random.uniform(0.0, 1.0) <= skip_rate_pos
         ):
-            print('\t Skipping Positive')
+            logger.info('\t Skipping Positive')
             continue
 
         if (
@@ -2163,7 +2169,7 @@ def get_cnn_classifier_cameratrap_binary_training_images(
             and category == 'negative'
             and random.uniform(0.0, 1.0) <= skip_rate_neg
         ):
-            print('\t Skipping Negative')
+            logger.info('\t Skipping Negative')
             continue
 
         image = ibs.get_images(gid)
@@ -2237,10 +2243,10 @@ def get_cnn_classifier_binary_training_images(
     label_list = []
     for gid, species_set in zip(train_gid_set, species_set_list):
         args = (gid,)
-        print('Processing GID: %r' % args)
+        logger.info('Processing GID: %r' % args)
 
         if skip_rate > 0.0 and random.uniform(0.0, 1.0) <= skip_rate:
-            print('\t Skipping')
+            logger.info('\t Skipping')
             continue
 
         category = 'positive' if len(species_set & category_set) else 'negative'
@@ -2250,7 +2256,7 @@ def get_cnn_classifier_binary_training_images(
             and category == 'positive'
             and random.uniform(0.0, 1.0) <= skip_rate_pos
         ):
-            print('\t Skipping Positive')
+            logger.info('\t Skipping Positive')
             continue
 
         if (
@@ -2258,7 +2264,7 @@ def get_cnn_classifier_binary_training_images(
             and category == 'negative'
             and random.uniform(0.0, 1.0) <= skip_rate_neg
         ):
-            print('\t Skipping Negative')
+            logger.info('\t Skipping Negative')
             continue
 
         image = ibs.get_images(gid)
@@ -2329,7 +2335,7 @@ def get_cnn_classifier2_training_images(
     category_list = list(sorted(category_set))
 
     if cache and exists(name_path):
-        print('Using cached exported data')
+        logger.info('Using cached exported data')
     else:
         if purge:
             ut.delete(name_path)
@@ -2341,10 +2347,10 @@ def get_cnn_classifier2_training_images(
         label_list = []
         for gid, species_set in zip(train_gid_set, species_set_list):
             args = (gid,)
-            print('Processing GID: %r' % args)
+            logger.info('Processing GID: %r' % args)
 
             if skip_rate > 0.0 and random.uniform(0.0, 1.0) <= skip_rate:
-                print('\t Skipping')
+                logger.info('\t Skipping')
                 continue
 
             species_set = set(
@@ -2356,7 +2362,7 @@ def get_cnn_classifier2_training_images(
             ]
 
             if len(category_list_) == 0:
-                print('\t Skipping (Categories)')
+                logger.info('\t Skipping (Categories)')
                 continue
 
             image = ibs.get_images(gid)
@@ -2422,8 +2428,8 @@ def get_cnn_labeler_training_images(
     ut.ensuredir(raw_path)
     ut.ensuredir(labels_path)
 
-    print('category mapping = %s' % (ut.repr3(category_mapping),))
-    print('viewpoint mapping = %s' % (ut.repr3(viewpoint_mapping),))
+    logger.info('category mapping = %s' % (ut.repr3(category_mapping),))
+    logger.info('viewpoint mapping = %s' % (ut.repr3(viewpoint_mapping),))
 
     # train_gid_set = ibs.get_valid_gids()
     train_gid_set = set(
@@ -2469,7 +2475,7 @@ def get_cnn_labeler_training_images(
         if species in category_set
     ]
     new_len = len(tup_list)
-    print(
+    logger.info(
         'Filtered annotations: keep %d / original %d'
         % (
             new_len,
@@ -2522,20 +2528,20 @@ def get_cnn_labeler_training_images(
                 invalid_yaw_set.add(species)
                 continue
 
-    print('Null yaws: %d' % (counter,))
+    logger.info('Null yaws: %d' % (counter,))
     valid_seen_set = category_set - invalid_seen_set
     valid_yaw_set = valid_seen_set - invalid_yaw_set
-    print('Requested categories:')
+    logger.info('Requested categories:')
     category_set = sorted(category_set)
     ut.print_list(category_set)
-    # print('Invalid yaw categories:')
+    # logger.info('Invalid yaw categories:')
     # ut.print_list(sorted(invalid_yaw_set))
-    # print('Valid seen categories:')
+    # logger.info('Valid seen categories:')
     # ut.print_list(sorted(valid_seen_set))
-    print('Valid yaw categories:')
+    logger.info('Valid yaw categories:')
     valid_yaw_set = sorted(valid_yaw_set)
     ut.print_list(valid_yaw_set)
-    print('Invalid seen categories (could not fulfill request):')
+    logger.info('Invalid seen categories (could not fulfill request):')
     invalid_seen_set = sorted(invalid_seen_set)
     ut.print_list(invalid_seen_set)
 
@@ -2561,14 +2567,14 @@ def get_cnn_labeler_training_images(
             continue
         tup_list_.append((tup, category))
         aid_list_.append(aid)
-    print(
+    logger.info(
         'Skipped Yaw:  skipped %d / total %d'
         % (
             skipped_yaw,
             len(tup_list),
         )
     )
-    print(
+    logger.info(
         'Skipped Seen: skipped %d / total %d'
         % (
             skipped_seen,
@@ -2584,10 +2590,10 @@ def get_cnn_labeler_training_images(
     for tup, category in tup_list_:
         aid, species, yaw = tup
         args = (aid,)
-        print('Processing AID: %r' % args)
+        logger.info('Processing AID: %r' % args)
 
         if skip_rate > 0.0 and random.uniform(0.0, 1.0) <= skip_rate:
-            print('\t Skipping')
+            logger.info('\t Skipping')
             continue
 
         # Compute data
@@ -2611,7 +2617,7 @@ def get_cnn_labeler_training_images(
         )
         label_list.append(label)
 
-    print('Using labels for labeler training:')
+    logger.info('Using labels for labeler training:')
     label_list_ = set([_[1] for _ in tup_list_])
     label_list_ = sorted(label_list_)
     ut.print_list(label_list_)
@@ -2653,7 +2659,7 @@ def get_cnn_qualifier_training_images(ibs, dest_path=None, image_size=128, purge
     aid_list = ut.flatten(aids_list)
     flag_list = ibs.get_annot_reviewed(aid_list)
     aid_list = [aid for aid, flag in zip(aid_list, flag_list) if flag]
-    print('Outputing a total of %d annotations' % (len(aid_list),))
+    logger.info('Outputing a total of %d annotations' % (len(aid_list),))
     # import random
     # random.shuffle(aid_list)
     # aid_list = sorted(aid_list[:100])
@@ -2662,7 +2668,7 @@ def get_cnn_qualifier_training_images(ibs, dest_path=None, image_size=128, purge
     label_list = []
     for aid, quality in zip(aid_list, quality_list):
         args = (aid,)
-        print('Processing AID: %r' % args)
+        logger.info('Processing AID: %r' % args)
 
         image = ibs.get_annot_chips(aid)
         image_ = cv2.resize(
@@ -2724,10 +2730,10 @@ def extract_orientation_chips(ibs, gid_list, image_size=128, training=True, verb
     for gid, aid_list, bbox_list, theta_list in zipped_list:
         args = (gid,)
         if verbose:
-            print('Processing GID: %r' % args)
-            print('\tAIDS  : %r' % (aid_list,))
-            print('\tBBOXES: %r' % (bbox_list,))
-            print('\tTHETAS: %r' % (theta_list,))
+            logger.info('Processing GID: %r' % args)
+            logger.info('\tAIDS  : %r' % (aid_list,))
+            logger.info('\tBBOXES: %r' % (bbox_list,))
+            logger.info('\tTHETAS: %r' % (theta_list,))
 
         if len(aid_list) > 0:
             image = ibs.get_images(gid)

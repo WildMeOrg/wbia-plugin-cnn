@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
+import logging
 from wbia_cnn.models import abstract_models
 import utool as ut
 
 print, rrr, profile = ut.inject2(__name__)
+logger = logging.getLogger()
 
 
 class MNISTModel(abstract_models.AbstractCategoricalModel):
@@ -156,14 +158,14 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
             >>> model.show_arch()
             >>> ut.show_if_requested()
         """
-        print('[model] init_arch')
+        logger.info('[model] init_arch')
         if True:
-            print('[model] Initialize MNIST model architecture')
-            print('[model]   * batch_size     = %r' % (model.batch_size,))
-            print('[model]   * input_width    = %r' % (model.input_width,))
-            print('[model]   * input_height   = %r' % (model.input_height,))
-            print('[model]   * input_channels = %r' % (model.input_channels,))
-            print('[model]   * output_dims    = %r' % (model.output_dims,))
+            logger.info('[model] Initialize MNIST model architecture')
+            logger.info('[model]   * batch_size     = %r' % (model.batch_size,))
+            logger.info('[model]   * input_width    = %r' % (model.input_width,))
+            logger.info('[model]   * input_height   = %r' % (model.input_height,))
+            logger.info('[model]   * input_channels = %r' % (model.input_channels,))
+            logger.info('[model]   * output_dims    = %r' % (model.output_dims,))
         name = model.name
 
         if name is None:

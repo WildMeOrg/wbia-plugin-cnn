@@ -20,6 +20,7 @@ References:
     https://github.com/Lasagne/Lasagne/issues/168
     https://groups.google.com/forum/#!topic/lasagne-users/7JX_8zKfDI0
 """
+import logging
 import lasagne  # NOQA
 from lasagne import init, layers, nonlinearities
 import functools
@@ -31,6 +32,7 @@ import utool as ut
 from wbia_cnn import augment
 
 print, rrr, profile = ut.inject2(__name__)
+logger = logging.getLogger()
 
 
 @six.add_metaclass(ut.ReloadingMetaclass)
@@ -546,16 +548,16 @@ class SiameseL2(AbstractSiameseModel):
         """
         # TODO: remove output dims
         # _P = functools.partial
-        print('[model] init_arch')
+        logger.info('[model] init_arch')
         # (_, input_channels, input_width, input_height) = model.input_shape
         (_, input_channels, input_height, input_width) = model.input_shape
         if verbose:
-            print('[model] Initialize center siamese l2 model architecture')
-            print('[model]   * batch_size     = %r' % (model.batch_size,))
-            print('[model]   * input_width    = %r' % (input_width,))
-            print('[model]   * input_height   = %r' % (input_height,))
-            print('[model]   * input_channels = %r' % (input_channels,))
-            print('[model]   * output_dims    = %r' % (model.output_dims,))
+            logger.info('[model] Initialize center siamese l2 model architecture')
+            logger.info('[model]   * batch_size     = %r' % (model.batch_size,))
+            logger.info('[model]   * input_width    = %r' % (input_width,))
+            logger.info('[model]   * input_height   = %r' % (input_height,))
+            logger.info('[model]   * input_channels = %r' % (input_channels,))
+            logger.info('[model]   * output_dims    = %r' % (model.output_dims,))
 
         # network_layers_def = model.get_mnist_siaml2_def(verbose=verbose, **kwargs)
         network_layers_def = getattr(model, 'get_' + model.arch_tag + '_def')(
@@ -607,7 +609,7 @@ class SiameseL2(AbstractSiameseModel):
             >>> ut.show_if_requested()
         """
         if verbose:
-            print('[model] Build SiameseL2 loss function')
+            logger.info('[model] Build SiameseL2 loss function')
         vecs1 = network_output[0::2]
         vecs2 = network_output[1::2]
         margin = 1.0
@@ -623,7 +625,7 @@ class SiameseL2(AbstractSiameseModel):
 
         encoder = vt.ScoreNormalizer(**kwargs)
         encoder.fit(scores, labels)
-        print(
+        logger.info(
             '[model] learned encoder accuracy = %r'
             % (encoder.get_accuracy(scores, labels))
         )
@@ -895,15 +897,15 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
             >>> model.show_arch()
             >>> ut.show_if_requested()
         """
-        print('[model] init_arch')
+        logger.info('[model] init_arch')
         (_, input_channels, input_width, input_height) = model.input_shape
         if verbose:
-            print('[model] Initialize center surround siamese model architecture')
-            print('[model]   * batch_size     = %r' % (model.batch_size,))
-            print('[model]   * input_width    = %r' % (input_width,))
-            print('[model]   * input_height   = %r' % (input_height,))
-            print('[model]   * input_channels = %r' % (input_channels,))
-            print('[model]   * output_dims    = %r' % (model.output_dims,))
+            logger.info('[model] Initialize center surround siamese model architecture')
+            logger.info('[model]   * batch_size     = %r' % (model.batch_size,))
+            logger.info('[model]   * input_width    = %r' % (input_width,))
+            logger.info('[model]   * input_height   = %r' % (input_height,))
+            logger.info('[model]   * input_channels = %r' % (input_channels,))
+            logger.info('[model]   * output_dims    = %r' % (model.output_dims,))
         network_layers_def = model.get_siam2stream_def(verbose=verbose, **kwargs)
         # connect and record layers
         from wbia_cnn import custom_layers
@@ -964,7 +966,7 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
             >>> ut.show_if_requested()
         """
         if verbose:
-            print('[model] Build SiameseCenterSurroundModel loss function')
+            logger.info('[model] Build SiameseCenterSurroundModel loss function')
         # make y_i in {-1, 1} where -1 denotes non-matching and +1 denotes matching
         # Y_ = (1 - (2 * Y))
         Y_ = (2 * Y) - 1
@@ -981,7 +983,7 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
 
         encoder = vt.ScoreNormalizer(**kwargs)
         encoder.fit(scores, labels)
-        print(
+        logger.info(
             '[model] learned encoder accuracy = %r'
             % (encoder.get_accuracy(scores, labels))
         )

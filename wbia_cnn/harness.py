@@ -12,10 +12,12 @@ http://cs231n.github.io/neural-networks-3/#distr
 Pretrained Models:
     https://github.com/fchollet/deep-learning-models
 """
+import logging
 from six.moves import input, zip, range  # NOQA
 import utool as ut
 
 print, rrr, profile = ut.inject2(__name__)
+logger = logging.getLogger()
 
 
 def _clean(model, theano_forward, X_list, y_list, min_conf=0.95):
@@ -63,10 +65,10 @@ def _clean(model, theano_forward, X_list, y_list, min_conf=0.95):
         total,
         ratio,
     )
-    print('[_clean] Cleaned Data... [ %d / %d ] ( %0.04f )' % args)
+    logger.info('[_clean] Cleaned Data... [ %d / %d ] ( %0.04f )' % args)
     for src in sorted(switched.keys()):
         for dst in sorted(switched[src].keys()):
-            print(
+            logger.info(
                 '[_clean] \t%r -> %r : %d'
                 % (
                     src,

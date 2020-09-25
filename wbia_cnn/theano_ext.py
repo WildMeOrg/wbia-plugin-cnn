@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
+import logging
 import utool as ut
 from theano import tensor as T  # NOQA
 
 print, rrr, profile = ut.inject2(__name__)
+logger = logging.getLogger()
 
 
 def get_symbol_inputs(expr_list=[]):
