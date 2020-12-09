@@ -1367,6 +1367,34 @@ def get_background_training_patches2(
         y1 = y0 + h
         return x0 <= x and x <= x1 and y0 <= y and y <= y1
 
+    if target_species == 'turtle_sea':
+        target_species_list = [
+            'turtle_green',
+            'turtle_green+head',
+            'turtle_hawksbill',
+            'turtle_hawksbill+head',
+            'turtle_oliveridley',
+            'turtle_oliveridley+head',
+            'turtle_sea',
+            'turtle_sea+head',
+        ]
+    elif target_species == 'wild_dog':
+        target_species_list = [
+            '____',
+            'wild_dog',
+            'wild_dog_dark',
+            'wild_dog_light',
+            'wild_dog_puppy',
+            'wild_dog_standard',
+            'wild_dog_tan',
+        ]
+    elif isinstance(target_species, (list, tuple)):
+        assert len(target_species) == 2
+        target_species, target_species_list = target_species
+        assert len(target_species_list) > 0
+    else:
+        target_species_list = [target_species]
+
     if dest_path is None:
         dest_path = expanduser(join('~', 'Desktop', 'extracted'))
 
@@ -1446,46 +1474,7 @@ def get_background_training_patches2(
             positives = 0
             negatives = 0
 
-            if target_species == 'turtle_sea':
-                turtle_sea_species_list = [
-                    'turtle_green',
-                    'turtle_green+head',
-                    'turtle_hawksbill',
-                    'turtle_hawksbill+head',
-                    'turtle_oliveridley',
-                    'turtle_oliveridley+head',
-                    'turtle_sea',
-                    'turtle_sea+head',
-                ]
-                if species not in turtle_sea_species_list:
-                    logger.info(
-                        'Skipping aid %r (bad species: %s)'
-                        % (
-                            aid,
-                            species,
-                        )
-                    )
-                    continue
-            elif target_species == 'wild_dog':
-                wild_dog_species_list = [
-                    '____',
-                    'wild_dog',
-                    'wild_dog_dark',
-                    'wild_dog_light',
-                    'wild_dog_puppy',
-                    'wild_dog_standard',
-                    'wild_dog_tan',
-                ]
-                if species not in wild_dog_species_list:
-                    logger.info(
-                        'Skipping aid %r (bad species: %s)'
-                        % (
-                            aid,
-                            species,
-                        )
-                    )
-                    continue
-            elif species != target_species:
+            if species not in target_species_list:
                 logger.info(
                     'Skipping aid %r (bad species: %s)'
                     % (
