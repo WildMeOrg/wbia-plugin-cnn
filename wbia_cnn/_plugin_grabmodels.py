@@ -78,6 +78,7 @@ MODEL_URLS = {
     'background_wilddog_v0': 'background.wild_dog.v0.pkl',
     'background_leopard_v0': 'background.leopard.v0.pkl',
     'background_snow_leopard_v0': 'background.snow_leopard.v0.pkl',
+    'background_whale_grey_v0': 'background.whale_grey.v0.pkl',
     'aoi2_candidacy': 'aoi2.candidacy.pkl',
     'aoi2_ggr2': 'aoi2.ggr2.pkl',
     'aoi2_hammerhead': 'aoi2.shark_hammerhead.pkl',
