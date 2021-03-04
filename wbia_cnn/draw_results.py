@@ -565,7 +565,7 @@ def get_patch_sample_img(
         tup = get_patch_multichunks(data_lists, label_list, flat_metadata, multiindices)
         stacked_img, stacked_offsets, stacked_sfs = tup
         return stacked_img, stacked_offsets, stacked_sfs
-    except StopIteration:
+    except (RuntimeError, StopIteration):
         if len(index_list) > 0:
             raise
         import vtool as vt
