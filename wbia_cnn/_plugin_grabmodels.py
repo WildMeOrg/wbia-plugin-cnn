@@ -49,6 +49,7 @@ MODEL_URLS = {
     'background_lynx_v3': 'background.lynx.v3.pkl',
     'background_cheetah_v0': 'background.cheetah.v0.pkl',
     'background_cheetah_v1': 'background.cheetah.v1.pkl',
+    'background_hyaena_v0': 'background.hyaena.v0.pkl',
     'background_jaguar_v1': 'background.jaguar.v1.pkl',
     'background_jaguar_v2': 'background.jaguar.v2.pkl',
     'background_manta': 'background.manta_ray_giant.pkl',

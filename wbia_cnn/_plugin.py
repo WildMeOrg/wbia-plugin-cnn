@@ -783,6 +783,13 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_cheetah_v1', redownload=False)
         canvas_key = 1
+    elif species in ['hyaena', 'hyaena_hyaena']:
+        LEGACY = False
+        species = 'hyaena'
+        confidence_thresh = 0.2
+        model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
+        weights_path = grabmodels.ensure_model('background_hyaena_v0', redownload=False)
+        canvas_key = 1
     elif species in ['jaguar', 'panthera_onca']:
         LEGACY = False
         species = 'jaguar'
