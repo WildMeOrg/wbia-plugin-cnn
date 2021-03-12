@@ -24,7 +24,7 @@ def process_image_directory(project_name, size, reset=True):
     project_processed_path = join(processed_path, project_name)
 
     # Load raw data
-    direct = Directory(project_raw_path, include_extensions='images')
+    direct = Directory(project_raw_path, include_file_extensions='images')
 
     # Reset / create paths if not exist
     if exists(project_processed_path) and reset:
@@ -66,7 +66,7 @@ def numpy_processed_directory(
     project_numpy_labels_file_name = join(project_labels_path, labels_file_name)
 
     # Load raw data
-    direct = Directory(project_processed_path, include_extensions='images')
+    direct = Directory(project_processed_path, include_file_extensions='images')
     label_dict = {}
     for line in open(project_numpy_labels_file_name):
         line = line.strip().split(',')
@@ -150,7 +150,7 @@ def numpy_processed_directory2(
     project_numpy_labels_file_name = join(labels_path, labels_file_name)
 
     # Load raw data
-    direct = Directory(raw_path, include_extensions='images')
+    direct = Directory(raw_path, include_file_extensions='images')
     label_dict = {}
     for line in open(project_numpy_labels_file_name):
         line = line.strip().split(',')
@@ -244,7 +244,7 @@ def numpy_processed_directory3(
             category_list.append(category)
 
     # Load raw data
-    direct = Directory(raw_path, include_extensions='images')
+    direct = Directory(raw_path, include_file_extensions='images')
     label_dict = {}
     count_dict = {}
     for line in open(project_numpy_labels_file_name):
@@ -340,7 +340,7 @@ def numpy_processed_directory4(
     project_numpy_labels_file_name = join(labels_path, labels_file_name)
 
     # Load raw data
-    direct = Directory(raw_path, include_extensions=['npy'])
+    direct = Directory(raw_path, include_file_extensions=['npy'])
     label_dict = {}
     for line in open(project_numpy_labels_file_name):
         line = line.strip().split(',')
@@ -417,7 +417,7 @@ def numpy_processed_directory5(
     project_numpy_labels_file_name = join(labels_path, labels_file_name)
 
     # Load raw data
-    direct = Directory(raw_path, include_extensions='images')
+    direct = Directory(raw_path, include_file_extensions='images')
     label_dict = {}
     for line in open(project_numpy_labels_file_name):
         line = line.strip().split(',')
