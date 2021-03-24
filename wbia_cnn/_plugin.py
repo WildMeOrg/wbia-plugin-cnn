@@ -1015,6 +1015,24 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
             'background_grouper_nassau_v0', redownload=False
         )
         canvas_key = 1
+    elif species in ['salamandra_salamandra', 'salamandra_salamandra_larvae', 'salanader_fire', 'salanader_fire_larvae']:
+        LEGACY = False
+        species = 'salanader_fire'
+        confidence_thresh = 0.2
+        model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
+        weights_path = grabmodels.ensure_model(
+            'salanader_fire_v0', redownload=False
+        )
+        canvas_key = 1
+    elif species in ['salamandra_salamandra_adult', 'salanader_fire_adult']:
+        LEGACY = False
+        species = 'salanader_fire_adult'
+        confidence_thresh = 0.2
+        model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
+        weights_path = grabmodels.ensure_model(
+            'salanader_fire_adult_v0', redownload=False
+        )
+        canvas_key = 1
     else:
         raise ValueError('species %r key does not have a trained model' % (species,))
 

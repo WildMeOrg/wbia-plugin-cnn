@@ -81,6 +81,8 @@ MODEL_URLS = {
     'background_snow_leopard_v0': 'background.snow_leopard.v0.pkl',
     'background_whale_grey_v0': 'background.whale_grey.v0.pkl',
     'background_grouper_nassau_v0': 'background.grouper_nassau.v0.pkl',
+    'salanader_fire_v0': 'background.salanader_fire.v0.pkl',
+    'salanader_fire_adult_v0': 'background.salanader_fire_adult.v0.pkl',
     'aoi2_candidacy': 'aoi2.candidacy.pkl',
     'aoi2_ggr2': 'aoi2.ggr2.pkl',
     'aoi2_hammerhead': 'aoi2.shark_hammerhead.pkl',

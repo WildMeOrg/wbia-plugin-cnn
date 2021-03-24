@@ -403,7 +403,7 @@ class _ModelFitter(object):
         # TODO: some sort of behavior config Things that dont influence
         # training, but do impact performance / memory usage.
         model._behavior = {
-            'buffered': True,
+            'buffered': False,
         }
         # Static configuration indicating training preferences
         # (these will not influence the model learning)
