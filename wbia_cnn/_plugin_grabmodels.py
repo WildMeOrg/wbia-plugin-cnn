@@ -80,6 +80,8 @@ MODEL_URLS = {
     'background_leopard_v0': 'background.leopard.v0.pkl',
     'background_snow_leopard_v0': 'background.snow_leopard.v0.pkl',
     'background_whale_grey_v0': 'background.whale_grey.v0.pkl',
+    'background_whale_beluga_v0': 'background.whale_beluga.v0.pkl',
+    'background_seals_v0': 'background.seals.v0.pkl',
     'background_grouper_nassau_v0': 'background.grouper_nassau.v0.pkl',
     'salanader_fire_v0': 'background.salanader_fire.v0.pkl',
     'salanader_fire_adult_v0': 'background.salanader_fire_adult.v0.pkl',
