@@ -755,7 +755,7 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         'whale_fluke',
         'whale_humpback',
         'megaptera_novaeangliae',
-        'physeter_macrocephalus',
+        # 'physeter_macrocephalus',
     ]:
         LEGACY = False
         species = 'whale_fluke'
@@ -838,6 +838,18 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_orca_v0', redownload=False)
+        canvas_key = 1
+    elif species in [
+        'whale_sperm',
+        'whale_sperm+fluke',
+        'physeter_macrocephalus',
+        'physeter_macrocephalus+fluke',
+    ]:
+        LEGACY = False
+        species = 'whale_sperm+fluke'
+        confidence_thresh = 0.2
+        model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
+        weights_path = grabmodels.ensure_model('background_whale_sperm_v0', redownload=False)
         canvas_key = 1
     elif species in ['seadragon_leafy', 'phycodurus_eques']:
         LEGACY = False
