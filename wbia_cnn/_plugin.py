@@ -991,6 +991,10 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         'dolphin_spotted+fin_dorsal',
         'stenella_frontalis+dorsal',
         'stenella_frontalis+fin_dorsal',
+        'dolphin_bottlenose+dorsal',
+        'dolphin_bottlenose+fin_dorsal',
+        'tursiops_truncatus+dorsal',
+        'tursiops_truncatus+fin_dorsal',
     ]:
         LEGACY = False
         species = 'dolphin_spotted+fin_dorsal'
