@@ -3395,7 +3395,11 @@ class _ModelUtility(object):
 
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', '.*topo.*')
-            lasagne.layers.set_all_param_values(model.output_layer, weights_list, allow_input_downcast=True)
+            try:
+                lasagne.layers.set_all_param_values(model.get_all_layers(), weights_list)
+            except TypeError:
+                weights_list_fp32 = [weights.astype(np.float32) for weights in weights_list]
+                lasagne.layers.set_all_param_values(model.get_all_layers(), weights_list_fp32)
 
     def get_all_param_values(model):
         import lasagne
