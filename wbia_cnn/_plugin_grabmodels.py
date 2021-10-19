@@ -85,6 +85,7 @@ MODEL_URLS = {
     'background_whale_beluga_v0': 'background.whale_beluga.v0.pkl',
     'background_seals_v0': 'background.seals.v0.pkl',
     'background_grouper_nassau_v0': 'background.grouper_nassau.v0.pkl',
+    'background_sea_turtle_v4': 'background.sea_turtle.v4.pkl',
     'salanader_fire_v0': 'background.salanader_fire.v0.pkl',
     'salanader_fire_adult_v0': 'background.salanader_fire_adult.v0.pkl',
     'aoi2_candidacy': 'aoi2.candidacy.pkl',

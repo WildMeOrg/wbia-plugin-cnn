@@ -941,12 +941,13 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         'lepidochelys_olivacea',
         'turtle_oliveridley+head',
         'lepidochelys_olivacea+head',
+        'turtle_asian',
     ]:
         LEGACY = False
-        species = 'turtle_sea'
+        species = 'seaturtle'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
-        weights_path = grabmodels.ensure_model('background_iot_v0', redownload=False)
+        weights_path = grabmodels.ensure_model('background_sea_turtle_v4', redownload=False)
         canvas_key = 1
     elif species in ['dolphin_spotted', 'stenella_frontalis']:
         LEGACY = False
