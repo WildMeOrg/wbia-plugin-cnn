@@ -949,6 +949,16 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_sea_turtle_v4', redownload=False)
         canvas_key = 1
+    elif species in [
+        'spotted_eagle_ray',
+        'aetobatus_narinari',
+    ]:
+        LEGACY = False
+        species = 'spotted_eagle_ray'
+        confidence_thresh = 0.2
+        model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
+        weights_path = grabmodels.ensure_model('background_spotted_eagle_ray_v0', redownload=False)
+        canvas_key = 1
     elif species in ['dolphin_spotted', 'stenella_frontalis']:
         LEGACY = False
         species = 'dolphin_spotted'
