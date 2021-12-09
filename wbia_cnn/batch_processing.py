@@ -415,7 +415,7 @@ def augment_batch(model, Xb, yb, batch_index, verbose, num_batches):
     This means use a mean fill values not 0.
 
     >>> from wbia_cnn import augment
-    >>> import plottool as pt
+    >>> from wbia import plottool as pt
     >>> pt.qt4ensure()
     >>> augment.show_augmented_patches(Xb_orig, Xb, yb_orig, yb)
     """
@@ -427,7 +427,7 @@ def augment_batch(model, Xb, yb, batch_index, verbose, num_batches):
     # if DEBUG_AUGMENTATION:
     #    #Xb, yb = augment.augment_siamese_patches2(Xb, yb)
     #    from wbia_cnn import augment
-    #    import plottool as pt
+    #    from wbia import plottool as pt
     #    augment.show_augmented_patches(Xb_orig, Xb, yb_orig, yb)
     #    pt.show_if_requested()
     #    ut.embed()

@@ -3,7 +3,7 @@ import logging
 import utool as ut
 from lasagne import layers, nonlinearities
 
-from wbia_cnn.models import abstract_models
+from wbia_cnn.models import abstract_models, pretrained
 
 print, rrr, profile = ut.inject2(__name__)
 logger = logging.getLogger()
@@ -39,7 +39,7 @@ class QualityModel(abstract_models.AbstractCategoricalModel):
         Conv2DLayer = custom_layers.Conv2DLayer
         MaxPool2DLayer = custom_layers.MaxPool2DLayer
 
-        _CaffeNet = abstract_models.PretrainedNetwork('caffenet')
+        _CaffeNet = pretrained.PretrainedNetwork('caffenet')
 
         l_in = layers.InputLayer(
             # variable batch size (None), channel, width, height

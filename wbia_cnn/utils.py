@@ -33,26 +33,6 @@ def checkfreq(freqlike_, count):
         return freqlike_ is True
 
 
-def get_gpu_memory():
-    """
-    References:
-        https://groups.google.com/forum/#!topic/theano-users/2EdclcmZazU
-        https://gist.github.com/matpalm/9c0c7c6a6f3681a0d39d
-
-    CommandLine:
-        python -m wbia_cnn.utils --test-get_gpu_memory
-
-    Example:
-        >>> # ENABLE_DOCTEST
-        >>> from wbia_cnn.utils import *  # NOQA
-        >>> result = get_gpu_memory()
-        >>> print(result)
-    """
-    import theano
-
-    return theano.sandbox.cuda.cuda_ndarray.cuda_ndarray.mem_info()
-
-
 def _update(kwargs, key, value):
     # if key not in kwargs.keys():
     if key not in kwargs:
@@ -72,7 +52,7 @@ def testdata_imglist(shape=(32, 32, 3)):
         >>> from wbia_cnn.utils import *  # NOQA
         >>> (img_list, width, height, channels) = testdata_imglist()
         >>> ut.quit_if_noshow()
-        >>> import plottool as pt
+        >>> from wbia import plottool as pt
         >>> pt.imshow(img_list[0], pnum=(2, 2, 1))
         >>> pt.imshow(img_list[1], pnum=(2, 2, 2))
         >>> pt.imshow(img_list[2], pnum=(2, 2, 3))
@@ -119,7 +99,7 @@ def convert_cv2_images_to_theano_images(img_list):
         >>> # build test data
         >>> # execute function
         >>> img_list, width, height, channels = testdata_imglist()
-        >>> data = convert_cv2_images_to_theano_images(img_list)
+        >>> data = convert_cv2_images_to_theano_images(np.array(img_list))
         >>> data[0].reshape(3, 32, 32)[:, 0:2, 0:2]
         >>> subset = (data[0].reshape(3, 32, 32)[:, 0:2, 0:2])
         >>> #result = str(np.transpose(subset, (1, 2, 0)))
@@ -171,7 +151,7 @@ def convert_theano_images_to_cv2_images(data, *args):
 
 
 def evaluate_symbolic_layer(get_output_for, inputdata_, input_type=None, **kwargs):
-    """ helper for testing lasagne layers """
+    """helper for testing lasagne layers"""
     import theano
     from theano import tensor as T  # NOQA
 
@@ -199,7 +179,7 @@ def testdata_xy(data_per_label=2, factor=20, seed=0):
         rng = seed
     else:
         assert False
-    labels = rng.rand(len(data) / data_per_label) > 0.5
+    labels = rng.rand(int(len(data) / data_per_label)) > 0.5
     # data_per_label = 2
     return data, labels, data_per_label
 
@@ -296,7 +276,7 @@ def get_printcolinfo(requested_headers_):
     Example:
         >>> # ENABLE_DOCTEST
         >>> from wbia_cnn.utils import *  # NOQA
-        >>> requested_headers_ = None
+        >>> requested_headers = None
         >>> printcol_info = get_printcolinfo(requested_headers)
     """
     if requested_headers_ is None:

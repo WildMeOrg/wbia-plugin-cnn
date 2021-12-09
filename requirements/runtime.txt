@@ -1,5 +1,4 @@
-# lasagne  # Use the one embedded here instead because the pypi version is too old
-scikit-learn>=0.16.1
+scikit-learn
 theano
 wbia-utool
 wbia-vtool

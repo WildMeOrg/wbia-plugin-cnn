@@ -526,7 +526,7 @@ class SiameseConcatLayer(layers.Layer):
 
 def interact_image_list(img_list, num_per_page=1):
     # from wbia.viz import viz_helpers as vh
-    import plottool as pt
+    from wbia import plottool as pt
 
     nRows, nCols = pt.get_square_row_cols(num_per_page)
     chunked_iter = list(ut.ichunks(img_list, num_per_page))

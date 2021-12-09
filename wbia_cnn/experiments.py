@@ -65,7 +65,7 @@ def sift_dataset_separability(dataset):
         figtitle=dataname + ' SIFT scores. #data=' + str(len(labels)), fnum=None, **viz_kw
     )
 
-    import plottool as pt
+    from wbia import plottool as pt
 
     # icon = ibs.get_database_icon()
     icon = (
@@ -137,7 +137,7 @@ def test_siamese_performance(model, data, labels, flat_metadata, dataname=''):
         python -m wbia_cnn --tf netrun --db pzmtest --weights=liberty:current --arch=siaml2_128
     """
     import vtool as vt
-    import plottool as pt
+    from wbia import plottool as pt
 
     # TODO: save in model.trainind_dpath/diagnostics/figures
     ut.colorprint('\n[siam_perf] Testing Siamese Performance', 'white')
@@ -376,8 +376,8 @@ def test_siamese_thresholds(network_output, y_test, **kwargs):
     # batch cycling may cause more outputs than test labels.
     # should be able to just crop
     network_output_ = network_output[0 : len(y_test)].copy() ** 2
-    tp_support = network_output_.T[0][y_test.astype(np.bool)].astype(np.float64)
-    tn_support = network_output_.T[0][~(y_test.astype(np.bool))].astype(np.float64)
+    tp_support = network_output_.T[0][y_test.astype(np.bool_)].astype(np.float64)
+    tn_support = network_output_.T[0][~(y_test.astype(np.bool_))].astype(np.float64)
     if tp_support.mean() < tn_support.mean():
         logger.info('need to invert scores')
         tp_support *= -1
@@ -400,7 +400,7 @@ def test_siamese_thresholds(network_output, y_test, **kwargs):
     #    tp_support, tn_support, return_all=False, **learnkw)
     # (score_domain, p_tp_given_score, clip_score) = learntup
     # Plotting
-    # import plottool as pt
+    # from wbia import plottool as pt
     # fnum = 1
     # pt.figure(fnum=fnum, pnum=(2, 1, 1), doclf=True, docla=True)
     # score_normalization.plot_support(tn_support, tp_support, fnum=fnum, pnum=(2, 1, 1))

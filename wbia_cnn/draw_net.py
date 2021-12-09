@@ -42,6 +42,7 @@ def draw_neural_net(ax, left, right, bottom, top, layer_sizes):
     Draw a neural network cartoon using matplotilb.
 
     Example:
+        >>> import matplotlib.pyplot as plt
         >>> fig = plt.figure(figsize=(12, 12))
         >>> draw_neural_net(fig.gca(), .1, .9, .1, .9, [4, 7, 2])
 
@@ -104,12 +105,12 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
         >>> from wbia_cnn.draw_net import *  # NOQA
         >>> from wbia_cnn import models
         >>> model = models.mnist.MNISTModel(batch_size=128, output_dims=10,
-        >>>                                 data_shape=(24, 24, 3))
+        >>>                                 data_shape=(28, 28, 3))
         >>> model.init_arch()
         >>> layers = model.get_all_layers()
         >>> show_arch_nx_graph(layers)
         >>> ut.quit_if_noshow()
-        >>> import plottool as pt
+        >>> from wbia import plottool as pt
         >>> ut.show_if_requested()
 
     Example1:
@@ -120,12 +121,12 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
         >>> layers = model.get_all_layers()
         >>> show_arch_nx_graph(layers)
         >>> ut.quit_if_noshow()
-        >>> import plottool as pt
+        >>> from wbia import plottool as pt
         >>> ut.show_if_requested()
 
     """
     import networkx as nx
-    import plottool as pt
+    from wbia import plottool as pt
     import lasagne
 
     # from matplotlib import offsetbox
@@ -475,7 +476,7 @@ def pydot_to_image(pydot_graph):
 #        >>> img = make_architecture_image(layers, **kwargs)
 #        >>> print(img.shape)
 #        >>> ut.quit_if_noshow()
-#        >>> import plottool as pt
+#        >>> from wbia import plottool as pt
 #        >>> pt.imshow(img)
 #        >>> ut.show_if_requested()
 #    """
@@ -594,7 +595,7 @@ def occlusion_heatmap(net, x, target, square_length=7):
 
 
 def _plot_heat_map(net, Xb, figsize, get_heat_image):
-    import plottool as pt
+    from wbia import plottool as pt
 
     if Xb.ndim != 4:
         raise ValueError(
@@ -707,7 +708,7 @@ class Dream(object):
         >>> model.load_model_state()
         >>> target_labels = 3
         >>> ut.quit_if_noshow()
-        >>> import plottool as pt
+        >>> from wbia import plottool as pt
         >>> #pt.qt4ensure()
         >>> dream = Dream(model, niters=200)
         >>> img = dream.make_class_images(target_labels)
@@ -843,7 +844,7 @@ class Dream(object):
             >>> model.init_arch()
             >>> dream = Dream(model, init='rgauss', niters=200)
             >>> ut.quit_if_noshow()
-            >>> import plottool as pt
+            >>> from wbia import plottool as pt
             >>> import vtool as vt
             >>> #pt.qt4ensure()
             >>> initial_state = dream._make_init_state().transpose((0, 2, 3, 1))[0]
@@ -962,7 +963,7 @@ class Dream(object):
 
     def generate_class_images(dream, target_labels):
         """
-        import plottool as pt
+        from wbia import plottool as pt
         fnum = None
         kw = dict(init='gauss', niters=500, update_rate=.05, weight_decay=1e-4)
         target_labels = list(range(model.output_dims))
@@ -1028,7 +1029,7 @@ def show_saliency_heatmap(model, dataset):
         >>> model.encoder = None
         >>> model.init_arch()
         >>> model.load_model_state()
-        >>> import plottool as pt
+        >>> from wbia import plottool as pt
         >>> pt.qt4ensure()
         >>> show_saliency_heatmap(model, dataset)
         >>> ut.show_if_requested()
@@ -1088,7 +1089,7 @@ def show_convolutional_weights(
         >>> limit = 64
         >>> fig = show_convolutional_weights(all_weights, use_color, limit)
         >>> ut.quit_if_noshow()
-        >>> import plottool as pt
+        >>> from wbia import plottool as pt
         >>> pt.qt4ensure()
         >>> fig = show_convolutional_weights(all_weights, use_color, limit)
         >>> ut.show_if_requested()
@@ -1110,7 +1111,7 @@ def show_convolutional_weights(
         >>> fig = show_convolutional_weights(all_weights, use_color, limit)
         >>> ut.show_if_requested()
     """
-    import plottool as pt
+    from wbia import plottool as pt
 
     if fnum is None:
         fnum = pt.next_fnum()
@@ -1129,7 +1130,7 @@ def show_convolutional_weights(
 
 
 def make_conv_weight_image(all_weights, limit=144):
-    """ just makes the image ndarray of the weights """
+    """just makes the image ndarray of the weights"""
     import vtool as vt
     import cv2
 
@@ -1193,7 +1194,7 @@ def make_conv_weight_image(all_weights, limit=144):
 
 
 def output_confusion_matrix(X_test, results_path, test_results, model, **kwargs):
-    """ currently hacky implementation, fix it later """
+    """currently hacky implementation, fix it later"""
     loss, accu_test, prob_list, auglbl_list, pred_list, conf_list = test_results
     # Output confusion matrix
     mapping_fn = None
@@ -1215,7 +1216,7 @@ def output_confusion_matrix(X_test, results_path, test_results, model, **kwargs)
 def save_confusion_matrix(
     results_path, correct_y, predict_y, category_list, mapping_fn=None, data_x=None
 ):
-    import plottool as pt
+    from wbia import plottool as pt
 
     fig = show_confusion_matrix(
         correct_y, predict_y, category_list, mapping_fn=mapping_fn, data_x=data_x

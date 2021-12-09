@@ -32,9 +32,9 @@ def get_aidpairs_partmatch(ibs, acfg_name):
         >>> from wbia_cnn.ingest_wbia import *  # NOQA
         >>> import wbia
         >>> # build test data
-        >>> ibs = wbia.opendb(defaultdb='PZ_Master1')
-        >>> #ibs = wbia.opendb(defaultdb='PZ_MTEST')
-        >>> #ibs = wbia.opendb(defaultdb='PZ_FlankHack')
+        >>> ibs = wbia.opendb(defaultdb='PZ_Master1', allow_newdir=True)
+        >>> #ibs = wbia.opendb(defaultdb='PZ_MTEST', allow_newdir=True)
+        >>> #ibs = wbia.opendb(defaultdb='PZ_FlankHack', allow_newdir=True)
         >>> acfg_name = ut.get_argval(('--aidcfg', '--acfg', '-a'),
         ...                             type_=str,
         ...                             default='ctrl:pername=None,excluderef=False,contributor_contains=FlankHack')
@@ -166,16 +166,16 @@ def extract_annotpair_training_chips(ibs, aid_pairs, **kwargs):
         >>> import wbia
         >>> # build test data
         >>> if False:
-        >>>     ibs = wbia.opendb(defaultdb='PZ_Master1')
+        >>>     ibs = wbia.opendb(defaultdb='PZ_Master1', allow_newdir=True)
         >>>     acfg_name = ut.get_argval(('--aidcfg', '--acfg', '-a'),
         >>>                                 type_=str,
         >>>                                 default='ctrl:pername=None,excluderef=False,contributor_contains=FlankHack')
         >>> else:
-        >>>     ibs = wbia.opendb(defaultdb='PZ_MTEST')
+        >>>     ibs = wbia.opendb(defaultdb='PZ_MTEST', allow_newdir=True)
         >>>     acfg_name = ut.get_argval(('--aidcfg', '--acfg', '-a'),
         >>>                                  type_=str,
         >>>                                  default='ctrl:pername=None,excluderef=False,index=0:20:2')
-        >>> #ibs = wbia.opendb(defaultdb='PZ_FlankHack')
+        >>> #ibs = wbia.opendb(defaultdb='PZ_FlankHack', allow_newdir=True)
         >>> aid_pairs, label_list, flat_metadata = get_aidpairs_partmatch(ibs, acfg_name)
         >>> s = slice(2, len(aid_pairs), len(aid_pairs) // ut.get_argval('--x', type_=int, default=8))
         >>> #aid_pairs = aid_pairs[s]
@@ -321,7 +321,7 @@ def extract_annotpair_training_chips(ibs, aid_pairs, **kwargs):
 
     return rchip1_list, rchip2_list
     """
-    import plottool as pt
+    from wbia import plottool as pt
     pt.imshow(vt.stack_images(rchip1, rchip2)[0])
     pt.imshow(vt.stack_images(rchip1_sz, rchip2_sz)[0])
     """
@@ -349,7 +349,7 @@ def get_aidpair_patchmatch_training_data(
         >>> from wbia_cnn.ingest_wbia import *  # NOQA
         >>> import wbia
         >>> # build test data
-        >>> ibs = wbia.opendb(defaultdb='PZ_MTEST')
+        >>> ibs = wbia.opendb(defaultdb='PZ_MTEST', allow_newdir=True)
         >>> tup = get_aidpairs_and_matches(ibs, 6)
         >>> (aid1_list, aid2_list, kpts1_m_list, kpts2_m_list, fm_list, metadata_lists) = tup
         >>> pmcfg = PatchMetricDataConfig()
@@ -533,7 +533,7 @@ def get_patchmetric_training_data_and_labels(
         >>> from wbia_cnn.ingest_wbia import *  # NOQA
         >>> import wbia
         >>> # build test data
-        >>> ibs = wbia.opendb(defaultdb='PZ_MTEST')
+        >>> ibs = wbia.opendb(defaultdb='PZ_MTEST', allow_newdir=True)
         >>> (aid1_list, aid2_list, kpts1_m_list, kpts2_m_list, fm_list, metadata_lists) = get_aidpairs_and_matches(ibs, 10, 3)
         >>> pmcfg = PatchMetricDataConfig()
         >>> patch_size = pmcfg['patch_size']
@@ -590,7 +590,7 @@ def get_aidpair_training_labels(ibs, aid1_list_, aid2_list_):
         >>> from wbia_cnn.ingest_wbia import *  # NOQA
         >>> import wbia
         >>> # build test data
-        >>> ibs = wbia.opendb(defaultdb='PZ_MTEST')
+        >>> ibs = wbia.opendb(defaultdb='PZ_MTEST', allow_newdir=True)
         >>> tup = get_aidpairs_and_matches(ibs)
         >>> (aid1_list, aid2_list) = tup[0:2]
         >>> aid1_list = aid1_list[0:min(100, len(aid1_list))]
@@ -887,7 +887,7 @@ def get_aidpairs_and_matches(
         >>> from wbia_cnn.ingest_wbia import *  # NOQA
         >>> import wbia
         >>> # build test data
-        >>> ibs = wbia.opendb(defaultdb='PZ_MTEST')
+        >>> ibs = wbia.opendb(defaultdb='PZ_MTEST', allow_newdir=True)
         >>> acfg_name = ut.get_argval(('--aidcfg', '--acfg', '-a', '--acfg-name'),
         ...                             type_=str,
         ...                             default='ctrl:qindex=0:10')
@@ -914,7 +914,7 @@ def get_aidpairs_and_matches(
         >>> # Visualize parent matches
         >>> _iter = list(zip(aid1_list, aid2_list, kpts1_m_list, kpts2_m_list, fm_list))
         >>> _iter = ut.InteractiveIter(_iter, display_item=False)
-        >>> import plottool as pt
+        >>> from wbia import plottool as pt
         >>> import wbia.viz
         >>> for aid1, aid2, kpts1, kpts2, fm in _iter:
         >>>     pt.reset()
@@ -2702,7 +2702,7 @@ def extract_orientation_chips(ibs, gid_list, image_size=128, training=True, verb
         w, h = int(w), int(h)
         return cv2.resize(image, (w, h), interpolation=cv2.INTER_LANCZOS4)
 
-    from vtool.image import scaled_verts_from_bbox
+    from vtool import scaled_verts_from_bbox
 
     dbname = ibs.dbname
     target_size = int(np.around(image_size * 2 ** 0.5))
@@ -2798,7 +2798,7 @@ def get_orientation_training_images(ibs, dest_path=None, **kwargs):
         >>> from wbia_cnn.ingest_wbia import *  # NOQA
         >>> import wbia
         >>> # build test data
-        >>> ibs = wbia.opendb(defaultdb='PZ_MTEST')
+        >>> ibs = wbia.opendb(defaultdb='PZ_MTEST', allow_newdir=True)
         >>> get_orientation_training_images(ibs)
     """
     from os.path import join, expanduser

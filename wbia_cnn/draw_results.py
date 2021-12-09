@@ -182,8 +182,8 @@ def interact_patches(
 
 
 def make_InteractSiamPatches(*args, **kwargs):
-    import plottool as pt
-    from plottool import abstract_interaction
+    from wbia import plottool as pt
+    from wbia.plottool import abstract_interaction
 
     BASE_CLASS = abstract_interaction.AbstractPagedInteraction
 
@@ -259,7 +259,7 @@ def make_InteractSiamPatches(*args, **kwargs):
             logger.info('click inside')
 
             def get_label_index(self, event, ax):
-                """ generalize """
+                """generalize"""
                 x, y = event.xdata, event.ydata
 
                 def find_offset_index(offset_list, size_list, x, y):
@@ -306,7 +306,7 @@ def make_InteractSiamPatches(*args, **kwargs):
                 label_index = get_label_index(self, event, ax)
                 d1 = self.data_lists[0][label_index]
                 d2 = self.data_lists[1][label_index]
-                import plottool as pt
+                from wbia import plottool as pt
 
                 pt.imshow(d1, pnum=(2, 1, 1), fnum=2)
                 pt.imshow(d2, pnum=(2, 1, 2), fnum=2)
@@ -382,8 +382,8 @@ def make_InteractSiamPatches(*args, **kwargs):
 
 
 def make_InteractClasses(*args, **kwargs):
-    import plottool as pt
-    from plottool import abstract_interaction
+    from wbia import plottool as pt
+    from wbia.plottool import abstract_interaction
 
     @ut.reloadable_class
     class InteractAnnotClasses(abstract_interaction.AbstractInteraction):
@@ -451,7 +451,7 @@ def make_InteractClasses(*args, **kwargs):
             logger.info('click inside')
 
             def get_label_index(inter, event, ax):
-                """ generalize """
+                """generalize"""
                 x, y = event.xdata, event.ydata
 
                 def find_offset_index(offsets, sizes, x, y):
@@ -581,7 +581,7 @@ def get_patch_multichunks(data_lists, label_list, flat_metadata, multiindicies):
         python -m wbia_cnn.draw_results --test-get_patch_multichunks --show
 
     Example:
-        >>> # ENABLE_DOCTEST
+        >>> # DISABLE_DOCTEST
         >>> from wbia_cnn.draw_results import *  # NOQA
         >>> from wbia_cnn import ingest_data
         >>> data, label_list = ingest_data.testdata_patchmatch2()
@@ -591,7 +591,7 @@ def get_patch_multichunks(data_lists, label_list, flat_metadata, multiindicies):
         >>> multiindicies = [np.arange(0, 10), np.arange(10, 20), np.arange(20, 30) ]
         >>> stacked_img, stacked_offsets, stacked_sfs = get_patch_multichunks(data_lists, label_list, flat_metadata, multiindicies)
         >>> ut.quit_if_noshow()
-        >>> import plottool as pt
+        >>> from wbia import plottool as pt
         >>> pt.imshow(stacked_img)
         >>> ut.show_if_requested()
     """
@@ -657,7 +657,7 @@ def get_patch_chunk(
         python -m wbia_cnn.draw_results --test-get_patch_chunk
 
     Example:
-        >>> # ENABLE_DOCTEST
+        >>> # DISABLE_DOCTEST
         >>> from wbia_cnn.draw_results import *  # NOQA
         >>> from wbia_cnn import ingest_data
         >>> data, label_list = ingest_data.testdata_patchmatch2()
@@ -668,7 +668,7 @@ def get_patch_chunk(
         >>> result = str(img.shape)
         >>> print(result)
         >>> ut.quit_if_noshow()
-        >>> import plottool as pt
+        >>> from wbia import plottool as pt
         >>> pt.imshow(img)
         >>> ut.show_if_requested()
         (1920, 384, 3)
@@ -679,7 +679,7 @@ def get_patch_chunk(
     data_per_label = len(data_lists)
     import utool as ut
     import vtool as vt
-    import plottool as pt
+    from wbia import plottool as pt
 
     # Ipython embed hates dict comprehensions and locals
     # with ut.embed_on_exception_context:
@@ -833,7 +833,7 @@ def visualize_score_separability(
     label_list, warped_patch1_list, warped_patch2_list, flat_metadata
 ):
     # import vtool as vt
-    import plottool as pt
+    from wbia import plottool as pt
 
     # draw_results.interact_siamsese_data_patches(fp_labels, fp_data, {'fs': fp_scores}, rand=False, figtitle='FP')
     from vtool import score_normalization as scorenorm

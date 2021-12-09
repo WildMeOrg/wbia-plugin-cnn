@@ -42,10 +42,11 @@ class _ModelLegacy(object):
         }
         model._fix_center_mean_std()
         # Set class attributes
+        print(oldkw.keys())
         model.best_results = {
             'epoch': oldkw['best_epoch'],
             'test_accuracy': oldkw['best_test_accuracy'],
-            'learn_loss': oldkw['best_learn_loss'],
+            'learn_loss': oldkw['best_train_loss'],
             'valid_accuracy': oldkw['best_valid_accuracy'],
             'valid_loss': oldkw['best_valid_loss'],
             'weights': oldkw['best_weights'],

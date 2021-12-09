@@ -173,7 +173,6 @@ class AoI2Model(abstract_models.AbstractCategoricalModel):
         return X, y, w
 
     def get_aoi2_def(model, verbose=ut.VERBOSE, **kwargs):
-        # _CaffeNet = abstract_models.PretrainedNetwork('caffenet')
         _P = functools.partial
 
         hidden_initkw = {
@@ -284,7 +283,7 @@ def train_aoi2(output_path, data_fpath, labels_fpath, purge=True):
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from wbia_cnn.train import *  # NOQA
+        >>> from wbia_cnn.models.aoi2 import *  # NOQA
         >>> result = train_aoi2()
         >>> print(result)
     """

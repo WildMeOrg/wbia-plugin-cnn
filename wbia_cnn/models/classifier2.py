@@ -129,7 +129,6 @@ class Classifier2Model(abstract_models.AbstractVectorModel):
         return X, y
 
     def get_classifier2_def(model, verbose=ut.VERBOSE, **kwargs):
-        # _CaffeNet = abstract_models.PretrainedNetwork('caffenet')
         _P = functools.partial
 
         _CaffeNet = pretrained.PretrainedNetwork('caffenet_conv')
@@ -242,7 +241,7 @@ def train_classifier2(output_path, data_fpath, labels_fpath, purge=True):
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from wbia_cnn.train import *  # NOQA
+        >>> from wbia_cnn.models.classifier2 import *  # NOQA
         >>> result = train_classifier2()
         >>> print(result)
     """

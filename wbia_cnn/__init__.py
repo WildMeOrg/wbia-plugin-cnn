@@ -52,11 +52,11 @@ def reassign_submodule_attributes(verbose=True):
 
 
 def reload_subs(verbose=True):
-    """ Reloads wbia_cnn and submodules """
+    """Reloads wbia_cnn and submodules"""
     rrr(verbose=verbose)
 
     def fbrrr(*args, **kwargs):
-        """ fallback reload """
+        """fallback reload"""
         pass
 
     getattr(models, 'rrr', fbrrr)(verbose=verbose)

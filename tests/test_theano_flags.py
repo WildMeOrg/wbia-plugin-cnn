@@ -25,14 +25,15 @@ def write_theano_flags(theano_flags):
     os.environ['THEANO_FLAGS'] = theano_flags_str
 
 
-theano_flags = parse_theano_flags()
-theano_flags['cnmem'] = 0
-# theano_flags['device'] = DEVICE
-theano_flags['print_active_device'] = False
-theano_flags['enable_initial_driver_test'] = False
-write_theano_flags(theano_flags)
+def test_theano_flags():
+    theano_flags = parse_theano_flags()
+    theano_flags['cnmem'] = 0
+    # theano_flags['device'] = DEVICE
+    theano_flags['print_active_device'] = False
+    theano_flags['enable_initial_driver_test'] = False
+    write_theano_flags(theano_flags)
 
-with ut.Timer():
-    import theano  # NOQA
+    with ut.Timer():
+        import theano  # NOQA
 
-logger.info(ut.get_memstats_str())
+    logger.info(ut.get_memstats_str())

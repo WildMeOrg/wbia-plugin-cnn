@@ -26,7 +26,7 @@ class DataSet(ut.NiceRepr):
         >>> dataset.print_dir_structure()
         >>> # ----
         >>> from wbia_cnn.models import MNISTModel
-        >>> model = MNISTModel(batch_size=128, data_shape=(24, 24, 1),
+        >>> model = MNISTModel(batch_size=128, data_shape=(28, 28, 1),
         >>>                    output_dims=10, dataset_dpath=dataset.dataset_dpath)
         >>> model.print_structure()
     """
@@ -147,7 +147,7 @@ class DataSet(ut.NiceRepr):
         dataset._lazy_cache[key] = val
 
     def subset(dataset, key):
-        """ loads a test/train/valid/full data subset """
+        """loads a test/train/valid/full data subset"""
         data = dataset.subset_data(key)
         labels = dataset.subset_labels(key)
         return data, labels

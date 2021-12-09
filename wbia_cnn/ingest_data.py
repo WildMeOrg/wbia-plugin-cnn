@@ -3,7 +3,7 @@ import logging
 from wbia_cnn import utils
 from wbia_cnn import ingest_helpers
 from wbia_cnn import ingest_wbia
-from wbia_cnn.dataset import DataSet
+from wbia_cnn.dataset import DataSet, get_juction_dpath
 from os.path import join, basename, splitext
 import utool as ut
 
@@ -52,12 +52,12 @@ def view_training_directories():
         python -m wbia_cnn.ingest_data --test-view_training_directories
 
     Example:
-        >>> # UTILITY_SCRIPT
+        >>> # DISABLE_DOCTEST
         >>> from wbia_cnn.ingest_data import *  # NOQA
         >>> result = view_training_directories()
         >>> print(result)
     """
-    ut.vd(ingest_wbia.get_juction_dpath())
+    ut.vd(get_juction_dpath())
 
 
 def merge_datasets(dataset_list):
@@ -111,6 +111,7 @@ def merge_datasets(dataset_list):
     # Build the dataset
     consensus_check = consensus_check_factory()
 
+    data_shape = None
     for dataset in dataset_list:
         logger.info(ut.get_file_nBytes_str(dataset.data_fpath))
         logger.info(dataset.data_fpath_dict['full'])
@@ -187,7 +188,7 @@ def grab_siam_dataset(ds_tag=None):
         python -m wbia_cnn.ingest_data --test-grab_siam_dataset --db liberty --show --nohud --nometa
 
     Example:
-        >>> # ENABLE_DOCTEST
+        >>> # DISABLE_DOCTEST
         >>> from wbia_cnn.ingest_data import *  # NOQA
         >>> ds_tag = None
         >>> dataset = grab_siam_dataset(ds_tag=ds_tag)
@@ -334,7 +335,7 @@ def grab_mnist_siam_dataset():
 def grab_liberty_siam_dataset(pairs=250000):
     """
     References:
-        http://www.cs.ubc.ca/~mbrown/patchdata/patchdata.html
+        http://icvl.ee.ic.ac.uk/vbalnt/liberty.zip
         https://github.com/osdf/datasets/blob/master/patchdata/dataset.py
 
     Notes:
@@ -363,7 +364,7 @@ def grab_liberty_siam_dataset(pairs=250000):
         python -m wbia_cnn.ingest_data --test-grab_liberty_siam_dataset --show
 
     Example:
-        >>> # ENABLE_DOCTEST
+        >>> # DISABLE_DOCTEST
         >>> from wbia_cnn.ingest_data import *  # NOQA
         >>> pairs = 500
         >>> dataset = grab_liberty_siam_dataset(pairs)
@@ -387,8 +388,8 @@ def grab_liberty_siam_dataset(pairs=250000):
     assert pairs in [500, 50000, 100000, 250000]
 
     liberty_urls = {
-        'dog': 'http://www.cs.ubc.ca/~mbrown/patchdata/liberty.zip',
-        'harris': 'http://www.cs.ubc.ca/~mbrown/patchdata/liberty_harris.zip',
+        'dog': 'http://matthewalunbrown.com/patchdata/liberty.zip',
+        'harris': 'http://matthewalunbrown.com/patchdata/liberty_harris.zip',
     }
     url = liberty_urls[datakw['detector']]
     ds_path = ut.grab_zipped_url(url)
@@ -439,7 +440,7 @@ def get_wbia_patch_siam_dataset(**kwargs):
         python -m wbia_cnn.ingest_data --test-get_wbia_patch_siam_dataset --show --db PZ_MTEST --acfg_name unctrl --dryrun
 
     Example:
-        >>> # ENABLE_DOCTEST
+        >>> # DISABLE_DOCTEST
         >>> from wbia_cnn.ingest_data import *  # NOQA
         >>> from wbia_cnn import draw_results
         >>> import wbia
@@ -479,7 +480,7 @@ def get_wbia_patch_siam_dataset(**kwargs):
         import wbia
 
         dbname = ut.get_argval('--db', default='PZ_MTEST')
-        ibs = wbia.opendb(dbname=dbname, defaultdb='PZ_MTEST')
+        ibs = wbia.opendb(dbname=dbname, defaultdb='PZ_MTEST', allow_newdir=True)
 
     # Nets dir is the root dir for all training on this data
     training_dpath = ibs.get_neuralnet_dir()
@@ -494,7 +495,7 @@ def get_wbia_patch_siam_dataset(**kwargs):
             raise Exception('forced cache off')
         # Try and short circut cached loading
         dataset = DataSet.from_alias_key(alias_key)
-        dataset.setprop('ibs', lambda: wbia.opendb(db=dbname))
+        dataset.setprop('ibs', lambda: wbia.opendb(db=dbname, allow_newdir=True))
         return dataset
     except Exception as ex:
         ut.printex(
@@ -564,7 +565,7 @@ def get_wbia_part_siam_dataset(**kwargs):
         python -m wbia_cnn.ingest_data --test-get_wbia_part_siam_dataset --show --db PZ_MTEST --acfg_name unctrl --dryrun
 
     Example:
-        >>> # ENABLE_DOCTEST
+        >>> # DISABLE_DOCTEST
         >>> from wbia_cnn.ingest_data import *  # NOQA
         >>> from wbia_cnn import draw_results
         >>> import wbia
@@ -599,7 +600,7 @@ def get_wbia_part_siam_dataset(**kwargs):
             raise Exception('forced cache off')
         # Try and short circut cached loading
         dataset = DataSet.from_alias_key(alias_key)
-        dataset.setprop('ibs', lambda: wbia.opendb(db=dbname))
+        dataset.setprop('ibs', lambda: wbia.opendb(db=dbname, allow_newdir=True))
         return dataset
     except Exception as ex:
         ut.printex(
@@ -609,7 +610,7 @@ def get_wbia_part_siam_dataset(**kwargs):
         )
 
     with ut.Indenter('[LOAD IBEIS DB]'):
-        ibs = wbia.opendb(db=dbname)
+        ibs = wbia.opendb(db=dbname, allow_newdir=True)
 
     # Nets dir is the root dir for all training on this data
     training_dpath = ibs.get_neuralnet_dir()

@@ -205,7 +205,7 @@ class History(ut.NiceRepr):
             >>> history = model.history
             >>> result = str(model.history.hist_id)
             >>> print(result)
-            epoch0002_era012_qewrbbgy
+            epoch0003_era012_zamwoidy
         """
         hashid = history.get_history_hashid()
         nice = history.get_history_nice()
@@ -906,7 +906,9 @@ class _ModelFitter(object):
 
             unique_classes = np.array(sorted(ut.unique(y_learn)))
             class_to_weight = sklearn.utils.compute_class_weight(
-                'balanced', unique_classes, y_learn
+                'balanced',
+                classes=unique_classes,
+                y=y_learn,
             )
             model.data_params['class_to_weight'] = class_to_weight
         else:
@@ -1559,7 +1561,7 @@ class _ModelBatch(_BatchUtility):
         shuffle=False,
         augment_on=False,
     ):
-        """ Execute a theano function on batches of X and y """
+        """Execute a theano function on batches of X and y"""
         # Break data into generated batches
         # TODO: sliced batches when there is no shuffling
         # Create an iterator to generate batches of data
@@ -1617,12 +1619,12 @@ class _ModelBatch(_BatchUtility):
             >>> model = models.DummyModel(batch_size=16)
             >>> X, y = model.make_random_testdata(num=37, cv2_format=True)
             >>> model.ensure_data_params(X, y)
-            >>> result_list = [(Xb, Yb) for Xb, Yb in model.batch_iterator(X, y)]
+            >>> result_list = [(Xb, Yb) for Xb, Yb, _ in model.batch_iterator(X, y)]
             >>> Xb, yb = result_list[0]
             >>> assert np.all(X[0, :, :, 0] == Xb[0, 0, :, :])
             >>> result = ut.depth_profile(result_list, compress_consecutive=True)
             >>> print(result)
-            (7, [(16, 1, 4, 4), 16])
+            [[(16, 1, 4, 4), 16]] * 2 + [[(5, 1, 4, 4), 5]]
 
         Example:
             >>> # ENABLE_DOCTEST
@@ -1632,10 +1634,10 @@ class _ModelBatch(_BatchUtility):
             >>> X, y = model.make_random_testdata(num=37, cv2_format=False, asint=True)
             >>> model.X_is_cv2_native = False
             >>> model.ensure_data_params(X, y)
-            >>> result_list = [(Xb, Yb) for Xb, Yb in model.batch_iterator(X, y)]
+            >>> result_list = [(Xb, Yb) for Xb, Yb, _ in model.batch_iterator(X, y)]
             >>> Xb, yb = result_list[0]
             >>> assert np.all(np.isclose(X[0] / 255, Xb[0]))
-            >>> result = depth
+            >>> result = ut.depth_profile(result_list, compress_consecutive=True)
             >>> print(result)
         """
         # need to be careful with batchsizes if directly specified to theano
@@ -1710,7 +1712,7 @@ class _ModelBatch(_BatchUtility):
         return Xb, yb, wb
 
     def prepare_data(model, X, y=None, w=None):
-        """ convenience function for external use """
+        """convenience function for external use"""
         is_int = ut.is_int(X)
         is_cv2 = model.X_is_cv2_native
         whiten_on = model.hyperparams['whiten_on']
@@ -1747,7 +1749,7 @@ class _ModelPredicter(object):
         return y_proba
 
     def predict_proba_Xb(model, Xb):
-        """ Accepts prepared inputs """
+        """Accepts prepared inputs"""
         theano_predict = model.build_predict_func()
         batch_label = theano_predict(Xb)
         output_names = [
@@ -1788,7 +1790,7 @@ class _ModelBackend(object):
         logger.info('[model] --- FINISHED BUILD ---')
 
     def build_predict_func(model):
-        """ Computes predictions given unlabeled data """
+        """Computes predictions given unlabeled data"""
         if model._theano_predict is None:
             logger.info('[model.build] request_predict')
             netout_exprs = model._get_network_output()
@@ -2161,7 +2163,7 @@ class _ModelVisualization(object):
         >>> X, y = model.make_random_testdata(num=27, cv2_format=True, asint=False)
         >>> model.fit(X, y, max_epochs=10, era_size=3, buffered=False)
         >>> fnum = None
-        >>> import plottool as pt
+        >>> from wbia import plottool as pt
         >>> pt.qt4ensure()
         >>> fnum = 1
         >>> model.show_loss_history(fnum)
@@ -2170,7 +2172,7 @@ class _ModelVisualization(object):
     """
 
     def show_arch(model, fnum=None, fullinfo=True, **kwargs):
-        import plottool as pt
+        from wbia import plottool as pt
 
         layers = model.get_all_layers(**kwargs)
         draw_net.show_arch_nx_graph(layers, fnum=fnum, fullinfo=fullinfo)
@@ -2190,12 +2192,12 @@ class _ModelVisualization(object):
             >>> model.init_arch()
             >>> model.load_model_state()
             >>> ut.quit_if_noshow()
-            >>> import plottool as pt
+            >>> from wbia import plottool as pt
             >>> #pt.qt4ensure()
             >>> model.show_class_dream()
             >>> ut.show_if_requested()
         """
-        import plottool as pt
+        from wbia import plottool as pt
 
         kw = dict(init='randn', niters=200, update_rate=0.05, weight_decay=1e-4)
         kw.update(**kwargs)
@@ -2243,7 +2245,7 @@ class _ModelVisualization(object):
                 step_fn()
 
     def show_weights_image(model, index=0, *args, **kwargs):
-        import plottool as pt
+        from wbia import plottool as pt
 
         network_layers = model.get_all_layers()
         cnn_layers = [layer_ for layer_ in network_layers if hasattr(layer_, 'W')]
@@ -2272,7 +2274,7 @@ class _ModelVisualization(object):
             >>> model.show_update_mag_history(fnum)
             >>> ut.show_if_requested()
         """
-        import plottool as pt
+        from wbia import plottool as pt
 
         fnum = pt.ensure_fnum(fnum)
 
@@ -2325,7 +2327,7 @@ class _ModelVisualization(object):
             >>> model.show_pr_history(fnum)
             >>> ut.show_if_requested()
         """
-        import plottool as pt
+        from wbia import plottool as pt
 
         fnum = pt.ensure_fnum(fnum)
         fig = pt.figure(fnum=fnum, pnum=(1, 1, 1), doclf=True, docla=True)
@@ -2361,7 +2363,7 @@ class _ModelVisualization(object):
             >>> model.show_loss_history(fnum)
             >>> ut.show_if_requested()
         """
-        import plottool as pt
+        from wbia import plottool as pt
 
         fnum = pt.ensure_fnum(fnum)
         fig = pt.figure(fnum=fnum, pnum=(1, 1, 1), doclf=True, docla=True)
@@ -2397,7 +2399,7 @@ class _ModelVisualization(object):
     def _show_era_class_pr(
         model, types=['valid', 'learn'], measures=['precision', 'recall'], **kwargs
     ):
-        import plottool as pt
+        from wbia import plottool as pt
 
         if getattr(model, 'encoder', None):
             # TODO: keep in data_params?
@@ -2556,7 +2558,7 @@ class _ModelVisualization(object):
         fig = model._show_era_measure(
             ydatas, labels, styles, ylabel='accuracy', yspreads=yspreads, **kwargs
         )
-        # import plottool as pt
+        # from wbia import plottool as pt
         # ax = pt.gca()
         # ymin, ymax = ax.get_ylim()
         # pt.gca().set_ylim((ymin, 100))
@@ -2589,7 +2591,7 @@ class _ModelVisualization(object):
 
     def show_weight_updates(model, param_keys=None, **kwargs):
         # has_mag_updates = False
-        import plottool as pt
+        from wbia import plottool as pt
 
         xdatas = []
         ydatas = []
@@ -2664,7 +2666,7 @@ class _ModelVisualization(object):
     ):
 
         # logger.info('Show Era Measure ylabel = %r' % (ylabel,))
-        import plottool as pt
+        from wbia import plottool as pt
 
         num_eras = model.history.total_eras
 
@@ -2739,7 +2741,7 @@ class _ModelVisualization(object):
         return fig
 
     def show_regularization_stuff(model, fnum=None, pnum=(1, 1, 1)):
-        import plottool as pt
+        from wbia import plottool as pt
 
         fnum = pt.ensure_fnum(fnum)
         fig = pt.figure(fnum=fnum, pnum=pnum)
@@ -2789,7 +2791,7 @@ class _ModelVisualization(object):
     # --- IMAGE WRITE
 
     def render_arch(model, fullinfo=True):
-        import plottool as pt
+        from wbia import plottool as pt
 
         savekw = dict(dpi=180)
         with pt.RenderingContext(**savekw) as render:
@@ -2808,7 +2810,7 @@ class _ModelVisualization(object):
             >>> # DISABLE_DOCTEST
             >>> from wbia_cnn.models.abstract_models import *  # NOQA
             >>> from wbia_cnn.models.mnist import MNISTModel
-            >>> model = MNISTModel(batch_size=128, data_shape=(24, 24, 1),
+            >>> model = MNISTModel(batch_size=128, data_shape=(28, 28, 1),
             >>>                    output_dims=10, batch_norm=False, name='mnist')
             >>> model.init_arch()
             >>> fapth = model.imwrite_arch()
@@ -2918,13 +2920,24 @@ class _ModelStrings(object):
             >>> model.init_arch()
             >>> result = model.get_arch_str(sep=ut.NEWLINE, with_noise=False)
             >>> print(result)
-            InputLayer(name=I0,shape=(128, 1, 24, 24))
-            Conv2DDNNLayer(name=C1,num_filters=32,stride=(1, 1),nonlinearity=rectify)
-            MaxPool2DDNNLayer(name=P1,stride=(2, 2))
-            Conv2DDNNLayer(name=C2,num_filters=32,stride=(1, 1),nonlinearity=rectify)
-            MaxPool2DDNNLayer(name=P2,stride=(2, 2))
-            DenseLayer(name=F3,num_units=256,nonlinearity=rectify)
-            DenseLayer(name=O4,num_units=10,nonlinearity=softmax)
+            InputLayer(shape=(None, 1, 28, 28))
+            Conv2DLayer(num_filters=128,filter_size=(3, 3),stride=(1, 1),output_shape=(None, 128, 26, 26),num_groups=1,nonlinearity=linear)
+            BatchNormLayer2(alpha=0.1,nonlinearity=rectify)
+            MaxPool2DLayer(stride=(2, 2),pool_size=(2, 2),output_shape=(None, 128, 13, 13))
+            Conv2DLayer(num_filters=128,filter_size=(3, 3),stride=(1, 1),output_shape=(None, 128, 11, 11),num_groups=1,nonlinearity=linear)
+            BatchNormLayer2(alpha=0.1,nonlinearity=rectify)
+            Conv2DLayer(num_filters=128,filter_size=(3, 3),stride=(1, 1),output_shape=(None, 128, 9, 9),num_groups=1,nonlinearity=linear)
+            BatchNormLayer2(alpha=0.1,nonlinearity=rectify)
+            MaxPool2DLayer(stride=(2, 2),pool_size=(2, 2),output_shape=(None, 128, 4, 4))
+            Conv2DLayer(num_filters=128,filter_size=(3, 3),stride=(1, 1),output_shape=(None, 128, 2, 2),num_groups=1,nonlinearity=linear)
+            BatchNormLayer2(alpha=0.1,nonlinearity=rectify)
+            Conv2DLayer(num_filters=128,filter_size=(2, 2),stride=(1, 1),output_shape=(None, 128, 1, 1),num_groups=1,nonlinearity=linear)
+            BatchNormLayer2(alpha=0.1,nonlinearity=rectify)
+            DenseLayer(num_units=256,num_leading_axes=1,nonlinearity=linear)
+            BatchNormLayer2(alpha=0.1,nonlinearity=rectify)
+            DenseLayer(num_units=256,num_leading_axes=1,nonlinearity=linear)
+            BatchNormLayer2(alpha=0.1,nonlinearity=rectify)
+            DenseLayer(num_units=10,num_leading_axes=1,nonlinearity=softmax)
         """
         if model.output_layer is None:
             return ''
@@ -2941,27 +2954,40 @@ class _ModelStrings(object):
             python -m wbia_cnn.models.abstract_models _ModelStrings.get_layer_info_str:0
 
         Example:
-            >>> # ENABLE_DOCTEST
+            >>> # DISABLE_DOCTEST
             >>> from wbia_cnn.models.abstract_models import *  # NOQA
             >>> from wbia_cnn.models.mnist import MNISTModel
-            >>> model = MNISTModel(batch_size=128, data_shape=(24, 24, 1),
+            >>> model = MNISTModel(batch_size=128, data_shape=(28, 28, 1),
             >>>                    output_dims=10)
             >>> model.init_arch()
             >>> result = model.get_layer_info_str()
             >>> print(result)
             Network Structure:
-             index  Name  Layer               Outputs      Bytes OutShape           Params
-             0      I0    InputLayer              576    294,912 (128, 1, 24, 24)   []
-             1      C1    Conv2DDNNLayer       12,800  6,556,928 (128, 32, 20, 20)  [C1.W(32,1,5,5, {t,r}), C1.b(32, {t})]
-             2      P1    MaxPool2DDNNLayer     3,200  1,638,400 (128, 32, 10, 10)  []
-             3      C2    Conv2DDNNLayer        1,152    692,352 (128, 32, 6, 6)    [C2.W(32,32,5,5, {t,r}), C2.b(32, {t})]
-             4      P2    MaxPool2DDNNLayer       288    147,456 (128, 32, 3, 3)    []
-             5      D2    DropoutLayer            288    147,456 (128, 32, 3, 3)    []
-             6      F3    DenseLayer              256    427,008 (128, 256)         [F3.W(288,256, {t,r}), F3.b(256, {t})]
-             7      D3    DropoutLayer            256    131,072 (128, 256)         []
-             8      O4    DenseLayer               10     15,400 (128, 10)          [O4.W(256,10, {t,r}), O4.b(10, {t})]
-            ...this model has 103,018 learnable parameters
-            ...this model will use 10,050,984 bytes = 9.59 MB
+            index  Name    Layer       Outputs      Bytes OutShape             Params
+            0      I1      Input           784      3,136 (None, 1, 28, 28)    []
+            1      C2      Conv2D       86,528    355,328 (None, 128, 26, 26)  [W(128,1,3,3; r,t)]
+            2      C2/bn_  BatchNorm    86,528    350,208 (None, 128, 26, 26)  [beta(128; t), gamma(128; r,t), mean(128; b), inv_std(128; b)]
+            3      C2/P    MaxPool2D    21,632     86,528 (None, 128, 13, 13)  []
+            4      C3      Conv2D       15,488  1,241,600 (None, 128, 11, 11)  [W(128,128,3,3; r,t)]
+            5      C3/bn_  BatchNorm    15,488     66,048 (None, 128, 11, 11)  [beta(128; t), gamma(128; r,t), mean(128; b), inv_std(128; b)]
+            6      C4      Conv2D       10,368  1,221,120 (None, 128, 9, 9)    [W(128,128,3,3; r,t)]
+            7      C4/bn_  BatchNorm    10,368     45,568 (None, 128, 9, 9)    [beta(128; t), gamma(128; r,t), mean(128; b), inv_std(128; b)]
+            8      C4/P    MaxPool2D     2,048      8,192 (None, 128, 4, 4)    []
+            9      C5      Conv2D          512  1,181,696 (None, 128, 2, 2)    [W(128,128,3,3; r,t)]
+            10     C5/bn_  BatchNorm       512      6,144 (None, 128, 2, 2)    [beta(128; t), gamma(128; r,t), mean(128; b), inv_std(128; b)]
+            11     C6      Conv2D          128    524,800 (None, 128, 1, 1)    [W(128,128,2,2; r,t)]
+            12     C6/bn_  BatchNorm       128      4,608 (None, 128, 1, 1)    [beta(128; t), gamma(128; r,t), mean(128; b), inv_std(128; b)]
+            13     D7      Dropout         128        512 (None, 128, 1, 1)    []
+            14     F7      Dense           256    263,168 (None, 256)          [W(128,256; r,t)]
+            15     F7/bn   BatchNorm       256      9,216 (None, 256)          [beta(256; t), gamma(256; r,t), mean(256; b), inv_std(256; b)]
+            16     D8      Dropout         256      1,024 (None, 256)          []
+            17     F8      Dense           256    525,312 (None, 256)          [W(256,256; r,t)]
+            18     F8/bn   BatchNorm       256      9,216 (None, 256)          [beta(256; t), gamma(256; r,t), mean(256; b), inv_std(256; b)]
+            19     D9      Dropout         256      1,024 (None, 256)          []
+            20     F9      SoftMax          10     20,600 (None, 10)           [W(256,10; r,t), b(10; t)]
+            ...this model has 614,538 learnable parameters
+            ...this model will use ~5,925,048 bytes = 5.65 MB per input
+            ...this model will use ~758,406,144 bytes = 723.27 MB per batch with a batch size of 128
         """
         return net_strs.get_layer_info_str(model.get_all_layers(), model.batch_size)
 
@@ -3021,8 +3047,8 @@ class _ModelIDs(object):
             >>> # ENABLE_DOCTEST
             >>> from wbia_cnn.models.abstract_models import *  # NOQA
             >>> from wbia_cnn.models.mnist import MNISTModel
-            >>> model = MNISTModel(batch_size=128, data_shape=(24, 24, 1),
-            >>>                    output_dims=10, name='bnorm')
+            >>> model = MNISTModel(batch_size=128, data_shape=(28, 28, 1),
+            >>>                    output_dims=10, name='bnorm', batch_norm=True)
             >>> model.init_arch()
             >>> result = str(model.arch_id)
             >>> print(result)
@@ -3056,12 +3082,12 @@ class _ModelIDs(object):
             >>> # ENABLE_DOCTEST
             >>> from wbia_cnn.models.abstract_models import *  # NOQA
             >>> from wbia_cnn.models.mnist import MNISTModel
-            >>> model = MNISTModel(batch_size=128, data_shape=(24, 24, 1),
-            >>>                    output_dims=10)
+            >>> model = MNISTModel(batch_size=128, data_shape=(28, 28, 1),
+            >>>                    output_dims=10, batch_norm=True)
             >>> model.init_arch()
             >>> result = str(model.get_arch_nice())
             >>> print(result)
-            o10_d4_c107
+            o10_d8_c650
         """
         if model.output_layer is None:
             return 'NoArch'
@@ -3114,8 +3140,9 @@ class _ModelIO(object):
             >>> dataset.print_dir_structure()
             >>> # ----
             >>> from wbia_cnn.models.mnist import MNISTModel
-            >>> model = MNISTModel(batch_size=128, data_shape=(24, 24, 1),
-            >>>                    output_dims=10, dataset_dpath=dataset.dataset_dpath)
+            >>> model = MNISTModel(batch_size=128, data_shape=(28, 28, 1),
+            >>>                    output_dims=10, dataset_dpath=dataset.dataset_dpath,
+            >>>                    batch_norm=True)
             >>> model.print_structure()
 
         """
@@ -3124,7 +3151,7 @@ class _ModelIO(object):
         # logger.info(model.best_dpath)
         logger.info(model.saved_session_dpath)
         logger.info(model.checkpoint_dpath)
-        logger.info(model.diagnostic_dpath)
+        # logger.info(model.diagnostic_dpath)
         logger.info(model.trained_model_dpath)
         logger.info(model.trained_arch_dpath)
 
@@ -3273,7 +3300,7 @@ class _ModelIO(object):
         model.save_model_info(fpath=fpath)
 
     def save_model_state(model, **kwargs):
-        """ saves current model state """
+        """saves current model state"""
         current_weights = model.get_all_param_values()
         model_state = {
             'best_results': model.best_results,
@@ -3285,7 +3312,7 @@ class _ModelIO(object):
             'batch_size': model.data_shape,
             'output_dims': model.output_dims,
             'era_history': model.history,
-            # 'arch_tag': model.arch_tag,
+            'arch_tag': model.arch_tag,
         }
         model_state_fpath = model.get_model_state_fpath(**kwargs)
         # logger.info('saving model state to: %s' % (model_state_fpath,))
@@ -3295,7 +3322,7 @@ class _ModelIO(object):
         return model_state_fpath
 
     def save_model_info(model, **kwargs):
-        """ save model information (history and results but no weights) """
+        """save model information (history and results but no weights)"""
         model_info = {
             'best_results': model.best_results,
             'input_shape': model.input_shape,
@@ -3315,6 +3342,7 @@ class _ModelIO(object):
             straightforward
 
         Example:
+            >>> # DISABLE_DOCTEST
             >>> # Assumes mnist is trained
             >>> from wbia_cnn.models.abstract_models import  *  # NOQA
             >>> from wbia_cnn.models import mnist
@@ -3358,7 +3386,7 @@ class _ModelIO(object):
             model.set_all_param_values(model.best_results['weights'])
 
     def load_extern_weights(model, **kwargs):
-        """ load weights from another model """
+        """load weights from another model"""
         model_state_fpath = model.get_model_state_fpath(**kwargs)
         logger.info('[model] loading extern weights from: %s' % (model_state_fpath,))
         model_state = ut.load_cPkl(model_state_fpath)
@@ -3398,8 +3426,12 @@ class _ModelUtility(object):
             try:
                 lasagne.layers.set_all_param_values(model.get_all_layers(), weights_list)
             except TypeError:
-                weights_list_fp32 = [weights.astype(np.float32) for weights in weights_list]
-                lasagne.layers.set_all_param_values(model.get_all_layers(), weights_list_fp32)
+                weights_list_fp32 = [
+                    weights.astype(np.float32) for weights in weights_list
+                ]
+                lasagne.layers.set_all_param_values(
+                    model.get_all_layers(), weights_list_fp32
+                )
 
     def get_all_param_values(model):
         import lasagne
@@ -3441,7 +3473,7 @@ class _ModelUtility(object):
 
     @property
     def layers_(model):
-        """ for compatibility with nolearn visualizations """
+        """for compatibility with nolearn visualizations"""
         return model.get_all_layers()
 
     def get_output_layer(model):
@@ -3451,7 +3483,7 @@ class _ModelUtility(object):
             return None
 
     def _validate_data(model, X_train):
-        """ Check to make sure data agrees with model input """
+        """Check to make sure data agrees with model input"""
         input_layer = model.get_all_layers()[0]
         expected_item_shape = ut.take(input_layer.shape[1:], [1, 2, 0])
         expected_item_shape = tuple(expected_item_shape)
@@ -3535,6 +3567,7 @@ class BaseModel(
         model._init_batch_vars(kwargs)
         model.output_layer = None
         autoinit = kwargs.pop('autoinit', False)
+        model.arch_tag = kwargs.pop('arch_tag', None)
         assert len(kwargs) == 0, 'Model was given unused keywords=%r' % (
             list(kwargs.keys())
         )
@@ -3648,7 +3681,7 @@ class BaseModel(
 
 @ut.reloadable_class
 class AbstractCategoricalModel(BaseModel):
-    """ base model for catagory classifiers """
+    """base model for catagory classifiers"""
 
     def __init__(model, **kwargs):
         # BaseModel.__init__(model, **kwargs)
@@ -3710,7 +3743,7 @@ class AbstractCategoricalModel(BaseModel):
 
 @ut.reloadable_class
 class AbstractVectorModel(BaseModel):
-    """ base model for catagory classifiers """
+    """base model for catagory classifiers"""
 
     def __init__(model, **kwargs):
         # BaseModel.__init__(model, **kwargs)
@@ -3771,7 +3804,7 @@ class AbstractVectorModel(BaseModel):
 
 @ut.reloadable_class
 class AbstractVectorVectorModel(AbstractVectorModel):
-    """ base model for catagory classifiers """
+    """base model for catagory classifiers"""
 
     def __init__(model, **kwargs):
         # BaseModel.__init__(model, **kwargs)

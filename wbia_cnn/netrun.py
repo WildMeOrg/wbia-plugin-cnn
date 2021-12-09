@@ -368,8 +368,8 @@ def merge_ds_tags(ds_alias_list):
         http://stackoverflow.com/questions/18492273/combining-hdf5-files
 
     Example:
-        >>> # ENABLE_DOCTEST
-        >>> from wbia_cnn.train import *  # NOQA
+        >>> # DISABLE_DOCTEST
+        >>> from wbia_cnn.netrun import *  # NOQA
         >>> ds_alias_list = ut.get_argval('--alias-list', type_=list, default=[])
         >>> result = merge_ds_tags(ds_alias_list)
         >>> print(result)
@@ -384,9 +384,9 @@ def merge_ds_tags(ds_alias_list):
 if __name__ == '__main__':
     """
     CommandLine:
-        python -m wbia_cnn.train
-        python -m wbia_cnn.train --allexamples
-        python -m wbia_cnn.train --allexamples --noface --nosrc
+        python -m wbia_cnn.netrun
+        python -m wbia_cnn.netrun --allexamples
+        python -m wbia_cnn.netrun --allexamples --noface --nosrc
     """
     # train_pz()
     import multiprocessing

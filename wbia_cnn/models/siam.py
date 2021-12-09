@@ -602,7 +602,7 @@ class SiameseL2(AbstractSiameseModel):
             >>> dist1_l2 = dist_l2[~labels]
             >>> loss0 = loss[labels]
             >>> loss1 = loss[~labels]
-            >>> import plottool as pt
+            >>> from wbia import plottool as pt
             >>> pt.plot2(dist0_l2, loss0, 'x', color=pt.TRUE_BLUE, label='imposter_loss', y_label='loss')
             >>> pt.plot2(dist1_l2, loss1, 'x', color=pt.FALSE_RED, label='genuine_loss', y_label='loss')
             >>> pt.legend()
@@ -812,7 +812,7 @@ def constrastive_loss(dist_l2, labels, margin, T=T):
         >>> margin, T = 1.25, np
         >>> loss = constrastive_loss(dist_l2, labels, margin, T)
         >>> ut.quit_if_noshow()
-        >>> import plottool as pt
+        >>> from wbia import plottool as pt
         >>> xdat_genuine, ydat_genuine = dist_l2[labels], loss[labels] * 2.0
         >>> xdat_imposter, ydat_imposter = dist_l2[~labels], loss[~labels] * 2.0
         >>> #pt.presetup_axes(x_label='Energy (D_w)', y_label='Loss (L)', equal_aspect=False)
@@ -893,7 +893,7 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
             >>> result = str(output_layer)
             >>> print(result)
             >>> ut.quit_if_noshow()
-            >>> import plottool as pt
+            >>> from wbia import plottool as pt
             >>> model.show_arch()
             >>> ut.show_if_requested()
         """
@@ -924,7 +924,7 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
             python -m wbia_cnn.models.siam --test-loss_function:1 --show
 
         Example:
-            >>> # ENABLE_DOCTEST
+            >>> # DISABLE_DOCTEST
             >>> from wbia_cnn.models import *  # NOQA
             >>> from wbia_cnn import ingest_data
             >>> from wbia_cnn import batch_processing as batch
@@ -944,7 +944,7 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
             >>> print(result)
 
         Example1:
-            >>> # ENABLE_DOCTEST
+            >>> # DISABLE_DOCTEST
             >>> from wbia_cnn.models import *  # NOQA
             >>> network_output = np.linspace(-2, 2, 128)
             >>> Y0 = np.zeros(len(network_output), np.float32)
@@ -959,7 +959,7 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
             >>> assert np.all(Y1 == 1) and np.all(Y1_ == 1), 'bad label mapping'
             >>> assert np.all(Y0 == 0) and np.all(Y0_ == -1), 'bad label mapping'
             >>> ut.quit_if_noshow()
-            >>> import plottool as pt
+            >>> from wbia import plottool as pt
             >>> pt.plot2(network_output, loss0, '-', color=pt.TRUE_BLUE, label='imposter_loss', y_label='network output')
             >>> pt.plot2(network_output, loss1, '-', color=pt.FALSE_RED, label='genuine_loss', y_label='network output')
             >>> pt.legend()

@@ -35,7 +35,7 @@ def load_mnist_labels(gz_fpath):
 
 
 def grab_mnist2():
-    """ Follows lasagne example """
+    """Follows lasagne example"""
     train_data_gz = ut.grab_file_url(
         'http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz'
     )
@@ -352,7 +352,7 @@ def convert_category_to_siam_data(category_data, category_labels):
         return needs_fix
 
     def swap_undirected(pairxs):
-        """ ensure left indicies are lower """
+        """ensure left indicies are lower"""
         needs_swap = pairxs.T[0] > pairxs.T[1]
         arr = pairxs[needs_swap]
         tmp = arr.T[0].copy()

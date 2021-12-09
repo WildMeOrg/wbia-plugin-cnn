@@ -4,7 +4,7 @@ import six
 import random
 from lasagne import layers, nonlinearities
 
-from wbia_cnn.models import abstract_models
+from wbia_cnn.models import abstract_models, pretrained
 import utool as ut
 
 print, rrr, profile = ut.inject2(__name__)
@@ -117,7 +117,7 @@ class ViewpointModel(abstract_models.AbstractCategoricalModel):
         (_, input_channels, input_width, input_height) = model.input_shape
         output_dims = model.output_dims
 
-        _CaffeNet = abstract_models.PretrainedNetwork('caffenet')
+        _CaffeNet = pretrained.PretrainedNetwork('caffenet')
 
         l_in = layers.InputLayer(
             # variable batch size (None), channel, width, height

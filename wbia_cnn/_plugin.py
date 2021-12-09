@@ -72,9 +72,9 @@ def get_verified_aid_pairs(ibs):
     """
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from wbia_cnn.train import *  # NOQA
+        >>> from wbia_cnn._plugin import *  # NOQA
         >>> import wbia
-        >>> ibs = wbia.opendb('NNP_Master3')
+        >>> ibs = wbia.opendb('NNP_Master3', allow_newdir=True)
         >>> verified_aid1_list, verified_aid2_list = get_verified_aid_pairs(ibs)
     """
     # Grab marked hard cases
@@ -558,14 +558,14 @@ def generate_species_background_mask(ibs, chip_fpath_list, species=None):
         >>> import wbia_cnn
         >>> import wbia
         >>> from wbia_cnn._plugin import *  # NOQA
-        >>> ibs = wbia.opendb(defaultdb='testdb1')
+        >>> ibs = wbia.opendb(defaultdb='testdb1', allow_newdir=True)
         >>> aid_list = ut.get_argval(('--aids', '--aid'), type_=list, default=ibs.get_valid_aids()[0:2])
         >>> chip_fpath_list = ibs.get_annot_chip_fpath(aid_list)
         >>> species = ibs.const.TEST_SPECIES.ZEB_PLAIN
         >>> mask_list = generate_species_background_mask(ibs, chip_fpath_list, species)
         >>> mask_list = list(mask_list)
         >>> ut.quit_if_noshow()
-        >>> import plottool as pt
+        >>> from wbia import plottool as pt
         >>> iteract_obj = pt.interact_multi_image.MultiImageInteraction(mask_list, nPerPage=4)
         >>> #pt.imshow(mask_list[0])
         >>> ut.show_if_requested()
@@ -621,7 +621,7 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         >>> import wbia_cnn
         >>> import wbia
         >>> from wbia_cnn._plugin import *  # NOQA
-        >>> ibs = wbia.opendb(defaultdb='testdb1')
+        >>> ibs = wbia.opendb(defaultdb='testdb1', allow_newdir=True)
         >>> aid_list = ibs.get_valid_aids()[0:8]
         >>> species = ut.get_argval('--species', type_=str, default='zebra_plains')
         >>> config2_ = None
@@ -630,7 +630,7 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         >>> mask_iter = generate_species_background(ibs, chip_iter, species=species, nInput=nInput)
         >>> mask_list = list(mask_iter)
         >>> ut.quit_if_noshow()
-        >>> import plottool as pt
+        >>> from wbia import plottool as pt
         >>> import vtool as vt
         >>> chip_list = ibs.get_annot_chips(aid_list, verbose=True, config2_=config2_, eager=True)
         >>> stacked_list = [vt.stack_images(chip, mask)[0] for chip, mask in  zip(chip_list, mask_list)]
@@ -849,7 +849,9 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         species = 'whale_sperm+fluke'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
-        weights_path = grabmodels.ensure_model('background_whale_sperm_v0', redownload=False)
+        weights_path = grabmodels.ensure_model(
+            'background_whale_sperm_v0', redownload=False
+        )
         canvas_key = 1
     elif species in ['seadragon_leafy', 'phycodurus_eques']:
         LEGACY = False
@@ -947,7 +949,9 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         species = 'seaturtle'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
-        weights_path = grabmodels.ensure_model('background_sea_turtle_v4', redownload=False)
+        weights_path = grabmodels.ensure_model(
+            'background_sea_turtle_v4', redownload=False
+        )
         canvas_key = 1
     elif species in [
         'spotted_eagle_ray',
@@ -957,7 +961,9 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         species = 'spotted_eagle_ray'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
-        weights_path = grabmodels.ensure_model('background_spotted_eagle_ray_v0', redownload=False)
+        weights_path = grabmodels.ensure_model(
+            'background_spotted_eagle_ray_v0', redownload=False
+        )
         canvas_key = 1
     elif species in [
         'yellow_bellied_toad',
@@ -967,7 +973,9 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         species = 'yellow_bellied_toad'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
-        weights_path = grabmodels.ensure_model('background_yellow_bellied_toad_v0', redownload=False)
+        weights_path = grabmodels.ensure_model(
+            'background_yellow_bellied_toad_v0', redownload=False
+        )
         canvas_key = 1
     elif species in ['dolphin_spotted', 'stenella_frontalis']:
         LEGACY = False
@@ -990,7 +998,9 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         species = 'snow_leopard'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
-        weights_path = grabmodels.ensure_model('background_snow_leopard_v0', redownload=False)
+        weights_path = grabmodels.ensure_model(
+            'background_snow_leopard_v0', redownload=False
+        )
         canvas_key = 1
     elif species in [
         'wild_dog',
@@ -1070,11 +1080,14 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         species = 'seals'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
-        weights_path = grabmodels.ensure_model(
-            'background_seals_v0', redownload=False
-        )
+        weights_path = grabmodels.ensure_model('background_seals_v0', redownload=False)
         canvas_key = 1
-    elif species in ['grouper_nassau', 'grouper_tiger', 'grouper_nassau_bicolor', 'epinephelus_striatus']:
+    elif species in [
+        'grouper_nassau',
+        'grouper_tiger',
+        'grouper_nassau_bicolor',
+        'epinephelus_striatus',
+    ]:
         LEGACY = False
         species = 'grouper_nassau'
         confidence_thresh = 0.2
@@ -1083,14 +1096,17 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
             'background_grouper_nassau_v0', redownload=False
         )
         canvas_key = 1
-    elif species in ['salamandra_salamandra', 'salamandra_salamandra_larvae', 'salanader_fire', 'salanader_fire_larvae']:
+    elif species in [
+        'salamandra_salamandra',
+        'salamandra_salamandra_larvae',
+        'salanader_fire',
+        'salanader_fire_larvae',
+    ]:
         LEGACY = False
         species = 'salanader_fire'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
-        weights_path = grabmodels.ensure_model(
-            'salanader_fire_v0', redownload=False
-        )
+        weights_path = grabmodels.ensure_model('salanader_fire_v0', redownload=False)
         canvas_key = 1
     elif species in ['salamandra_salamandra_adult', 'salanader_fire_adult']:
         LEGACY = False
@@ -1465,7 +1481,7 @@ def detect_annot_species_viewpoint_cnn(ibs, aid_list):
         >>> # DISABLE_DOCTEST
         >>> from wbia_cnn._plugin import *  # NOQA
         >>> import wbia
-        >>> ibs = wbia.opendb(defaultdb='testdb1')
+        >>> ibs = wbia.opendb(defaultdb='testdb1', allow_newdir=True)
         >>> aid_list = ibs.get_valid_aids()
         >>> species_viewpoint_list = detect_annot_species_viewpoint_cnn(ibs, aid_list)
         >>> result = ('species_viewpoint_list = %s' % (str(species_viewpoint_list),))
@@ -1512,30 +1528,6 @@ def validate_annot_species_viewpoint_cnn(ibs, aid_list, verbose=False):
 
     Returns:
         tuple: (bad_species_list, bad_viewpoint_list)
-
-    CommandLine:
-        python -m wbia_cnn._plugin --exec-validate_annot_species_viewpoint_cnn --db PZ_FlankHack
-        python -m wbia_cnn._plugin --exec-validate_annot_species_viewpoint_cnn --db GZ_Master1
-
-    Example:
-        >>> # DISABLE_DOCTEST
-        >>> from wbia_cnn._plugin import *  # NOQA
-        >>> import wbia
-        >>> ibs = wbia.opendb(defaultdb='testdb1')
-        >>> aid_list = ibs.get_valid_aids()
-        >>> verbose = False
-        >>> (bad_species_list, bad_viewpoint_list) = validate_annot_species_viewpoint_cnn(ibs, aid_list, verbose)
-        >>> print('bad_species_list = %s' % (bad_species_list,))
-        >>> print('bad_species_list = %s' % (bad_viewpoint_list,))
-        >>> print(result)
-
-     Ignore:
-        bad_viewpoint_list_ = [item for item in bad_viewpoint_list if item[2] is not None and item[0] > 1200]
-        grouped_dict = ut.group_items(bad_viewpoint_list, ut.get_list_column(bad_viewpoint_list_, 3))
-        grouped_list = grouped_dict.values()
-        regrouped_items = ut.flatten(ut.sortedby(grouped_list, map(len, grouped_list)))
-        candidate_aid_list = ut.get_list_column(regrouped_items, 0)
-        logger.info('candidate_aid_list = %r' % (candidate_aid_list,))
     """
     # Load chips and metadata
     species_list = ibs.get_annot_species(aid_list)
@@ -1691,7 +1683,7 @@ def detect_image_cnn(ibs, gid, confidence=0.90, extraction='bing'):
         >>> from wbia_cnn._plugin import *  # NOQA
         >>> from wbia_cnn._plugin import _suggest_random_candidate_regions, _suggest_bing_candidate_regions  # NOQA
         >>> import wbia
-        >>> ibs = wbia.opendb(defaultdb='testdb1')
+        >>> ibs = wbia.opendb(defaultdb='testdb1', allow_newdir=True)
         >>> gid = 1
         >>> confidence = 0.9
         >>> extraction = 'bing'
@@ -1851,7 +1843,7 @@ def generate_siam_l2_128_feats(ibs, cid_list, config2_=None):
         >>> # DISABLE_DOCTEST
         >>> from wbia_cnn._plugin import *  # NOQA
         >>> import wbia
-        >>> ibs = wbia.opendb(defaultdb='testdb1')
+        >>> ibs = wbia.opendb(defaultdb='testdb1', allow_newdir=True)
         >>> cid_list = ibs.depc_annot.get_rowids('chips', ibs.get_valid_aids())
         >>> config2_ = None
         >>> # megahack

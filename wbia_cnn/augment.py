@@ -79,11 +79,11 @@ def random_affine_args(
         >>> affine_args = random_affine_args(zoom_range, max_tx, max_ty, max_shear, enable_rotate, enable_flip, enable_stretch, rng)
         >>> sx, sy, theta, shear, tx, ty = affine_args
         >>> Aff = vt.affine_mat3x3(sx, sy, theta, shear, tx, ty)
-        >>> result = ut.numpy_str2(Aff)
+        >>> result = ut.repr2(Aff)
         >>> print(result)
-        np.array([[ 0.972,  0.566,  0.359],
-                  [ 0.308,  0.848, -0.611],
-                  [ 0.   ,  0.   ,  1.   ]])
+        np.array([[-0.91730358, -0.88832132,  0.35906546],
+                  [-0.42111527,  0.47923811, -0.61076161],
+                  [ 0.        ,  0.        ,  1.        ]])
     """
     # TODO: use vt.random_affine_args
 
@@ -143,7 +143,7 @@ def affine_perterb(img, rng=np.random):
         >>> rng = np.random   #.RandomState(0)
         >>> img_warped = affine_perterb(img, rng)
         >>> ut.quit_if_noshow()
-        >>> import plottool as pt
+        >>> from wbia import plottool as pt
         >>> pt.imshow(img_warped)
         >>> ut.show_if_requested()
     """
@@ -167,7 +167,7 @@ def test_transforms():
         python -m wbia_cnn.augment --test-test_transforms --show
 
     Example:
-        >>> # ENABLE_DOCTEST
+        >>> # DISABLE_DOCTEST
         >>> from wbia_cnn.augment import *  # NOQA
         >>> test_transforms()
     """
@@ -215,7 +215,7 @@ def test_transforms():
     )
     stacked_img, stacked_offsets, stacked_sfs = tup
     ut.quit_if_noshow()
-    import plottool as pt
+    from wbia import plottool as pt
 
     pt.imshow(stacked_img)
     ut.show_if_requested()
@@ -227,7 +227,7 @@ def augment_siamese_patches(Xb, yb=None, rng=np.random):
         python -m wbia_cnn.augment --test-augment_siamese_patches --show
 
     Example:
-        >>> # ENABLE_DOCTEST
+        >>> # DISABLE_DOCTEST
         >>> from wbia_cnn.augment import *  # NOQA
         >>> from wbia_cnn import ingest_data, utils, draw_results
         >>> data, labels = ingest_data.testdata_patchmatch()
@@ -237,7 +237,7 @@ def augment_siamese_patches(Xb, yb=None, rng=np.random):
         >>> Xb1, yb1 = augment_siamese_patches(Xb.copy(), yb.copy())
         >>> modified_indexes = np.where((Xb1 != Xb).sum(-1).sum(-1).sum(-1) > 0)[0]
         >>> ut.quit_if_noshow()
-        >>> import plottool as pt
+        >>> from wbia import plottool as pt
         >>> #z = draw_results.get_sample_pairimg_from_X(Xb, 1)
         >>> pt.imshow(Xb[modified_indexes[0]], pnum=(2, 2, 1), title='before')
         >>> pt.imshow(Xb1[modified_indexes[0]], pnum=(2, 2, 2), title='after')
@@ -304,7 +304,7 @@ def show_augmented_patches(Xb, Xb_, yb, yb_, data_per_label=1, shadows=None):
     std_ = center_std
     mean_ = center_mean
     """
-    import plottool as pt
+    from wbia import plottool as pt
     import vtool as vt
 
     Xb_old = vt.rectify_to_float01(Xb)
@@ -420,7 +420,7 @@ def augment_affine(
         >>> Xb_, yb_ = augment_affine(Xb, yb, data_per_label=data_per_label, rng=rng, affperterb_ranges=affperterb_ranges)
         >>> assert Xb_ is not Xb
         >>> ut.quit_if_noshow()
-        >>> import plottool as pt
+        >>> from wbia import plottool as pt
         >>> pt.qt4ensure()
         >>> show_augmented_patches(Xb, Xb_, yb, yb_, data_per_label=data_per_label)
         >>> ut.show_if_requested()
@@ -475,7 +475,7 @@ def augment_affine(
     grouped_idxs = [np.arange(n, len(Xb_), data_per_label) for n in range(data_per_label)]
 
     # Take only the groups that were augmented
-    aug_grouped = ut.take(zip(*grouped_idxs), index_list)
+    aug_grouped = ut.take(list(zip(*grouped_idxs)), index_list)
 
     borderMode = cv2.BORDER_CONSTANT
     # borderMode = cv2.BORDER_REPLICATE
@@ -508,7 +508,7 @@ def augment_affine_siam(Xb, yb=None, rng=np.random):
         python -m wbia_cnn.augment --test-augment_affine --show --db PZ_MTEST
 
     Example:
-        >>> # ENABLE_DOCTEST
+        >>> # DISABLE_DOCTEST
         >>> from wbia_cnn.augment import *  # NOQA
         >>> from wbia_cnn.models import mnist
         >>> model, dataset = mnist.testdata_mnist()
@@ -517,14 +517,14 @@ def augment_affine_siam(Xb, yb=None, rng=np.random):
         >>> yb = y[0:8]
         >>> rng = np.random.RandomState(0)
         >>> Xb_, yb_ = augment_affine(Xb, yb, rng=rng)
-        >>> import plottool as pt
+        >>> from wbia import plottool as pt
         >>> pt.qt4ensure()
         >>> ut.quit_if_noshow()
         >>> show_augmented_patches(Xb, Xb_, yb, yb_)
         >>> ut.show_if_requested()
 
     Example:
-        >>> # ENABLE_DOCTEST
+        >>> # DISABLE_DOCTEST
         >>> from wbia_cnn.augment import *  # NOQA
         >>> from wbia_cnn import ingest_data, utils, draw_results
         >>> Xb_orig, yb_orig, Xb, yb = testdata_augment()
@@ -627,7 +627,7 @@ def augment_shadow(Xb, yb=None, rng=np.random, return_shadowmaps=False):
         python -m wbia_cnn.augment --test-augment_shadow --show --db PZ_MTEST
 
     Example:
-        >>> # ENABLE_DOCTEST
+        >>> # DISABLE_DOCTEST
         >>> from wbia_cnn.augment import *  # NOQA
         >>> from wbia_cnn import ingest_data, utils, draw_results
         >>> Xb_orig, yb_orig, Xb, yb = testdata_augment()
@@ -716,7 +716,7 @@ def augment_gamma(Xb, yb=None, rng=np.random):
         python -m wbia_cnn.augment --test-augment_gamma --show --db PZ_MTEST
 
     Example:
-        >>> # ENABLE_DOCTEST
+        >>> # DISABLE_DOCTEST
         >>> from wbia_cnn.augment import *  # NOQA
         >>> from wbia_cnn import ingest_data, utils, draw_results
         >>> Xb_orig, yb_orig, Xb, yb = testdata_augment()
@@ -770,7 +770,7 @@ def augment_siamese_patches2(Xb, yb=None, rng=np.random):
         slightly different transforms for each image in the pair
 
     Example:
-        >>> # ENABLE_DOCTEST
+        >>> # DISABLE_DOCTEST
         >>> from wbia_cnn.augment import *  # NOQA
         >>> from wbia_cnn import ingest_data, utils, draw_results
         >>> Xb_orig, yb_orig, Xb, yb = testdata_augment()

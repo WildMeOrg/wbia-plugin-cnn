@@ -24,7 +24,7 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         >>> from wbia_cnn import ingest_data
         >>> dataset = ingest_data.grab_mnist_category_dataset_float()
         >>> model = MNISTModel(batch_size=128, data_shape=dataset.data_shape,
-        >>>                    output_dims=dataset.output_dims,
+        >>>                    output_dims=len(dataset.unique_labels),
         >>>                    training_dpath=dataset.training_dpath)
         >>> output_layer = model.init_arch()
         >>> model.print_model_info_str()
@@ -32,7 +32,7 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
         >>> model.build_backprop_func()
 
     Example:
-        >>> # ENABLE_DOCTEST
+        >>> # DISABLE_DOCTEST
         >>> from wbia_cnn.models.mnist import *  # NOQA
         >>> from wbia_cnn.models import mnist
         >>> model, dataset = mnist.testdata_mnist()
@@ -66,7 +66,7 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
             python -m wbia_cnn.models.mnist MNISTModel.fit --show
 
         Example:
-            >>> # ENABLE_DOCTEST
+            >>> # DISABLE_DOCTEST
             >>> from wbia_cnn.models.mnist import *  # NOQA
             >>> from wbia_cnn.models import mnist
             >>> model, dataset = mnist.testdata_mnist()
@@ -104,7 +104,7 @@ class MNISTModel(abstract_models.AbstractCategoricalModel):
             >>> Xb_, yb_ = model.augment(Xb.copy())
             >>> yb_ = None
             >>> ut.quit_if_noshow()
-            >>> import plottool as pt
+            >>> from wbia import plottool as pt
             >>> pt.qt4ensure()
             >>> from wbia_cnn import augment
             >>> augment.show_augmented_patches(Xb, Xb_, yb, yb_, data_per_label=1)

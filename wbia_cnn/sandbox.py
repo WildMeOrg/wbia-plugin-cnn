@@ -232,7 +232,7 @@ def theano_gradient_funtimes():
 
         IPython.get_ipython().magic('pylab qt4')
 
-    import plottool as pt
+    from wbia import plottool as pt
 
     pt.plot(x_data, y_predict)
     pt.iup()
