@@ -3,7 +3,8 @@
 exclude: |
   (?x)(
       ^docs/ |
-      ^_docs/_build/html/
+      ^_docs/_build/html/ |
+      ^Lasagne/
   )
 repos:
   # - repo: https://github.com/psf/black
