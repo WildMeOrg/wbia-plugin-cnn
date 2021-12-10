@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          submodules: 'true'
 
       - uses: actions/setup-python@v2
         name: Install Python
@@ -43,6 +45,9 @@ jobs:
     steps:
       # Checkout and env setup
       - uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
