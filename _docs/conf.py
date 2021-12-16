@@ -3,7 +3,10 @@ from sphinx.ext.autodoc import between
 from datetime import date
 import sys
 import os
-import theano  # NOQA
+try:
+    import theano  # NOQA
+except Exception:
+    pass
 
 sys.path.append(sys.path.insert(0, os.path.abspath('../')))
 
