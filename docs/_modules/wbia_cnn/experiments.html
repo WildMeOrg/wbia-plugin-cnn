@@ -1,45 +1,82 @@
-
 <!DOCTYPE html>
-
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>wbia_cnn.experiments &#8212; wbia-cnn 3.3.0 documentation</title>
-    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
-    <script src="../../_static/language_data.js"></script>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>wbia_cnn.experiments &mdash; wbia-cnn 4.0.1.dev0+dirty documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" />
-   
-  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
 
-  </head><body>
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> wbia-cnn
+          </a>
+              <div class="version">
+                4.0.1.dev0+dirty
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../wbia_cnn.html">wbia_cnn package</a></li>
+</ul>
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          
+        </div>
+      </div>
+    </nav>
 
-          <div class="body" role="main">
-            
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">wbia-cnn</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+          <li><a href="../wbia_cnn.html">wbia_cnn</a> &raquo;</li>
+      <li>wbia_cnn.experiments</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
   <h1>Source code for wbia_cnn.experiments</h1><div class="highlight"><pre>
 <span></span><span class="c1"># -*- coding: utf-8 -*-</span>
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">unicode_literals</span>
+<span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">functools</span>
 <span class="kn">from</span> <span class="nn">wbia_cnn</span> <span class="kn">import</span> <span class="n">draw_results</span>
 <span class="kn">import</span> <span class="nn">utool</span> <span class="k">as</span> <span class="nn">ut</span>
 
 <span class="nb">print</span><span class="p">,</span> <span class="n">rrr</span><span class="p">,</span> <span class="n">profile</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">inject2</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span>
 
 
 <div class="viewcode-block" id="sift_dataset_separability"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.experiments.sift_dataset_separability">[docs]</a><span class="k">def</span> <span class="nf">sift_dataset_separability</span><span class="p">(</span><span class="n">dataset</span><span class="p">):</span>
@@ -98,7 +135,7 @@
         <span class="n">figtitle</span><span class="o">=</span><span class="n">dataname</span> <span class="o">+</span> <span class="s1">&#39; SIFT scores. #data=&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">)),</span> <span class="n">fnum</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">viz_kw</span>
     <span class="p">)</span>
 
-    <span class="kn">import</span> <span class="nn">plottool</span> <span class="k">as</span> <span class="nn">pt</span>
+    <span class="kn">from</span> <span class="nn">wbia</span> <span class="kn">import</span> <span class="n">plottool</span> <span class="k">as</span> <span class="n">pt</span>
 
     <span class="c1"># icon = ibs.get_database_icon()</span>
     <span class="n">icon</span> <span class="o">=</span> <span class="p">(</span>
@@ -123,7 +160,7 @@
 <span class="c1">#        # TODO use dataset to infer data colorspace</span>
 <span class="c1">#        data = vt.convert_image_list_colorspace(data, &#39;GRAY&#39;, src_colorspace=&#39;BGR&#39;)</span>
 <span class="c1">#    patch_list = data</span>
-<span class="c1">#    print(&#39;Extract SIFT descr&#39;)</span>
+<span class="c1">#    logger.info(&#39;Extract SIFT descr&#39;)</span>
 <span class="c1">#    vecs_list = pyhesaff.extract_desc_from_patches(patch_list)</span>
 <span class="c1">#    return vecs_list</span>
 
@@ -144,9 +181,9 @@
         <span class="c1"># TODO use dataset to infer data colorspace</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">vt</span><span class="o">.</span><span class="n">convert_image_list_colorspace</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="s1">&#39;GRAY&#39;</span><span class="p">,</span> <span class="n">src_colorspace</span><span class="o">=</span><span class="s1">&#39;BGR&#39;</span><span class="p">)</span>
     <span class="n">patch_list</span> <span class="o">=</span> <span class="n">data</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Extract SIFT descr&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Extract SIFT descr&#39;</span><span class="p">)</span>
     <span class="n">vecs_list</span> <span class="o">=</span> <span class="n">pyhesaff</span><span class="o">.</span><span class="n">extract_desc_from_patches</span><span class="p">(</span><span class="n">patch_list</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Compute SIFT dist&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Compute SIFT dist&#39;</span><span class="p">)</span>
     <span class="n">sqrddist</span> <span class="o">=</span> <span class="p">(</span>
         <span class="p">(</span><span class="n">vecs_list</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">-</span> <span class="n">vecs_list</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span>
     <span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -170,7 +207,7 @@
 <span class="sd">        python -m wbia_cnn --tf netrun --db pzmtest --weights=liberty:current --arch=siaml2_128</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">import</span> <span class="nn">vtool</span> <span class="k">as</span> <span class="nn">vt</span>
-    <span class="kn">import</span> <span class="nn">plottool</span> <span class="k">as</span> <span class="nn">pt</span>
+    <span class="kn">from</span> <span class="nn">wbia</span> <span class="kn">import</span> <span class="n">plottool</span> <span class="k">as</span> <span class="n">pt</span>
 
     <span class="c1"># TODO: save in model.trainind_dpath/diagnostics/figures</span>
     <span class="n">ut</span><span class="o">.</span><span class="n">colorprint</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">[siam_perf] Testing Siamese Performance&#39;</span><span class="p">,</span> <span class="s1">&#39;white&#39;</span><span class="p">)</span>
@@ -324,7 +361,7 @@
             <span class="c1"># vt.imwrite(dataname + &#39;_&#39; + &#39;sift_fp_img.png&#39;, (sift_fp_img))</span>
             <span class="c1"># vt.imwrite(dataname + &#39;_&#39; + &#39;sift_fn_img.png&#39;, (sift_fn_img))</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Drawing TP FP TN FN&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Drawing TP FP TN FN&#39;</span><span class="p">)</span>
             <span class="n">fnum</span> <span class="o">=</span> <span class="n">fnum_gen</span><span class="p">()</span>
             <span class="n">pnum_gen</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">make_pnum_nextgen</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
             <span class="n">fig</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">fnum</span><span class="p">)</span>
@@ -409,15 +446,15 @@
     <span class="c1"># batch cycling may cause more outputs than test labels.</span>
     <span class="c1"># should be able to just crop</span>
     <span class="n">network_output_</span> <span class="o">=</span> <span class="n">network_output</span><span class="p">[</span><span class="mi">0</span> <span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_test</span><span class="p">)]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="o">**</span> <span class="mi">2</span>
-    <span class="n">tp_support</span> <span class="o">=</span> <span class="n">network_output_</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">y_test</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">bool</span><span class="p">)]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-    <span class="n">tn_support</span> <span class="o">=</span> <span class="n">network_output_</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="o">~</span><span class="p">(</span><span class="n">y_test</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">bool</span><span class="p">))]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">tp_support</span> <span class="o">=</span> <span class="n">network_output_</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">y_test</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">bool_</span><span class="p">)]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">tn_support</span> <span class="o">=</span> <span class="n">network_output_</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="o">~</span><span class="p">(</span><span class="n">y_test</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">bool_</span><span class="p">))]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">tp_support</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">tn_support</span><span class="o">.</span><span class="n">mean</span><span class="p">():</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;need to invert scores&#39;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;need to invert scores&#39;</span><span class="p">)</span>
         <span class="n">tp_support</span> <span class="o">*=</span> <span class="o">-</span><span class="mi">1</span>
         <span class="n">tn_support</span> <span class="o">*=</span> <span class="o">-</span><span class="mi">1</span>
     <span class="n">bottom</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">tn_support</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">tp_support</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
     <span class="k">if</span> <span class="n">bottom</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;need to subtract from scores&#39;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;need to subtract from scores&#39;</span><span class="p">)</span>
         <span class="n">tn_support</span> <span class="o">-=</span> <span class="n">bottom</span>
         <span class="n">tp_support</span> <span class="o">-=</span> <span class="n">bottom</span>
 
@@ -433,7 +470,7 @@
     <span class="c1">#    tp_support, tn_support, return_all=False, **learnkw)</span>
     <span class="c1"># (score_domain, p_tp_given_score, clip_score) = learntup</span>
     <span class="c1"># Plotting</span>
-    <span class="c1"># import plottool as pt</span>
+    <span class="c1"># from wbia import plottool as pt</span>
     <span class="c1"># fnum = 1</span>
     <span class="c1"># pt.figure(fnum=fnum, pnum=(2, 1, 1), doclf=True, docla=True)</span>
     <span class="c1"># score_normalization.plot_support(tn_support, tp_support, fnum=fnum, pnum=(2, 1, 1))</span>
@@ -457,71 +494,31 @@
     <span class="n">ut</span><span class="o">.</span><span class="n">doctest_funcs</span><span class="p">()</span>
 </pre></div>
 
+           </div>
           </div>
-          
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Wild Me.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../index.html">wbia-cnn</a></h1>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
 
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../wbia_cnn.html">wbia_cnn package</a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../index.html">Documentation overview</a><ul>
-  <li><a href="../index.html">Module code</a><ul>
-  <li><a href="../wbia_cnn.html">wbia_cnn</a><ul>
-  </ul></li>
-  </ul></li>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2020, Wild Me.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-    </div>
-
-    
-
-    
-  </body>
+</body>
 </html>

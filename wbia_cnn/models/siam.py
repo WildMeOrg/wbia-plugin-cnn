@@ -88,9 +88,8 @@ class SiameseL2(AbstractSiameseModel):
         """
         Notes:
             (ix) siam-2stream-l2 consists of one central and one surround
-                branch of siam-2stream.
-
-                C0(96, 7, 3) - ReLU - P0(2, 2) - C1(192, 5, 1) - ReLU - P1(2, 2) - C2(256, 3, 1)
+            branch of siam-2stream.
+            C0(96, 7, 3) - ReLU - P0(2, 2) - C1(192, 5, 1) - ReLU - P1(2, 2) - C2(256, 3, 1)
         """
         _P = functools.partial
 
@@ -149,9 +148,8 @@ class SiameseL2(AbstractSiameseModel):
         """
         Notes:
             (ix) siam-2stream-l2 consists of one central and one surround
-                branch of siam-2stream.
-
-                C0(96, 7, 3) - ReLU - P0(2, 2) - C1(192, 5, 1) - ReLU - P1(2, 2) - C2(256, 3, 1)
+            branch of siam-2stream.
+            C0(96, 7, 3) - ReLU - P0(2, 2) - C1(192, 5, 1) - ReLU - P1(2, 2) - C2(256, 3, 1)
         """
         _P = functools.partial
 
@@ -388,9 +386,8 @@ class SiameseL2(AbstractSiameseModel):
         """
         Notes:
             (ix) siam-2stream-l2 consists of one central and one surround
-                branch of siam-2stream.
-
-                C0(96, 7, 3) - ReLU - P0(2, 2) - C1(192, 5, 1) - ReLU - P1(2, 2) - C2(256, 3, 1)
+            branch of siam-2stream.
+            C0(96, 7, 3) - ReLU - P0(2, 2) - C1(192, 5, 1) - ReLU - P1(2, 2) - C2(256, 3, 1)
 
         CommandLine:
             python -m wbia_cnn --tf  SiameseL2.init_arch --archtag siam2streaml2 --datashape=64,64,1 --verbose  --show
@@ -589,7 +586,7 @@ class SiameseL2(AbstractSiameseModel):
         CommandLine:
             python -m wbia_cnn.models.siam --test-SiameseL2.loss_function --show
 
-        Example1:
+        Example:
             >>> # ENABLE_DOCTEST
             >>> from wbia_cnn.models import *  # NOQA
             >>> network_output, labels = testdata_siam_desc()
@@ -649,7 +646,7 @@ def ignore_hardest_cases(loss, labels, num_ignore=3, T=T):
         python -m wbia_cnn.models.siam --test-ignore_hardest_cases:1
         python -m wbia_cnn.models.siam --test-ignore_hardest_cases:2
 
-    Example0:
+    Example:
         >>> # ENABLE_DOCTEST
         >>> # Test numpy version
         >>> from wbia_cnn.models.siam import *  # NOQA
@@ -662,27 +659,10 @@ def ignore_hardest_cases(loss, labels, num_ignore=3, T=T):
         >>> ignored_loss_arr = ignore_hardest_cases(loss, labels, num_ignore, T)
         >>> result = ('ignored_loss_arr = %s' % (ut.numpy_str(ignored_loss_arr),))
         >>> print(result)
-        ignored_loss = np.array([0, 1, 0, 3, 4, 5, 0, 0, 0], dtype=np.int32)
+        ignored_loss_arr = np.array([0, 1, 0, 3, 4, 5, 0, 0, 0])
 
-     Example1:
-        >>> # ENABLE_DOCTEST
-        >>> # Test theano version
-        >>> from wbia_cnn.models.siam import *  # NOQA
-        >>> import theano.tensor
-        >>> loss_arr   = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8], dtype=np.int32)
-        >>> labels_arr = np.array([1, 0, 0, 1, 1, 1, 1, 1, 0], dtype=np.int32)
-        >>> T = theano.tensor
-        >>> loss = T.ivector(name='loss')
-        >>> labels = T.ivector(name='labels')
-        >>> num_ignore = 2
-        >>> ignored_loss = ignore_hardest_cases(loss, labels, num_ignore, T)
-        >>> ignored_loss_arr = ignored_loss.eval({loss: loss_arr, labels: labels_arr})
-        >>> result = ('ignored_loss = %s' % (ut.numpy_str(ignored_loss_arr),))
-        >>> print(result)
-        ignored_loss = np.array([0, 1, 0, 3, 4, 5, 0, 0, 0], dtype=np.int32)
-
-    Example2:
-        >>> # ENABLE_DOCTEST
+    Example:
+        >>> # DISABLE_DOCTEST
         >>> # Test version compatiblity
         >>> from wbia_cnn.models.siam import *  # NOQA
         >>> import wbia_cnn.theano_ext as theano_ext
@@ -943,7 +923,7 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
             >>> result = str(avg_loss)
             >>> print(result)
 
-        Example1:
+        Example:
             >>> # DISABLE_DOCTEST
             >>> from wbia_cnn.models import *  # NOQA
             >>> network_output = np.linspace(-2, 2, 128)
@@ -994,10 +974,10 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
         """
         Notes:
             (i) 2ch-2stream consists of two branches
-                C(95, 5, 1)- ReLU- P(2, 2)- C(96, 3, 1)- ReLU- P(2, 2)- C(192, 3, 1)-
-                  ReLU- C(192, 3, 1)- ReLU,
-                one for central and one for surround parts, followed by
-                F(768)- ReLU- F(1)
+            C(95, 5, 1)- ReLU- P(2, 2)- C(96, 3, 1)- ReLU- P(2, 2)- C(192, 3, 1)-
+            ReLU- C(192, 3, 1)- ReLU,
+            one for central and one for surround parts, followed by
+            F(768)- ReLU- F(1)
         """
         raise NotImplementedError('The 2-channel part is not yet implemented')
         _P = functools.partial
@@ -1063,10 +1043,10 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
         """
         Notes:
             (viii) siam-2stream has 4 branches
-                C(96, 4, 2)- ReLU- P(2, 2)- C(192, 3, 1)- ReLU- C(256, 3, 1)- ReLU- C(256, 3, 1)-
-                  ReLU
-                (coupled in pairs for central and surround streams, and decision layer)
-                F(512)-ReLU- F(1)
+            C(96, 4, 2)- ReLU- P(2, 2)- C(192, 3, 1)- ReLU- C(256, 3, 1)- ReLU- C(256, 3, 1)-
+            ReLU
+            (coupled in pairs for central and surround streams, and decision layer)
+            F(512)-ReLU- F(1)
         """
         _P = functools.partial
 
@@ -1136,7 +1116,7 @@ class SiameseCenterSurroundModel(AbstractSiameseModel):
         """
         Notes:
             (ix) siam-2stream-l2 consists of one central and one surround
-                branch of siam-2stream.
+            branch of siam-2stream.
         """
         raise NotImplementedError('Need to implement L2 distance layer')
         _P = functools.partial

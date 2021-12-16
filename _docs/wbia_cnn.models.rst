@@ -11,7 +11,6 @@ wbia\_cnn.models.\_model\_legacy module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 wbia\_cnn.models.abstract\_models module
 ----------------------------------------
@@ -20,7 +19,6 @@ wbia\_cnn.models.abstract\_models module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 wbia\_cnn.models.aoi module
 ---------------------------
@@ -29,7 +27,6 @@ wbia\_cnn.models.aoi module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 wbia\_cnn.models.aoi2 module
 ----------------------------
@@ -38,7 +35,6 @@ wbia\_cnn.models.aoi2 module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 wbia\_cnn.models.background module
 ----------------------------------
@@ -47,7 +43,6 @@ wbia\_cnn.models.background module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 wbia\_cnn.models.classifier module
 ----------------------------------
@@ -56,7 +51,6 @@ wbia\_cnn.models.classifier module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 wbia\_cnn.models.classifier2 module
 -----------------------------------
@@ -65,7 +59,6 @@ wbia\_cnn.models.classifier2 module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 wbia\_cnn.models.dummy module
 -----------------------------
@@ -74,7 +67,6 @@ wbia\_cnn.models.dummy module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 wbia\_cnn.models.labeler module
 -------------------------------
@@ -83,7 +75,6 @@ wbia\_cnn.models.labeler module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 wbia\_cnn.models.mnist module
 -----------------------------
@@ -92,7 +83,6 @@ wbia\_cnn.models.mnist module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 wbia\_cnn.models.pretrained module
 ----------------------------------
@@ -101,7 +91,6 @@ wbia\_cnn.models.pretrained module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 wbia\_cnn.models.quality module
 -------------------------------
@@ -110,7 +99,6 @@ wbia\_cnn.models.quality module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 wbia\_cnn.models.siam module
 ----------------------------
@@ -119,7 +107,6 @@ wbia\_cnn.models.siam module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 wbia\_cnn.models.viewpoint module
 ---------------------------------
@@ -128,7 +115,6 @@ wbia\_cnn.models.viewpoint module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 Module contents
 ---------------
@@ -137,4 +123,3 @@ Module contents
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:

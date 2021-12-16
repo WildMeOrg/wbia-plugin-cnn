@@ -338,28 +338,6 @@ def grab_liberty_siam_dataset(pairs=250000):
         http://icvl.ee.ic.ac.uk/vbalnt/liberty.zip
         https://github.com/osdf/datasets/blob/master/patchdata/dataset.py
 
-    Notes:
-        "info.txt" contains the match information Each row of info.txt
-        corresponds corresponds to a separate patch, with the patches ordered
-        from left to right and top to bottom in each bitmap image.
-
-        3 types of metadata files
-
-        info.txt - contains patch ids that correspond with the order of patches
-          in the bmp images
-          In the format:
-              pointid, unused
-
-        interest.txt -
-            interest points corresponding to patches with patchids
-            has same number of rows as info.txt
-            In the format:
-                reference image id, x, y, orientation, scale (in log2 units)
-
-        m50_<d>_<d>_0.txt -
-             matches files
-             patchID1  3DpointID1  unused1  patchID2  3DpointID2  unused2
-
     CommandLine:
         python -m wbia_cnn.ingest_data --test-grab_liberty_siam_dataset --show
 

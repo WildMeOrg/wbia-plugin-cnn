@@ -41,8 +41,8 @@ def process_batch(
         python -m wbia_cnn --tf process_batch:0 --verbose
         python -m wbia_cnn --tf process_batch:1 --verbose
 
-    Example0:
-        >>> # ENABLE_DOCTEST
+    Example:
+        >>> # DISABLE_DOCTEST
         >>> from wbia_cnn.batch_processing import *  # NOQA
         >>> from wbia_cnn import models
         >>> model = models.DummyModel(batch_size=128)
@@ -50,53 +50,52 @@ def process_batch(
         >>> model.init_arch()
         >>> theano_fn = model.build_predict_func()
         >>> kwargs = {'X_is_cv2_native': False, 'showprog': True,
-        ...           'randomize_batch_order': True}
+        >>>            'randomize_batch_order': True}
         >>> outputs_ = process_batch(model, X, y, theano_fn, **kwargs)
         >>> result = ut.dict_str(outputs_)
         >>> print(result)
 
-    Example0:
-        >>> # ENABLE_DOCTEST
+    Example:
+        >>> # DISABLE_DOCTEST
         >>> from wbia_cnn.batch_processing import *  # NOQA
         >>> from wbia_cnn import models
-        >>> model = models.SiameseL2(batch_size=128, data_shape=(32, 32, 1),
-        ...                          strict_batch_size=True)
+        >>> model = models.SiameseL2(batch_size=128, data_shape=(32, 32, 1))
         >>> X, y = model.make_random_testdata(num=2000, seed=None)
         >>> model.init_arch()
         >>> theano_fn = model.build_predict_func()
         >>> kwargs = {'X_is_cv2_native': False, 'showprog': True,
-        ...           'randomize_batch_order': True}
+        >>>           'randomize_batch_order': True}
         >>> outputs_ = process_batch(model, X, y, theano_fn, **kwargs)
         >>> result = ut.dict_str(outputs_)
         >>> print(result)
 
     Ignore:
-        Xb, yb = batch_iter.next()
-        assert Xb.shape == (8, 1, 4, 4)
-        yb.shape == (8,)
+        >>> Xb, yb = batch_iter.next()
+        >>> assert Xb.shape == (8, 1, 4, 4)
+        >>> yb.shape == (8,)
 
     Ignore:
-        X, y = model.make_random_testdata(num=2000, seed=None)
-        kwargs = {'X_is_cv2_native': False, 'showprog': True,
-                  'randomize_batch_order': True, 'time_thresh': .5,
-                  }
-
-        logger.info('Testing Unbuffered')
-        batch_iter = batch_iterator(model, X, y, lbl=theano_fn.name, **kwargs)
-        for Xb, yb in ut.ProgressIter(batch_iter, lbl=':EXEC FG'):
-            [ut.is_prime(346373) for _ in range(2)]
-
-        # Notice how the progress iters are not interlaced like
-        # they are in the unbuffered version
-        import sys
-        sys.stdout.flush()
-        logger.info('Testing Buffered')
-        sys.stdout.flush()
-        batch_iter2 = batch_iterator(model, X, y, lbl=theano_fn.name, **kwargs)
-        batch_iter2 = ut.buffered_generator(batch_iter2, buffer_size=4)
-        logger.info('Iterating')
-        for Xb, yb in ut.ProgressIter(batch_iter2, lbl=':EXEC FG'):
-            [ut.is_prime(346373) for _ in range(2)]
+        >>> X, y = model.make_random_testdata(num=2000, seed=None)
+        >>> kwargs = {'X_is_cv2_native': False, 'showprog': True,
+        >>>           'randomize_batch_order': True, 'time_thresh': .5,
+        >>>           }
+        >>>
+        >>> logger.info('Testing Unbuffered')
+        >>> batch_iter = batch_iterator(model, X, y, lbl=theano_fn.name, **kwargs)
+        >>> for Xb, yb in ut.ProgressIter(batch_iter, lbl=':EXEC FG'):
+        >>>     [ut.is_prime(346373) for _ in range(2)]
+        >>>
+        >>> # Notice how the progress iters are not interlaced like
+        >>> # they are in the unbuffered version
+        >>> import sys
+        >>> sys.stdout.flush()
+        >>> logger.info('Testing Buffered')
+        >>> sys.stdout.flush()
+        >>> batch_iter2 = batch_iterator(model, X, y, lbl=theano_fn.name, **kwargs)
+        >>> batch_iter2 = ut.buffered_generator(batch_iter2, buffer_size=4)
+        >>> logger.info('Iterating')
+        >>> for Xb, yb in ut.ProgressIter(batch_iter2, lbl=':EXEC FG'):
+        >>>     [ut.is_prime(346373) for _ in range(2)]
     """
     import vtool as vt
 
@@ -196,6 +195,7 @@ def batch_iterator(
     y,
     randomize_batch_order=False,
     augment_on=False,
+    showprog=True,
     X_is_cv2_native=True,
     verbose=None,
     lbl='verbose batch iteration',
@@ -213,8 +213,8 @@ def batch_iterator(
         # Threaded buffering seems to help a lot
         python -m wbia_cnn --tf batch_iterator:1 --augment
 
-    Example0:
-        >>> # ENABLE_DOCTEST
+    Example:
+        >>> # DISABLE_DOCTEST
         >>> from wbia_cnn.batch_processing import *  # NOQA
         >>> from wbia_cnn import models
         >>> model = models.DummyModel(batch_size=16)
@@ -229,8 +229,8 @@ def batch_iterator(
         >>> print(result)
         [[(16, 1, 4, 4), 16]] * 6 + [[(3, 1, 4, 4), 3]]
 
-    Example1:
-        >>> # ENABLE_DOCTEST
+    Example:
+        >>> # DISABLE_DOCTEST
         >>> from wbia_cnn.batch_processing import *  # NOQA
         >>> from wbia_cnn import models
         >>> import time
@@ -272,7 +272,7 @@ def batch_iterator(
         >>> assert result_list1 == result_list2
         >>> print(len(result_list2))
 
-    Example2:
+    Example:
         >>> # DISABLE_DOCTEST
         >>> from wbia_cnn.batch_processing import *  # NOQA
         >>> from wbia_cnn.models.mnist import MNISTModel

@@ -1,39 +1,75 @@
-
 <!DOCTYPE html>
-
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>wbia_cnn.ingest_wbia &#8212; wbia-cnn 3.3.0 documentation</title>
-    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
-    <script src="../../_static/language_data.js"></script>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>wbia_cnn.ingest_wbia &mdash; wbia-cnn 4.0.1.dev0+dirty documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" />
-   
-  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
 
-  </head><body>
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> wbia-cnn
+          </a>
+              <div class="version">
+                4.0.1.dev0+dirty
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../wbia_cnn.html">wbia_cnn package</a></li>
+</ul>
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          
+        </div>
+      </div>
+    </nav>
 
-          <div class="body" role="main">
-            
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">wbia-cnn</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+          <li><a href="../wbia_cnn.html">wbia_cnn</a> &raquo;</li>
+      <li>wbia_cnn.ingest_wbia</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
   <h1>Source code for wbia_cnn.ingest_wbia</h1><div class="highlight"><pre>
 <span></span><span class="c1"># -*- coding: utf-8 -*-</span>
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span>
+<span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">utool</span> <span class="k">as</span> <span class="nn">ut</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">vtool</span> <span class="k">as</span> <span class="nn">vt</span>
@@ -41,9 +77,12 @@
 <span class="kn">import</span> <span class="nn">itertools</span>
 <span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="nb">zip</span><span class="p">,</span> <span class="nb">map</span><span class="p">,</span> <span class="nb">range</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">wbia</span> <span class="kn">import</span> <span class="n">dtool</span>
+
 <span class="kn">from</span> <span class="nn">wbia_cnn</span> <span class="kn">import</span> <span class="n">draw_results</span>  <span class="c1"># NOQA</span>
 
 <span class="nb">print</span><span class="p">,</span> <span class="n">rrr</span><span class="p">,</span> <span class="n">profile</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">inject2</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span>
 
 
 <span class="n">FIX_HASH</span> <span class="o">=</span> <span class="kc">True</span>
@@ -63,15 +102,15 @@
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn.ingest_wbia import *  # NOQA</span>
 <span class="sd">        &gt;&gt;&gt; import wbia</span>
 <span class="sd">        &gt;&gt;&gt; # build test data</span>
-<span class="sd">        &gt;&gt;&gt; ibs = wbia.opendb(defaultdb=&#39;PZ_Master1&#39;)</span>
-<span class="sd">        &gt;&gt;&gt; #ibs = wbia.opendb(defaultdb=&#39;PZ_MTEST&#39;)</span>
-<span class="sd">        &gt;&gt;&gt; #ibs = wbia.opendb(defaultdb=&#39;PZ_FlankHack&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; ibs = wbia.opendb(defaultdb=&#39;PZ_Master1&#39;, allow_newdir=True)</span>
+<span class="sd">        &gt;&gt;&gt; #ibs = wbia.opendb(defaultdb=&#39;PZ_MTEST&#39;, allow_newdir=True)</span>
+<span class="sd">        &gt;&gt;&gt; #ibs = wbia.opendb(defaultdb=&#39;PZ_FlankHack&#39;, allow_newdir=True)</span>
 <span class="sd">        &gt;&gt;&gt; acfg_name = ut.get_argval((&#39;--aidcfg&#39;, &#39;--acfg&#39;, &#39;-a&#39;),</span>
 <span class="sd">        ...                             type_=str,</span>
 <span class="sd">        ...                             default=&#39;ctrl:pername=None,excluderef=False,contributor_contains=FlankHack&#39;)</span>
 <span class="sd">        &gt;&gt;&gt; aid_pairs, label_list, flat_metadata = get_aidpairs_partmatch(ibs, acfg_name)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;NEW WAY OF FILTERING&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;NEW WAY OF FILTERING&#39;</span><span class="p">)</span>
     <span class="kn">from</span> <span class="nn">wbia.expt</span> <span class="kn">import</span> <span class="n">experiment_helpers</span>
 
     <span class="n">acfg_list</span><span class="p">,</span> <span class="n">expanded_aids_list</span> <span class="o">=</span> <span class="n">experiment_helpers</span><span class="o">.</span><span class="n">get_annotcfg_list</span><span class="p">(</span><span class="n">ibs</span><span class="p">,</span> <span class="p">[</span><span class="n">acfg_name</span><span class="p">])</span>
@@ -87,7 +126,7 @@
     <span class="n">ibs</span><span class="o">.</span><span class="n">print_annotconfig_stats</span><span class="p">(</span><span class="n">qaid_list</span><span class="p">,</span> <span class="n">daid_list</span><span class="p">,</span> <span class="n">bigstr</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="c1"># Positive Examples</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Sampling positive examples&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Sampling positive examples&#39;</span><span class="p">)</span>
     <span class="n">nested_pairs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
         <span class="nb">map</span><span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">itertools</span><span class="o">.</span><span class="n">starmap</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">iprod</span><span class="p">,</span> <span class="nb">zip</span><span class="p">(</span><span class="n">aids1_list</span><span class="p">,</span> <span class="n">aids2_list</span><span class="p">)))</span>
     <span class="p">)</span>
@@ -104,10 +143,10 @@
     <span class="n">pos_aid_pairs</span> <span class="o">=</span> <span class="n">pos_aid_pairs</span><span class="o">.</span><span class="n">compress</span><span class="p">(</span><span class="n">flag_list</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="c1"># pos_aid_pairs = vt.unique_rows(pos_aid_pairs)  # should be unncessary</span>
     <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">vt</span><span class="o">.</span><span class="n">unique_rows</span><span class="p">(</span><span class="n">pos_aid_pairs</span><span class="p">))</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">pos_aid_pairs</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;pos_aid_pairs.shape = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">pos_aid_pairs</span><span class="o">.</span><span class="n">shape</span><span class="p">,))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;pos_aid_pairs.shape = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">pos_aid_pairs</span><span class="o">.</span><span class="n">shape</span><span class="p">,))</span>
 
     <span class="c1"># Hard Negative Examples</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Sampling hard negative examples&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Sampling hard negative examples&#39;</span><span class="p">)</span>
     <span class="n">num_hard_neg_per_aid</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">pos_aid_pairs</span><span class="p">)</span> <span class="o">//</span> <span class="nb">len</span><span class="p">(</span><span class="n">multiton_aids</span><span class="p">))</span>
     <span class="n">cfgdict</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s1">&#39;affine_invariance&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
@@ -123,7 +162,7 @@
 
     <span class="c1"># Random Negative Examples</span>
     <span class="c1"># TODO: may be able to say not a match from viewpoint?</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Sampling random negative examples&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Sampling random negative examples&#39;</span><span class="p">)</span>
     <span class="n">num_rand_neg_per_aid</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">pos_aid_pairs</span><span class="p">)</span> <span class="o">//</span> <span class="nb">len</span><span class="p">(</span><span class="n">multiton_aids</span><span class="p">))</span>
     <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">randneg_aid_pairs</span> <span class="o">=</span> <span class="p">[]</span>
@@ -138,18 +177,18 @@
     <span class="n">randneg_aid_pairs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">randneg_aid_pairs</span><span class="p">)</span>
 
     <span class="c1"># Concatenate both types of negative examples</span>
-    <span class="c1"># print(&#39;Building negative examples&#39;)</span>
+    <span class="c1"># logger.info(&#39;Building negative examples&#39;)</span>
     <span class="c1"># _neg_aid_pairs = np.vstack((hardneg_aid_pairs, randneg_aid_pairs))</span>
     <span class="c1"># neg_aid_pairs = vt.unique_rows(_neg_aid_pairs)</span>
 
     <span class="c1"># Unsure Examples</span>
     <span class="c1"># TODO: use quality and viewoint labelings to determine this</span>
     <span class="c1"># as well as metadata from the annotmatch table</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;hardneg_aid_pairs.shape = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">hardneg_aid_pairs</span><span class="o">.</span><span class="n">shape</span><span class="p">,))</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;randneg_aid_pairs.shape = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">randneg_aid_pairs</span><span class="o">.</span><span class="n">shape</span><span class="p">,))</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;pos_aid_pairs.shape = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">pos_aid_pairs</span><span class="o">.</span><span class="n">shape</span><span class="p">,))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;hardneg_aid_pairs.shape = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">hardneg_aid_pairs</span><span class="o">.</span><span class="n">shape</span><span class="p">,))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;randneg_aid_pairs.shape = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">randneg_aid_pairs</span><span class="o">.</span><span class="n">shape</span><span class="p">,))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;pos_aid_pairs.shape = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">pos_aid_pairs</span><span class="o">.</span><span class="n">shape</span><span class="p">,))</span>
 
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Building labels&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Building labels&#39;</span><span class="p">)</span>
     <span class="n">const</span> <span class="o">=</span> <span class="n">ibs</span><span class="o">.</span><span class="n">const</span>
     <span class="n">unflat_pairs</span> <span class="o">=</span> <span class="p">(</span><span class="n">pos_aid_pairs</span><span class="p">,</span> <span class="n">hardneg_aid_pairs</span><span class="p">,</span> <span class="n">randneg_aid_pairs</span><span class="p">)</span>
     <span class="n">type_labels</span> <span class="o">=</span> <span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">REVIEW</span><span class="o">.</span><span class="n">MATCH</span><span class="p">,</span> <span class="n">const</span><span class="o">.</span><span class="n">REVIEW</span><span class="o">.</span><span class="n">NON_MATCH</span><span class="p">,</span> <span class="n">const</span><span class="o">.</span><span class="n">REVIEW</span><span class="o">.</span><span class="n">NON_MATCH</span><span class="p">)</span>
@@ -163,21 +202,21 @@
 
     <span class="n">flat_metadata</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;meta_label&#39;</span><span class="p">:</span> <span class="n">ut</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">_expand</span><span class="p">(</span><span class="n">type_meta_labels</span><span class="p">))}</span>
 
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Filtering Duplicates&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Filtering Duplicates&#39;</span><span class="p">)</span>
     <span class="n">nonunique_flags</span> <span class="o">=</span> <span class="n">vt</span><span class="o">.</span><span class="n">nonunique_row_flags</span><span class="p">(</span><span class="n">_aid_pairs</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Filtered </span><span class="si">%d</span><span class="s1"> duplicate pairs&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">nonunique_flags</span><span class="o">.</span><span class="n">sum</span><span class="p">()))</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Nonunique stats:&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Filtered </span><span class="si">%d</span><span class="s1"> duplicate pairs&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">nonunique_flags</span><span class="o">.</span><span class="n">sum</span><span class="p">()))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Nonunique stats:&#39;</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">flat_metadata</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">dict_hist</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">compress</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">nonunique_flags</span><span class="p">)))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">dict_hist</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">compress</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">nonunique_flags</span><span class="p">)))</span>
     <span class="n">unique_flags</span> <span class="o">=</span> <span class="o">~</span><span class="n">nonunique_flags</span>
     <span class="c1"># Do filtering</span>
     <span class="n">aid_pairs</span> <span class="o">=</span> <span class="n">_aid_pairs</span><span class="o">.</span><span class="n">compress</span><span class="p">(</span><span class="n">unique_flags</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">label_list</span> <span class="o">=</span> <span class="n">_labels</span><span class="o">.</span><span class="n">compress</span><span class="p">(</span><span class="n">unique_flags</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">flat_metadata</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="n">flat_metadata</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">compress</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">unique_flags</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Final Stats&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Final Stats&#39;</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">flat_metadata</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">dict_hist</span><span class="p">(</span><span class="n">val</span><span class="p">))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">dict_hist</span><span class="p">(</span><span class="n">val</span><span class="p">))</span>
 
     <span class="n">groupsizes</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="nb">len</span><span class="p">,</span> <span class="n">vt</span><span class="o">.</span><span class="n">group_indices</span><span class="p">(</span><span class="n">aid_pairs</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">])[</span><span class="mi">1</span><span class="p">])</span>
     <span class="n">ut</span><span class="o">.</span><span class="n">print_dict</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">dict_hist</span><span class="p">(</span><span class="n">groupsizes</span><span class="p">),</span> <span class="s1">&#39;groupsize freq&#39;</span><span class="p">)</span>
@@ -197,16 +236,16 @@
 <span class="sd">        &gt;&gt;&gt; import wbia</span>
 <span class="sd">        &gt;&gt;&gt; # build test data</span>
 <span class="sd">        &gt;&gt;&gt; if False:</span>
-<span class="sd">        &gt;&gt;&gt;     ibs = wbia.opendb(defaultdb=&#39;PZ_Master1&#39;)</span>
+<span class="sd">        &gt;&gt;&gt;     ibs = wbia.opendb(defaultdb=&#39;PZ_Master1&#39;, allow_newdir=True)</span>
 <span class="sd">        &gt;&gt;&gt;     acfg_name = ut.get_argval((&#39;--aidcfg&#39;, &#39;--acfg&#39;, &#39;-a&#39;),</span>
 <span class="sd">        &gt;&gt;&gt;                                 type_=str,</span>
 <span class="sd">        &gt;&gt;&gt;                                 default=&#39;ctrl:pername=None,excluderef=False,contributor_contains=FlankHack&#39;)</span>
 <span class="sd">        &gt;&gt;&gt; else:</span>
-<span class="sd">        &gt;&gt;&gt;     ibs = wbia.opendb(defaultdb=&#39;PZ_MTEST&#39;)</span>
+<span class="sd">        &gt;&gt;&gt;     ibs = wbia.opendb(defaultdb=&#39;PZ_MTEST&#39;, allow_newdir=True)</span>
 <span class="sd">        &gt;&gt;&gt;     acfg_name = ut.get_argval((&#39;--aidcfg&#39;, &#39;--acfg&#39;, &#39;-a&#39;),</span>
 <span class="sd">        &gt;&gt;&gt;                                  type_=str,</span>
 <span class="sd">        &gt;&gt;&gt;                                  default=&#39;ctrl:pername=None,excluderef=False,index=0:20:2&#39;)</span>
-<span class="sd">        &gt;&gt;&gt; #ibs = wbia.opendb(defaultdb=&#39;PZ_FlankHack&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; #ibs = wbia.opendb(defaultdb=&#39;PZ_FlankHack&#39;, allow_newdir=True)</span>
 <span class="sd">        &gt;&gt;&gt; aid_pairs, label_list, flat_metadata = get_aidpairs_partmatch(ibs, acfg_name)</span>
 <span class="sd">        &gt;&gt;&gt; s = slice(2, len(aid_pairs), len(aid_pairs) // ut.get_argval(&#39;--x&#39;, type_=int, default=8))</span>
 <span class="sd">        &gt;&gt;&gt; #aid_pairs = aid_pairs[s]</span>
@@ -244,7 +283,7 @@
         <span class="n">annot1</span> <span class="o">=</span> <span class="n">pair_metadata</span><span class="p">[</span><span class="s1">&#39;annot1&#39;</span><span class="p">]</span>
         <span class="n">annot2</span> <span class="o">=</span> <span class="n">pair_metadata</span><span class="p">[</span><span class="s1">&#39;annot2&#39;</span><span class="p">]</span>
         <span class="n">aid1</span><span class="p">,</span> <span class="n">aid2</span> <span class="o">=</span> <span class="n">annot1</span><span class="p">[</span><span class="s1">&#39;aid&#39;</span><span class="p">],</span> <span class="n">annot2</span><span class="p">[</span><span class="s1">&#39;aid&#39;</span><span class="p">]</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Computing alignment aidpair=(</span><span class="si">%r</span><span class="s1">, </span><span class="si">%r</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">aid1</span><span class="p">,</span> <span class="n">aid2</span><span class="p">))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Computing alignment aidpair=(</span><span class="si">%r</span><span class="s1">, </span><span class="si">%r</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">aid1</span><span class="p">,</span> <span class="n">aid2</span><span class="p">))</span>
         <span class="n">match</span> <span class="o">=</span> <span class="n">wbia</span><span class="o">.</span><span class="n">algo</span><span class="o">.</span><span class="n">hots</span><span class="o">.</span><span class="n">vsone_pipeline</span><span class="o">.</span><span class="n">vsone_single</span><span class="p">(</span>
             <span class="n">aid1</span><span class="p">,</span> <span class="n">aid2</span><span class="p">,</span> <span class="n">qreq_</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span>
         <span class="p">)</span>
@@ -258,14 +297,14 @@
         <span class="n">match_metadata</span> <span class="o">=</span> <span class="n">pair_metadata</span><span class="p">[</span><span class="s1">&#39;match_metadata&#39;</span><span class="p">]</span>
         <span class="n">annot1</span> <span class="o">=</span> <span class="n">pair_metadata</span><span class="p">[</span><span class="s1">&#39;annot1&#39;</span><span class="p">]</span>
         <span class="n">annot2</span> <span class="o">=</span> <span class="n">pair_metadata</span><span class="p">[</span><span class="s1">&#39;annot2&#39;</span><span class="p">]</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Warping Chips aidpair=(</span><span class="si">%r</span><span class="s1">, </span><span class="si">%r</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">annot1</span><span class="p">[</span><span class="s1">&#39;aid&#39;</span><span class="p">],</span> <span class="n">annot2</span><span class="p">[</span><span class="s1">&#39;aid&#39;</span><span class="p">]))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Warping Chips aidpair=(</span><span class="si">%r</span><span class="s1">, </span><span class="si">%r</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">annot1</span><span class="p">[</span><span class="s1">&#39;aid&#39;</span><span class="p">],</span> <span class="n">annot2</span><span class="p">[</span><span class="s1">&#39;aid&#39;</span><span class="p">]))</span>
         <span class="n">rchip1</span> <span class="o">=</span> <span class="n">annot1</span><span class="p">[</span><span class="s1">&#39;rchip&#39;</span><span class="p">]</span>
         <span class="n">rchip2</span> <span class="o">=</span> <span class="n">annot2</span><span class="p">[</span><span class="s1">&#39;rchip&#39;</span><span class="p">]</span>
         <span class="n">warped</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">if</span> <span class="n">warped</span><span class="p">:</span>
             <span class="n">H1</span> <span class="o">=</span> <span class="n">match_metadata</span><span class="p">[</span><span class="s1">&#39;H_RAT&#39;</span><span class="p">]</span>
             <span class="n">fm</span> <span class="o">=</span> <span class="n">match_metadata</span><span class="p">[</span><span class="s1">&#39;fm&#39;</span><span class="p">]</span>
-            <span class="c1"># print(&#39;WARPING&#39;)</span>
+            <span class="c1"># logger.info(&#39;WARPING&#39;)</span>
             <span class="c1"># Initial Warping</span>
             <span class="n">kpts1_m</span> <span class="o">=</span> <span class="n">annot1</span><span class="p">[</span><span class="s1">&#39;kpts&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">fm</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
             <span class="n">kpts2_m</span> <span class="o">=</span> <span class="n">annot2</span><span class="p">[</span><span class="s1">&#39;kpts&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">fm</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
@@ -352,7 +391,7 @@
 
     <span class="k">return</span> <span class="n">rchip1_list</span><span class="p">,</span> <span class="n">rchip2_list</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    import plottool as pt</span>
+<span class="sd">    from wbia import plottool as pt</span>
 <span class="sd">    pt.imshow(vt.stack_images(rchip1, rchip2)[0])</span>
 <span class="sd">    pt.imshow(vt.stack_images(rchip1_sz, rchip2_sz)[0])</span>
 <span class="sd">    &quot;&quot;&quot;</span></div>
@@ -380,7 +419,7 @@
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn.ingest_wbia import *  # NOQA</span>
 <span class="sd">        &gt;&gt;&gt; import wbia</span>
 <span class="sd">        &gt;&gt;&gt; # build test data</span>
-<span class="sd">        &gt;&gt;&gt; ibs = wbia.opendb(defaultdb=&#39;PZ_MTEST&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; ibs = wbia.opendb(defaultdb=&#39;PZ_MTEST&#39;, allow_newdir=True)</span>
 <span class="sd">        &gt;&gt;&gt; tup = get_aidpairs_and_matches(ibs, 6)</span>
 <span class="sd">        &gt;&gt;&gt; (aid1_list, aid2_list, kpts1_m_list, kpts2_m_list, fm_list, metadata_lists) = tup</span>
 <span class="sd">        &gt;&gt;&gt; pmcfg = PatchMetricDataConfig()</span>
@@ -388,8 +427,8 @@
 <span class="sd">        &gt;&gt;&gt; colorspace = pmcfg[&#39;colorspace&#39;]</span>
 <span class="sd">        &gt;&gt;&gt; # execute function</span>
 <span class="sd">        &gt;&gt;&gt; tup = get_aidpair_patchmatch_training_data(ibs, aid1_list,</span>
-<span class="sd">        ...     aid2_list, kpts1_m_list, kpts2_m_list, fm_list, metadata_lists,</span>
-<span class="sd">        ...     patch_size, colorspace)</span>
+<span class="sd">        &gt;&gt;&gt;     aid2_list, kpts1_m_list, kpts2_m_list, fm_list, metadata_lists,</span>
+<span class="sd">        &gt;&gt;&gt;     patch_size, colorspace)</span>
 <span class="sd">        &gt;&gt;&gt; aid1_list_, aid2_list_, warped_patch1_list, warped_patch2_list, flat_metadata = tup</span>
 <span class="sd">        &gt;&gt;&gt; ut.quit_if_noshow()</span>
 <span class="sd">        &gt;&gt;&gt; label_list = get_aidpair_training_labels(ibs, aid1_list_, aid2_list_)</span>
@@ -397,20 +436,20 @@
 <span class="sd">        &gt;&gt;&gt; ut.show_if_requested()</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Flatten to only apply chip operations once</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;get_aidpair_patchmatch_training_data num_pairs = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">aid1_list</span><span class="p">)))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;get_aidpair_patchmatch_training_data num_pairs = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">aid1_list</span><span class="p">)))</span>
     <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">aid1_list</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">aid2_list</span><span class="p">)</span>
     <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">aid1_list</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">kpts1_m_list</span><span class="p">)</span>
     <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">aid1_list</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">kpts2_m_list</span><span class="p">)</span>
     <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">aid1_list</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">fm_list</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;geting_unflat_chips&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;geting_unflat_chips&#39;</span><span class="p">)</span>
     <span class="n">flat_unique</span><span class="p">,</span> <span class="n">reconstruct_tup</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">inverable_unique_two_lists</span><span class="p">(</span><span class="n">aid1_list</span><span class="p">,</span> <span class="n">aid2_list</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;grabbing </span><span class="si">%d</span><span class="s1"> unique chips&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">flat_unique</span><span class="p">)))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;grabbing </span><span class="si">%d</span><span class="s1"> unique chips&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">flat_unique</span><span class="p">)))</span>
     <span class="n">chip_list</span> <span class="o">=</span> <span class="n">ibs</span><span class="o">.</span><span class="n">get_annot_chips</span><span class="p">(</span><span class="n">flat_unique</span><span class="p">)</span>  <span class="c1"># TODO config2_</span>
     <span class="c1"># convert to approprate colorspace</span>
     <span class="n">chip_list</span> <span class="o">=</span> <span class="n">vt</span><span class="o">.</span><span class="n">convert_image_list_colorspace</span><span class="p">(</span><span class="n">chip_list</span><span class="p">,</span> <span class="n">colorspace</span><span class="p">)</span>
     <span class="n">ut</span><span class="o">.</span><span class="n">print_object_size</span><span class="p">(</span><span class="n">chip_list</span><span class="p">,</span> <span class="s1">&#39;chip_list&#39;</span><span class="p">)</span>
     <span class="n">chip1_list</span><span class="p">,</span> <span class="n">chip2_list</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">uninvert_unique_two_lists</span><span class="p">(</span><span class="n">chip_list</span><span class="p">,</span> <span class="n">reconstruct_tup</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;warping&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;warping&#39;</span><span class="p">)</span>
 
     <span class="k">class</span> <span class="nc">PatchExtractCache</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
         <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">patch_size</span><span class="p">):</span>
@@ -485,7 +524,7 @@
     <span class="n">len1_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">len</span><span class="p">,</span> <span class="n">fm_list</span><span class="p">))</span>
     <span class="k">assert</span> <span class="n">ut</span><span class="o">.</span><span class="n">lmap</span><span class="p">(</span><span class="nb">len</span><span class="p">,</span> <span class="n">warped_patches1_list</span><span class="p">)</span> <span class="o">==</span> <span class="n">ut</span><span class="o">.</span><span class="n">lmap</span><span class="p">(</span><span class="nb">len</span><span class="p">,</span> <span class="n">warped_patches2_list</span><span class="p">),</span> <span class="s1">&#39;bug&#39;</span>
     <span class="k">assert</span> <span class="n">ut</span><span class="o">.</span><span class="n">lmap</span><span class="p">(</span><span class="nb">len</span><span class="p">,</span> <span class="n">warped_patches1_list</span><span class="p">)</span> <span class="o">==</span> <span class="n">len1_list</span><span class="p">,</span> <span class="s1">&#39;bug&#39;</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;flattening&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;flattening&#39;</span><span class="p">)</span>
     <span class="n">aid1_list_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
         <span class="n">ut</span><span class="o">.</span><span class="n">flatten</span><span class="p">([[</span><span class="n">aid1</span><span class="p">]</span> <span class="o">*</span> <span class="n">len1</span> <span class="k">for</span> <span class="n">len1</span><span class="p">,</span> <span class="n">aid1</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">len1_list</span><span class="p">,</span> <span class="n">aid1_list</span><span class="p">)])</span>
     <span class="p">)</span>
@@ -517,7 +556,7 @@
 <span class="p">):</span>
     <span class="c1"># TODO; rectify</span>
     <span class="n">len1_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">len</span><span class="p">,</span> <span class="n">fm_list</span><span class="p">))</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;flattening&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;flattening&#39;</span><span class="p">)</span>
     <span class="n">aid1_list_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
         <span class="n">ut</span><span class="o">.</span><span class="n">flatten</span><span class="p">([[</span><span class="n">aid1</span><span class="p">]</span> <span class="o">*</span> <span class="n">len1</span> <span class="k">for</span> <span class="n">len1</span><span class="p">,</span> <span class="n">aid1</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">len1_list</span><span class="p">,</span> <span class="n">aid1_list</span><span class="p">)])</span>
     <span class="p">)</span>
@@ -564,7 +603,7 @@
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn.ingest_wbia import *  # NOQA</span>
 <span class="sd">        &gt;&gt;&gt; import wbia</span>
 <span class="sd">        &gt;&gt;&gt; # build test data</span>
-<span class="sd">        &gt;&gt;&gt; ibs = wbia.opendb(defaultdb=&#39;PZ_MTEST&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; ibs = wbia.opendb(defaultdb=&#39;PZ_MTEST&#39;, allow_newdir=True)</span>
 <span class="sd">        &gt;&gt;&gt; (aid1_list, aid2_list, kpts1_m_list, kpts2_m_list, fm_list, metadata_lists) = get_aidpairs_and_matches(ibs, 10, 3)</span>
 <span class="sd">        &gt;&gt;&gt; pmcfg = PatchMetricDataConfig()</span>
 <span class="sd">        &gt;&gt;&gt; patch_size = pmcfg[&#39;patch_size&#39;]</span>
@@ -621,7 +660,7 @@
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn.ingest_wbia import *  # NOQA</span>
 <span class="sd">        &gt;&gt;&gt; import wbia</span>
 <span class="sd">        &gt;&gt;&gt; # build test data</span>
-<span class="sd">        &gt;&gt;&gt; ibs = wbia.opendb(defaultdb=&#39;PZ_MTEST&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; ibs = wbia.opendb(defaultdb=&#39;PZ_MTEST&#39;, allow_newdir=True)</span>
 <span class="sd">        &gt;&gt;&gt; tup = get_aidpairs_and_matches(ibs)</span>
 <span class="sd">        &gt;&gt;&gt; (aid1_list, aid2_list) = tup[0:2]</span>
 <span class="sd">        &gt;&gt;&gt; aid1_list = aid1_list[0:min(100, len(aid1_list))]</span>
@@ -645,7 +684,7 @@
     <span class="n">data_per_label</span> <span class="o">=</span> <span class="mi">2</span>
     <span class="n">dtype_bytes</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">estimated_bytes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">item_shape</span><span class="p">)</span> <span class="o">*</span> <span class="n">num_data</span> <span class="o">*</span> <span class="n">data_per_label</span> <span class="o">*</span> <span class="n">dtype_bytes</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Estimated data size: &#39;</span> <span class="o">+</span> <span class="n">ut</span><span class="o">.</span><span class="n">byte_str2</span><span class="p">(</span><span class="n">estimated_bytes</span><span class="p">))</span></div>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Estimated data size: &#39;</span> <span class="o">+</span> <span class="n">ut</span><span class="o">.</span><span class="n">byte_str2</span><span class="p">(</span><span class="n">estimated_bytes</span><span class="p">))</span></div>
 
 
 <span class="c1"># class NewConfigBase(object):</span>
@@ -664,58 +703,51 @@
 <span class="c1">#        return ut.KwargsWrapper(self)</span>
 
 
-<span class="k">try</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">wbia</span> <span class="kn">import</span> <span class="n">dtool</span>
+<div class="viewcode-block" id="PartMatchDataConfig"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.ingest_wbia.PartMatchDataConfig">[docs]</a><span class="k">class</span> <span class="nc">PartMatchDataConfig</span><span class="p">(</span><span class="n">dtool</span><span class="o">.</span><span class="n">Config</span><span class="p">):</span>
+    <span class="n">_param_info_list</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">ut</span><span class="o">.</span><span class="n">ParamInfo</span><span class="p">(</span><span class="s1">&#39;part_chip_width&#39;</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span>
+        <span class="n">ut</span><span class="o">.</span><span class="n">ParamInfo</span><span class="p">(</span><span class="s1">&#39;part_chip_height&#39;</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span>
+        <span class="n">ut</span><span class="o">.</span><span class="n">ParamInfo</span><span class="p">(</span><span class="s1">&#39;colorspace&#39;</span><span class="p">,</span> <span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">valid_values</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="s1">&#39;bgr&#39;</span><span class="p">,</span> <span class="s1">&#39;lab&#39;</span><span class="p">]),</span>
+    <span class="p">]</span>
+    <span class="c1"># def __init__(pmcfg, **kwargs):</span>
+    <span class="c1">#    #pmcfg.part_chip_width = 256</span>
+    <span class="c1">#    #pmcfg.part_chip_height = 128</span>
+    <span class="c1">#    #pmcfg.colorspace = &#39;gray&#39;</span>
+    <span class="c1">#    super(PartMatchDataConfig, pmcfg).__init__(**kwargs)</span>
 
-<div class="viewcode-block" id="PartMatchDataConfig"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.ingest_wbia.PartMatchDataConfig">[docs]</a>    <span class="k">class</span> <span class="nc">PartMatchDataConfig</span><span class="p">(</span><span class="n">dtool</span><span class="o">.</span><span class="n">Config</span><span class="p">):</span>
-        <span class="n">_param_info_list</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">ut</span><span class="o">.</span><span class="n">ParamInfo</span><span class="p">(</span><span class="s1">&#39;part_chip_width&#39;</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span>
-            <span class="n">ut</span><span class="o">.</span><span class="n">ParamInfo</span><span class="p">(</span><span class="s1">&#39;part_chip_height&#39;</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span>
-            <span class="n">ut</span><span class="o">.</span><span class="n">ParamInfo</span><span class="p">(</span><span class="s1">&#39;colorspace&#39;</span><span class="p">,</span> <span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">valid_values</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="s1">&#39;bgr&#39;</span><span class="p">,</span> <span class="s1">&#39;lab&#39;</span><span class="p">]),</span>
-        <span class="p">]</span>
-        <span class="c1"># def __init__(pmcfg, **kwargs):</span>
-        <span class="c1">#    #pmcfg.part_chip_width = 256</span>
-        <span class="c1">#    #pmcfg.part_chip_height = 128</span>
-        <span class="c1">#    #pmcfg.colorspace = &#39;gray&#39;</span>
-        <span class="c1">#    super(PartMatchDataConfig, pmcfg).__init__(**kwargs)</span>
+    <span class="c1"># def get_cfgstr(pmcfg):</span>
+    <span class="c1">#    cfgstr_list = [</span>
+    <span class="c1">#        &#39;sz=(%d,%d)&#39; % (pmcfg.part_chip_width, pmcfg.part_chip_height),</span>
+    <span class="c1">#    ]</span>
+    <span class="c1">#    cfgstr_list.append(pmcfg.colorspace)</span>
+    <span class="c1">#    return &#39;,&#39;.join(cfgstr_list)</span>
 
-        <span class="c1"># def get_cfgstr(pmcfg):</span>
-        <span class="c1">#    cfgstr_list = [</span>
-        <span class="c1">#        &#39;sz=(%d,%d)&#39; % (pmcfg.part_chip_width, pmcfg.part_chip_height),</span>
-        <span class="c1">#    ]</span>
-        <span class="c1">#    cfgstr_list.append(pmcfg.colorspace)</span>
-        <span class="c1">#    return &#39;,&#39;.join(cfgstr_list)</span>
-
-<div class="viewcode-block" id="PartMatchDataConfig.get_data_shape"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.ingest_wbia.PartMatchDataConfig.get_data_shape">[docs]</a>        <span class="k">def</span> <span class="nf">get_data_shape</span><span class="p">(</span><span class="n">pmcfg</span><span class="p">):</span>
-            <span class="n">channels</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">pmcfg</span><span class="o">.</span><span class="n">colorspace</span> <span class="o">==</span> <span class="s1">&#39;gray&#39;</span> <span class="k">else</span> <span class="mi">3</span>
-            <span class="k">return</span> <span class="p">(</span><span class="n">pmcfg</span><span class="p">[</span><span class="s1">&#39;part_chip_height&#39;</span><span class="p">],</span> <span class="n">pmcfg</span><span class="p">[</span><span class="s1">&#39;part_chip_width&#39;</span><span class="p">],</span> <span class="n">channels</span><span class="p">)</span></div></div>
-
-<div class="viewcode-block" id="PatchMetricDataConfig"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.ingest_wbia.PatchMetricDataConfig">[docs]</a>    <span class="k">class</span> <span class="nc">PatchMetricDataConfig</span><span class="p">(</span><span class="n">dtool</span><span class="o">.</span><span class="n">Config</span><span class="p">):</span>
-        <span class="n">_param_info_list</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">ut</span><span class="o">.</span><span class="n">ParamInfo</span><span class="p">(</span><span class="s1">&#39;patch_size&#39;</span><span class="p">,</span> <span class="mi">64</span><span class="p">),</span>
-            <span class="n">ut</span><span class="o">.</span><span class="n">ParamInfo</span><span class="p">(</span><span class="s1">&#39;colorspace&#39;</span><span class="p">,</span> <span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">valid_values</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="s1">&#39;bgr&#39;</span><span class="p">,</span> <span class="s1">&#39;lab&#39;</span><span class="p">]),</span>
-        <span class="p">]</span>
-        <span class="c1"># def __init__(pmcfg, **kwargs):</span>
-        <span class="c1">#    #pmcfg.patch_size = 64</span>
-        <span class="c1">#    #pmcfg.colorspace = &#39;bgr&#39;</span>
-        <span class="c1">#    #pmcfg.colorspace = &#39;gray&#39;</span>
-        <span class="c1">#    super(PatchMetricDataConfig, pmcfg).__init__(**kwargs)</span>
-        <span class="c1"># def get_cfgstr(pmcfg):</span>
-        <span class="c1">#    cfgstr_list = [</span>
-        <span class="c1">#        &#39;patch_size=%d&#39; % (pmcfg.patch_size,),</span>
-        <span class="c1">#    ]</span>
-        <span class="c1">#    #if pmcfg.colorspace != &#39;bgr&#39;:</span>
-        <span class="c1">#    cfgstr_list.append(pmcfg.colorspace)</span>
-        <span class="c1">#    return &#39;,&#39;.join(cfgstr_list)</span>
-
-<div class="viewcode-block" id="PatchMetricDataConfig.get_data_shape"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.ingest_wbia.PatchMetricDataConfig.get_data_shape">[docs]</a>        <span class="k">def</span> <span class="nf">get_data_shape</span><span class="p">(</span><span class="n">pmcfg</span><span class="p">):</span>
-            <span class="n">channels</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">pmcfg</span><span class="p">[</span><span class="s1">&#39;colorspace&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;gray&#39;</span> <span class="k">else</span> <span class="mi">3</span>
-            <span class="k">return</span> <span class="p">(</span><span class="n">pmcfg</span><span class="p">[</span><span class="s1">&#39;patch_size&#39;</span><span class="p">],</span> <span class="n">pmcfg</span><span class="p">[</span><span class="s1">&#39;patch_size&#39;</span><span class="p">],</span> <span class="n">channels</span><span class="p">)</span></div></div>
+<div class="viewcode-block" id="PartMatchDataConfig.get_data_shape"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.ingest_wbia.PartMatchDataConfig.get_data_shape">[docs]</a>    <span class="k">def</span> <span class="nf">get_data_shape</span><span class="p">(</span><span class="n">pmcfg</span><span class="p">):</span>
+        <span class="n">channels</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">pmcfg</span><span class="o">.</span><span class="n">colorspace</span> <span class="o">==</span> <span class="s1">&#39;gray&#39;</span> <span class="k">else</span> <span class="mi">3</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">pmcfg</span><span class="p">[</span><span class="s1">&#39;part_chip_height&#39;</span><span class="p">],</span> <span class="n">pmcfg</span><span class="p">[</span><span class="s1">&#39;part_chip_width&#39;</span><span class="p">],</span> <span class="n">channels</span><span class="p">)</span></div></div>
 
 
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-    <span class="n">PartMatchDataConfig</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">PatchMetricDataConfig</span> <span class="o">=</span> <span class="kc">None</span>
+<div class="viewcode-block" id="PatchMetricDataConfig"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.ingest_wbia.PatchMetricDataConfig">[docs]</a><span class="k">class</span> <span class="nc">PatchMetricDataConfig</span><span class="p">(</span><span class="n">dtool</span><span class="o">.</span><span class="n">Config</span><span class="p">):</span>
+    <span class="n">_param_info_list</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">ut</span><span class="o">.</span><span class="n">ParamInfo</span><span class="p">(</span><span class="s1">&#39;patch_size&#39;</span><span class="p">,</span> <span class="mi">64</span><span class="p">),</span>
+        <span class="n">ut</span><span class="o">.</span><span class="n">ParamInfo</span><span class="p">(</span><span class="s1">&#39;colorspace&#39;</span><span class="p">,</span> <span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">valid_values</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="s1">&#39;bgr&#39;</span><span class="p">,</span> <span class="s1">&#39;lab&#39;</span><span class="p">]),</span>
+    <span class="p">]</span>
+    <span class="c1"># def __init__(pmcfg, **kwargs):</span>
+    <span class="c1">#    #pmcfg.patch_size = 64</span>
+    <span class="c1">#    #pmcfg.colorspace = &#39;bgr&#39;</span>
+    <span class="c1">#    #pmcfg.colorspace = &#39;gray&#39;</span>
+    <span class="c1">#    super(PatchMetricDataConfig, pmcfg).__init__(**kwargs)</span>
+    <span class="c1"># def get_cfgstr(pmcfg):</span>
+    <span class="c1">#    cfgstr_list = [</span>
+    <span class="c1">#        &#39;patch_size=%d&#39; % (pmcfg.patch_size,),</span>
+    <span class="c1">#    ]</span>
+    <span class="c1">#    #if pmcfg.colorspace != &#39;bgr&#39;:</span>
+    <span class="c1">#    cfgstr_list.append(pmcfg.colorspace)</span>
+    <span class="c1">#    return &#39;,&#39;.join(cfgstr_list)</span>
+
+<div class="viewcode-block" id="PatchMetricDataConfig.get_data_shape"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.ingest_wbia.PatchMetricDataConfig.get_data_shape">[docs]</a>    <span class="k">def</span> <span class="nf">get_data_shape</span><span class="p">(</span><span class="n">pmcfg</span><span class="p">):</span>
+        <span class="n">channels</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">pmcfg</span><span class="p">[</span><span class="s1">&#39;colorspace&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;gray&#39;</span> <span class="k">else</span> <span class="mi">3</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">pmcfg</span><span class="p">[</span><span class="s1">&#39;patch_size&#39;</span><span class="p">],</span> <span class="n">pmcfg</span><span class="p">[</span><span class="s1">&#39;patch_size&#39;</span><span class="p">],</span> <span class="n">channels</span><span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="cached_part_match_training_data_fpaths"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.ingest_wbia.cached_part_match_training_data_fpaths">[docs]</a><span class="k">def</span> <span class="nf">cached_part_match_training_data_fpaths</span><span class="p">(</span>
@@ -786,8 +818,8 @@
         <span class="n">ut</span><span class="o">.</span><span class="n">assert_eq</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">pmcfg</span><span class="p">[</span><span class="s1">&#39;part_chip_height&#39;</span><span class="p">])</span>
         <span class="n">ut</span><span class="o">.</span><span class="n">assert_eq</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">pmcfg</span><span class="p">[</span><span class="s1">&#39;part_chip_width&#39;</span><span class="p">])</span>
         <span class="c1"># TODO; save metadata</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[write_part_data] np.shape(data) = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">data</span><span class="p">),))</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[write_part_labels] np.shape(labels) = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">labels</span><span class="p">),))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[write_part_data] np.shape(data) = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">data</span><span class="p">),))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[write_part_labels] np.shape(labels) = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">labels</span><span class="p">),))</span>
         <span class="c1"># TODO hdf5 for large data</span>
         <span class="n">ut</span><span class="o">.</span><span class="n">save_hdf5</span><span class="p">(</span><span class="n">data_fpath</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
         <span class="n">ut</span><span class="o">.</span><span class="n">save_hdf5</span><span class="p">(</span><span class="n">labels_fpath</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
@@ -796,7 +828,7 @@
         <span class="c1"># ut.save_cPkl(labels_fpath, labels)</span>
         <span class="c1"># ut.save_cPkl(metadata_fpath, flat_metadata)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;data and labels cache hit&#39;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;data and labels cache hit&#39;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">data_fpath</span><span class="p">,</span> <span class="n">labels_fpath</span><span class="p">,</span> <span class="n">metadata_fpath</span><span class="p">,</span> <span class="n">training_dpath</span><span class="p">,</span> <span class="n">data_shape</span></div>
 
 
@@ -866,8 +898,8 @@
         <span class="n">ut</span><span class="o">.</span><span class="n">assert_eq</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">pmcfg</span><span class="p">[</span><span class="s1">&#39;patch_size&#39;</span><span class="p">])</span>
         <span class="n">ut</span><span class="o">.</span><span class="n">assert_eq</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">pmcfg</span><span class="p">[</span><span class="s1">&#39;patch_size&#39;</span><span class="p">])</span>
         <span class="c1"># TODO; save metadata</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[write_data_and_labels] np.shape(data) = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">data</span><span class="p">),))</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[write_data_and_labels] np.shape(labels) = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">labels</span><span class="p">),))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[write_data_and_labels] np.shape(data) = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">data</span><span class="p">),))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[write_data_and_labels] np.shape(labels) = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">labels</span><span class="p">),))</span>
         <span class="c1"># TODO hdf5 for large data</span>
         <span class="n">ut</span><span class="o">.</span><span class="n">save_hdf5</span><span class="p">(</span><span class="n">data_fpath</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
         <span class="n">ut</span><span class="o">.</span><span class="n">save_hdf5</span><span class="p">(</span><span class="n">labels_fpath</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
@@ -876,7 +908,7 @@
         <span class="c1"># ut.save_cPkl(labels_fpath, labels)</span>
         <span class="c1"># ut.save_cPkl(metadata_fpath, flat_metadata)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;data and labels cache hit&#39;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;data and labels cache hit&#39;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">data_fpath</span><span class="p">,</span> <span class="n">labels_fpath</span><span class="p">,</span> <span class="n">metadata_fpath</span><span class="p">,</span> <span class="n">training_dpath</span><span class="p">,</span> <span class="n">data_shape</span></div>
 
 
@@ -903,9 +935,9 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        tuple : patchmatch_tup = (aid1_list, aid2_list, kpts1_m_list,</span>
-<span class="sd">                                   kpts2_m_list, fm_list, metadata_lists)</span>
-<span class="sd">            aid pairs and matching keypoint pairs as well as the original index</span>
-<span class="sd">            of the feature matches</span>
+<span class="sd">        kpts2_m_list, fm_list, metadata_lists)</span>
+<span class="sd">        aid pairs and matching keypoint pairs as well as the original index</span>
+<span class="sd">        of the feature matches</span>
 
 <span class="sd">    CommandLine:</span>
 <span class="sd">        python -m wbia_cnn.ingest_wbia get_aidpairs_and_matches --show</span>
@@ -915,20 +947,20 @@
 <span class="sd">        python -m wbia_cnn.ingest_wbia --test-get_aidpairs_and_matches --db NNP_Master3</span>
 
 <span class="sd">        python -m wbia_cnn.ingest_wbia --test-get_aidpairs_and_matches --db PZ_MTEST \</span>
-<span class="sd">                --acfg default:is_known=True,qmin_pername=2,view=primary,species=primary,minqual=ok --show</span>
+<span class="sd">        --acfg default:is_known=True,qmin_pername=2,view=primary,species=primary,minqual=ok --show</span>
 
 <span class="sd">        python -m wbia_cnn.ingest_wbia --test-get_aidpairs_and_matches --db PZ_Master1 \</span>
-<span class="sd">                --acfg default:is_known=True,qmin_pername=2,view=primary,species=primary,minqual=ok --show</span>
+<span class="sd">        --acfg default:is_known=True,qmin_pername=2,view=primary,species=primary,minqual=ok --show</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; # DISABLE_DOCTEST</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn.ingest_wbia import *  # NOQA</span>
 <span class="sd">        &gt;&gt;&gt; import wbia</span>
 <span class="sd">        &gt;&gt;&gt; # build test data</span>
-<span class="sd">        &gt;&gt;&gt; ibs = wbia.opendb(defaultdb=&#39;PZ_MTEST&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; ibs = wbia.opendb(defaultdb=&#39;PZ_MTEST&#39;, allow_newdir=True)</span>
 <span class="sd">        &gt;&gt;&gt; acfg_name = ut.get_argval((&#39;--aidcfg&#39;, &#39;--acfg&#39;, &#39;-a&#39;, &#39;--acfg-name&#39;),</span>
-<span class="sd">        ...                             type_=str,</span>
-<span class="sd">        ...                             default=&#39;ctrl:qindex=0:10&#39;)</span>
+<span class="sd">        &gt;&gt;&gt;                             type_=str,</span>
+<span class="sd">        &gt;&gt;&gt;                             default=&#39;ctrl:qindex=0:10&#39;)</span>
 <span class="sd">        &gt;&gt;&gt; max_examples = None</span>
 <span class="sd">        &gt;&gt;&gt; num_top = None</span>
 <span class="sd">        &gt;&gt;&gt; controlled = True</span>
@@ -952,7 +984,7 @@
 <span class="sd">        &gt;&gt;&gt; # Visualize parent matches</span>
 <span class="sd">        &gt;&gt;&gt; _iter = list(zip(aid1_list, aid2_list, kpts1_m_list, kpts2_m_list, fm_list))</span>
 <span class="sd">        &gt;&gt;&gt; _iter = ut.InteractiveIter(_iter, display_item=False)</span>
-<span class="sd">        &gt;&gt;&gt; import plottool as pt</span>
+<span class="sd">        &gt;&gt;&gt; from wbia import plottool as pt</span>
 <span class="sd">        &gt;&gt;&gt; import wbia.viz</span>
 <span class="sd">        &gt;&gt;&gt; for aid1, aid2, kpts1, kpts2, fm in _iter:</span>
 <span class="sd">        &gt;&gt;&gt;     pt.reset()</span>
@@ -966,7 +998,7 @@
 
     <span class="k">def</span> <span class="nf">get_query_results</span><span class="p">():</span>
         <span class="k">if</span> <span class="n">acfg_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;NEW WAY OF FILTERING&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;NEW WAY OF FILTERING&#39;</span><span class="p">)</span>
             <span class="kn">from</span> <span class="nn">wbia.expt</span> <span class="kn">import</span> <span class="n">experiment_helpers</span>
 
             <span class="n">acfg_list</span><span class="p">,</span> <span class="n">expanded_aids_list</span> <span class="o">=</span> <span class="n">experiment_helpers</span><span class="o">.</span><span class="n">get_annotcfg_list</span><span class="p">(</span>
@@ -976,7 +1008,7 @@
             <span class="n">expanded_aids</span> <span class="o">=</span> <span class="n">expanded_aids_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="n">qaid_list</span><span class="p">,</span> <span class="n">daid_list</span> <span class="o">=</span> <span class="n">expanded_aids</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;OLD WAY OF FILTERING&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;OLD WAY OF FILTERING&#39;</span><span class="p">)</span>
             <span class="kn">from</span> <span class="nn">wbia.other</span> <span class="kn">import</span> <span class="n">ibsfuncs</span>
 
             <span class="k">if</span> <span class="n">controlled</span><span class="p">:</span>
@@ -1087,8 +1119,8 @@
 
             <span class="n">prev_total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">len</span><span class="p">,</span> <span class="n">fm_list_all</span><span class="p">))</span>
             <span class="n">adding</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">len</span><span class="p">,</span> <span class="n">randneg_fm</span><span class="p">))</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;prev_total = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">prev_total</span><span class="p">,))</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;adding     = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">adding</span><span class="p">,))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;prev_total = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">prev_total</span><span class="p">,))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;adding     = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">adding</span><span class="p">,))</span>
 
             <span class="n">metadata_all</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">dict_isect_combine</span><span class="p">(</span><span class="n">metadata_all</span><span class="p">,</span> <span class="n">rand_meta</span><span class="p">)</span>
             <span class="n">fm_list_all</span> <span class="o">=</span> <span class="n">fm_list_all</span> <span class="o">+</span> <span class="n">randneg_fm</span>
@@ -1128,7 +1160,7 @@
         <span class="c1"># using case tags</span>
 
         <span class="n">flags_tag</span> <span class="o">=</span> <span class="n">get_badtag_flags</span><span class="p">(</span><span class="n">ibs</span><span class="p">,</span> <span class="n">aid1_list_all</span><span class="p">,</span> <span class="n">aid2_list_all</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">filtered_infostr</span><span class="p">(</span><span class="n">flags_tag</span><span class="p">,</span> <span class="s1">&#39;annots&#39;</span><span class="p">,</span> <span class="s1">&#39;tag filters&#39;</span><span class="p">))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">filtered_infostr</span><span class="p">(</span><span class="n">flags_tag</span><span class="p">,</span> <span class="s1">&#39;annots&#39;</span><span class="p">,</span> <span class="s1">&#39;tag filters&#39;</span><span class="p">))</span>
         <span class="n">flags</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">and_lists</span><span class="p">(</span><span class="n">flags_tag</span><span class="p">,</span> <span class="n">flags_tag</span><span class="p">)</span>
         <span class="c1">#</span>
         <span class="n">MIN_TD</span> <span class="o">=</span> <span class="mi">5</span> <span class="o">*</span> <span class="mi">60</span>  <span class="c1"># 5 minutes at least</span>
@@ -1137,11 +1169,11 @@
         <span class="n">gf_tdflags</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_or</span><span class="p">(</span>
             <span class="n">labels_all</span> <span class="o">==</span> <span class="n">ibs</span><span class="o">.</span><span class="n">const</span><span class="o">.</span><span class="n">REVIEW</span><span class="o">.</span><span class="n">MATCH</span><span class="p">,</span> <span class="n">timedelta_list</span> <span class="o">&gt;</span> <span class="n">MIN_TD</span>
         <span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">filtered_infostr</span><span class="p">(</span><span class="n">gf_tdflags</span><span class="p">,</span> <span class="s1">&#39;gf annots&#39;</span><span class="p">,</span> <span class="s1">&#39;timestamp&#39;</span><span class="p">))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">filtered_infostr</span><span class="p">(</span><span class="n">gf_tdflags</span><span class="p">,</span> <span class="s1">&#39;gf annots&#39;</span><span class="p">,</span> <span class="s1">&#39;timestamp&#39;</span><span class="p">))</span>
         <span class="n">flags</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">and_lists</span><span class="p">(</span><span class="n">flags</span><span class="p">,</span> <span class="n">gf_tdflags</span><span class="p">)</span>
         <span class="c1"># Remove small time deltas</span>
         <span class="c1"># --</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">filtered_infostr</span><span class="p">(</span><span class="n">flags</span><span class="p">,</span> <span class="s1">&#39;total invalid annots&#39;</span><span class="p">))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">filtered_infostr</span><span class="p">(</span><span class="n">flags</span><span class="p">,</span> <span class="s1">&#39;total invalid annots&#39;</span><span class="p">))</span>
         <span class="n">isvalid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">has_gt</span><span class="p">,</span> <span class="n">nonempty</span><span class="p">),</span> <span class="n">flags</span><span class="p">)</span>
         <span class="n">aid1_list_uneq</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">compress</span><span class="p">(</span><span class="n">aid1_list_all</span><span class="p">,</span> <span class="n">isvalid</span><span class="p">)</span>
         <span class="n">aid2_list_uneq</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">compress</span><span class="p">(</span><span class="n">aid2_list_all</span><span class="p">,</span> <span class="n">isvalid</span><span class="p">)</span>
@@ -1164,7 +1196,7 @@
 
         <span class="c1"># min_featweight = None</span>
         <span class="k">if</span> <span class="n">min_featweight</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;filter by featweight&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;filter by featweight&#39;</span><span class="p">)</span>
             <span class="c1"># Remove feature matches where the foreground weight is under a threshold</span>
             <span class="n">flags_list</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">ut</span><span class="o">.</span><span class="n">ProgIter</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">aid1_list_uneq</span><span class="p">)),</span> <span class="s1">&#39;filt fw&#39;</span><span class="p">,</span> <span class="n">adjust</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
@@ -1182,7 +1214,7 @@
                 <span class="p">)</span>
                 <span class="n">flags_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">flags</span><span class="p">)</span>
 
-            <span class="nb">print</span><span class="p">(</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
                 <span class="n">ut</span><span class="o">.</span><span class="n">filtered_infostr</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">flags_list</span><span class="p">),</span> <span class="s1">&#39;feat matches&#39;</span><span class="p">,</span> <span class="s1">&#39;featweight&#39;</span><span class="p">)</span>
             <span class="p">)</span>
             <span class="n">fm_list_uneq2</span> <span class="o">=</span> <span class="n">vt</span><span class="o">.</span><span class="n">zipcompress_safe</span><span class="p">(</span><span class="n">fm_list_uneq</span><span class="p">,</span> <span class="n">flags_list</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
@@ -1199,8 +1231,10 @@
     <span class="k">def</span> <span class="nf">equalize_flat_flags</span><span class="p">(</span><span class="n">flat_labels</span><span class="p">,</span> <span class="n">flat_scores</span><span class="p">):</span>
         <span class="n">labelhist</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">dict_hist</span><span class="p">(</span><span class="n">flat_labels</span><span class="p">)</span>
         <span class="c1"># Print input distribution of labels</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[ingest_wbia] original label histogram = </span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">ut</span><span class="o">.</span><span class="n">dict_str</span><span class="p">(</span><span class="n">labelhist</span><span class="p">))</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[ingest_wbia] total = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">labelhist</span><span class="o">.</span><span class="n">values</span><span class="p">()))))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s1">&#39;[ingest_wbia] original label histogram = </span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">ut</span><span class="o">.</span><span class="n">dict_str</span><span class="p">(</span><span class="n">labelhist</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[ingest_wbia] total = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">labelhist</span><span class="o">.</span><span class="n">values</span><span class="p">()))))</span>
 
         <span class="n">pref_method</span> <span class="o">=</span> <span class="s1">&#39;rand&#39;</span>
         <span class="c1"># pref_method = &#39;scores&#39;</span>
@@ -1230,8 +1264,8 @@
         <span class="n">true_min_</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">labelhist</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
         <span class="c1"># Allow for some window around the minimum</span>
         <span class="n">min_</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">true_min_</span> <span class="o">*</span> <span class="n">allowed_ratio</span><span class="p">),</span> <span class="n">true_max_</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Equalizing label distribution with method=</span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">pref_method</span><span class="p">,))</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Allowing at most </span><span class="si">%d</span><span class="s1"> labels of a type&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">min_</span><span class="p">,))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Equalizing label distribution with method=</span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">pref_method</span><span class="p">,))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Allowing at most </span><span class="si">%d</span><span class="s1"> labels of a type&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">min_</span><span class="p">,))</span>
         <span class="n">key_list</span><span class="p">,</span> <span class="n">type_indicies_list</span> <span class="o">=</span> <span class="n">vt</span><span class="o">.</span><span class="n">group_indices</span><span class="p">(</span><span class="n">flat_labels</span><span class="p">)</span>
         <span class="c1"># type_indicies_list = [np.where(flat_labels == key)[0]</span>
         <span class="c1">#                      for key in six.iterkeys(labelhist)]</span>
@@ -1255,7 +1289,7 @@
             <span class="n">fm_list_uneq2</span><span class="p">,</span>
             <span class="n">metadata_uneq2</span><span class="p">,</span>
         <span class="p">)</span> <span class="o">=</span> <span class="n">get_matchdata3</span><span class="p">()</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;flattening&#39;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;flattening&#39;</span><span class="p">)</span>
         <span class="c1"># Find out how many examples each source holds</span>
         <span class="n">len1_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">len</span><span class="p">,</span> <span class="n">fm_list_uneq2</span><span class="p">))</span>
         <span class="c1"># Expand source labels so one exists for each datapoint</span>
@@ -1298,8 +1332,10 @@
             <span class="n">key</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">six</span><span class="o">.</span><span class="n">iteritems</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">group_items</span><span class="p">(</span><span class="n">flat_labels_eq</span><span class="p">,</span> <span class="n">flat_labels_eq</span><span class="p">))</span>
         <span class="p">}</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[ingest_wbia] equalized label histogram = </span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">ut</span><span class="o">.</span><span class="n">dict_str</span><span class="p">(</span><span class="n">labelhist_eq</span><span class="p">))</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[ingest_wbia] total = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">labelhist_eq</span><span class="o">.</span><span class="n">values</span><span class="p">()))))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s1">&#39;[ingest_wbia] equalized label histogram = </span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">ut</span><span class="o">.</span><span class="n">dict_str</span><span class="p">(</span><span class="n">labelhist_eq</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[ingest_wbia] total = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">labelhist_eq</span><span class="o">.</span><span class="n">values</span><span class="p">()))))</span>
         <span class="c1"># --</span>
         <span class="k">return</span> <span class="n">aid1_list_eq</span><span class="p">,</span> <span class="n">aid2_list_eq</span><span class="p">,</span> <span class="n">fm_list_eq</span><span class="p">,</span> <span class="n">labels_eq</span><span class="p">,</span> <span class="n">metadata_eq</span>
 
@@ -1309,7 +1345,7 @@
 
     <span class="c1"># Convert annot-vs-annot pairs into raw feature-vs-feature pairs</span>
 
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Building feature indicies&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Building feature indicies&#39;</span><span class="p">)</span>
 
     <span class="n">fx1_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">fm</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">fm</span> <span class="ow">in</span> <span class="n">fm_list_eq</span><span class="p">]</span>
     <span class="n">fx2_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">fm</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">fm</span> <span class="ow">in</span> <span class="n">fm_list_eq</span><span class="p">]</span>
@@ -1328,7 +1364,7 @@
     <span class="c1"># Save some memory</span>
     <span class="n">ibs</span><span class="o">.</span><span class="n">print_cachestats_str</span><span class="p">()</span>
     <span class="n">ibs</span><span class="o">.</span><span class="n">clear_table_cache</span><span class="p">(</span><span class="n">ibs</span><span class="o">.</span><span class="n">const</span><span class="o">.</span><span class="n">FEATURE_TABLE</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Taking matching keypoints&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Taking matching keypoints&#39;</span><span class="p">)</span>
     <span class="n">kpts1_m_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">kpts1</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">fx1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">kpts1</span><span class="p">,</span> <span class="n">fx1</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">kpts1_list</span><span class="p">,</span> <span class="n">fx1_list</span><span class="p">)]</span>
     <span class="n">kpts2_m_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">kpts2</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">fx2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">kpts2</span><span class="p">,</span> <span class="n">fx2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">kpts2_list</span><span class="p">,</span> <span class="n">fx2_list</span><span class="p">)]</span>
 
@@ -1401,6 +1437,34 @@
         <span class="n">y1</span> <span class="o">=</span> <span class="n">y0</span> <span class="o">+</span> <span class="n">h</span>
         <span class="k">return</span> <span class="n">x0</span> <span class="o">&lt;=</span> <span class="n">x</span> <span class="ow">and</span> <span class="n">x</span> <span class="o">&lt;=</span> <span class="n">x1</span> <span class="ow">and</span> <span class="n">y0</span> <span class="o">&lt;=</span> <span class="n">y</span> <span class="ow">and</span> <span class="n">y</span> <span class="o">&lt;=</span> <span class="n">y1</span>
 
+    <span class="k">if</span> <span class="n">target_species</span> <span class="o">==</span> <span class="s1">&#39;turtle_sea&#39;</span><span class="p">:</span>
+        <span class="n">target_species_list</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s1">&#39;turtle_green&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;turtle_green+head&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;turtle_hawksbill&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;turtle_hawksbill+head&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;turtle_oliveridley&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;turtle_oliveridley+head&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;turtle_sea&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;turtle_sea+head&#39;</span><span class="p">,</span>
+        <span class="p">]</span>
+    <span class="k">elif</span> <span class="n">target_species</span> <span class="o">==</span> <span class="s1">&#39;wild_dog&#39;</span><span class="p">:</span>
+        <span class="n">target_species_list</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s1">&#39;____&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;wild_dog&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;wild_dog_dark&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;wild_dog_light&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;wild_dog_puppy&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;wild_dog_standard&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;wild_dog_tan&#39;</span><span class="p">,</span>
+        <span class="p">]</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target_species</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">target_species</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>
+        <span class="n">target_species</span><span class="p">,</span> <span class="n">target_species_list</span> <span class="o">=</span> <span class="n">target_species</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">target_species_list</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">target_species_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">target_species</span><span class="p">]</span>
+
     <span class="k">if</span> <span class="n">dest_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">dest_path</span> <span class="o">=</span> <span class="n">expanduser</span><span class="p">(</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;~&#39;</span><span class="p">,</span> <span class="s1">&#39;Desktop&#39;</span><span class="p">,</span> <span class="s1">&#39;extracted&#39;</span><span class="p">))</span>
 
@@ -1418,7 +1482,7 @@
     <span class="n">raw_path</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="n">name_path</span><span class="p">,</span> <span class="s1">&#39;raw&#39;</span><span class="p">)</span>
     <span class="n">labels_path</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="n">name_path</span><span class="p">,</span> <span class="s1">&#39;labels&#39;</span><span class="p">)</span>
 
-    <span class="nb">print</span><span class="p">(</span><span class="n">dest_path</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">dest_path</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">purge</span><span class="p">:</span>
         <span class="n">ut</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">dest_path</span><span class="p">)</span>
     <span class="n">ut</span><span class="o">.</span><span class="n">ensuredir</span><span class="p">(</span><span class="n">dest_path</span><span class="p">)</span>
@@ -1463,13 +1527,13 @@
             <span class="n">global_negatives</span><span class="p">,</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">label_list</span><span class="p">),</span>
         <span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Processing GID: </span><span class="si">%r</span><span class="s1"> [ </span><span class="si">%r</span><span class="s1"> / </span><span class="si">%r</span><span class="s1"> = </span><span class="si">%r</span><span class="s1">]&#39;</span> <span class="o">%</span> <span class="n">args</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">AIDS  : </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">aid_list</span><span class="p">,))</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">BBOXES: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">bbox_list</span><span class="p">,))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Processing GID: </span><span class="si">%r</span><span class="s1"> [ </span><span class="si">%r</span><span class="s1"> / </span><span class="si">%r</span><span class="s1"> = </span><span class="si">%r</span><span class="s1">]&#39;</span> <span class="o">%</span> <span class="n">args</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">AIDS  : </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">aid_list</span><span class="p">,))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">BBOXES: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">bbox_list</span><span class="p">,))</span>
 
         <span class="k">if</span> <span class="n">global_limit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">global_negatives</span> <span class="o">+</span> <span class="n">global_positives</span> <span class="o">&gt;=</span> <span class="n">global_limit</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">HIT GLOBAL LIMIT&#39;</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">HIT GLOBAL LIMIT&#39;</span><span class="p">)</span>
                 <span class="k">continue</span>
 
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">aid_list</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">bbox_list</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
@@ -1480,47 +1544,8 @@
             <span class="n">positives</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="n">negatives</span> <span class="o">=</span> <span class="mi">0</span>
 
-            <span class="k">if</span> <span class="n">target_species</span> <span class="o">==</span> <span class="s1">&#39;turtle_sea&#39;</span><span class="p">:</span>
-                <span class="n">turtle_sea_species_list</span> <span class="o">=</span> <span class="p">[</span>
-                    <span class="s1">&#39;turtle_green&#39;</span><span class="p">,</span>
-                    <span class="s1">&#39;turtle_green+head&#39;</span><span class="p">,</span>
-                    <span class="s1">&#39;turtle_hawksbill&#39;</span><span class="p">,</span>
-                    <span class="s1">&#39;turtle_hawksbill+head&#39;</span><span class="p">,</span>
-                    <span class="s1">&#39;turtle_oliveridley&#39;</span><span class="p">,</span>
-                    <span class="s1">&#39;turtle_oliveridley+head&#39;</span><span class="p">,</span>
-                    <span class="s1">&#39;turtle_sea&#39;</span><span class="p">,</span>
-                    <span class="s1">&#39;turtle_sea+head&#39;</span><span class="p">,</span>
-                <span class="p">]</span>
-                <span class="k">if</span> <span class="n">species</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">turtle_sea_species_list</span><span class="p">:</span>
-                    <span class="nb">print</span><span class="p">(</span>
-                        <span class="s1">&#39;Skipping aid </span><span class="si">%r</span><span class="s1"> (bad species: </span><span class="si">%s</span><span class="s1">)&#39;</span>
-                        <span class="o">%</span> <span class="p">(</span>
-                            <span class="n">aid</span><span class="p">,</span>
-                            <span class="n">species</span><span class="p">,</span>
-                        <span class="p">)</span>
-                    <span class="p">)</span>
-                    <span class="k">continue</span>
-            <span class="k">elif</span> <span class="n">target_species</span> <span class="o">==</span> <span class="s1">&#39;wild_dog&#39;</span><span class="p">:</span>
-                <span class="n">wild_dog_species_list</span> <span class="o">=</span> <span class="p">[</span>
-                    <span class="s1">&#39;____&#39;</span><span class="p">,</span>
-                    <span class="s1">&#39;wild_dog&#39;</span><span class="p">,</span>
-                    <span class="s1">&#39;wild_dog_dark&#39;</span><span class="p">,</span>
-                    <span class="s1">&#39;wild_dog_light&#39;</span><span class="p">,</span>
-                    <span class="s1">&#39;wild_dog_puppy&#39;</span><span class="p">,</span>
-                    <span class="s1">&#39;wild_dog_standard&#39;</span><span class="p">,</span>
-                    <span class="s1">&#39;wild_dog_tan&#39;</span><span class="p">,</span>
-                <span class="p">]</span>
-                <span class="k">if</span> <span class="n">species</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">wild_dog_species_list</span><span class="p">:</span>
-                    <span class="nb">print</span><span class="p">(</span>
-                        <span class="s1">&#39;Skipping aid </span><span class="si">%r</span><span class="s1"> (bad species: </span><span class="si">%s</span><span class="s1">)&#39;</span>
-                        <span class="o">%</span> <span class="p">(</span>
-                            <span class="n">aid</span><span class="p">,</span>
-                            <span class="n">species</span><span class="p">,</span>
-                        <span class="p">)</span>
-                    <span class="p">)</span>
-                    <span class="k">continue</span>
-            <span class="k">elif</span> <span class="n">species</span> <span class="o">!=</span> <span class="n">target_species</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span>
+            <span class="k">if</span> <span class="n">species</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">target_species_list</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
                     <span class="s1">&#39;Skipping aid </span><span class="si">%r</span><span class="s1"> (bad species: </span><span class="si">%s</span><span class="s1">)&#39;</span>
                     <span class="o">%</span> <span class="p">(</span>
                         <span class="n">aid</span><span class="p">,</span>
@@ -1537,7 +1562,7 @@
                     <span class="n">cv2</span><span class="o">.</span><span class="n">rectangle</span><span class="p">(</span><span class="n">canvas</span><span class="p">,</span> <span class="p">(</span><span class="n">xtl</span><span class="p">,</span> <span class="n">ytl</span><span class="p">),</span> <span class="p">(</span><span class="n">xbr</span><span class="p">,</span> <span class="n">ybr</span><span class="p">),</span> <span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
 
                 <span class="k">if</span> <span class="nb">min</span><span class="p">(</span><span class="n">w_</span><span class="p">,</span> <span class="n">h_</span><span class="p">)</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="n">w_</span><span class="p">,</span> <span class="n">h_</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mf">0.25</span><span class="p">:</span>
-                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Skipping aid </span><span class="si">%r</span><span class="s1"> (aspect ratio)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">aid</span><span class="p">,))</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Skipping aid </span><span class="si">%r</span><span class="s1"> (aspect ratio)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">aid</span><span class="p">,))</span>
                     <span class="k">continue</span>
 
                 <span class="n">modifier</span> <span class="o">=</span> <span class="n">w_</span> <span class="o">/</span> <span class="n">annot_size</span>
@@ -1559,7 +1584,7 @@
 
                         <span class="k">if</span> <span class="n">inside_boundary</span><span class="p">:</span>
                             <span class="k">if</span> <span class="n">patch_size_final</span> <span class="o">&gt;</span> <span class="n">w_</span> <span class="ow">or</span> <span class="n">patch_size_final</span> <span class="o">&gt;</span> <span class="n">h_</span><span class="p">:</span>
-                                <span class="nb">print</span><span class="p">(</span>
+                                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
                                     <span class="s1">&#39;Skipping aid </span><span class="si">%r</span><span class="s1"> (patch_size_final too big)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">aid</span><span class="p">,)</span>
                                 <span class="p">)</span>
                                 <span class="k">continue</span>
@@ -1576,10 +1601,10 @@
                         <span class="n">y1</span> <span class="o">=</span> <span class="n">centery</span> <span class="o">+</span> <span class="n">radius</span>
 
                         <span class="k">if</span> <span class="n">x0</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">x0</span> <span class="o">&gt;=</span> <span class="n">w</span> <span class="ow">or</span> <span class="n">x1</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">x1</span> <span class="o">&gt;=</span> <span class="n">w</span><span class="p">:</span>
-                            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Skipping aid </span><span class="si">%r</span><span class="s1"> (bounds check, width)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">aid</span><span class="p">,))</span>
+                            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Skipping aid </span><span class="si">%r</span><span class="s1"> (bounds check, width)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">aid</span><span class="p">,))</span>
                             <span class="k">continue</span>
                         <span class="k">if</span> <span class="n">y0</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">y0</span> <span class="o">&gt;=</span> <span class="n">w</span> <span class="ow">or</span> <span class="n">y1</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">y1</span> <span class="o">&gt;=</span> <span class="n">w</span><span class="p">:</span>
-                            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Skipping aid </span><span class="si">%r</span><span class="s1"> (bounds check, height)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">aid</span><span class="p">,))</span>
+                            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Skipping aid </span><span class="si">%r</span><span class="s1"> (bounds check, height)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">aid</span><span class="p">,))</span>
                             <span class="k">continue</span>
 
                         <span class="n">found</span> <span class="o">=</span> <span class="kc">True</span>
@@ -1594,7 +1619,7 @@
                         <span class="k">assert</span> <span class="n">x0</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">x0</span> <span class="o">&lt;</span> <span class="n">w</span> <span class="ow">and</span> <span class="n">x1</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">x1</span> <span class="o">&lt;</span> <span class="n">w</span>
                         <span class="k">assert</span> <span class="n">y0</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">y0</span> <span class="o">&lt;</span> <span class="n">h</span> <span class="ow">and</span> <span class="n">y1</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">y1</span> <span class="o">&lt;</span> <span class="n">h</span>
                     <span class="k">except</span> <span class="ne">AssertionError</span><span class="p">:</span>
-                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Skipping aid </span><span class="si">%r</span><span class="s1"> (sanity check)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">aid</span><span class="p">,))</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Skipping aid </span><span class="si">%r</span><span class="s1"> (sanity check)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">aid</span><span class="p">,))</span>
                         <span class="n">found</span> <span class="o">=</span> <span class="kc">False</span>
 
                     <span class="k">if</span> <span class="n">found</span><span class="p">:</span>
@@ -1627,7 +1652,7 @@
                         <span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">,</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">patch_filename</span><span class="p">,</span> <span class="n">positive_category</span><span class="p">)</span>
                         <span class="n">label_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
                     <span class="k">else</span><span class="p">:</span>
-                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Skipping aid </span><span class="si">%r</span><span class="s1"> (not found)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">aid</span><span class="p">,))</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Skipping aid </span><span class="si">%r</span><span class="s1"> (not found)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">aid</span><span class="p">,))</span>
 
                 <span class="n">positives_</span> <span class="o">=</span> <span class="n">positives</span>
             <span class="k">else</span><span class="p">:</span>
@@ -1639,10 +1664,10 @@
 
             <span class="n">delta</span> <span class="o">=</span> <span class="n">global_positives</span> <span class="o">-</span> <span class="n">global_negatives</span>
             <span class="k">if</span> <span class="n">delta</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">patches_per_annotation</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;SUPERCHARGE NEGATIVES&#39;</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;SUPERCHARGE NEGATIVES&#39;</span><span class="p">)</span>
                 <span class="n">positives_</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">positives_</span> <span class="o">*</span> <span class="n">supercharge_negative_multiplier</span><span class="p">)</span>
             <span class="k">elif</span> <span class="n">delta</span> <span class="o">&lt;=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">patches_per_annotation</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;UNDERCHARGE NEGATIVES&#39;</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;UNDERCHARGE NEGATIVES&#39;</span><span class="p">)</span>
                 <span class="n">positives_</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">positives_</span> <span class="o">*</span> <span class="n">undercharge_negative_multiplier</span><span class="p">)</span>
 
             <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">positives_</span><span class="p">):</span>
@@ -1736,7 +1761,7 @@
         <span class="n">global_negatives</span><span class="p">,</span>
         <span class="nb">len</span><span class="p">(</span><span class="n">label_list</span><span class="p">),</span>
     <span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Final Split: [ </span><span class="si">%r</span><span class="s1"> / </span><span class="si">%r</span><span class="s1"> = </span><span class="si">%r</span><span class="s1">]&#39;</span> <span class="o">%</span> <span class="n">args</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Final Split: [ </span><span class="si">%r</span><span class="s1"> / </span><span class="si">%r</span><span class="s1"> = </span><span class="si">%r</span><span class="s1">]&#39;</span> <span class="o">%</span> <span class="n">args</span><span class="p">)</span>
 
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">join</span><span class="p">(</span><span class="n">labels_path</span><span class="p">,</span> <span class="s1">&#39;labels.csv&#39;</span><span class="p">),</span> <span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">labels</span><span class="p">:</span>
         <span class="n">label_str</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">label_list</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
@@ -1812,9 +1837,9 @@
         <span class="n">species_list</span><span class="p">,</span>
         <span class="n">interest_list</span><span class="p">,</span>
     <span class="p">)</span> <span class="ow">in</span> <span class="n">zipped</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Processing GID: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">gid</span><span class="p">,))</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">AIDS  : </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">aid_list</span><span class="p">,))</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">BBOXES: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">bbox_list</span><span class="p">,))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Processing GID: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">gid</span><span class="p">,))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">AIDS  : </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">aid_list</span><span class="p">,))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">BBOXES: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">bbox_list</span><span class="p">,))</span>
 
         <span class="k">if</span> <span class="n">reviewed</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">]:</span>
             <span class="k">continue</span>
@@ -1893,7 +1918,7 @@
     <span class="n">labels_path</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="n">name_path</span><span class="p">,</span> <span class="s1">&#39;labels&#39;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">cache</span> <span class="ow">and</span> <span class="n">exists</span><span class="p">(</span><span class="n">name_path</span><span class="p">):</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Using cached exported data&#39;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Using cached exported data&#39;</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">purge</span><span class="p">:</span>
             <span class="n">ut</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">name_path</span><span class="p">)</span>
@@ -1942,9 +1967,9 @@
             <span class="n">species_list</span><span class="p">,</span>
             <span class="n">interest_list</span><span class="p">,</span>
         <span class="p">)</span> <span class="ow">in</span> <span class="n">zipped</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Processing GID: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">gid</span><span class="p">,))</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">AIDS  : </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">aid_list</span><span class="p">,))</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">BBOXES: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">bbox_list</span><span class="p">,))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Processing GID: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">gid</span><span class="p">,))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">AIDS  : </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">aid_list</span><span class="p">,))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">BBOXES: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">bbox_list</span><span class="p">,))</span>
 
             <span class="k">if</span> <span class="n">reviewed</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">]:</span>
                 <span class="k">continue</span>
@@ -2062,9 +2087,9 @@
         <span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">channels</span> <span class="o">=</span> <span class="n">image</span><span class="o">.</span><span class="n">shape</span>
 
         <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">gid</span><span class="p">,)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Processing GID: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">args</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">AIDS  : </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">aid_list</span><span class="p">,))</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">BBOXES: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">bbox_list</span><span class="p">,))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Processing GID: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">args</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">AIDS  : </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">aid_list</span><span class="p">,))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">BBOXES: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">bbox_list</span><span class="p">,))</span>
 
         <span class="n">image_</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span>
             <span class="n">image</span><span class="p">,</span> <span class="p">(</span><span class="n">image_size</span><span class="p">,</span> <span class="n">image_size</span><span class="p">),</span> <span class="n">interpolation</span><span class="o">=</span><span class="n">cv2</span><span class="o">.</span><span class="n">INTER_LANCZOS4</span>
@@ -2176,10 +2201,10 @@
     <span class="n">label_list</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">gid</span> <span class="ow">in</span> <span class="n">candidate_gid_set</span><span class="p">:</span>
         <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">gid</span><span class="p">,)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Processing GID: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">args</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Processing GID: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">args</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">skip_rate</span> <span class="o">&gt;</span> <span class="mf">0.0</span> <span class="ow">and</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">skip_rate</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1"> Skipping - Sampling&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1"> Skipping - Sampling&#39;</span><span class="p">)</span>
             <span class="k">continue</span>
 
         <span class="k">if</span> <span class="n">gid</span> <span class="ow">in</span> <span class="n">positive_gid_set</span><span class="p">:</span>
@@ -2187,7 +2212,7 @@
         <span class="k">elif</span> <span class="n">gid</span> <span class="ow">in</span> <span class="n">negative_gid_set</span><span class="p">:</span>
             <span class="n">category</span> <span class="o">=</span> <span class="s1">&#39;negative&#39;</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1"> Skipping - No Label&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1"> Skipping - No Label&#39;</span><span class="p">)</span>
             <span class="k">continue</span>
 
         <span class="k">if</span> <span class="p">(</span>
@@ -2195,7 +2220,7 @@
             <span class="ow">and</span> <span class="n">category</span> <span class="o">==</span> <span class="s1">&#39;positive&#39;</span>
             <span class="ow">and</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">skip_rate_pos</span>
         <span class="p">):</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1"> Skipping Positive&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1"> Skipping Positive&#39;</span><span class="p">)</span>
             <span class="k">continue</span>
 
         <span class="k">if</span> <span class="p">(</span>
@@ -2203,7 +2228,7 @@
             <span class="ow">and</span> <span class="n">category</span> <span class="o">==</span> <span class="s1">&#39;negative&#39;</span>
             <span class="ow">and</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">skip_rate_neg</span>
         <span class="p">):</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1"> Skipping Negative&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1"> Skipping Negative&#39;</span><span class="p">)</span>
             <span class="k">continue</span>
 
         <span class="n">image</span> <span class="o">=</span> <span class="n">ibs</span><span class="o">.</span><span class="n">get_images</span><span class="p">(</span><span class="n">gid</span><span class="p">)</span>
@@ -2277,10 +2302,10 @@
     <span class="n">label_list</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">gid</span><span class="p">,</span> <span class="n">species_set</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">train_gid_set</span><span class="p">,</span> <span class="n">species_set_list</span><span class="p">):</span>
         <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">gid</span><span class="p">,)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Processing GID: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">args</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Processing GID: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">args</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">skip_rate</span> <span class="o">&gt;</span> <span class="mf">0.0</span> <span class="ow">and</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">skip_rate</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1"> Skipping&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1"> Skipping&#39;</span><span class="p">)</span>
             <span class="k">continue</span>
 
         <span class="n">category</span> <span class="o">=</span> <span class="s1">&#39;positive&#39;</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">species_set</span> <span class="o">&amp;</span> <span class="n">category_set</span><span class="p">)</span> <span class="k">else</span> <span class="s1">&#39;negative&#39;</span>
@@ -2290,7 +2315,7 @@
             <span class="ow">and</span> <span class="n">category</span> <span class="o">==</span> <span class="s1">&#39;positive&#39;</span>
             <span class="ow">and</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">skip_rate_pos</span>
         <span class="p">):</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1"> Skipping Positive&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1"> Skipping Positive&#39;</span><span class="p">)</span>
             <span class="k">continue</span>
 
         <span class="k">if</span> <span class="p">(</span>
@@ -2298,7 +2323,7 @@
             <span class="ow">and</span> <span class="n">category</span> <span class="o">==</span> <span class="s1">&#39;negative&#39;</span>
             <span class="ow">and</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">skip_rate_neg</span>
         <span class="p">):</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1"> Skipping Negative&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1"> Skipping Negative&#39;</span><span class="p">)</span>
             <span class="k">continue</span>
 
         <span class="n">image</span> <span class="o">=</span> <span class="n">ibs</span><span class="o">.</span><span class="n">get_images</span><span class="p">(</span><span class="n">gid</span><span class="p">)</span>
@@ -2369,7 +2394,7 @@
     <span class="n">category_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">category_set</span><span class="p">))</span>
 
     <span class="k">if</span> <span class="n">cache</span> <span class="ow">and</span> <span class="n">exists</span><span class="p">(</span><span class="n">name_path</span><span class="p">):</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Using cached exported data&#39;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Using cached exported data&#39;</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">purge</span><span class="p">:</span>
             <span class="n">ut</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">name_path</span><span class="p">)</span>
@@ -2381,10 +2406,10 @@
         <span class="n">label_list</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">gid</span><span class="p">,</span> <span class="n">species_set</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">train_gid_set</span><span class="p">,</span> <span class="n">species_set_list</span><span class="p">):</span>
             <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">gid</span><span class="p">,)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Processing GID: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">args</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Processing GID: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">args</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">skip_rate</span> <span class="o">&gt;</span> <span class="mf">0.0</span> <span class="ow">and</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">skip_rate</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1"> Skipping&#39;</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1"> Skipping&#39;</span><span class="p">)</span>
                 <span class="k">continue</span>
 
             <span class="n">species_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
@@ -2396,7 +2421,7 @@
             <span class="p">]</span>
 
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">category_list_</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1"> Skipping (Categories)&#39;</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1"> Skipping (Categories)&#39;</span><span class="p">)</span>
                 <span class="k">continue</span>
 
             <span class="n">image</span> <span class="o">=</span> <span class="n">ibs</span><span class="o">.</span><span class="n">get_images</span><span class="p">(</span><span class="n">gid</span><span class="p">)</span>
@@ -2462,8 +2487,8 @@
     <span class="n">ut</span><span class="o">.</span><span class="n">ensuredir</span><span class="p">(</span><span class="n">raw_path</span><span class="p">)</span>
     <span class="n">ut</span><span class="o">.</span><span class="n">ensuredir</span><span class="p">(</span><span class="n">labels_path</span><span class="p">)</span>
 
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;category mapping = </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">repr3</span><span class="p">(</span><span class="n">category_mapping</span><span class="p">),))</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;viewpoint mapping = </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">repr3</span><span class="p">(</span><span class="n">viewpoint_mapping</span><span class="p">),))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;category mapping = </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">repr3</span><span class="p">(</span><span class="n">category_mapping</span><span class="p">),))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;viewpoint mapping = </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">repr3</span><span class="p">(</span><span class="n">viewpoint_mapping</span><span class="p">),))</span>
 
     <span class="c1"># train_gid_set = ibs.get_valid_gids()</span>
     <span class="n">train_gid_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
@@ -2509,7 +2534,7 @@
         <span class="k">if</span> <span class="n">species</span> <span class="ow">in</span> <span class="n">category_set</span>
     <span class="p">]</span>
     <span class="n">new_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">tup_list</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
         <span class="s1">&#39;Filtered annotations: keep </span><span class="si">%d</span><span class="s1"> / original </span><span class="si">%d</span><span class="s1">&#39;</span>
         <span class="o">%</span> <span class="p">(</span>
             <span class="n">new_len</span><span class="p">,</span>
@@ -2562,20 +2587,20 @@
                 <span class="n">invalid_yaw_set</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">species</span><span class="p">)</span>
                 <span class="k">continue</span>
 
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Null yaws: </span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">counter</span><span class="p">,))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Null yaws: </span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">counter</span><span class="p">,))</span>
     <span class="n">valid_seen_set</span> <span class="o">=</span> <span class="n">category_set</span> <span class="o">-</span> <span class="n">invalid_seen_set</span>
     <span class="n">valid_yaw_set</span> <span class="o">=</span> <span class="n">valid_seen_set</span> <span class="o">-</span> <span class="n">invalid_yaw_set</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Requested categories:&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Requested categories:&#39;</span><span class="p">)</span>
     <span class="n">category_set</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">category_set</span><span class="p">)</span>
     <span class="n">ut</span><span class="o">.</span><span class="n">print_list</span><span class="p">(</span><span class="n">category_set</span><span class="p">)</span>
-    <span class="c1"># print(&#39;Invalid yaw categories:&#39;)</span>
+    <span class="c1"># logger.info(&#39;Invalid yaw categories:&#39;)</span>
     <span class="c1"># ut.print_list(sorted(invalid_yaw_set))</span>
-    <span class="c1"># print(&#39;Valid seen categories:&#39;)</span>
+    <span class="c1"># logger.info(&#39;Valid seen categories:&#39;)</span>
     <span class="c1"># ut.print_list(sorted(valid_seen_set))</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Valid yaw categories:&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Valid yaw categories:&#39;</span><span class="p">)</span>
     <span class="n">valid_yaw_set</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">valid_yaw_set</span><span class="p">)</span>
     <span class="n">ut</span><span class="o">.</span><span class="n">print_list</span><span class="p">(</span><span class="n">valid_yaw_set</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Invalid seen categories (could not fulfill request):&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Invalid seen categories (could not fulfill request):&#39;</span><span class="p">)</span>
     <span class="n">invalid_seen_set</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">invalid_seen_set</span><span class="p">)</span>
     <span class="n">ut</span><span class="o">.</span><span class="n">print_list</span><span class="p">(</span><span class="n">invalid_seen_set</span><span class="p">)</span>
 
@@ -2601,14 +2626,14 @@
             <span class="k">continue</span>
         <span class="n">tup_list_</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">tup</span><span class="p">,</span> <span class="n">category</span><span class="p">))</span>
         <span class="n">aid_list_</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">aid</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
         <span class="s1">&#39;Skipped Yaw:  skipped </span><span class="si">%d</span><span class="s1"> / total </span><span class="si">%d</span><span class="s1">&#39;</span>
         <span class="o">%</span> <span class="p">(</span>
             <span class="n">skipped_yaw</span><span class="p">,</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">tup_list</span><span class="p">),</span>
         <span class="p">)</span>
     <span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
         <span class="s1">&#39;Skipped Seen: skipped </span><span class="si">%d</span><span class="s1"> / total </span><span class="si">%d</span><span class="s1">&#39;</span>
         <span class="o">%</span> <span class="p">(</span>
             <span class="n">skipped_seen</span><span class="p">,</span>
@@ -2624,10 +2649,10 @@
     <span class="k">for</span> <span class="n">tup</span><span class="p">,</span> <span class="n">category</span> <span class="ow">in</span> <span class="n">tup_list_</span><span class="p">:</span>
         <span class="n">aid</span><span class="p">,</span> <span class="n">species</span><span class="p">,</span> <span class="n">yaw</span> <span class="o">=</span> <span class="n">tup</span>
         <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">aid</span><span class="p">,)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Processing AID: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">args</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Processing AID: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">args</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">skip_rate</span> <span class="o">&gt;</span> <span class="mf">0.0</span> <span class="ow">and</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">skip_rate</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1"> Skipping&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1"> Skipping&#39;</span><span class="p">)</span>
             <span class="k">continue</span>
 
         <span class="c1"># Compute data</span>
@@ -2651,7 +2676,7 @@
         <span class="p">)</span>
         <span class="n">label_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
 
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Using labels for labeler training:&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Using labels for labeler training:&#39;</span><span class="p">)</span>
     <span class="n">label_list_</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">_</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">tup_list_</span><span class="p">])</span>
     <span class="n">label_list_</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">label_list_</span><span class="p">)</span>
     <span class="n">ut</span><span class="o">.</span><span class="n">print_list</span><span class="p">(</span><span class="n">label_list_</span><span class="p">)</span>
@@ -2693,7 +2718,7 @@
     <span class="n">aid_list</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">aids_list</span><span class="p">)</span>
     <span class="n">flag_list</span> <span class="o">=</span> <span class="n">ibs</span><span class="o">.</span><span class="n">get_annot_reviewed</span><span class="p">(</span><span class="n">aid_list</span><span class="p">)</span>
     <span class="n">aid_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">aid</span> <span class="k">for</span> <span class="n">aid</span><span class="p">,</span> <span class="n">flag</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">aid_list</span><span class="p">,</span> <span class="n">flag_list</span><span class="p">)</span> <span class="k">if</span> <span class="n">flag</span><span class="p">]</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Outputing a total of </span><span class="si">%d</span><span class="s1"> annotations&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">aid_list</span><span class="p">),))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Outputing a total of </span><span class="si">%d</span><span class="s1"> annotations&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">aid_list</span><span class="p">),))</span>
     <span class="c1"># import random</span>
     <span class="c1"># random.shuffle(aid_list)</span>
     <span class="c1"># aid_list = sorted(aid_list[:100])</span>
@@ -2702,7 +2727,7 @@
     <span class="n">label_list</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">aid</span><span class="p">,</span> <span class="n">quality</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">aid_list</span><span class="p">,</span> <span class="n">quality_list</span><span class="p">):</span>
         <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">aid</span><span class="p">,)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Processing AID: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">args</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Processing AID: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">args</span><span class="p">)</span>
 
         <span class="n">image</span> <span class="o">=</span> <span class="n">ibs</span><span class="o">.</span><span class="n">get_annot_chips</span><span class="p">(</span><span class="n">aid</span><span class="p">)</span>
         <span class="n">image_</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span>
@@ -2747,7 +2772,7 @@
         <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">w</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">cv2</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">),</span> <span class="n">interpolation</span><span class="o">=</span><span class="n">cv2</span><span class="o">.</span><span class="n">INTER_LANCZOS4</span><span class="p">)</span>
 
-    <span class="kn">from</span> <span class="nn">vtool.image</span> <span class="kn">import</span> <span class="n">scaled_verts_from_bbox</span>
+    <span class="kn">from</span> <span class="nn">vtool</span> <span class="kn">import</span> <span class="n">scaled_verts_from_bbox</span>
 
     <span class="n">dbname</span> <span class="o">=</span> <span class="n">ibs</span><span class="o">.</span><span class="n">dbname</span>
     <span class="n">target_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">around</span><span class="p">(</span><span class="n">image_size</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">))</span>
@@ -2764,10 +2789,10 @@
     <span class="k">for</span> <span class="n">gid</span><span class="p">,</span> <span class="n">aid_list</span><span class="p">,</span> <span class="n">bbox_list</span><span class="p">,</span> <span class="n">theta_list</span> <span class="ow">in</span> <span class="n">zipped_list</span><span class="p">:</span>
         <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">gid</span><span class="p">,)</span>
         <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Processing GID: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">args</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">AIDS  : </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">aid_list</span><span class="p">,))</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">BBOXES: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">bbox_list</span><span class="p">,))</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">THETAS: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">theta_list</span><span class="p">,))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Processing GID: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">args</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">AIDS  : </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">aid_list</span><span class="p">,))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">BBOXES: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">bbox_list</span><span class="p">,))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">THETAS: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">theta_list</span><span class="p">,))</span>
 
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">aid_list</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">image</span> <span class="o">=</span> <span class="n">ibs</span><span class="o">.</span><span class="n">get_images</span><span class="p">(</span><span class="n">gid</span><span class="p">)</span>
@@ -2831,9 +2856,9 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        tuple : patchmatch_tup = (aid1_list, aid2_list, kpts1_m_list,</span>
-<span class="sd">                                   kpts2_m_list, fm_list, metadata_lists)</span>
-<span class="sd">            aid pairs and matching keypoint pairs as well as the original index</span>
-<span class="sd">            of the feature matches</span>
+<span class="sd">        kpts2_m_list, fm_list, metadata_lists)</span>
+<span class="sd">        aid pairs and matching keypoint pairs as well as the original index</span>
+<span class="sd">        of the feature matches</span>
 
 <span class="sd">    CommandLine:</span>
 <span class="sd">        python -m wbia_cnn.ingest_wbia --test-get_orientation_training_images --dbdir /Datasets/BACKGROUND/PZ_Master1</span>
@@ -2843,7 +2868,7 @@
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn.ingest_wbia import *  # NOQA</span>
 <span class="sd">        &gt;&gt;&gt; import wbia</span>
 <span class="sd">        &gt;&gt;&gt; # build test data</span>
-<span class="sd">        &gt;&gt;&gt; ibs = wbia.opendb(defaultdb=&#39;PZ_MTEST&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; ibs = wbia.opendb(defaultdb=&#39;PZ_MTEST&#39;, allow_newdir=True)</span>
 <span class="sd">        &gt;&gt;&gt; get_orientation_training_images(ibs)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">join</span><span class="p">,</span> <span class="n">expanduser</span>
@@ -2909,71 +2934,31 @@
     <span class="n">ut</span><span class="o">.</span><span class="n">doctest_funcs</span><span class="p">()</span>
 </pre></div>
 
+           </div>
           </div>
-          
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Wild Me.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../index.html">wbia-cnn</a></h1>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
 
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../wbia_cnn.html">wbia_cnn package</a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../index.html">Documentation overview</a><ul>
-  <li><a href="../index.html">Module code</a><ul>
-  <li><a href="../wbia_cnn.html">wbia_cnn</a><ul>
-  </ul></li>
-  </ul></li>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2020, Wild Me.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-    </div>
-
-    
-
-    
-  </body>
+</body>
 </html>

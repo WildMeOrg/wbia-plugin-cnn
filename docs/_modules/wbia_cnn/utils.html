@@ -1,36 +1,72 @@
-
 <!DOCTYPE html>
-
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>wbia_cnn.utils &#8212; wbia-cnn 3.3.0 documentation</title>
-    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
-    <script src="../../_static/language_data.js"></script>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>wbia_cnn.utils &mdash; wbia-cnn 4.0.1.dev0+dirty documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" />
-   
-  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
 
-  </head><body>
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> wbia-cnn
+          </a>
+              <div class="version">
+                4.0.1.dev0+dirty
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../wbia_cnn.html">wbia_cnn package</a></li>
+</ul>
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          
+        </div>
+      </div>
+    </nav>
 
-          <div class="body" role="main">
-            
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">wbia-cnn</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+          <li><a href="../wbia_cnn.html">wbia_cnn</a> &raquo;</li>
+      <li>wbia_cnn.utils</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
   <h1>Source code for wbia_cnn.utils</h1><div class="highlight"><pre>
 <span></span><span class="c1"># -*- coding: utf-8 -*-</span>
 <span class="sd">&quot;&quot;&quot;</span>
@@ -39,7 +75,7 @@
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="c1"># utils.py</span>
 <span class="c1"># provides utilities for learning a neural network model</span>
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span>
+<span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="n">cPickle</span> <span class="k">as</span> <span class="n">pickle</span>  <span class="c1"># NOQA</span>
@@ -48,6 +84,7 @@
 <span class="kn">from</span> <span class="nn">wbia_cnn</span> <span class="kn">import</span> <span class="n">net_strs</span>
 
 <span class="nb">print</span><span class="p">,</span> <span class="n">rrr</span><span class="p">,</span> <span class="n">profile</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">inject2</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span>
 
 
 <span class="c1"># VERBOSE_CNN = ut.get_argflag((&#39;--verbose-cnn&#39;, &#39;--verbcnn&#39;)) or ut.VERBOSE</span>
@@ -66,30 +103,10 @@
         <span class="k">return</span> <span class="n">freqlike_</span> <span class="ow">is</span> <span class="kc">True</span></div>
 
 
-<div class="viewcode-block" id="get_gpu_memory"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.utils.get_gpu_memory">[docs]</a><span class="k">def</span> <span class="nf">get_gpu_memory</span><span class="p">():</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    References:</span>
-<span class="sd">        https://groups.google.com/forum/#!topic/theano-users/2EdclcmZazU</span>
-<span class="sd">        https://gist.github.com/matpalm/9c0c7c6a6f3681a0d39d</span>
-
-<span class="sd">    CommandLine:</span>
-<span class="sd">        python -m wbia_cnn.utils --test-get_gpu_memory</span>
-
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # ENABLE_DOCTEST</span>
-<span class="sd">        &gt;&gt;&gt; from wbia_cnn.utils import *  # NOQA</span>
-<span class="sd">        &gt;&gt;&gt; result = get_gpu_memory()</span>
-<span class="sd">        &gt;&gt;&gt; print(result)</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">import</span> <span class="nn">theano</span>
-
-    <span class="k">return</span> <span class="n">theano</span><span class="o">.</span><span class="n">sandbox</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">cuda_ndarray</span><span class="o">.</span><span class="n">cuda_ndarray</span><span class="o">.</span><span class="n">mem_info</span><span class="p">()</span></div>
-
-
-<div class="viewcode-block" id="_update"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.utils._update">[docs]</a><span class="k">def</span> <span class="nf">_update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
     <span class="c1"># if key not in kwargs.keys():</span>
     <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
-        <span class="n">kwargs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span></div>
+        <span class="n">kwargs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
 
 
 <div class="viewcode-block" id="testdata_imglist"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.utils.testdata_imglist">[docs]</a><span class="k">def</span> <span class="nf">testdata_imglist</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">3</span><span class="p">)):</span>
@@ -105,7 +122,7 @@
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn.utils import *  # NOQA</span>
 <span class="sd">        &gt;&gt;&gt; (img_list, width, height, channels) = testdata_imglist()</span>
 <span class="sd">        &gt;&gt;&gt; ut.quit_if_noshow()</span>
-<span class="sd">        &gt;&gt;&gt; import plottool as pt</span>
+<span class="sd">        &gt;&gt;&gt; from wbia import plottool as pt</span>
 <span class="sd">        &gt;&gt;&gt; pt.imshow(img_list[0], pnum=(2, 2, 1))</span>
 <span class="sd">        &gt;&gt;&gt; pt.imshow(img_list[1], pnum=(2, 2, 2))</span>
 <span class="sd">        &gt;&gt;&gt; pt.imshow(img_list[2], pnum=(2, 2, 3))</span>
@@ -152,7 +169,7 @@
 <span class="sd">        &gt;&gt;&gt; # build test data</span>
 <span class="sd">        &gt;&gt;&gt; # execute function</span>
 <span class="sd">        &gt;&gt;&gt; img_list, width, height, channels = testdata_imglist()</span>
-<span class="sd">        &gt;&gt;&gt; data = convert_cv2_images_to_theano_images(img_list)</span>
+<span class="sd">        &gt;&gt;&gt; data = convert_cv2_images_to_theano_images(np.array(img_list))</span>
 <span class="sd">        &gt;&gt;&gt; data[0].reshape(3, 32, 32)[:, 0:2, 0:2]</span>
 <span class="sd">        &gt;&gt;&gt; subset = (data[0].reshape(3, 32, 32)[:, 0:2, 0:2])</span>
 <span class="sd">        &gt;&gt;&gt; #result = str(np.transpose(subset, (1, 2, 0)))</span>
@@ -204,7 +221,7 @@
 
 
 <div class="viewcode-block" id="evaluate_symbolic_layer"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.utils.evaluate_symbolic_layer">[docs]</a><span class="k">def</span> <span class="nf">evaluate_symbolic_layer</span><span class="p">(</span><span class="n">get_output_for</span><span class="p">,</span> <span class="n">inputdata_</span><span class="p">,</span> <span class="n">input_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot; helper for testing lasagne layers &quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;helper for testing lasagne layers&quot;&quot;&quot;</span>
     <span class="kn">import</span> <span class="nn">theano</span>
     <span class="kn">from</span> <span class="nn">theano</span> <span class="kn">import</span> <span class="n">tensor</span> <span class="k">as</span> <span class="n">T</span>  <span class="c1"># NOQA</span>
 
@@ -232,7 +249,7 @@
         <span class="n">rng</span> <span class="o">=</span> <span class="n">seed</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">assert</span> <span class="kc">False</span>
-    <span class="n">labels</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">/</span> <span class="n">data_per_label</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">0.5</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">/</span> <span class="n">data_per_label</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mf">0.5</span>
     <span class="c1"># data_per_label = 2</span>
     <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">data_per_label</span></div>
 
@@ -329,7 +346,7 @@
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; # ENABLE_DOCTEST</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn.utils import *  # NOQA</span>
-<span class="sd">        &gt;&gt;&gt; requested_headers_ = None</span>
+<span class="sd">        &gt;&gt;&gt; requested_headers = None</span>
 <span class="sd">        &gt;&gt;&gt; printcol_info = get_printcolinfo(requested_headers)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">requested_headers_</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -390,7 +407,7 @@
     <span class="n">header_line1</span> <span class="o">=</span> <span class="s1">&#39;[info] &#39;</span> <span class="o">+</span> <span class="s1">&#39;|&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">header_nice_list</span><span class="p">)</span>
     <span class="n">header_line2</span> <span class="o">=</span> <span class="s1">&#39;[info] &#39;</span> <span class="o">+</span> <span class="s1">&#39;|&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">header_line_list</span><span class="p">)</span>
     <span class="n">header_str</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">header_line1</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">header_line2</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">header_str</span><span class="p">)</span></div>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">header_str</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="print_epoch_info"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.utils.print_epoch_info">[docs]</a><span class="k">def</span> <span class="nf">print_epoch_info</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">printcol_info</span><span class="p">,</span> <span class="n">epoch_info</span><span class="p">):</span>
@@ -451,7 +468,7 @@
     <span class="k">for</span> <span class="n">func</span> <span class="ow">in</span> <span class="n">func_list</span><span class="p">:</span>
         <span class="n">fmttup</span> <span class="o">+=</span> <span class="n">func</span><span class="p">()</span>
     <span class="n">epoch_info_str</span> <span class="o">=</span> <span class="n">data_fmtstr</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">*</span><span class="n">fmttup</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">epoch_info_str</span><span class="p">)</span></div>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">epoch_info_str</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="float32"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.utils.float32">[docs]</a><span class="k">def</span> <span class="nf">float32</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
@@ -574,12 +591,12 @@
             <span class="k">if</span> <span class="n">yb</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">yb_extra</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">extra</span> <span class="o">//</span> <span class="n">data_per_label</span><span class="p">)]</span>
                 <span class="n">yb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">yb</span><span class="p">,</span> <span class="n">yb_extra</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-            <span class="c1"># print(&#39;WRAP&#39;)</span>
+            <span class="c1"># logger.info(&#39;WRAP&#39;)</span>
     <span class="c1"># Get corret dtype for X</span>
     <span class="c1"># Xb = Xb.astype(np.float32)</span>
     <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[batchiter]   * x_sl = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">x_sl</span><span class="p">,))</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[batchiter]   * y_sl = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">y_sl</span><span class="p">,))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[batchiter]   * x_sl = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">x_sl</span><span class="p">,))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[batchiter]   * y_sl = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">y_sl</span><span class="p">,))</span>
     <span class="k">return</span> <span class="n">Xb</span><span class="p">,</span> <span class="n">yb</span></div>
 
 
@@ -677,15 +694,15 @@
 
 
 <div class="viewcode-block" id="save_model"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.utils.save_model">[docs]</a><span class="k">def</span> <span class="nf">save_model</span><span class="p">(</span><span class="n">kwargs</span><span class="p">,</span> <span class="n">weights_file</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[model] saving best weights to </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">weights_file</span><span class="p">))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[model] saving best weights to </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">weights_file</span><span class="p">))</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">weights_file</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">pfile</span><span class="p">:</span>
         <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">kwargs</span><span class="p">,</span> <span class="n">pfile</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="n">pickle</span><span class="o">.</span><span class="n">HIGHEST_PROTOCOL</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[model] ...saved</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span></div>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[model] ...saved</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="shock_network"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.utils.shock_network">[docs]</a><span class="k">def</span> <span class="nf">shock_network</span><span class="p">(</span><span class="n">output_layer</span><span class="p">,</span> <span class="n">voltage</span><span class="o">=</span><span class="mf">0.10</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[model] shocking the network with voltage: </span><span class="si">%0.2f%%</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">voltage</span><span class="p">,))</span>
-    <span class="kn">from</span> <span class="nn">Lasagne.lasagne</span> <span class="kn">import</span> <span class="n">layers</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[model] shocking the network with voltage: </span><span class="si">%0.2f%%</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">voltage</span><span class="p">,))</span>
+    <span class="kn">from</span> <span class="nn">lasagne</span> <span class="kn">import</span> <span class="n">layers</span>
 
     <span class="n">current_weights</span> <span class="o">=</span> <span class="n">layers</span><span class="o">.</span><span class="n">get_all_param_values</span><span class="p">(</span><span class="n">output_layer</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">current_weights</span><span class="p">)):</span>
@@ -695,7 +712,7 @@
         <span class="c1"># Apply shock</span>
         <span class="n">current_weights</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">+=</span> <span class="n">temp</span>
     <span class="n">layers</span><span class="o">.</span><span class="n">set_all_param_values</span><span class="p">(</span><span class="n">output_layer</span><span class="p">,</span> <span class="n">current_weights</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[model] ...shocked&#39;</span><span class="p">)</span></div>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[model] ...shocked&#39;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="save_pretrained_weights_slice"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.utils.save_pretrained_weights_slice">[docs]</a><span class="k">def</span> <span class="nf">save_pretrained_weights_slice</span><span class="p">(</span><span class="n">pretrained_weights</span><span class="p">,</span> <span class="n">weights_path</span><span class="p">,</span> <span class="n">slice_</span><span class="o">=</span><span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">)):</span>
@@ -797,71 +814,31 @@
     <span class="n">ut</span><span class="o">.</span><span class="n">doctest_funcs</span><span class="p">()</span>
 </pre></div>
 
+           </div>
           </div>
-          
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Wild Me.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../index.html">wbia-cnn</a></h1>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
 
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../wbia_cnn.html">wbia_cnn package</a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../index.html">Documentation overview</a><ul>
-  <li><a href="../index.html">Module code</a><ul>
-  <li><a href="../wbia_cnn.html">wbia_cnn</a><ul>
-  </ul></li>
-  </ul></li>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2020, Wild Me.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-    </div>
-
-    
-
-    
-  </body>
+</body>
 </html>

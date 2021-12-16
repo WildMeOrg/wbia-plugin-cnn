@@ -1,39 +1,75 @@
-
 <!DOCTYPE html>
-
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>wbia_cnn.batch_processing &#8212; wbia-cnn 3.3.0 documentation</title>
-    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
-    <script src="../../_static/language_data.js"></script>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>wbia_cnn.batch_processing &mdash; wbia-cnn 4.0.1.dev0+dirty documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" />
-   
-  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
 
-  </head><body>
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> wbia-cnn
+          </a>
+              <div class="version">
+                4.0.1.dev0+dirty
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../wbia_cnn.html">wbia_cnn package</a></li>
+</ul>
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          
+        </div>
+      </div>
+    </nav>
 
-          <div class="body" role="main">
-            
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">wbia-cnn</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+          <li><a href="../wbia_cnn.html">wbia_cnn</a> &raquo;</li>
+      <li>wbia_cnn.batch_processing</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
   <h1>Source code for wbia_cnn.batch_processing</h1><div class="highlight"><pre>
 <span></span><span class="c1"># -*- coding: utf-8 -*-</span>
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span>
+<span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">wbia_cnn</span> <span class="kn">import</span> <span class="n">utils</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">six</span>
@@ -41,6 +77,7 @@
 
 <span class="c1"># import warnings</span>
 <span class="nb">print</span><span class="p">,</span> <span class="n">rrr</span><span class="p">,</span> <span class="n">profile</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">inject2</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span>
 
 
 <span class="n">VERBOSE_BATCH</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">get_module_verbosity_flags</span><span class="p">(</span><span class="s1">&#39;batch&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">or</span> <span class="n">utils</span><span class="o">.</span><span class="n">VERBOSE_CNN</span>
@@ -74,8 +111,8 @@
 <span class="sd">        python -m wbia_cnn --tf process_batch:0 --verbose</span>
 <span class="sd">        python -m wbia_cnn --tf process_batch:1 --verbose</span>
 
-<span class="sd">    Example0:</span>
-<span class="sd">        &gt;&gt;&gt; # ENABLE_DOCTEST</span>
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; # DISABLE_DOCTEST</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn.batch_processing import *  # NOQA</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn import models</span>
 <span class="sd">        &gt;&gt;&gt; model = models.DummyModel(batch_size=128)</span>
@@ -83,53 +120,52 @@
 <span class="sd">        &gt;&gt;&gt; model.init_arch()</span>
 <span class="sd">        &gt;&gt;&gt; theano_fn = model.build_predict_func()</span>
 <span class="sd">        &gt;&gt;&gt; kwargs = {&#39;X_is_cv2_native&#39;: False, &#39;showprog&#39;: True,</span>
-<span class="sd">        ...           &#39;randomize_batch_order&#39;: True}</span>
+<span class="sd">        &gt;&gt;&gt;            &#39;randomize_batch_order&#39;: True}</span>
 <span class="sd">        &gt;&gt;&gt; outputs_ = process_batch(model, X, y, theano_fn, **kwargs)</span>
 <span class="sd">        &gt;&gt;&gt; result = ut.dict_str(outputs_)</span>
 <span class="sd">        &gt;&gt;&gt; print(result)</span>
 
-<span class="sd">    Example0:</span>
-<span class="sd">        &gt;&gt;&gt; # ENABLE_DOCTEST</span>
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; # DISABLE_DOCTEST</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn.batch_processing import *  # NOQA</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn import models</span>
-<span class="sd">        &gt;&gt;&gt; model = models.SiameseL2(batch_size=128, data_shape=(32, 32, 1),</span>
-<span class="sd">        ...                          strict_batch_size=True)</span>
+<span class="sd">        &gt;&gt;&gt; model = models.SiameseL2(batch_size=128, data_shape=(32, 32, 1))</span>
 <span class="sd">        &gt;&gt;&gt; X, y = model.make_random_testdata(num=2000, seed=None)</span>
 <span class="sd">        &gt;&gt;&gt; model.init_arch()</span>
 <span class="sd">        &gt;&gt;&gt; theano_fn = model.build_predict_func()</span>
 <span class="sd">        &gt;&gt;&gt; kwargs = {&#39;X_is_cv2_native&#39;: False, &#39;showprog&#39;: True,</span>
-<span class="sd">        ...           &#39;randomize_batch_order&#39;: True}</span>
+<span class="sd">        &gt;&gt;&gt;           &#39;randomize_batch_order&#39;: True}</span>
 <span class="sd">        &gt;&gt;&gt; outputs_ = process_batch(model, X, y, theano_fn, **kwargs)</span>
 <span class="sd">        &gt;&gt;&gt; result = ut.dict_str(outputs_)</span>
 <span class="sd">        &gt;&gt;&gt; print(result)</span>
 
 <span class="sd">    Ignore:</span>
-<span class="sd">        Xb, yb = batch_iter.next()</span>
-<span class="sd">        assert Xb.shape == (8, 1, 4, 4)</span>
-<span class="sd">        yb.shape == (8,)</span>
+<span class="sd">        &gt;&gt;&gt; Xb, yb = batch_iter.next()</span>
+<span class="sd">        &gt;&gt;&gt; assert Xb.shape == (8, 1, 4, 4)</span>
+<span class="sd">        &gt;&gt;&gt; yb.shape == (8,)</span>
 
 <span class="sd">    Ignore:</span>
-<span class="sd">        X, y = model.make_random_testdata(num=2000, seed=None)</span>
-<span class="sd">        kwargs = {&#39;X_is_cv2_native&#39;: False, &#39;showprog&#39;: True,</span>
-<span class="sd">                  &#39;randomize_batch_order&#39;: True, &#39;time_thresh&#39;: .5,</span>
-<span class="sd">                  }</span>
-
-<span class="sd">        print(&#39;Testing Unbuffered&#39;)</span>
-<span class="sd">        batch_iter = batch_iterator(model, X, y, lbl=theano_fn.name, **kwargs)</span>
-<span class="sd">        for Xb, yb in ut.ProgressIter(batch_iter, lbl=&#39;:EXEC FG&#39;):</span>
-<span class="sd">            [ut.is_prime(346373) for _ in range(2)]</span>
-
-<span class="sd">        # Notice how the progress iters are not interlaced like</span>
-<span class="sd">        # they are in the unbuffered version</span>
-<span class="sd">        import sys</span>
-<span class="sd">        sys.stdout.flush()</span>
-<span class="sd">        print(&#39;Testing Buffered&#39;)</span>
-<span class="sd">        sys.stdout.flush()</span>
-<span class="sd">        batch_iter2 = batch_iterator(model, X, y, lbl=theano_fn.name, **kwargs)</span>
-<span class="sd">        batch_iter2 = ut.buffered_generator(batch_iter2, buffer_size=4)</span>
-<span class="sd">        print(&#39;Iterating&#39;)</span>
-<span class="sd">        for Xb, yb in ut.ProgressIter(batch_iter2, lbl=&#39;:EXEC FG&#39;):</span>
-<span class="sd">            [ut.is_prime(346373) for _ in range(2)]</span>
+<span class="sd">        &gt;&gt;&gt; X, y = model.make_random_testdata(num=2000, seed=None)</span>
+<span class="sd">        &gt;&gt;&gt; kwargs = {&#39;X_is_cv2_native&#39;: False, &#39;showprog&#39;: True,</span>
+<span class="sd">        &gt;&gt;&gt;           &#39;randomize_batch_order&#39;: True, &#39;time_thresh&#39;: .5,</span>
+<span class="sd">        &gt;&gt;&gt;           }</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; logger.info(&#39;Testing Unbuffered&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; batch_iter = batch_iterator(model, X, y, lbl=theano_fn.name, **kwargs)</span>
+<span class="sd">        &gt;&gt;&gt; for Xb, yb in ut.ProgressIter(batch_iter, lbl=&#39;:EXEC FG&#39;):</span>
+<span class="sd">        &gt;&gt;&gt;     [ut.is_prime(346373) for _ in range(2)]</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; # Notice how the progress iters are not interlaced like</span>
+<span class="sd">        &gt;&gt;&gt; # they are in the unbuffered version</span>
+<span class="sd">        &gt;&gt;&gt; import sys</span>
+<span class="sd">        &gt;&gt;&gt; sys.stdout.flush()</span>
+<span class="sd">        &gt;&gt;&gt; logger.info(&#39;Testing Buffered&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; sys.stdout.flush()</span>
+<span class="sd">        &gt;&gt;&gt; batch_iter2 = batch_iterator(model, X, y, lbl=theano_fn.name, **kwargs)</span>
+<span class="sd">        &gt;&gt;&gt; batch_iter2 = ut.buffered_generator(batch_iter2, buffer_size=4)</span>
+<span class="sd">        &gt;&gt;&gt; logger.info(&#39;Iterating&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; for Xb, yb in ut.ProgressIter(batch_iter2, lbl=&#39;:EXEC FG&#39;):</span>
+<span class="sd">        &gt;&gt;&gt;     [ut.is_prime(346373) for _ in range(2)]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">import</span> <span class="nn">vtool</span> <span class="k">as</span> <span class="nn">vt</span>
 
@@ -177,10 +213,10 @@
 
             <span class="k">if</span> <span class="n">show</span><span class="p">:</span>
                 <span class="c1"># Print the network output for the first batch</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;--------------&#39;</span><span class="p">)</span>
-                <span class="nb">print</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">list_str</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">output_names</span><span class="p">,</span> <span class="n">batch_output</span><span class="p">)))</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Correct: &#39;</span><span class="p">,</span> <span class="n">yb</span><span class="p">)</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;--------------&#39;</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;--------------&#39;</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">list_str</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">output_names</span><span class="p">,</span> <span class="n">batch_output</span><span class="p">)))</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Correct: &#39;</span><span class="p">,</span> <span class="n">yb</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;--------------&#39;</span><span class="p">)</span>
                 <span class="n">show</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="c1"># get outputs of each type</span>
@@ -229,6 +265,7 @@
     <span class="n">y</span><span class="p">,</span>
     <span class="n">randomize_batch_order</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">augment_on</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">showprog</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="n">X_is_cv2_native</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">lbl</span><span class="o">=</span><span class="s1">&#39;verbose batch iteration&#39;</span><span class="p">,</span>
@@ -246,8 +283,8 @@
 <span class="sd">        # Threaded buffering seems to help a lot</span>
 <span class="sd">        python -m wbia_cnn --tf batch_iterator:1 --augment</span>
 
-<span class="sd">    Example0:</span>
-<span class="sd">        &gt;&gt;&gt; # ENABLE_DOCTEST</span>
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; # DISABLE_DOCTEST</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn.batch_processing import *  # NOQA</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn import models</span>
 <span class="sd">        &gt;&gt;&gt; model = models.DummyModel(batch_size=16)</span>
@@ -262,8 +299,8 @@
 <span class="sd">        &gt;&gt;&gt; print(result)</span>
 <span class="sd">        [[(16, 1, 4, 4), 16]] * 6 + [[(3, 1, 4, 4), 3]]</span>
 
-<span class="sd">    Example1:</span>
-<span class="sd">        &gt;&gt;&gt; # ENABLE_DOCTEST</span>
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; # DISABLE_DOCTEST</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn.batch_processing import *  # NOQA</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn import models</span>
 <span class="sd">        &gt;&gt;&gt; import time</span>
@@ -305,7 +342,7 @@
 <span class="sd">        &gt;&gt;&gt; assert result_list1 == result_list2</span>
 <span class="sd">        &gt;&gt;&gt; print(len(result_list2))</span>
 
-<span class="sd">    Example2:</span>
+<span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; # DISABLE_DOCTEST</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn.batch_processing import *  # NOQA</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn.models.mnist import MNISTModel</span>
@@ -368,15 +405,17 @@
         <span class="c1"># 0.079 mnist time fraction</span>
         <span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">data_label_shuffle</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">data_per_label_input</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[batchiter] BEGIN&#39;</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[batchiter] X.shape </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">,))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[batchiter] BEGIN&#39;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[batchiter] X.shape </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">,))</span>
         <span class="k">if</span> <span class="n">y</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[batchiter] y.shape </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">,))</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[batchiter] augment_on </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">augment_on</span><span class="p">,))</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[batchiter] encoder </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">encoder</span><span class="p">,))</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[batchiter] wraparound </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">wraparound</span><span class="p">,))</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[batchiter] model.data_per_label_input </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">data_per_label_input</span><span class="p">,))</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[batchiter] needs_convert = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">needs_convert</span><span class="p">,))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[batchiter] y.shape </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">,))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[batchiter] augment_on </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">augment_on</span><span class="p">,))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[batchiter] encoder </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">encoder</span><span class="p">,))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[batchiter] wraparound </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">wraparound</span><span class="p">,))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s1">&#39;[batchiter] model.data_per_label_input </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">data_per_label_input</span><span class="p">,)</span>
+        <span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[batchiter] needs_convert = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">needs_convert</span><span class="p">,))</span>
 
     <span class="c1"># FIXME: put in a layer?</span>
     <span class="n">center_mean</span> <span class="o">=</span> <span class="kc">None</span>
@@ -437,7 +476,7 @@
             <span class="n">print_batch_info</span><span class="p">(</span><span class="n">Xb</span><span class="p">,</span> <span class="n">yb</span><span class="p">,</span> <span class="n">verbose</span><span class="p">,</span> <span class="n">batch_index</span><span class="p">,</span> <span class="n">num_batches</span><span class="p">)</span>
         <span class="k">yield</span> <span class="n">Xb</span><span class="p">,</span> <span class="n">yb</span>
     <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[batch] END&#39;</span><span class="p">)</span></div>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[batch] END&#39;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="augment_batch"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.batch_processing.augment_batch">[docs]</a><span class="k">def</span> <span class="nf">augment_batch</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">Xb</span><span class="p">,</span> <span class="n">yb</span><span class="p">,</span> <span class="n">batch_index</span><span class="p">,</span> <span class="n">verbose</span><span class="p">,</span> <span class="n">num_batches</span><span class="p">):</span>
@@ -446,19 +485,19 @@
 <span class="sd">    This means use a mean fill values not 0.</span>
 
 <span class="sd">    &gt;&gt;&gt; from wbia_cnn import augment</span>
-<span class="sd">    &gt;&gt;&gt; import plottool as pt</span>
+<span class="sd">    &gt;&gt;&gt; from wbia import plottool as pt</span>
 <span class="sd">    &gt;&gt;&gt; pt.qt4ensure()</span>
 <span class="sd">    &gt;&gt;&gt; augment.show_augmented_patches(Xb_orig, Xb, yb_orig, yb)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">verbose</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="p">(</span><span class="n">batch_index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">num_batches</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Augmenting Data&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Augmenting Data&#39;</span><span class="p">)</span>
             <span class="c1"># only copy if we have&#39;t yet</span>
     <span class="n">Xb</span><span class="p">,</span> <span class="n">yb</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">augment</span><span class="p">(</span><span class="n">Xb</span><span class="p">,</span> <span class="n">yb</span><span class="p">)</span>
     <span class="c1"># if DEBUG_AUGMENTATION:</span>
     <span class="c1">#    #Xb, yb = augment.augment_siamese_patches2(Xb, yb)</span>
     <span class="c1">#    from wbia_cnn import augment</span>
-    <span class="c1">#    import plottool as pt</span>
+    <span class="c1">#    from wbia import plottool as pt</span>
     <span class="c1">#    augment.show_augmented_patches(Xb_orig, Xb, yb_orig, yb)</span>
     <span class="c1">#    pt.show_if_requested()</span>
     <span class="c1">#    ut.embed()</span>
@@ -477,11 +516,11 @@
 
 <div class="viewcode-block" id="print_batch_info"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.batch_processing.print_batch_info">[docs]</a><span class="k">def</span> <span class="nf">print_batch_info</span><span class="p">(</span><span class="n">Xb</span><span class="p">,</span> <span class="n">yb</span><span class="p">,</span> <span class="n">verbose</span><span class="p">,</span> <span class="n">batch_index</span><span class="p">,</span> <span class="n">num_batches</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">verbose</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="p">(</span><span class="n">batch_index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">num_batches</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[batch] Yielding batch: batch_index = </span><span class="si">%r</span><span class="s1"> &#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">batch_index</span><span class="p">,))</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[batch]   * Xb.shape = </span><span class="si">%r</span><span class="s1">, Xb.dtype=</span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">Xb</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">Xb</span><span class="o">.</span><span class="n">dtype</span><span class="p">))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[batch] Yielding batch: batch_index = </span><span class="si">%r</span><span class="s1"> &#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">batch_index</span><span class="p">,))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[batch]   * Xb.shape = </span><span class="si">%r</span><span class="s1">, Xb.dtype=</span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">Xb</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">Xb</span><span class="o">.</span><span class="n">dtype</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">yb</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[batch]   * yb.shape = </span><span class="si">%r</span><span class="s1">, yb.dtype=</span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">yb</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">yb</span><span class="o">.</span><span class="n">dtype</span><span class="p">))</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[batch]   * yb.sum = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">yb</span><span class="o">.</span><span class="n">sum</span><span class="p">(),))</span></div>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[batch]   * yb.shape = </span><span class="si">%r</span><span class="s1">, yb.dtype=</span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">yb</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">yb</span><span class="o">.</span><span class="n">dtype</span><span class="p">))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[batch]   * yb.sum = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">yb</span><span class="o">.</span><span class="n">sum</span><span class="p">(),))</span></div>
 
 
 <div class="viewcode-block" id="concatenate_hack"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.batch_processing.concatenate_hack">[docs]</a><span class="k">def</span> <span class="nf">concatenate_hack</span><span class="p">(</span><span class="n">sequence</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
@@ -492,7 +531,7 @@
 <span class="sd">    &gt;&gt;&gt; sequence = (np.array([[]]), np.array([[1, 2, 3]]))</span>
 <span class="sd">    &gt;&gt;&gt; sequence = (np.array([[1, 2, 3]]), np.array([[]]))</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># print(sequence)</span>
+    <span class="c1"># logger.info(sequence)</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sequence</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">sequence</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">sequence</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
@@ -515,71 +554,31 @@
     <span class="n">ut</span><span class="o">.</span><span class="n">doctest_funcs</span><span class="p">()</span>
 </pre></div>
 
+           </div>
           </div>
-          
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Wild Me.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../index.html">wbia-cnn</a></h1>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
 
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../wbia_cnn.html">wbia_cnn package</a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../index.html">Documentation overview</a><ul>
-  <li><a href="../index.html">Module code</a><ul>
-  <li><a href="../wbia_cnn.html">wbia_cnn</a><ul>
-  </ul></li>
-  </ul></li>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2020, Wild Me.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-    </div>
-
-    
-
-    
-  </body>
+</body>
 </html>

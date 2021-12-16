@@ -8,10 +8,6 @@ _ibeis_cache/nets for ibeis databases. Otherwise it it custom defined (like in
 
 # era=(group of epochs)
 
-----------------
-|-- netdir <training_dpath>
-----------------
-
 Datasets contain ingested data packed into a single file for quick loading.
 Data can be presplit into testing /  learning / validation sets.  Metadata is
 always a dictionary where keys specify columns and each item corresponds a row
@@ -22,51 +18,20 @@ probably be located in a manifest.json file.
 # need to incorporate that structure.
 
 The model directory must keep track of several things:
-    * The network architecture (which may depend on the dataset being used)
-        - input / output shape
-        - network layers
-    * The state of learning
-        - epoch/era number
-        - learning rate
-        - regularization rate
-    * diagnostic information
-        - graphs of loss / error rates
-        - images of convolutional weights
-        - other visualizations
+* The network architecture (which may depend on the dataset being used)
+- input / output shape
+- network layers
+* The state of learning
+- epoch/era number
+- learning rate
+- regularization rate
+* diagnostic information
+- graphs of loss / error rates
+- images of convolutional weights
+- other visualizations
 
 The trained model keeps track of the trained weights and is now independant of
 the dataset. Finalized weights should be copied to and loaded from here.
-
-----------------
-|   |--  <training_dpath>
-|   |   |-- dataset_{dataset_id} *
-|   |   |   |-- full
-|   |   |   |   |-- {dataset_id}_data.pkl
-|   |   |   |   |-- {dataset_id}_labels.pkl
-|   |   |   |   |-- {dataset_id}_labels_{task1}.pkl?
-|   |   |   |   |-- {dataset_id}_labels_{task2}.pkl?
-|   |   |   |   |-- {dataset_id}_metadata.pkl
-|   |   |   |-- splits
-|   |   |   |   |-- {split_id}_{num} *
-|   |   |   |   |   |-- {dataset_id}_{split_id}_data.pkl
-|   |   |   |   |   |-- {dataset_id}_{split_id}_labels.pkl
-|   |   |   |   |   |-- {dataset_id}_{split_id}_metadata.pkl
-|   |   |   |-- models
-|   |   |   |   |-- arch_{archid} *
-|   |   |   |   |   |-- best_results
-|   |   |   |   |   |   |-- model_state.pkl
-|   |   |   |   |   |-- checkpoints
-|   |   |   |   |   |   |-- {history_id} *
-|   |   |   |   |   |   |    |-- model_history.pkl
-|   |   |   |   |   |   |    |-- model_state.pkl
-|   |   |   |   |   |-- progress
-|   |   |   |   |   |   |-- <latest>
-|   |   |   |   |   |-- diagnostics
-|   |   |   |   |   |   |-- {history_id} *
-|   |   |   |   |   |   |   |-- <files>
-|   |   |-- trained_models
-|   |   |   |-- arch_{archid} *
-----------------
 """
 import logging
 import six
@@ -486,7 +451,8 @@ class _ModelFitter(object):
             python -m wbia_cnn _ModelFitter.fit --name=dropout
             python -m wbia_cnn _ModelFitter.fit --name=incep
 
-        Example1:
+        Example:
+            >>> # DISABLE_DOCTEST
             >>> from wbia_cnn.models import mnist
             >>> model, dataset = mnist.testdata_mnist(defaultname='bnorm', dropout=.5)
             >>> model.init_arch()
@@ -3509,8 +3475,12 @@ class _ModelUtility(object):
         model._validate_data(X)
         model._validate_labels(X, y, w)
 
-    def make_random_testdata(model, num=37, rng=0, cv2_format=False, asint=False):
+    def make_random_testdata(
+        model, num=37, rng=0, cv2_format=False, asint=False, seed=None
+    ):
         logger.info('made random testdata')
+        if seed is not None:
+            rng = seed
         rng = ut.ensure_rng(rng)
         num_labels = num
         num_data = num * model.data_per_label_input

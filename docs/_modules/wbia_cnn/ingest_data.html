@@ -1,47 +1,84 @@
-
 <!DOCTYPE html>
-
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>wbia_cnn.ingest_data &#8212; wbia-cnn 3.3.0 documentation</title>
-    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
-    <script src="../../_static/language_data.js"></script>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>wbia_cnn.ingest_data &mdash; wbia-cnn 4.0.1.dev0+dirty documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" />
-   
-  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
 
-  </head><body>
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> wbia-cnn
+          </a>
+              <div class="version">
+                4.0.1.dev0+dirty
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../wbia_cnn.html">wbia_cnn package</a></li>
+</ul>
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          
+        </div>
+      </div>
+    </nav>
 
-          <div class="body" role="main">
-            
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">wbia-cnn</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+          <li><a href="../wbia_cnn.html">wbia_cnn</a> &raquo;</li>
+      <li>wbia_cnn.ingest_data</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
   <h1>Source code for wbia_cnn.ingest_data</h1><div class="highlight"><pre>
 <span></span><span class="c1"># -*- coding: utf-8 -*-</span>
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span>
+<span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">wbia_cnn</span> <span class="kn">import</span> <span class="n">utils</span>
 <span class="kn">from</span> <span class="nn">wbia_cnn</span> <span class="kn">import</span> <span class="n">ingest_helpers</span>
 <span class="kn">from</span> <span class="nn">wbia_cnn</span> <span class="kn">import</span> <span class="n">ingest_wbia</span>
-<span class="kn">from</span> <span class="nn">wbia_cnn.dataset</span> <span class="kn">import</span> <span class="n">DataSet</span>
+<span class="kn">from</span> <span class="nn">wbia_cnn.dataset</span> <span class="kn">import</span> <span class="n">DataSet</span><span class="p">,</span> <span class="n">get_juction_dpath</span>
 <span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">join</span><span class="p">,</span> <span class="n">basename</span><span class="p">,</span> <span class="n">splitext</span>
 <span class="kn">import</span> <span class="nn">utool</span> <span class="k">as</span> <span class="nn">ut</span>
 
 <span class="nb">print</span><span class="p">,</span> <span class="n">rrr</span><span class="p">,</span> <span class="n">profile</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">inject2</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span>
 
 
 <span class="n">NOCACHE_DATASET</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">get_argflag</span><span class="p">((</span><span class="s1">&#39;--nocache-cnn&#39;</span><span class="p">,</span> <span class="s1">&#39;--nocache-dataset&#39;</span><span class="p">))</span>
@@ -85,12 +122,12 @@
 <span class="sd">        python -m wbia_cnn.ingest_data --test-view_training_directories</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # UTILITY_SCRIPT</span>
+<span class="sd">        &gt;&gt;&gt; # DISABLE_DOCTEST</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn.ingest_data import *  # NOQA</span>
 <span class="sd">        &gt;&gt;&gt; result = view_training_directories()</span>
 <span class="sd">        &gt;&gt;&gt; print(result)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">ut</span><span class="o">.</span><span class="n">vd</span><span class="p">(</span><span class="n">ingest_wbia</span><span class="o">.</span><span class="n">get_juction_dpath</span><span class="p">())</span></div>
+    <span class="n">ut</span><span class="o">.</span><span class="n">vd</span><span class="p">(</span><span class="n">get_juction_dpath</span><span class="p">())</span></div>
 
 
 <div class="viewcode-block" id="merge_datasets"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.ingest_data.merge_datasets">[docs]</a><span class="k">def</span> <span class="nf">merge_datasets</span><span class="p">(</span><span class="n">dataset_list</span><span class="p">):</span>
@@ -144,11 +181,12 @@
     <span class="c1"># Build the dataset</span>
     <span class="n">consensus_check</span> <span class="o">=</span> <span class="n">consensus_check_factory</span><span class="p">()</span>
 
+    <span class="n">data_shape</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">for</span> <span class="n">dataset</span> <span class="ow">in</span> <span class="n">dataset_list</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">get_file_nBytes_str</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">data_fpath</span><span class="p">))</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">data_fpath_dict</span><span class="p">[</span><span class="s1">&#39;full&#39;</span><span class="p">])</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">num_labels</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">data_per_label</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">get_file_nBytes_str</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">data_fpath</span><span class="p">))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">data_fpath_dict</span><span class="p">[</span><span class="s1">&#39;full&#39;</span><span class="p">])</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">num_labels</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">data_per_label</span><span class="p">)</span>
         <span class="n">total_num_labels</span> <span class="o">+=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">num_labels</span>
         <span class="n">total_num_data</span> <span class="o">+=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">data_per_label</span> <span class="o">*</span> <span class="n">dataset</span><span class="o">.</span><span class="n">num_labels</span>
         <span class="c1"># check that all data_dims agree</span>
@@ -220,7 +258,7 @@
 <span class="sd">        python -m wbia_cnn.ingest_data --test-grab_siam_dataset --db liberty --show --nohud --nometa</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # ENABLE_DOCTEST</span>
+<span class="sd">        &gt;&gt;&gt; # DISABLE_DOCTEST</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn.ingest_data import *  # NOQA</span>
 <span class="sd">        &gt;&gt;&gt; ds_tag = None</span>
 <span class="sd">        &gt;&gt;&gt; dataset = grab_siam_dataset(ds_tag=ds_tag)</span>
@@ -367,36 +405,14 @@
 <div class="viewcode-block" id="grab_liberty_siam_dataset"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.ingest_data.grab_liberty_siam_dataset">[docs]</a><span class="k">def</span> <span class="nf">grab_liberty_siam_dataset</span><span class="p">(</span><span class="n">pairs</span><span class="o">=</span><span class="mi">250000</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    References:</span>
-<span class="sd">        http://www.cs.ubc.ca/~mbrown/patchdata/patchdata.html</span>
+<span class="sd">        http://icvl.ee.ic.ac.uk/vbalnt/liberty.zip</span>
 <span class="sd">        https://github.com/osdf/datasets/blob/master/patchdata/dataset.py</span>
-
-<span class="sd">    Notes:</span>
-<span class="sd">        &quot;info.txt&quot; contains the match information Each row of info.txt</span>
-<span class="sd">        corresponds corresponds to a separate patch, with the patches ordered</span>
-<span class="sd">        from left to right and top to bottom in each bitmap image.</span>
-
-<span class="sd">        3 types of metadata files</span>
-
-<span class="sd">        info.txt - contains patch ids that correspond with the order of patches</span>
-<span class="sd">          in the bmp images</span>
-<span class="sd">          In the format:</span>
-<span class="sd">              pointid, unused</span>
-
-<span class="sd">        interest.txt -</span>
-<span class="sd">            interest points corresponding to patches with patchids</span>
-<span class="sd">            has same number of rows as info.txt</span>
-<span class="sd">            In the format:</span>
-<span class="sd">                reference image id, x, y, orientation, scale (in log2 units)</span>
-
-<span class="sd">        m50_&lt;d&gt;_&lt;d&gt;_0.txt -</span>
-<span class="sd">             matches files</span>
-<span class="sd">             patchID1  3DpointID1  unused1  patchID2  3DpointID2  unused2</span>
 
 <span class="sd">    CommandLine:</span>
 <span class="sd">        python -m wbia_cnn.ingest_data --test-grab_liberty_siam_dataset --show</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # ENABLE_DOCTEST</span>
+<span class="sd">        &gt;&gt;&gt; # DISABLE_DOCTEST</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn.ingest_data import *  # NOQA</span>
 <span class="sd">        &gt;&gt;&gt; pairs = 500</span>
 <span class="sd">        &gt;&gt;&gt; dataset = grab_liberty_siam_dataset(pairs)</span>
@@ -420,8 +436,8 @@
     <span class="k">assert</span> <span class="n">pairs</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">500</span><span class="p">,</span> <span class="mi">50000</span><span class="p">,</span> <span class="mi">100000</span><span class="p">,</span> <span class="mi">250000</span><span class="p">]</span>
 
     <span class="n">liberty_urls</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s1">&#39;dog&#39;</span><span class="p">:</span> <span class="s1">&#39;http://www.cs.ubc.ca/~mbrown/patchdata/liberty.zip&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;harris&#39;</span><span class="p">:</span> <span class="s1">&#39;http://www.cs.ubc.ca/~mbrown/patchdata/liberty_harris.zip&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;dog&#39;</span><span class="p">:</span> <span class="s1">&#39;http://matthewalunbrown.com/patchdata/liberty.zip&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;harris&#39;</span><span class="p">:</span> <span class="s1">&#39;http://matthewalunbrown.com/patchdata/liberty_harris.zip&#39;</span><span class="p">,</span>
     <span class="p">}</span>
     <span class="n">url</span> <span class="o">=</span> <span class="n">liberty_urls</span><span class="p">[</span><span class="n">datakw</span><span class="p">[</span><span class="s1">&#39;detector&#39;</span><span class="p">]]</span>
     <span class="n">ds_path</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">grab_zipped_url</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
@@ -472,7 +488,7 @@
 <span class="sd">        python -m wbia_cnn.ingest_data --test-get_wbia_patch_siam_dataset --show --db PZ_MTEST --acfg_name unctrl --dryrun</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # ENABLE_DOCTEST</span>
+<span class="sd">        &gt;&gt;&gt; # DISABLE_DOCTEST</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn.ingest_data import *  # NOQA</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn import draw_results</span>
 <span class="sd">        &gt;&gt;&gt; import wbia</span>
@@ -512,12 +528,12 @@
         <span class="kn">import</span> <span class="nn">wbia</span>
 
         <span class="n">dbname</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">get_argval</span><span class="p">(</span><span class="s1">&#39;--db&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;PZ_MTEST&#39;</span><span class="p">)</span>
-        <span class="n">ibs</span> <span class="o">=</span> <span class="n">wbia</span><span class="o">.</span><span class="n">opendb</span><span class="p">(</span><span class="n">dbname</span><span class="o">=</span><span class="n">dbname</span><span class="p">,</span> <span class="n">defaultdb</span><span class="o">=</span><span class="s1">&#39;PZ_MTEST&#39;</span><span class="p">)</span>
+        <span class="n">ibs</span> <span class="o">=</span> <span class="n">wbia</span><span class="o">.</span><span class="n">opendb</span><span class="p">(</span><span class="n">dbname</span><span class="o">=</span><span class="n">dbname</span><span class="p">,</span> <span class="n">defaultdb</span><span class="o">=</span><span class="s1">&#39;PZ_MTEST&#39;</span><span class="p">,</span> <span class="n">allow_newdir</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="c1"># Nets dir is the root dir for all training on this data</span>
     <span class="n">training_dpath</span> <span class="o">=</span> <span class="n">ibs</span><span class="o">.</span><span class="n">get_neuralnet_dir</span><span class="p">()</span>
     <span class="n">ut</span><span class="o">.</span><span class="n">ensuredir</span><span class="p">(</span><span class="n">training_dpath</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">[get_wbia_patch_siam_dataset] START&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">[get_wbia_patch_siam_dataset] START&#39;</span><span class="p">)</span>
     <span class="c1"># log_dir = join(training_dpath, &#39;logs&#39;)</span>
     <span class="c1"># ut.start_logging(log_dir=log_dir)</span>
 
@@ -527,7 +543,7 @@
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;forced cache off&#39;</span><span class="p">)</span>
         <span class="c1"># Try and short circut cached loading</span>
         <span class="n">dataset</span> <span class="o">=</span> <span class="n">DataSet</span><span class="o">.</span><span class="n">from_alias_key</span><span class="p">(</span><span class="n">alias_key</span><span class="p">)</span>
-        <span class="n">dataset</span><span class="o">.</span><span class="n">setprop</span><span class="p">(</span><span class="s1">&#39;ibs&#39;</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">wbia</span><span class="o">.</span><span class="n">opendb</span><span class="p">(</span><span class="n">db</span><span class="o">=</span><span class="n">dbname</span><span class="p">))</span>
+        <span class="n">dataset</span><span class="o">.</span><span class="n">setprop</span><span class="p">(</span><span class="s1">&#39;ibs&#39;</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">wbia</span><span class="o">.</span><span class="n">opendb</span><span class="p">(</span><span class="n">db</span><span class="o">=</span><span class="n">dbname</span><span class="p">,</span> <span class="n">allow_newdir</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">dataset</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
         <span class="n">ut</span><span class="o">.</span><span class="n">printex</span><span class="p">(</span>
@@ -551,7 +567,7 @@
         <span class="c1"># Extract and cache the data</span>
         <span class="c1"># TODO: metadata</span>
         <span class="k">if</span> <span class="n">ut</span><span class="o">.</span><span class="n">get_argflag</span><span class="p">(</span><span class="s1">&#39;--dryrun&#39;</span><span class="p">):</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;exiting due to dry run&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;exiting due to dry run&#39;</span><span class="p">)</span>
             <span class="kn">import</span> <span class="nn">sys</span>
 
             <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
@@ -566,7 +582,7 @@
             <span class="n">colorspace</span><span class="o">=</span><span class="n">colorspace</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">data_fpath</span><span class="p">,</span> <span class="n">labels_fpath</span><span class="p">,</span> <span class="n">metadata_fpath</span><span class="p">,</span> <span class="n">training_dpath</span><span class="p">,</span> <span class="n">data_shape</span> <span class="o">=</span> <span class="n">tup</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">[get_wbia_patch_siam_dataset] FINISH</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">[get_wbia_patch_siam_dataset] FINISH</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
 
     <span class="c1"># hack for caching num_labels</span>
     <span class="n">labels</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">load_data</span><span class="p">(</span><span class="n">labels_fpath</span><span class="p">)</span>
@@ -597,7 +613,7 @@
 <span class="sd">        python -m wbia_cnn.ingest_data --test-get_wbia_part_siam_dataset --show --db PZ_MTEST --acfg_name unctrl --dryrun</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # ENABLE_DOCTEST</span>
+<span class="sd">        &gt;&gt;&gt; # DISABLE_DOCTEST</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn.ingest_data import *  # NOQA</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn import draw_results</span>
 <span class="sd">        &gt;&gt;&gt; import wbia</span>
@@ -621,7 +637,7 @@
     <span class="p">)</span>
 
     <span class="n">datakw</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">[get_wbia_part_siam_dataset] START&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">[get_wbia_part_siam_dataset] START&#39;</span><span class="p">)</span>
 
     <span class="n">alias_key</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">dict_str</span><span class="p">(</span><span class="n">datakw</span><span class="p">,</span> <span class="n">nl</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">explicit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
@@ -632,7 +648,7 @@
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;forced cache off&#39;</span><span class="p">)</span>
         <span class="c1"># Try and short circut cached loading</span>
         <span class="n">dataset</span> <span class="o">=</span> <span class="n">DataSet</span><span class="o">.</span><span class="n">from_alias_key</span><span class="p">(</span><span class="n">alias_key</span><span class="p">)</span>
-        <span class="n">dataset</span><span class="o">.</span><span class="n">setprop</span><span class="p">(</span><span class="s1">&#39;ibs&#39;</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">wbia</span><span class="o">.</span><span class="n">opendb</span><span class="p">(</span><span class="n">db</span><span class="o">=</span><span class="n">dbname</span><span class="p">))</span>
+        <span class="n">dataset</span><span class="o">.</span><span class="n">setprop</span><span class="p">(</span><span class="s1">&#39;ibs&#39;</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">wbia</span><span class="o">.</span><span class="n">opendb</span><span class="p">(</span><span class="n">db</span><span class="o">=</span><span class="n">dbname</span><span class="p">,</span> <span class="n">allow_newdir</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">dataset</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
         <span class="n">ut</span><span class="o">.</span><span class="n">printex</span><span class="p">(</span>
@@ -642,7 +658,7 @@
         <span class="p">)</span>
 
     <span class="k">with</span> <span class="n">ut</span><span class="o">.</span><span class="n">Indenter</span><span class="p">(</span><span class="s1">&#39;[LOAD IBEIS DB]&#39;</span><span class="p">):</span>
-        <span class="n">ibs</span> <span class="o">=</span> <span class="n">wbia</span><span class="o">.</span><span class="n">opendb</span><span class="p">(</span><span class="n">db</span><span class="o">=</span><span class="n">dbname</span><span class="p">)</span>
+        <span class="n">ibs</span> <span class="o">=</span> <span class="n">wbia</span><span class="o">.</span><span class="n">opendb</span><span class="p">(</span><span class="n">db</span><span class="o">=</span><span class="n">dbname</span><span class="p">,</span> <span class="n">allow_newdir</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="c1"># Nets dir is the root dir for all training on this data</span>
     <span class="n">training_dpath</span> <span class="o">=</span> <span class="n">ibs</span><span class="o">.</span><span class="n">get_neuralnet_dir</span><span class="p">()</span>
@@ -656,7 +672,7 @@
         <span class="p">)</span>
         <span class="c1"># Extract and cache the data, labels, and metadata</span>
         <span class="k">if</span> <span class="n">ut</span><span class="o">.</span><span class="n">get_argflag</span><span class="p">(</span><span class="s1">&#39;--dryrun&#39;</span><span class="p">):</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;exiting due to dry run&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;exiting due to dry run&#39;</span><span class="p">)</span>
             <span class="kn">import</span> <span class="nn">sys</span>
 
             <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
@@ -664,7 +680,7 @@
             <span class="n">ibs</span><span class="p">,</span> <span class="n">aid_pairs</span><span class="p">,</span> <span class="n">label_list</span><span class="p">,</span> <span class="n">flat_metadata</span><span class="p">,</span> <span class="n">colorspace</span><span class="o">=</span><span class="n">colorspace</span>
         <span class="p">)</span>
         <span class="n">data_fpath</span><span class="p">,</span> <span class="n">labels_fpath</span><span class="p">,</span> <span class="n">metadata_fpath</span><span class="p">,</span> <span class="n">training_dpath</span><span class="p">,</span> <span class="n">data_shape</span> <span class="o">=</span> <span class="n">tup</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">[get_wbia_part_siam_dataset] FINISH</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">[get_wbia_part_siam_dataset] FINISH</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
 
     <span class="c1"># hack for caching num_labels</span>
     <span class="n">labels</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">load_data</span><span class="p">(</span><span class="n">labels_fpath</span><span class="p">)</span>
@@ -750,7 +766,7 @@
         <span class="n">dataset</span><span class="o">.</span><span class="n">add_split</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">,</span> <span class="n">train_idxs</span><span class="p">)</span>
         <span class="n">dataset</span><span class="o">.</span><span class="n">add_split</span><span class="p">(</span><span class="s1">&#39;valid&#39;</span><span class="p">,</span> <span class="n">valid_idxs</span><span class="p">)</span>
         <span class="n">dataset</span><span class="o">.</span><span class="n">clear_cache</span><span class="p">()</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;LOADING FROM DATASET RAW&#39;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;LOADING FROM DATASET RAW&#39;</span><span class="p">)</span>
 
     <span class="n">dataset</span><span class="o">.</span><span class="n">ensure_symlinked</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">dataset</span></div>
@@ -771,71 +787,31 @@
     <span class="n">ut</span><span class="o">.</span><span class="n">doctest_funcs</span><span class="p">()</span>
 </pre></div>
 
+           </div>
           </div>
-          
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Wild Me.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../index.html">wbia-cnn</a></h1>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
 
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../wbia_cnn.html">wbia_cnn package</a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../index.html">Documentation overview</a><ul>
-  <li><a href="../index.html">Module code</a><ul>
-  <li><a href="../wbia_cnn.html">wbia_cnn</a><ul>
-  </ul></li>
-  </ul></li>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2020, Wild Me.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-    </div>
-
-    
-
-    
-  </body>
+</body>
 </html>

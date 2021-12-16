@@ -2,8 +2,8 @@
 # flake8: noqa
 import logging
 from six.moves import cPickle as pickle
-from wbia_cnn import abstract_models
-from wbia_cnn.abstract_models import *
+from wbia_cnn.models import abstract_models
+from wbia_cnn.models.abstract_models import *
 
 (print, rrr, profile) = ut.inject2(__name__)
 logger = logging.getLogger()
@@ -28,7 +28,7 @@ def check_external_training_paths():
     checkpoints_dir = '/home/joncrall/.config/wbia_cnn/training_junction/NNP_Master3_patchmatch-_24285_xatwrytpdbfttoax-/checkpoints'
 
     from six.moves import cPickle as pickle
-    from wbia_cnn import abstract_models
+    from wbia_cnn.models import abstract_models
 
     model_fpaths = ut.glob(checkpoints_dir, '*.pkl', recursive=True)
     tmp_model_list = []
@@ -60,7 +60,7 @@ def check_external_training_paths():
 
 
 def load_tmp_model():
-    from wbia_cnn import abstract_models
+    from wbia_cnn.models import abstract_models
 
     fpath = '/home/joncrall/.config/wbia_cnn/training_junction/liberty/model_state.pkl'
     fpath = (

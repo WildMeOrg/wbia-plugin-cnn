@@ -1,36 +1,72 @@
-
 <!DOCTYPE html>
-
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>wbia_cnn.draw_net &#8212; wbia-cnn 3.3.0 documentation</title>
-    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
-    <script src="../../_static/language_data.js"></script>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>wbia_cnn.draw_net &mdash; wbia-cnn 4.0.1.dev0+dirty documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" />
-   
-  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
 
-  </head><body>
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> wbia-cnn
+          </a>
+              <div class="version">
+                4.0.1.dev0+dirty
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../wbia_cnn.html">wbia_cnn package</a></li>
+</ul>
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          
+        </div>
+      </div>
+    </nav>
 
-          <div class="body" role="main">
-            
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">wbia-cnn</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+          <li><a href="../wbia_cnn.html">wbia_cnn</a> &raquo;</li>
+      <li>wbia_cnn.draw_net</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
   <h1>Source code for wbia_cnn.draw_net</h1><div class="highlight"><pre>
 <span></span><span class="c1"># -*- coding: utf-8 -*-</span>
 <span class="sd">&quot;&quot;&quot;</span>
@@ -43,7 +79,7 @@
 <span class="sd">    # TODO:</span>
 <span class="sd">    https://github.com/dnouri/nolearn/blob/master/nolearn/lasagne/visualize.py</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span>
+<span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">operator</span> <span class="kn">import</span> <span class="n">itemgetter</span>
 <span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">join</span><span class="p">,</span> <span class="n">exists</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -51,6 +87,7 @@
 <span class="kn">from</span> <span class="nn">wbia_cnn</span> <span class="kn">import</span> <span class="n">utils</span>
 
 <span class="nb">print</span><span class="p">,</span> <span class="n">rrr</span><span class="p">,</span> <span class="n">profile</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">inject2</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span>
 
 
 <div class="viewcode-block" id="imwrite_theano_symbolic_graph"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.draw_net.imwrite_theano_symbolic_graph">[docs]</a><span class="k">def</span> <span class="nf">imwrite_theano_symbolic_graph</span><span class="p">(</span><span class="n">thean_expr</span><span class="p">):</span>
@@ -75,6 +112,7 @@
 <span class="sd">    Draw a neural network cartoon using matplotilb.</span>
 
 <span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; import matplotlib.pyplot as plt</span>
 <span class="sd">        &gt;&gt;&gt; fig = plt.figure(figsize=(12, 12))</span>
 <span class="sd">        &gt;&gt;&gt; draw_neural_net(fig.gca(), .1, .9, .1, .9, [4, 7, 2])</span>
 
@@ -132,20 +170,20 @@
 <span class="sd">        python -m wbia_cnn.draw_net show_arch_nx_graph:0 --show</span>
 <span class="sd">        python -m wbia_cnn.draw_net show_arch_nx_graph:1 --show</span>
 
-<span class="sd">    Example0:</span>
+<span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; # ENABLE_DOCTEST</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn.draw_net import *  # NOQA</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn import models</span>
 <span class="sd">        &gt;&gt;&gt; model = models.mnist.MNISTModel(batch_size=128, output_dims=10,</span>
-<span class="sd">        &gt;&gt;&gt;                                 data_shape=(24, 24, 3))</span>
+<span class="sd">        &gt;&gt;&gt;                                 data_shape=(28, 28, 3))</span>
 <span class="sd">        &gt;&gt;&gt; model.init_arch()</span>
 <span class="sd">        &gt;&gt;&gt; layers = model.get_all_layers()</span>
 <span class="sd">        &gt;&gt;&gt; show_arch_nx_graph(layers)</span>
 <span class="sd">        &gt;&gt;&gt; ut.quit_if_noshow()</span>
-<span class="sd">        &gt;&gt;&gt; import plottool as pt</span>
+<span class="sd">        &gt;&gt;&gt; from wbia import plottool as pt</span>
 <span class="sd">        &gt;&gt;&gt; ut.show_if_requested()</span>
 
-<span class="sd">    Example1:</span>
+<span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; # ENABLE_DOCTEST</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn.draw_net import *  # NOQA</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn import models</span>
@@ -153,13 +191,13 @@
 <span class="sd">        &gt;&gt;&gt; layers = model.get_all_layers()</span>
 <span class="sd">        &gt;&gt;&gt; show_arch_nx_graph(layers)</span>
 <span class="sd">        &gt;&gt;&gt; ut.quit_if_noshow()</span>
-<span class="sd">        &gt;&gt;&gt; import plottool as pt</span>
+<span class="sd">        &gt;&gt;&gt; from wbia import plottool as pt</span>
 <span class="sd">        &gt;&gt;&gt; ut.show_if_requested()</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">import</span> <span class="nn">networkx</span> <span class="k">as</span> <span class="nn">nx</span>
-    <span class="kn">import</span> <span class="nn">plottool</span> <span class="k">as</span> <span class="nn">pt</span>
-    <span class="kn">from</span> <span class="nn">Lasagne</span> <span class="kn">import</span> <span class="n">lasagne</span>
+    <span class="kn">from</span> <span class="nn">wbia</span> <span class="kn">import</span> <span class="n">plottool</span> <span class="k">as</span> <span class="n">pt</span>
+    <span class="kn">import</span> <span class="nn">lasagne</span>
 
     <span class="c1"># from matplotlib import offsetbox</span>
     <span class="c1"># import matplotlib as mpl</span>
@@ -351,7 +389,7 @@
     <span class="n">key_order</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">layer_to_id</span><span class="p">,</span> <span class="n">layers</span><span class="p">)</span>
     <span class="n">node_dict</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">dict_subset</span><span class="p">(</span><span class="n">node_dict</span><span class="p">,</span> <span class="n">key_order</span><span class="p">)</span>
 
-    <span class="c1"># print(&#39;node_dict = &#39; + ut.repr3(node_dict))</span>
+    <span class="c1"># logger.info(&#39;node_dict = &#39; + ut.repr3(node_dict))</span>
 
     <span class="c1"># Create the networkx graph structure</span>
     <span class="n">G</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">()</span>
@@ -367,7 +405,7 @@
     <span class="n">main_children</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">odict</span><span class="p">()</span>
 
     <span class="c1"># for n1, n2 in ut.itertwo(main_nodes):</span>
-    <span class="c1">#    print(&#39;n1, n2 = %r %r&#39; % (n1, n2))</span>
+    <span class="c1">#    logger.info(&#39;n1, n2 = %r %r&#39; % (n1, n2))</span>
     <span class="c1">#    import utool</span>
     <span class="c1">#    utool.embed()</span>
     <span class="c1">#    children = ut.nx_all_nodes_between(G, n1, n2)</span>
@@ -385,23 +423,23 @@
         <span class="c1"># Main nodes only place constraints on nodes in the next main group.</span>
         <span class="c1"># Not their own</span>
         <span class="n">next_main</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="n">G</span><span class="o">.</span><span class="n">node</span><span class="p">[</span><span class="n">n1</span><span class="p">][</span><span class="s1">&#39;group&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">n1</span>
+        <span class="n">G</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">n1</span><span class="p">][</span><span class="s1">&#39;group&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">n1</span>
         <span class="k">for</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">n2</span><span class="p">)</span> <span class="ow">in</span> <span class="n">nx</span><span class="o">.</span><span class="n">bfs_edges</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">n1</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">next_main</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">n2</span> <span class="ow">in</span> <span class="n">main_nodes</span><span class="p">:</span>
                     <span class="n">next_main</span> <span class="o">=</span> <span class="n">n2</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="n">G</span><span class="o">.</span><span class="n">node</span><span class="p">[</span><span class="n">n2</span><span class="p">][</span><span class="s1">&#39;group&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">n1</span>
+                    <span class="n">G</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">n2</span><span class="p">][</span><span class="s1">&#39;group&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">n1</span>
                     <span class="n">main_children</span><span class="p">[</span><span class="n">n1</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">n2</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">n2</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">nx</span><span class="o">.</span><span class="n">descendants</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">next_main</span><span class="p">)):</span>
-                    <span class="n">G</span><span class="o">.</span><span class="n">node</span><span class="p">[</span><span class="n">n2</span><span class="p">][</span><span class="s1">&#39;group&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">n1</span>
+                    <span class="n">G</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">n2</span><span class="p">][</span><span class="s1">&#39;group&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">n1</span>
                     <span class="n">main_children</span><span class="p">[</span><span class="n">n1</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">n2</span><span class="p">)</span>
 
     <span class="c1"># Custom positioning</span>
     <span class="n">x</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">y</span> <span class="o">=</span> <span class="mi">1000</span>
-    <span class="c1"># print(&#39;main_children = %s&#39; % (ut.repr3(main_children),))</span>
+    <span class="c1"># logger.info(&#39;main_children = %s&#39; % (ut.repr3(main_children),))</span>
 
     <span class="c1"># main_nodes = ut.isect(list(nx.topological_sort(G)), main_nodes)</span>
     <span class="n">xpad</span> <span class="o">=</span> <span class="n">main_size_</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mf">0.3</span>
@@ -413,27 +451,27 @@
     <span class="k">for</span> <span class="n">n1</span> <span class="ow">in</span> <span class="n">main_nodes</span><span class="p">:</span>
         <span class="n">cumheight</span> <span class="o">=</span> <span class="mi">0</span>
 
-        <span class="n">maxwidth</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">node</span><span class="p">[</span><span class="n">n1</span><span class="p">][</span><span class="s1">&#39;width&#39;</span><span class="p">]</span>
+        <span class="n">maxwidth</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">n1</span><span class="p">][</span><span class="s1">&#39;width&#39;</span><span class="p">]</span>
         <span class="k">for</span> <span class="n">n2</span> <span class="ow">in</span> <span class="n">main_children</span><span class="p">[</span><span class="n">n1</span><span class="p">]:</span>
-            <span class="n">maxwidth</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">maxwidth</span><span class="p">,</span> <span class="n">G</span><span class="o">.</span><span class="n">node</span><span class="p">[</span><span class="n">n2</span><span class="p">][</span><span class="s1">&#39;width&#39;</span><span class="p">])</span>
+            <span class="n">maxwidth</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">maxwidth</span><span class="p">,</span> <span class="n">G</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">n2</span><span class="p">][</span><span class="s1">&#39;width&#39;</span><span class="p">])</span>
 
         <span class="n">cumwidth</span> <span class="o">+=</span> <span class="n">xpad</span>
         <span class="n">cumwidth</span> <span class="o">+=</span> <span class="n">maxwidth</span> <span class="o">/</span> <span class="mi">2</span>
 
         <span class="n">pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span> <span class="o">+</span> <span class="n">cumwidth</span><span class="p">,</span> <span class="n">y</span> <span class="o">-</span> <span class="n">cumheight</span><span class="p">])</span>
-        <span class="n">G</span><span class="o">.</span><span class="n">node</span><span class="p">[</span><span class="n">n1</span><span class="p">][</span><span class="s1">&#39;pos&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pos</span>
-        <span class="n">G</span><span class="o">.</span><span class="n">node</span><span class="p">[</span><span class="n">n1</span><span class="p">][</span><span class="s1">&#39;pin&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;true&#39;</span>
+        <span class="n">G</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">n1</span><span class="p">][</span><span class="s1">&#39;pos&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pos</span>
+        <span class="n">G</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">n1</span><span class="p">][</span><span class="s1">&#39;pin&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;true&#39;</span>
 
-        <span class="n">height</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">node</span><span class="p">[</span><span class="n">n1</span><span class="p">][</span><span class="s1">&#39;height&#39;</span><span class="p">]</span>
+        <span class="n">height</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">n1</span><span class="p">][</span><span class="s1">&#39;height&#39;</span><span class="p">]</span>
         <span class="n">cumheight</span> <span class="o">+=</span> <span class="n">height</span> <span class="o">/</span> <span class="mi">2</span>
 
         <span class="k">for</span> <span class="n">n2</span> <span class="ow">in</span> <span class="n">main_children</span><span class="p">[</span><span class="n">n1</span><span class="p">]:</span>
-            <span class="n">height</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">node</span><span class="p">[</span><span class="n">n2</span><span class="p">][</span><span class="s1">&#39;height&#39;</span><span class="p">]</span>
+            <span class="n">height</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">n2</span><span class="p">][</span><span class="s1">&#39;height&#39;</span><span class="p">]</span>
             <span class="n">cumheight</span> <span class="o">+=</span> <span class="n">ypad</span>
             <span class="n">cumheight</span> <span class="o">+=</span> <span class="n">height</span> <span class="o">/</span> <span class="mi">2</span>
             <span class="n">pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span> <span class="o">+</span> <span class="n">cumwidth</span><span class="p">,</span> <span class="n">y</span> <span class="o">-</span> <span class="n">cumheight</span><span class="p">])</span>
-            <span class="n">G</span><span class="o">.</span><span class="n">node</span><span class="p">[</span><span class="n">n2</span><span class="p">][</span><span class="s1">&#39;pos&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pos</span>
-            <span class="n">G</span><span class="o">.</span><span class="n">node</span><span class="p">[</span><span class="n">n2</span><span class="p">][</span><span class="s1">&#39;pin&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;true&#39;</span>
+            <span class="n">G</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">n2</span><span class="p">][</span><span class="s1">&#39;pos&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pos</span>
+            <span class="n">G</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">n2</span><span class="p">][</span><span class="s1">&#39;pin&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;true&#39;</span>
             <span class="n">cumheight</span> <span class="o">+=</span> <span class="n">height</span> <span class="o">/</span> <span class="mi">2</span>
 
         <span class="n">cumwidth</span> <span class="o">+=</span> <span class="n">maxwidth</span> <span class="o">/</span> <span class="mi">2</span>
@@ -455,7 +493,7 @@
         <span class="n">layout_info</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">nx_agraph_layout</span><span class="p">(</span><span class="n">G_</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">layoutkw</span><span class="p">)</span>  <span class="c1"># NOQA</span>
     <span class="c1"># reset labels</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">nolayout</span><span class="p">:</span>
-        <span class="n">nx</span><span class="o">.</span><span class="n">set_node_attributes</span><span class="p">(</span><span class="n">G_</span><span class="p">,</span> <span class="s1">&#39;label&#39;</span><span class="p">,</span> <span class="n">_labels</span><span class="p">)</span>
+        <span class="n">nx</span><span class="o">.</span><span class="n">set_node_attributes</span><span class="p">(</span><span class="n">G_</span><span class="p">,</span> <span class="n">_labels</span><span class="p">,</span> <span class="s1">&#39;label&#39;</span><span class="p">)</span>
     <span class="n">_</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">show_nx</span><span class="p">(</span><span class="n">G_</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">arrow_width</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s1">&#39;custom&#39;</span><span class="p">,</span> <span class="n">fnum</span><span class="o">=</span><span class="n">fnum</span><span class="p">)</span>  <span class="c1"># NOQA</span>
     <span class="c1"># pt.adjust_subplots(top=1, bot=0, left=0, right=1)</span>
     <span class="n">pt</span><span class="o">.</span><span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span></div>
@@ -508,7 +546,7 @@
 <span class="c1">#        &gt;&gt;&gt; img = make_architecture_image(layers, **kwargs)</span>
 <span class="c1">#        &gt;&gt;&gt; print(img.shape)</span>
 <span class="c1">#        &gt;&gt;&gt; ut.quit_if_noshow()</span>
-<span class="c1">#        &gt;&gt;&gt; import plottool as pt</span>
+<span class="c1">#        &gt;&gt;&gt; from wbia import plottool as pt</span>
 <span class="c1">#        &gt;&gt;&gt; pt.imshow(img)</span>
 <span class="c1">#        &gt;&gt;&gt; ut.show_if_requested()</span>
 <span class="c1">#    &quot;&quot;&quot;</span>
@@ -553,41 +591,44 @@
 
 
 <div class="viewcode-block" id="occlusion_heatmap"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.draw_net.occlusion_heatmap">[docs]</a><span class="k">def</span> <span class="nf">occlusion_heatmap</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">square_length</span><span class="o">=</span><span class="mi">7</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;An occlusion test that checks an image for its critical parts.</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An occlusion test that checks an image for its critical parts.</span>
 <span class="sd">    In this function, a square part of the image is occluded (i.e. set</span>
 <span class="sd">    to 0) and then the net is tested for its propensity to predict the</span>
 <span class="sd">    correct label. One should expect that this propensity shrinks of</span>
 <span class="sd">    critical parts of the image are occluded. If not, this indicates</span>
 <span class="sd">    overfitting.</span>
+
 <span class="sd">    Depending on the depth of the net and the size of the image, this</span>
 <span class="sd">    function may take awhile to finish, since one prediction for each</span>
 <span class="sd">    pixel of the image is made.</span>
 <span class="sd">    Currently, all color channels are occluded at the same time. Also,</span>
 <span class="sd">    this does not really work if images are randomly distorted by the</span>
 <span class="sd">    batch iterator.</span>
+
 <span class="sd">    See paper: Zeiler, Fergus 2013</span>
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    net : NeuralNet instance</span>
-<span class="sd">      The neural net to test.</span>
-<span class="sd">    x : np.array</span>
-<span class="sd">      The input data, should be of shape (1, c, x, y). Only makes</span>
-<span class="sd">      sense with image data.</span>
-<span class="sd">    target : int</span>
-<span class="sd">      The true value of the image. If the net makes several</span>
-<span class="sd">      predictions, say 10 classes, this indicates which one to look</span>
-<span class="sd">      at.</span>
-<span class="sd">    square_length : int (default=7)</span>
-<span class="sd">      The length of the side of the square that occludes the image.</span>
-<span class="sd">      Must be an odd number.</span>
-<span class="sd">    Results</span>
-<span class="sd">    -------</span>
-<span class="sd">    heat_array : np.array (with same size as image)</span>
-<span class="sd">      An 2D np.array that at each point (i, j) contains the predicted</span>
-<span class="sd">      probability of the correct class if the image is occluded by a</span>
-<span class="sd">      square with center (i, j).</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        net : NeuralNet instance</span>
+<span class="sd">        The neural net to test.</span>
+<span class="sd">        x : np.array</span>
+<span class="sd">        The input data, should be of shape (1, c, x, y). Only makes</span>
+<span class="sd">        sense with image data.</span>
+<span class="sd">        target : int</span>
+<span class="sd">        The true value of the image. If the net makes several</span>
+<span class="sd">        predictions, say 10 classes, this indicates which one to look</span>
+<span class="sd">        at.</span>
+<span class="sd">        square_length : int (default=7)</span>
+<span class="sd">        The length of the side of the square that occludes the image.</span>
+<span class="sd">        Must be an odd number.</span>
+
+<span class="sd">    Results:</span>
+<span class="sd">        heat_array : np.array (with same size as image)</span>
+<span class="sd">        An 2D np.array that at each point (i, j) contains the predicted</span>
+<span class="sd">        probability of the correct class if the image is occluded by a</span>
+<span class="sd">        square with center (i, j).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">from</span> <span class="nn">Lasagne.lasagne.layers</span> <span class="kn">import</span> <span class="n">get_output_shape</span>
+    <span class="kn">from</span> <span class="nn">lasagne.layers</span> <span class="kn">import</span> <span class="n">get_output_shape</span>
 
     <span class="k">if</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">4</span><span class="p">)</span> <span class="ow">or</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -626,8 +667,8 @@
     <span class="k">return</span> <span class="n">heat_array</span></div>
 
 
-<div class="viewcode-block" id="_plot_heat_map"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.draw_net._plot_heat_map">[docs]</a><span class="k">def</span> <span class="nf">_plot_heat_map</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="n">Xb</span><span class="p">,</span> <span class="n">figsize</span><span class="p">,</span> <span class="n">get_heat_image</span><span class="p">):</span>
-    <span class="kn">import</span> <span class="nn">plottool</span> <span class="k">as</span> <span class="nn">pt</span>
+<span class="k">def</span> <span class="nf">_plot_heat_map</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="n">Xb</span><span class="p">,</span> <span class="n">figsize</span><span class="p">,</span> <span class="n">get_heat_image</span><span class="p">):</span>
+    <span class="kn">from</span> <span class="nn">wbia</span> <span class="kn">import</span> <span class="n">plottool</span> <span class="k">as</span> <span class="n">pt</span>
 
     <span class="k">if</span> <span class="n">Xb</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">4</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -657,34 +698,32 @@
         <span class="n">ax</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="o">-</span><span class="n">img</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
         <span class="n">ax</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="o">-</span><span class="n">heat_img</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;Reds&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.6</span><span class="p">)</span>
         <span class="n">ax</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;super-imposed&#39;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">pt</span><span class="o">.</span><span class="n">plt</span></div>
+    <span class="k">return</span> <span class="n">pt</span><span class="o">.</span><span class="n">plt</span>
 
 
 <div class="viewcode-block" id="plot_occlusion"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.draw_net.plot_occlusion">[docs]</a><span class="k">def</span> <span class="nf">plot_occlusion</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="n">Xb</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">square_length</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="kc">None</span><span class="p">)):</span>
-    <span class="sd">&quot;&quot;&quot;Plot which parts of an image are particularly import for the</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Plot which parts of an image are particularly import for the</span>
 <span class="sd">    net to classify the image correctly.</span>
+
 <span class="sd">    See paper: Zeiler, Fergus 2013</span>
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    net : NeuralNet instance</span>
-<span class="sd">      The neural net to test.</span>
-<span class="sd">    Xb : numpy.array</span>
-<span class="sd">      The input data, should be of shape (b, c, 0, 1). Only makes</span>
-<span class="sd">      sense with image data.</span>
-<span class="sd">    target : list or numpy.array of ints</span>
-<span class="sd">      The true values of the image. If the net makes several</span>
-<span class="sd">      predictions, say 10 classes, this indicates which one to look</span>
-<span class="sd">      at. If more than one sample is passed to Xb, each of them needs</span>
-<span class="sd">      its own target.</span>
-<span class="sd">    square_length : int (default=7)</span>
-<span class="sd">      The length of the side of the square that occludes the image.</span>
-<span class="sd">      Must be an odd number.</span>
-<span class="sd">    figsize : tuple (int, int)</span>
-<span class="sd">      Size of the figure.</span>
-<span class="sd">    Plots</span>
-<span class="sd">    -----</span>
-<span class="sd">    Figure with 3 subplots: the original image, the occlusion heatmap,</span>
-<span class="sd">    and both images super-imposed.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        net : NeuralNet instance</span>
+<span class="sd">        The neural net to test.</span>
+<span class="sd">        Xb : numpy.array</span>
+<span class="sd">        The input data, should be of shape (b, c, 0, 1). Only makes</span>
+<span class="sd">        sense with image data.</span>
+<span class="sd">        target : list or numpy.array of ints</span>
+<span class="sd">        The true values of the image. If the net makes several</span>
+<span class="sd">        predictions, say 10 classes, this indicates which one to look</span>
+<span class="sd">        at. If more than one sample is passed to Xb, each of them needs</span>
+<span class="sd">        its own target.</span>
+<span class="sd">        square_length : int (default=7)</span>
+<span class="sd">        The length of the side of the square that occludes the image.</span>
+<span class="sd">        Must be an odd number.</span>
+<span class="sd">        figsize : tuple (int, int)</span>
+<span class="sd">        Size of the figure.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">_plot_heat_map</span><span class="p">(</span>
         <span class="n">net</span><span class="p">,</span>
@@ -697,14 +736,14 @@
 <div class="viewcode-block" id="plot_saliency"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.draw_net.plot_saliency">[docs]</a><span class="k">def</span> <span class="nf">plot_saliency</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="n">Xb</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="kc">None</span><span class="p">)):</span>
     <span class="k">def</span> <span class="nf">saliency_map</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">pred</span><span class="p">,</span> <span class="n">Xb</span><span class="p">):</span>
         <span class="kn">import</span> <span class="nn">theano.tensor</span> <span class="k">as</span> <span class="nn">T</span>
-        <span class="kn">from</span> <span class="nn">Lasagne.lasagne.objectives</span> <span class="kn">import</span> <span class="n">binary_crossentropy</span>
+        <span class="kn">from</span> <span class="nn">lasagne.objectives</span> <span class="kn">import</span> <span class="n">binary_crossentropy</span>
 
         <span class="n">score</span> <span class="o">=</span> <span class="o">-</span><span class="n">binary_crossentropy</span><span class="p">(</span><span class="n">output</span><span class="p">[:,</span> <span class="n">pred</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">]))</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
         <span class="n">heat_map_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">T</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">score</span><span class="p">,</span> <span class="nb">input</span><span class="p">)</span><span class="o">.</span><span class="n">eval</span><span class="p">({</span><span class="nb">input</span><span class="p">:</span> <span class="n">Xb</span><span class="p">}))</span>
         <span class="k">return</span> <span class="n">heat_map_</span>
 
     <span class="k">def</span> <span class="nf">saliency_map_net</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="n">Xb</span><span class="p">):</span>
-        <span class="kn">from</span> <span class="nn">Lasagne.lasagne.layers</span> <span class="kn">import</span> <span class="n">get_output</span>
+        <span class="kn">from</span> <span class="nn">lasagne.layers</span> <span class="kn">import</span> <span class="n">get_output</span>
 
         <span class="nb">input</span> <span class="o">=</span> <span class="n">net</span><span class="o">.</span><span class="n">layers_</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">input_var</span>
         <span class="n">output</span> <span class="o">=</span> <span class="n">get_output</span><span class="p">(</span><span class="n">net</span><span class="o">.</span><span class="n">layers_</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
@@ -740,7 +779,7 @@
 <span class="sd">        &gt;&gt;&gt; model.load_model_state()</span>
 <span class="sd">        &gt;&gt;&gt; target_labels = 3</span>
 <span class="sd">        &gt;&gt;&gt; ut.quit_if_noshow()</span>
-<span class="sd">        &gt;&gt;&gt; import plottool as pt</span>
+<span class="sd">        &gt;&gt;&gt; from wbia import plottool as pt</span>
 <span class="sd">        &gt;&gt;&gt; #pt.qt4ensure()</span>
 <span class="sd">        &gt;&gt;&gt; dream = Dream(model, niters=200)</span>
 <span class="sd">        &gt;&gt;&gt; img = dream.make_class_images(target_labels)</span>
@@ -760,7 +799,7 @@
         <span class="n">dpath</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span>
 
         <span class="kn">import</span> <span class="nn">theano.tensor</span> <span class="k">as</span> <span class="nn">T</span>
-        <span class="kn">from</span> <span class="nn">Lasagne</span> <span class="kn">import</span> <span class="n">lasagne</span>
+        <span class="kn">import</span> <span class="nn">lasagne</span>
         <span class="kn">import</span> <span class="nn">vtool</span> <span class="k">as</span> <span class="nn">vt</span>
         <span class="kn">import</span> <span class="nn">theano</span>
 
@@ -854,14 +893,14 @@
         <span class="c1"># Optimize objective via backpropogation for a few iterations</span>
         <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">ut</span><span class="o">.</span><span class="n">ProgIter</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">dream</span><span class="o">.</span><span class="n">niters</span><span class="p">),</span> <span class="n">lbl</span><span class="o">=</span><span class="s1">&#39;making class model img&#39;</span><span class="p">,</span> <span class="n">bs</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
             <span class="n">dream</span><span class="o">.</span><span class="n">step_fn</span><span class="p">()</span>
-            <span class="c1"># print(&#39;objective = %r&#39; % (objective,))</span>
+            <span class="c1"># logger.info(&#39;objective = %r&#39; % (objective,))</span>
 
         <span class="n">out</span> <span class="o">=</span> <span class="n">dream</span><span class="o">.</span><span class="n">_postprocess_class_image</span><span class="p">(</span>
             <span class="n">dream</span><span class="o">.</span><span class="n">shared_images</span><span class="p">,</span> <span class="n">target_labels</span><span class="p">,</span> <span class="n">was_scalar</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">out</span></div>
 
-<div class="viewcode-block" id="Dream._make_init_state"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.draw_net.Dream._make_init_state">[docs]</a>    <span class="k">def</span> <span class="nf">_make_init_state</span><span class="p">(</span><span class="n">dream</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_make_init_state</span><span class="p">(</span><span class="n">dream</span><span class="p">):</span>
         <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 
 <span class="sd">        CommandLine:</span>
@@ -876,7 +915,7 @@
 <span class="sd">            &gt;&gt;&gt; model.init_arch()</span>
 <span class="sd">            &gt;&gt;&gt; dream = Dream(model, init=&#39;rgauss&#39;, niters=200)</span>
 <span class="sd">            &gt;&gt;&gt; ut.quit_if_noshow()</span>
-<span class="sd">            &gt;&gt;&gt; import plottool as pt</span>
+<span class="sd">            &gt;&gt;&gt; from wbia import plottool as pt</span>
 <span class="sd">            &gt;&gt;&gt; import vtool as vt</span>
 <span class="sd">            &gt;&gt;&gt; #pt.qt4ensure()</span>
 <span class="sd">            &gt;&gt;&gt; initial_state = dream._make_init_state().transpose((0, 2, 3, 1))[0]</span>
@@ -925,21 +964,21 @@
             <span class="p">)</span>
             <span class="n">initial_state</span> <span class="o">=</span> <span class="n">initial_state</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">/</span> <span class="mi">255</span>
         <span class="n">initial_state</span> <span class="o">=</span> <span class="n">initial_state</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">initial_state</span></div>
+        <span class="k">return</span> <span class="n">initial_state</span>
 
-<div class="viewcode-block" id="Dream._make_objective"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.draw_net.Dream._make_objective">[docs]</a>    <span class="k">def</span> <span class="nf">_make_objective</span><span class="p">(</span><span class="n">dream</span><span class="p">,</span> <span class="n">shared_images</span><span class="p">,</span> <span class="n">target_labels</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_make_objective</span><span class="p">(</span><span class="n">dream</span><span class="p">,</span> <span class="n">shared_images</span><span class="p">,</span> <span class="n">target_labels</span><span class="p">):</span>
         <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        The goal is to optimize</span>
 <span class="sd">        S_c = score of class c before softmax nonlinearity</span>
 <span class="sd">        argmax_{I} S_c(I) - \lambda \elltwo{I}</span>
 <span class="sd">        max(S_c(I) - lambda * norm(I, 2))</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="kn">from</span> <span class="nn">Lasagne</span> <span class="kn">import</span> <span class="n">lasagne</span>
+        <span class="kn">import</span> <span class="nn">lasagne</span>
         <span class="kn">import</span> <span class="nn">copy</span>
         <span class="kn">import</span> <span class="nn">theano</span>
         <span class="kn">from</span> <span class="nn">theano</span> <span class="kn">import</span> <span class="n">tensor</span> <span class="k">as</span> <span class="n">T</span>  <span class="c1"># NOQA</span>
 
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Making dream objective&#39;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Making dream objective&#39;</span><span class="p">)</span>
         <span class="c1"># Get the final layer and remove the softmax nonlinearity to access the</span>
         <span class="c1"># pre-activation. (Softmax encourages minimization of other classes)</span>
         <span class="n">softmax</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">dream</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">output_layer</span><span class="p">)</span>
@@ -977,9 +1016,9 @@
             <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">objective</span><span class="p">],</span>
             <span class="n">updates</span><span class="o">=</span><span class="p">{</span><span class="n">shared_images</span><span class="p">:</span> <span class="n">shared_images</span> <span class="o">+</span> <span class="n">dream</span><span class="o">.</span><span class="n">update_rate</span> <span class="o">*</span> <span class="n">grads</span><span class="p">},</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">step_fn</span></div>
+        <span class="k">return</span> <span class="n">step_fn</span>
 
-<div class="viewcode-block" id="Dream._postprocess_class_image"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.draw_net.Dream._postprocess_class_image">[docs]</a>    <span class="k">def</span> <span class="nf">_postprocess_class_image</span><span class="p">(</span><span class="n">dream</span><span class="p">,</span> <span class="n">shared_images</span><span class="p">,</span> <span class="n">target_labels</span><span class="p">,</span> <span class="n">was_scalar</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_postprocess_class_image</span><span class="p">(</span><span class="n">dream</span><span class="p">,</span> <span class="n">shared_images</span><span class="p">,</span> <span class="n">target_labels</span><span class="p">,</span> <span class="n">was_scalar</span><span class="p">):</span>
         <span class="c1"># return final state of the image</span>
         <span class="n">Xb</span> <span class="o">=</span> <span class="n">shared_images</span><span class="o">.</span><span class="n">get_value</span><span class="p">()</span>
         <span class="n">X</span> <span class="o">=</span> <span class="n">Xb</span><span class="o">.</span><span class="n">transpose</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
@@ -991,34 +1030,35 @@
         <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">out</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">was_scalar</span><span class="p">:</span>
             <span class="n">out</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">out</span></div>
+        <span class="k">return</span> <span class="n">out</span>
 
 <div class="viewcode-block" id="Dream.generate_class_images"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.draw_net.Dream.generate_class_images">[docs]</a>    <span class="k">def</span> <span class="nf">generate_class_images</span><span class="p">(</span><span class="n">dream</span><span class="p">,</span> <span class="n">target_labels</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        import plottool as pt</span>
-<span class="sd">        fnum = None</span>
-<span class="sd">        kw = dict(init=&#39;gauss&#39;, niters=500, update_rate=.05, weight_decay=1e-4)</span>
-<span class="sd">        target_labels = list(range(model.output_dims))</span>
-<span class="sd">        dream = draw_net.Dream(model, **kw)</span>
-<span class="sd">        target_labels = 8</span>
-<span class="sd">        images = list(dream.generate_class_images(target_labels))</span>
-
-<span class="sd">        vid = vt.make_video(images, &#39;dynimg.pimj&#39;, fps=1, is_color=False, format=&#39;PIM1&#39;)</span>
-<span class="sd">        vid = vt.make_video2(images, &#39;dynimg&#39;)</span>
-
-<span class="sd">        import matplotlib.pyplot as plt</span>
-<span class="sd">        ims = []</span>
-<span class="sd">        for img in imgs:</span>
-<span class="sd">            im = plt.imshow(img[:, :, 0], interpolation=&#39;nearest&#39;, cmap=&#39;gray&#39;)</span>
-<span class="sd">            ims.append([im])</span>
-
-<span class="sd">        import matplotlib.animation as animation</span>
-<span class="sd">        fig = plt.figure()</span>
-<span class="sd">        ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True,</span>
-<span class="sd">                                        repeat_delay=1000)</span>
-<span class="sd">        ani.save(&#39;dynamic_images.mp4&#39;)</span>
-<span class="sd">        ut.startfile(&#39;dynamic_images.mp4&#39;)</span>
-<span class="sd">        plt.show()</span>
+<span class="sd">        Ignore:</span>
+<span class="sd">            &gt;&gt;&gt; from wbia import plottool as pt</span>
+<span class="sd">            &gt;&gt;&gt; fnum = None</span>
+<span class="sd">            &gt;&gt;&gt; kw = dict(init=&#39;gauss&#39;, niters=500, update_rate=.05, weight_decay=1e-4)</span>
+<span class="sd">            &gt;&gt;&gt; target_labels = list(range(model.output_dims))</span>
+<span class="sd">            &gt;&gt;&gt; dream = draw_net.Dream(model, **kw)</span>
+<span class="sd">            &gt;&gt;&gt; target_labels = 8</span>
+<span class="sd">            &gt;&gt;&gt; images = list(dream.generate_class_images(target_labels))</span>
+<span class="sd">            &gt;&gt;&gt;</span>
+<span class="sd">            &gt;&gt;&gt; vid = vt.make_video(images, &#39;dynimg.pimj&#39;, fps=1, is_color=False, format=&#39;PIM1&#39;)</span>
+<span class="sd">            &gt;&gt;&gt; vid = vt.make_video2(images, &#39;dynimg&#39;)</span>
+<span class="sd">            &gt;&gt;&gt;</span>
+<span class="sd">            &gt;&gt;&gt; import matplotlib.pyplot as plt</span>
+<span class="sd">            &gt;&gt;&gt; ims = []</span>
+<span class="sd">            &gt;&gt;&gt; for img in imgs:</span>
+<span class="sd">            &gt;&gt;&gt;     im = plt.imshow(img[:, :, 0], interpolation=&#39;nearest&#39;, cmap=&#39;gray&#39;)</span>
+<span class="sd">            &gt;&gt;&gt;     ims.append([im])</span>
+<span class="sd">            &gt;&gt;&gt;</span>
+<span class="sd">            &gt;&gt;&gt; import matplotlib.animation as animation</span>
+<span class="sd">            &gt;&gt;&gt; fig = plt.figure()</span>
+<span class="sd">            &gt;&gt;&gt; ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True,</span>
+<span class="sd">            &gt;&gt;&gt;                                 repeat_delay=1000)</span>
+<span class="sd">            &gt;&gt;&gt; ani.save(&#39;dynamic_images.mp4&#39;)</span>
+<span class="sd">            &gt;&gt;&gt; ut.startfile(&#39;dynamic_images.mp4&#39;)</span>
+<span class="sd">            &gt;&gt;&gt; plt.show()</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">import</span> <span class="nn">theano</span>
         <span class="kn">from</span> <span class="nn">theano</span> <span class="kn">import</span> <span class="n">tensor</span> <span class="k">as</span> <span class="n">T</span>  <span class="c1"># NOQA</span>
@@ -1037,7 +1077,7 @@
         <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">ut</span><span class="o">.</span><span class="n">ProgIter</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">dream</span><span class="o">.</span><span class="n">niters</span><span class="p">),</span> <span class="n">lbl</span><span class="o">=</span><span class="s1">&#39;class dream&#39;</span><span class="p">,</span> <span class="n">bs</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
             <span class="n">step_fn</span><span class="p">()</span>
             <span class="c1"># objective = step_fn()</span>
-            <span class="c1"># print(&#39;objective = %r&#39; % (objective,))</span>
+            <span class="c1"># logger.info(&#39;objective = %r&#39; % (objective,))</span>
             <span class="n">out</span> <span class="o">=</span> <span class="n">dream</span><span class="o">.</span><span class="n">_postprocess_class_image</span><span class="p">(</span><span class="n">shared_images</span><span class="p">,</span> <span class="n">target_labels</span><span class="p">,</span> <span class="n">was_scalar</span><span class="p">)</span>
             <span class="k">yield</span> <span class="n">out</span></div></div>
 
@@ -1061,7 +1101,7 @@
 <span class="sd">        &gt;&gt;&gt; model.encoder = None</span>
 <span class="sd">        &gt;&gt;&gt; model.init_arch()</span>
 <span class="sd">        &gt;&gt;&gt; model.load_model_state()</span>
-<span class="sd">        &gt;&gt;&gt; import plottool as pt</span>
+<span class="sd">        &gt;&gt;&gt; from wbia import plottool as pt</span>
 <span class="sd">        &gt;&gt;&gt; pt.qt4ensure()</span>
 <span class="sd">        &gt;&gt;&gt; show_saliency_heatmap(model, dataset)</span>
 <span class="sd">        &gt;&gt;&gt; ut.show_if_requested()</span>
@@ -1121,7 +1161,7 @@
 <span class="sd">        &gt;&gt;&gt; limit = 64</span>
 <span class="sd">        &gt;&gt;&gt; fig = show_convolutional_weights(all_weights, use_color, limit)</span>
 <span class="sd">        &gt;&gt;&gt; ut.quit_if_noshow()</span>
-<span class="sd">        &gt;&gt;&gt; import plottool as pt</span>
+<span class="sd">        &gt;&gt;&gt; from wbia import plottool as pt</span>
 <span class="sd">        &gt;&gt;&gt; pt.qt4ensure()</span>
 <span class="sd">        &gt;&gt;&gt; fig = show_convolutional_weights(all_weights, use_color, limit)</span>
 <span class="sd">        &gt;&gt;&gt; ut.show_if_requested()</span>
@@ -1130,7 +1170,7 @@
 <span class="sd">        &gt;&gt;&gt; # ENABLE_DOCTEST</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn.draw_net import *  # NOQA</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn import models</span>
-<span class="sd">        &gt;&gt;&gt; from Lasagne.lasagne import layers</span>
+<span class="sd">        &gt;&gt;&gt; from lasagne import layers</span>
 <span class="sd">        &gt;&gt;&gt; model = models.SiameseCenterSurroundModel(autoinit=True)</span>
 <span class="sd">        &gt;&gt;&gt; output_layer = model.get_output_layer()</span>
 <span class="sd">        &gt;&gt;&gt; nn_layers = layers.get_all_layers(output_layer)</span>
@@ -1143,7 +1183,7 @@
 <span class="sd">        &gt;&gt;&gt; fig = show_convolutional_weights(all_weights, use_color, limit)</span>
 <span class="sd">        &gt;&gt;&gt; ut.show_if_requested()</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">import</span> <span class="nn">plottool</span> <span class="k">as</span> <span class="nn">pt</span>
+    <span class="kn">from</span> <span class="nn">wbia</span> <span class="kn">import</span> <span class="n">plottool</span> <span class="k">as</span> <span class="n">pt</span>
 
     <span class="k">if</span> <span class="n">fnum</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">fnum</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">next_fnum</span><span class="p">()</span>
@@ -1162,7 +1202,7 @@
 
 
 <div class="viewcode-block" id="make_conv_weight_image"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.draw_net.make_conv_weight_image">[docs]</a><span class="k">def</span> <span class="nf">make_conv_weight_image</span><span class="p">(</span><span class="n">all_weights</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">144</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot; just makes the image ndarray of the weights &quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;just makes the image ndarray of the weights&quot;&quot;&quot;</span>
     <span class="kn">import</span> <span class="nn">vtool</span> <span class="k">as</span> <span class="nn">vt</span>
     <span class="kn">import</span> <span class="nn">cv2</span>
 
@@ -1226,7 +1266,7 @@
 
 
 <div class="viewcode-block" id="output_confusion_matrix"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.draw_net.output_confusion_matrix">[docs]</a><span class="k">def</span> <span class="nf">output_confusion_matrix</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">results_path</span><span class="p">,</span> <span class="n">test_results</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot; currently hacky implementation, fix it later &quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;currently hacky implementation, fix it later&quot;&quot;&quot;</span>
     <span class="n">loss</span><span class="p">,</span> <span class="n">accu_test</span><span class="p">,</span> <span class="n">prob_list</span><span class="p">,</span> <span class="n">auglbl_list</span><span class="p">,</span> <span class="n">pred_list</span><span class="p">,</span> <span class="n">conf_list</span> <span class="o">=</span> <span class="n">test_results</span>
     <span class="c1"># Output confusion matrix</span>
     <span class="n">mapping_fn</span> <span class="o">=</span> <span class="kc">None</span>
@@ -1248,7 +1288,7 @@
 <div class="viewcode-block" id="save_confusion_matrix"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.draw_net.save_confusion_matrix">[docs]</a><span class="k">def</span> <span class="nf">save_confusion_matrix</span><span class="p">(</span>
     <span class="n">results_path</span><span class="p">,</span> <span class="n">correct_y</span><span class="p">,</span> <span class="n">predict_y</span><span class="p">,</span> <span class="n">category_list</span><span class="p">,</span> <span class="n">mapping_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data_x</span><span class="o">=</span><span class="kc">None</span>
 <span class="p">):</span>
-    <span class="kn">import</span> <span class="nn">plottool</span> <span class="k">as</span> <span class="nn">pt</span>
+    <span class="kn">from</span> <span class="nn">wbia</span> <span class="kn">import</span> <span class="n">plottool</span> <span class="k">as</span> <span class="n">pt</span>
 
     <span class="n">fig</span> <span class="o">=</span> <span class="n">show_confusion_matrix</span><span class="p">(</span>
         <span class="n">correct_y</span><span class="p">,</span> <span class="n">predict_y</span><span class="p">,</span> <span class="n">category_list</span><span class="p">,</span> <span class="n">mapping_fn</span><span class="o">=</span><span class="n">mapping_fn</span><span class="p">,</span> <span class="n">data_x</span><span class="o">=</span><span class="n">data_x</span>
@@ -1380,71 +1420,31 @@
     <span class="n">ut</span><span class="o">.</span><span class="n">doctest_funcs</span><span class="p">()</span>
 </pre></div>
 
+           </div>
           </div>
-          
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Wild Me.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../index.html">wbia-cnn</a></h1>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
 
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../wbia_cnn.html">wbia_cnn package</a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../index.html">Documentation overview</a><ul>
-  <li><a href="../index.html">Module code</a><ul>
-  <li><a href="../wbia_cnn.html">wbia_cnn</a><ul>
-  </ul></li>
-  </ul></li>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2020, Wild Me.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-    </div>
-
-    
-
-    
-  </body>
+</body>
 </html>

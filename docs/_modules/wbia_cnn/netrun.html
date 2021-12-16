@@ -1,41 +1,76 @@
-
 <!DOCTYPE html>
-
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>wbia_cnn.netrun &#8212; wbia-cnn 3.3.0 documentation</title>
-    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
-    <script src="../../_static/language_data.js"></script>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>wbia_cnn.netrun &mdash; wbia-cnn 4.0.1.dev0+dirty documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" />
-   
-  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
 
-  </head><body>
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> wbia-cnn
+          </a>
+              <div class="version">
+                4.0.1.dev0+dirty
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../wbia_cnn.html">wbia_cnn package</a></li>
+</ul>
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          
+        </div>
+      </div>
+    </nav>
 
-          <div class="body" role="main">
-            
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">wbia-cnn</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+          <li><a href="../wbia_cnn.html">wbia_cnn</a> &raquo;</li>
+      <li>wbia_cnn.netrun</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
   <h1>Source code for wbia_cnn.netrun</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python</span>
 <span class="c1"># -*- coding: utf-8 -*-</span>
-<span class="sd">&quot;&quot;&quot;</span>
-
+<span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">FIXME:</span>
 <span class="sd">    sometimes you have to chown -R user:user ~/.theano or run with sudo the</span>
 <span class="sd">    first time after roboot, otherwise you get errors</span>
@@ -44,22 +79,22 @@
 <span class="sd">    python -m wbia_cnn --tf netrun &lt;networkmodel&gt;</span>
 
 <span class="sd">    --dataset, --ds = &lt;dstag&gt;:&lt;subtag&gt;</span>
-<span class="sd">        dstag is the main dataset name (eg PZ_MTEST), subtag are parameters to</span>
-<span class="sd">        modify (max_examples=3)</span>
+<span class="sd">    dstag is the main dataset name (eg PZ_MTEST), subtag are parameters to</span>
+<span class="sd">    modify (max_examples=3)</span>
 
-<span class="sd">    --weights, -w = |new|&lt;checkpoint_tag&gt;|&lt;dstag&gt;:&lt;checkpoint_tag&gt; (default: &lt;checkpoint_tag&gt;)</span>
-<span class="sd">        new will initialize clean weights.</span>
-<span class="sd">        a checkpoint tag will try to to match a saved model state in the history.</span>
-<span class="sd">        can load weights from an external dataset.</span>
-<span class="sd">        &lt;checkpoint_tag&gt; defaults to current</span>
+<span class="sd">    --weights, -w = \|new\|&lt;checkpoint_tag&gt;\|&lt;dstag&gt;:&lt;checkpoint_tag&gt; (default: &lt;checkpoint_tag&gt;)</span>
+<span class="sd">    new will initialize clean weights.</span>
+<span class="sd">    a checkpoint tag will try to to match a saved model state in the history.</span>
+<span class="sd">    can load weights from an external dataset.</span>
+<span class="sd">    &lt;checkpoint_tag&gt; defaults to current</span>
 
 <span class="sd">    --arch, -a = &lt;archtag&gt;</span>
-<span class="sd">        model architecture tag (eg siaml2_128, siam2stream, viewpoint)</span>
+<span class="sd">    model architecture tag (eg siaml2_128, siam2stream, viewpoint)</span>
 
 <span class="sd">    --device = &lt;processor&gt;</span>
-<span class="sd">       sets theano device flag to a processor like gpu0, gpu1, or cpu0</span>
+<span class="sd">    sets theano device flag to a processor like gpu0, gpu1, or cpu0</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span>
+<span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">wbia_cnn</span> <span class="kn">import</span> <span class="n">models</span>
 <span class="kn">from</span> <span class="nn">wbia_cnn</span> <span class="kn">import</span> <span class="n">ingest_data</span>
 <span class="kn">from</span> <span class="nn">wbia_cnn</span> <span class="kn">import</span> <span class="n">experiments</span>
@@ -67,6 +102,7 @@
 <span class="kn">import</span> <span class="nn">sys</span>
 
 <span class="nb">print</span><span class="p">,</span> <span class="n">rrr</span><span class="p">,</span> <span class="n">profile</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">inject2</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span>
 
 
 <span class="c1"># This is more of a history tag</span>
@@ -113,7 +149,7 @@
 <span class="sd">        # Parts based datasets</span>
 <span class="sd">        python -m wbia_cnn --tf netrun --db PZ_MTEST --acfg ctrl --datatype=siam-part --ensuredata --show</span>
 
-<span class="sd">        % Patch based dataset (big one)</span>
+<span class="sd">        # Patch based dataset (big one)</span>
 <span class="sd">        python -m wbia_cnn --tf netrun --db PZ_Master1 --acfg default:is_known=True,qmin_pername=2,view=primary,species=primary,minqual=ok --ensuredata --show --vtd</span>
 <span class="sd">        python -m wbia_cnn --tf netrun --ds pzm4 --weights=new --arch=siaml2_128 --train --monitor</span>
 <span class="sd">        python -m wbia_cnn --tf netrun --ds pzm4 --arch=siaml2_128 --test</span>
@@ -165,10 +201,10 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="n">extern_dpath</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;dataset.training_dpath = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">training_dpath</span><span class="p">,))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;dataset.training_dpath = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">training_dpath</span><span class="p">,))</span>
 
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Dataset Alias Key: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">alias_key</span><span class="p">,))</span>
-    <span class="nb">print</span><span class="p">(</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Dataset Alias Key: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">alias_key</span><span class="p">,))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
         <span class="s1">&#39;Current Dataset Tag: </span><span class="si">%r</span><span class="s1">&#39;</span>
         <span class="o">%</span> <span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">invert_dict</span><span class="p">(</span><span class="n">DS_TAG_ALIAS2</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">alias_key</span><span class="p">,</span> <span class="kc">None</span><span class="p">),)</span>
     <span class="p">)</span>
@@ -178,7 +214,7 @@
         <span class="k">if</span> <span class="n">ut</span><span class="o">.</span><span class="n">show_was_requested</span><span class="p">():</span>
             <span class="n">interact_</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">interact</span><span class="p">()</span>  <span class="c1"># NOQA</span>
             <span class="k">return</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;...exiting&#39;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;...exiting&#39;</span><span class="p">)</span>
         <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 
     <span class="c1"># ----------------------------</span>
@@ -234,9 +270,11 @@
             <span class="n">model</span><span class="o">.</span><span class="n">load_model_state</span><span class="p">(</span><span class="n">checkpoint_tag</span><span class="o">=</span><span class="n">checkpoint_tag</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">model_state_fpath</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_model_state_fpath</span><span class="p">(</span><span class="n">checkpoint_tag</span><span class="o">=</span><span class="n">checkpoint_tag</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;model_state_fpath = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">model_state_fpath</span><span class="p">,))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;model_state_fpath = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">model_state_fpath</span><span class="p">,))</span>
             <span class="n">ut</span><span class="o">.</span><span class="n">checkpath</span><span class="p">(</span><span class="n">model_state_fpath</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Known checkpoints are: &#39;</span> <span class="o">+</span> <span class="n">ut</span><span class="o">.</span><span class="n">repr3</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">list_saved_checkpoints</span><span class="p">()))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s1">&#39;Known checkpoints are: &#39;</span> <span class="o">+</span> <span class="n">ut</span><span class="o">.</span><span class="n">repr3</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">list_saved_checkpoints</span><span class="p">())</span>
+            <span class="p">)</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="p">(</span><span class="s1">&#39;Unresolved weight init: &#39;</span> <span class="s1">&#39;checkpoint_tag=</span><span class="si">%r</span><span class="s1">, extern_ds_tag=</span><span class="si">%r</span><span class="s1">&#39;</span><span class="p">)</span>
                 <span class="o">%</span> <span class="p">(</span>
@@ -245,8 +283,8 @@
                 <span class="p">)</span>
             <span class="p">)</span>
 
-    <span class="c1"># print(&#39;Model State:&#39;)</span>
-    <span class="c1"># print(model.get_state_str())</span>
+    <span class="c1"># logger.info(&#39;Model State:&#39;)</span>
+    <span class="c1"># logger.info(model.get_state_str())</span>
     <span class="c1"># ----------------------------</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">model</span><span class="o">.</span><span class="n">is_train_state_initialized</span><span class="p">():</span>
         <span class="n">ut</span><span class="o">.</span><span class="n">colorprint</span><span class="p">(</span><span class="s1">&#39;[netrun] Need to initialize training state&#39;</span><span class="p">,</span> <span class="s1">&#39;yellow&#39;</span><span class="p">)</span>
@@ -295,7 +333,7 @@
         <span class="p">)</span>
         <span class="n">ut</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">get_model_state_fpath</span><span class="p">(),</span> <span class="n">published_model_state</span><span class="p">)</span>
         <span class="n">ut</span><span class="o">.</span><span class="n">view_directory</span><span class="p">(</span><span class="n">publish_dpath</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s1">&#39;You need to get the dropbox link and &#39;</span>
             <span class="s1">&#39;register it into the appropriate file&#39;</span>
         <span class="p">)</span>
@@ -399,8 +437,8 @@
 <span class="sd">        http://stackoverflow.com/questions/18492273/combining-hdf5-files</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # ENABLE_DOCTEST</span>
-<span class="sd">        &gt;&gt;&gt; from wbia_cnn.train import *  # NOQA</span>
+<span class="sd">        &gt;&gt;&gt; # DISABLE_DOCTEST</span>
+<span class="sd">        &gt;&gt;&gt; from wbia_cnn.netrun import *  # NOQA</span>
 <span class="sd">        &gt;&gt;&gt; ds_alias_list = ut.get_argval(&#39;--alias-list&#39;, type_=list, default=[])</span>
 <span class="sd">        &gt;&gt;&gt; result = merge_ds_tags(ds_alias_list)</span>
 <span class="sd">        &gt;&gt;&gt; print(result)</span>
@@ -408,16 +446,16 @@
     <span class="n">ds_tag_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">DS_TAG_ALIAS2</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ds_tag</span><span class="p">,</span> <span class="n">ds_tag</span><span class="p">)</span> <span class="k">for</span> <span class="n">ds_tag</span> <span class="ow">in</span> <span class="n">ds_alias_list</span><span class="p">]</span>
     <span class="n">dataset_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">ingest_data</span><span class="o">.</span><span class="n">grab_siam_dataset</span><span class="p">(</span><span class="n">ds_tag</span><span class="p">)</span> <span class="k">for</span> <span class="n">ds_tag</span> <span class="ow">in</span> <span class="n">ds_tag_list</span><span class="p">]</span>
     <span class="n">merged_dataset</span> <span class="o">=</span> <span class="n">ingest_data</span><span class="o">.</span><span class="n">merge_datasets</span><span class="p">(</span><span class="n">dataset_list</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">merged_dataset</span><span class="o">.</span><span class="n">alias_key</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">merged_dataset</span><span class="o">.</span><span class="n">alias_key</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">merged_dataset</span></div>
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    CommandLine:</span>
-<span class="sd">        python -m wbia_cnn.train</span>
-<span class="sd">        python -m wbia_cnn.train --allexamples</span>
-<span class="sd">        python -m wbia_cnn.train --allexamples --noface --nosrc</span>
+<span class="sd">        python -m wbia_cnn.netrun</span>
+<span class="sd">        python -m wbia_cnn.netrun --allexamples</span>
+<span class="sd">        python -m wbia_cnn.netrun --allexamples --noface --nosrc</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># train_pz()</span>
     <span class="kn">import</span> <span class="nn">multiprocessing</span>
@@ -432,71 +470,31 @@
     <span class="n">ut</span><span class="o">.</span><span class="n">doctest_funcs</span><span class="p">()</span>
 </pre></div>
 
+           </div>
           </div>
-          
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Wild Me.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../index.html">wbia-cnn</a></h1>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
 
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../wbia_cnn.html">wbia_cnn package</a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../index.html">Documentation overview</a><ul>
-  <li><a href="../index.html">Module code</a><ul>
-  <li><a href="../wbia_cnn.html">wbia_cnn</a><ul>
-  </ul></li>
-  </ul></li>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2020, Wild Me.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-    </div>
-
-    
-
-    
-  </body>
+</body>
 </html>

@@ -23,13 +23,13 @@ class PretrainedNetwork(object):
         python -m wbia_cnn --tf PretrainedNetwork:0
         python -m wbia_cnn --tf PretrainedNetwork:1
 
-    Example0:
+    Example:
         >>> # DISABLE_DOCTEST
         >>> from wbia_cnn.models import *  # NOQA
         >>> self = PretrainedNetwork('caffenet', show_network=True)
         >>> print('done')
 
-    Example1:
+    Example:
         >>> # DISABLE_DOCTEST
         >>> from wbia_cnn.models import *  # NOQA
         >>> self = PretrainedNetwork('vggnet', show_network=True)

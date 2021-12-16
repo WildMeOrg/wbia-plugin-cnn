@@ -302,7 +302,7 @@ class L2NormalizeLayer(layers.Layer):
         CommandLine:
             python -m wbia_cnn.custom_layers --test-L2NormalizeLayer.get_output_for
 
-        Example0:
+        Example:
             >>> # ENABLE_DOCTEST
             >>> from wbia_cnn.custom_layers import *  # NOQA
             >>> # l2 normalization on batches of vector encodings
@@ -323,7 +323,7 @@ class L2NormalizeLayer(layers.Layer):
             >>> print(output_T)
             >>> assert np.all(np.isclose(output_T, output_np)), 'theano and numpy diagree'
 
-        Example1:
+        Example:
             >>> # ENABLE_DOCTEST
             >>> from wbia_cnn.custom_layers import *  # NOQA
             >>> # l2 normalization on batches of image filters
@@ -436,7 +436,7 @@ class SiameseConcatLayer(layers.Layer):
         CommandLine:
             python -m wbia_cnn.custom_layers --test-get_output_shape_for
 
-        Example0:
+        Example:
             >>> # ENABLE_DOCTEST
             >>> from wbia_cnn.custom_layers import *  # NOQA
             >>> input_layer = testdata_input_layer(item_shape=(3, 8, 16))
@@ -448,7 +448,7 @@ class SiameseConcatLayer(layers.Layer):
             [(64, 6, 8, 16), (64, 3, 16, 16), (64, 3, 8, 32)]
             [(64, 6, 8, 16), (64, 3, 16, 16), (64, 3, 8, 32)]
 
-        Example1:
+        Example:
             >>> # ENABLE_DOCTEST
             >>> from wbia_cnn.custom_layers import *  # NOQA
             >>> input_layer = testdata_input_layer(item_shape=(1024,))
@@ -479,7 +479,7 @@ class SiameseConcatLayer(layers.Layer):
         CommandLine:
             python -m wbia_cnn.custom_layers --test-SiameseConcatLayer.get_output_for:1 --show
 
-        Example0:
+        Example:
             >>> # ENABLE_DOCTEST
             >>> from wbia_cnn.custom_layers import *  # NOQA
             >>> input_shape = (128, 1024)
@@ -495,7 +495,7 @@ class SiameseConcatLayer(layers.Layer):
             >>> assert target_shape == result
             (64, 2048)
 
-        Example1:
+        Example:
             >>> # DISABLE_DOCTEST
             >>> from wbia_cnn.custom_layers import *  # NOQA
             >>> from wbia_cnn import utils
@@ -569,7 +569,7 @@ class CenterSurroundLayer(layers.Layer):
             python -m wbia_cnn.custom_layers --test-CenterSurroundLayer.get_output_for:0 --show
             python -m wbia_cnn.custom_layers --test-CenterSurroundLayer.get_output_for:1 --show
 
-        Example0:
+        Example:
             >>> # DISABLE_DOCTEST
             >>> from wbia_cnn.custom_layers import *  # NOQA
             >>> import theano
@@ -583,7 +583,7 @@ class CenterSurroundLayer(layers.Layer):
             >>> img_list = utils.convert_theano_images_to_cv2_images(output_T)
             >>> interact_image_list(img_list, num_per_page=8)
 
-        Example1:
+        Example:
             >>> # DISABLE_DOCTEST
             >>> from wbia_cnn.custom_layers import *  # NOQA
             >>> import numpy as np
@@ -777,13 +777,14 @@ class FlipLayer(layers.Layer):
 
 def load_json_arch_def(arch_json_fpath):
     """
-    layer_list = layers.get_all_layers(output_layer)
-
-    from wbia_cnn import net_strs
-    layer_json_list = [net_strs.make_layer_json_dict(layer)
-                       for layer in layer_list]
-
-    arch_json_fpath = '/media/raid/work/WS_ALL/_ibsdb/_ibeis_cache/nets/injur-shark_10056_224x224x3_auqbfhle/models/arch_injur-shark_o2_d11_c688_acioqbst/saved_sessions/fit_session_2016-08-26T173854+5/fit_arch_info.json'
+    Ignore:
+        >>> layer_list = layers.get_all_layers(output_layer)
+        >>>
+        >>> from wbia_cnn import net_strs
+        >>> layer_json_list = [net_strs.make_layer_json_dict(layer)
+        >>>                    for layer in layer_list]
+        >>>
+        >>> arch_json_fpath = '/media/raid/work/WS_ALL/_ibsdb/_ibeis_cache/nets/injur-shark_10056_224x224x3_auqbfhle/models/arch_injur-shark_o2_d11_c688_acioqbst/saved_sessions/fit_session_2016-08-26T173854+5/fit_arch_info.json'
     """
     from wbia_cnn import custom_layers
     import layers.dnn

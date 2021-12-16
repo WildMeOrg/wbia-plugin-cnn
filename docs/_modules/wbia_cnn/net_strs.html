@@ -1,45 +1,82 @@
-
 <!DOCTYPE html>
-
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>wbia_cnn.net_strs &#8212; wbia-cnn 3.3.0 documentation</title>
-    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
-    <script src="../../_static/language_data.js"></script>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>wbia_cnn.net_strs &mdash; wbia-cnn 4.0.1.dev0+dirty documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" />
-   
-  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
 
-  </head><body>
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> wbia-cnn
+          </a>
+              <div class="version">
+                4.0.1.dev0+dirty
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../wbia_cnn.html">wbia_cnn package</a></li>
+</ul>
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          
+        </div>
+      </div>
+    </nav>
 
-          <div class="body" role="main">
-            
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">wbia-cnn</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+          <li><a href="../wbia_cnn.html">wbia_cnn</a> &raquo;</li>
+      <li>wbia_cnn.net_strs</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
   <h1>Source code for wbia_cnn.net_strs</h1><div class="highlight"><pre>
 <span></span><span class="c1"># -*- coding: utf-8 -*-</span>
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">unicode_literals</span>
+<span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">import</span> <span class="nn">six</span>
 <span class="kn">import</span> <span class="nn">functools</span>
 <span class="kn">import</span> <span class="nn">utool</span> <span class="k">as</span> <span class="nn">ut</span>
 
 <span class="nb">print</span><span class="p">,</span> <span class="n">rrr</span><span class="p">,</span> <span class="n">profile</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">inject2</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span>
 
 
 <div class="viewcode-block" id="make_layer_str"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.net_strs.make_layer_str">[docs]</a><span class="k">def</span> <span class="nf">make_layer_str</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">with_name</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
@@ -148,10 +185,10 @@
 <span class="sd">        pretrained_weights (list of ndarrays): represents layer weights</span>
 <span class="sd">        lbl (str): label</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Initialization network: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">lbl</span><span class="p">))</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Total memory: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">get_object_size_str</span><span class="p">(</span><span class="n">pretrained_weights</span><span class="p">)))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Initialization network: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">lbl</span><span class="p">))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Total memory: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">get_object_size_str</span><span class="p">(</span><span class="n">pretrained_weights</span><span class="p">)))</span>
     <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">layer_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">pretrained_weights</span><span class="p">):</span>
-        <span class="nb">print</span><span class="p">(</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s1">&#39; layer </span><span class="si">{:2}</span><span class="s1">: shape=</span><span class="si">{:&lt;18}</span><span class="s1">, memory=</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                 <span class="n">index</span><span class="p">,</span> <span class="n">layer_</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">ut</span><span class="o">.</span><span class="n">get_object_size_str</span><span class="p">(</span><span class="n">layer_</span><span class="p">)</span>
             <span class="p">)</span>
@@ -159,13 +196,13 @@
 
 
 <div class="viewcode-block" id="count_bytes"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.net_strs.count_bytes">[docs]</a><span class="k">def</span> <span class="nf">count_bytes</span><span class="p">(</span><span class="n">output_layer</span><span class="p">):</span>
-    <span class="kn">from</span> <span class="nn">Lasagne</span> <span class="kn">import</span> <span class="n">lasagne</span>
+    <span class="kn">import</span> <span class="nn">lasagne</span>
 
     <span class="n">layers</span> <span class="o">=</span> <span class="n">lasagne</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">get_all_layers</span><span class="p">(</span><span class="n">output_layer</span><span class="p">)</span>
     <span class="n">info_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">get_layer_info</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span> <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">layers</span><span class="p">]</span>
     <span class="n">total_bytes</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;total_bytes&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">info</span> <span class="ow">in</span> <span class="n">info_list</span><span class="p">])</span>
-    <span class="c1"># print(&#39;total_bytes = %s&#39; % (ut.byte_str2(total_bytes),))</span>
-    <span class="c1"># print(ut.repr2(info_list, nl=2, hack_liststr=True))</span>
+    <span class="c1"># logger.info(&#39;total_bytes = %s&#39; % (ut.byte_str2(total_bytes),))</span>
+    <span class="c1"># logger.info(ut.repr2(info_list, nl=2, hack_liststr=True))</span>
     <span class="k">return</span> <span class="n">total_bytes</span></div>
 
 
@@ -213,7 +250,7 @@
 <span class="sd">        &gt;&gt;&gt; # DISABLE_DOCTEST</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn.net_strs import *  # NOQA</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn import models</span>
-<span class="sd">        &gt;&gt;&gt; model = models.mnist.MNISTModel(batch_size=8, data_shape=(24, 24, 1), output_dims=10)</span>
+<span class="sd">        &gt;&gt;&gt; model = models.mnist.MNISTModel(batch_size=8, data_shape=(28, 28, 1), output_dims=10)</span>
 <span class="sd">        &gt;&gt;&gt; model.init_arch()</span>
 <span class="sd">        &gt;&gt;&gt; nn_layers = model.get_all_layers()</span>
 <span class="sd">        &gt;&gt;&gt; for layer in nn_layers:</span>
@@ -221,7 +258,7 @@
 <span class="sd">        &gt;&gt;&gt;     print(ut.repr3(layer_info, nl=1))</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">import</span> <span class="nn">operator</span>
-    <span class="kn">from</span> <span class="nn">Lasagne</span> <span class="kn">import</span> <span class="n">lasagne</span>
+    <span class="kn">import</span> <span class="nn">lasagne</span>
 
     <span class="c1"># Information that contributes to RAM usage</span>
     <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -277,7 +314,7 @@
             <span class="k">return</span> <span class="n">spec</span>
 
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="s1">&#39;_initializers&#39;</span><span class="p">):</span>
-            <span class="c1"># print(&#39;layer = %r&#39; % (layer,))</span>
+            <span class="c1"># logger.info(&#39;layer = %r&#39; % (layer,))</span>
             <span class="n">initclass</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="n">_initializers</span><span class="p">[</span><span class="n">param</span><span class="p">]</span>
             <span class="n">spec</span> <span class="o">=</span> <span class="n">initializer_info</span><span class="p">(</span><span class="n">initclass</span><span class="p">)</span>
             <span class="n">param_info</span><span class="p">[</span><span class="s1">&#39;init&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">spec</span>
@@ -388,10 +425,10 @@
     <span class="c1">#    ut.embed()</span>
     <span class="n">DEBUG</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="k">if</span> <span class="n">DEBUG</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">missing_keys</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;---&#39;</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39; * &#39;</span> <span class="o">+</span> <span class="n">classname</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39; * missing keys: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">missing_keys</span><span class="p">,))</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39; * has keys: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">attr_key_list</span><span class="p">,))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;---&#39;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39; * &#39;</span> <span class="o">+</span> <span class="n">classname</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39; * missing keys: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">missing_keys</span><span class="p">,))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39; * has keys: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">attr_key_list</span><span class="p">,))</span>
         <span class="k">if</span> <span class="kc">True</span><span class="p">:</span>
             <span class="c1"># import utool</span>
             <span class="c1"># with utool.embed_on_exception_context:</span>
@@ -459,7 +496,7 @@
 <span class="sd">        &gt;&gt;&gt; # DISABLE_DOCTEST</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn.net_strs import *  # NOQA</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn import models</span>
-<span class="sd">        &gt;&gt;&gt; model = models.DummyModel(data_shape=(24, 24, 3), autoinit=True)</span>
+<span class="sd">        &gt;&gt;&gt; model = models.DummyModel(data_shape=(28, 28, 3), autoinit=True)</span>
 <span class="sd">        &gt;&gt;&gt; output_layer = model.output_layer</span>
 <span class="sd">        &gt;&gt;&gt; result = get_layer_info_str(output_layer)</span>
 <span class="sd">        &gt;&gt;&gt; result = &#39;\n&#39;.join([x.rstrip() for x in result.split(&#39;\n&#39;)])</span>
@@ -479,14 +516,14 @@
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn.net_strs import *  # NOQA</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn import models</span>
 <span class="sd">        &gt;&gt;&gt; model = models.mnist.MNISTModel(batch_size=128, output_dims=10,</span>
-<span class="sd">        &gt;&gt;&gt;                                 data_shape=(24, 24, 3))</span>
+<span class="sd">        &gt;&gt;&gt;                                 data_shape=(28, 28, 3))</span>
 <span class="sd">        &gt;&gt;&gt; model.init_arch()</span>
 <span class="sd">        &gt;&gt;&gt; output_layer = model.output_layer</span>
 <span class="sd">        &gt;&gt;&gt; result = get_layer_info_str(output_layer)</span>
 <span class="sd">        &gt;&gt;&gt; result = &#39;\n&#39;.join([x.rstrip() for x in result.split(&#39;\n&#39;)])</span>
 <span class="sd">        &gt;&gt;&gt; print(result)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">from</span> <span class="nn">Lasagne</span> <span class="kn">import</span> <span class="n">lasagne</span>
+    <span class="kn">import</span> <span class="nn">lasagne</span>
 
     <span class="n">info_lines</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">_print</span> <span class="o">=</span> <span class="n">info_lines</span><span class="o">.</span><span class="n">append</span>
@@ -570,7 +607,7 @@
                 <span class="n">str_</span> <span class="o">=</span> <span class="n">fmtstr</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">*</span><span class="n">row</span><span class="p">)</span>
                 <span class="n">_print</span><span class="p">(</span><span class="n">str_</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
                     <span class="s1">&#39;Error printing </span><span class="si">%r</span><span class="s1"> with args </span><span class="si">%r</span><span class="s1">&#39;</span>
                     <span class="o">%</span> <span class="p">(</span>
                         <span class="n">fmtstr</span><span class="p">,</span>
@@ -601,7 +638,7 @@
 <div class="viewcode-block" id="print_layer_info"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.net_strs.print_layer_info">[docs]</a><span class="k">def</span> <span class="nf">print_layer_info</span><span class="p">(</span><span class="n">output_layer</span><span class="p">):</span>
     <span class="n">str_</span> <span class="o">=</span> <span class="n">get_layer_info_str</span><span class="p">(</span><span class="n">output_layer</span><span class="p">)</span>
     <span class="n">str_</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">indent</span><span class="p">(</span><span class="s1">&#39;[info] &#39;</span> <span class="o">+</span> <span class="n">str_</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">str_</span><span class="p">)</span></div>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">str_</span><span class="p">)</span></div>
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
@@ -619,71 +656,31 @@
     <span class="n">ut</span><span class="o">.</span><span class="n">doctest_funcs</span><span class="p">()</span>
 </pre></div>
 
+           </div>
           </div>
-          
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Wild Me.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../index.html">wbia-cnn</a></h1>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
 
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../wbia_cnn.html">wbia_cnn package</a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../index.html">Documentation overview</a><ul>
-  <li><a href="../index.html">Module code</a><ul>
-  <li><a href="../wbia_cnn.html">wbia_cnn</a><ul>
-  </ul></li>
-  </ul></li>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2020, Wild Me.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-    </div>
-
-    
-
-    
-  </body>
+</body>
 </html>

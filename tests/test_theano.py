@@ -9,7 +9,7 @@ python `python -c "import os, theano; print os.path.dirname(theano.__file__)"`/m
 import logging
 import theano
 
-# from theano import function, config, shared, sandbox
+# from theano import function, config, shared
 import theano.tensor as T
 import numpy
 import time

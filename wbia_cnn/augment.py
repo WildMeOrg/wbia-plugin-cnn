@@ -299,10 +299,10 @@ def stacked_img_pairs(Xb, modified_indexes, label_list=None, num=None):
 
 
 def show_augmented_patches(Xb, Xb_, yb, yb_, data_per_label=1, shadows=None):
-    """
+    r"""
     from wbia_cnn.augment import *  # NOQA
-    std_ = center_std
-    mean_ = center_mean
+    std\_ = center_std
+    mean\_ = center_mean
     """
     from wbia import plottool as pt
     import vtool as vt

@@ -1,43 +1,80 @@
-
 <!DOCTYPE html>
-
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>wbia_cnn._plugin_grabmodels &#8212; wbia-cnn 3.3.0 documentation</title>
-    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
-    <script src="../../_static/language_data.js"></script>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>wbia_cnn._plugin_grabmodels &mdash; wbia-cnn 4.0.1.dev0+dirty documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" />
-   
-  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
 
-  </head><body>
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> wbia-cnn
+          </a>
+              <div class="version">
+                4.0.1.dev0+dirty
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../wbia_cnn.html">wbia_cnn package</a></li>
+</ul>
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          
+        </div>
+      </div>
+    </nav>
 
-          <div class="body" role="main">
-            
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">wbia-cnn</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+          <li><a href="../wbia_cnn.html">wbia_cnn</a> &raquo;</li>
+      <li>wbia_cnn._plugin_grabmodels</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
   <h1>Source code for wbia_cnn._plugin_grabmodels</h1><div class="highlight"><pre>
 <span></span><span class="c1"># -*- coding: utf-8 -*-</span>
 <span class="c1"># -*- coding                                        :utf-8 -*-</span>
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span>
+<span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">utool</span> <span class="k">as</span> <span class="nn">ut</span>
 
 <span class="p">(</span><span class="nb">print</span><span class="p">,</span> <span class="n">rrr</span><span class="p">,</span> <span class="n">profile</span><span class="p">)</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">inject2</span><span class="p">(</span><span class="vm">__name__</span><span class="p">,</span> <span class="s1">&#39;[wbia_cnn._plugin_grabmodels]&#39;</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span>
 
 
 <span class="c1"># DEFAULT_CNNMODELS_DIR = ut.get_app_resource_dir(&#39;wbia_cnn&#39;, &#39;pretrained&#39;)</span>
@@ -82,11 +119,14 @@
     <span class="s1">&#39;background_lynx_v3&#39;</span><span class="p">:</span> <span class="s1">&#39;background.lynx.v3.pkl&#39;</span><span class="p">,</span>
     <span class="s1">&#39;background_cheetah_v0&#39;</span><span class="p">:</span> <span class="s1">&#39;background.cheetah.v0.pkl&#39;</span><span class="p">,</span>
     <span class="s1">&#39;background_cheetah_v1&#39;</span><span class="p">:</span> <span class="s1">&#39;background.cheetah.v1.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_cheetah_v2&#39;</span><span class="p">:</span> <span class="s1">&#39;background.cheetah.v2.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_hyaena_v0&#39;</span><span class="p">:</span> <span class="s1">&#39;background.hyaena.v0.pkl&#39;</span><span class="p">,</span>
     <span class="s1">&#39;background_jaguar_v1&#39;</span><span class="p">:</span> <span class="s1">&#39;background.jaguar.v1.pkl&#39;</span><span class="p">,</span>
     <span class="s1">&#39;background_jaguar_v2&#39;</span><span class="p">:</span> <span class="s1">&#39;background.jaguar.v2.pkl&#39;</span><span class="p">,</span>
     <span class="s1">&#39;background_manta&#39;</span><span class="p">:</span> <span class="s1">&#39;background.manta_ray_giant.pkl&#39;</span><span class="p">,</span>
     <span class="s1">&#39;background_right_whale_head_v0&#39;</span><span class="p">:</span> <span class="s1">&#39;background.right_whale_head.v0.pkl&#39;</span><span class="p">,</span>
     <span class="s1">&#39;background_orca_v0&#39;</span><span class="p">:</span> <span class="s1">&#39;background.whale_orca.v0.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_whale_sperm_v0&#39;</span><span class="p">:</span> <span class="s1">&#39;background.whale_sperm.v0.pkl&#39;</span><span class="p">,</span>
     <span class="s1">&#39;background_skunk_spotted_v0&#39;</span><span class="p">:</span> <span class="s1">&#39;background.skunk_spotted.v0.pkl&#39;</span><span class="p">,</span>
     <span class="s1">&#39;background_skunk_spotted_v1&#39;</span><span class="p">:</span> <span class="s1">&#39;background.skunk_spotted.v1.pkl&#39;</span><span class="p">,</span>
     <span class="s1">&#39;background_dolphin_spotted&#39;</span><span class="p">:</span> <span class="s1">&#39;background.dolphin_spotted.pkl&#39;</span><span class="p">,</span>
@@ -110,6 +150,16 @@
     <span class="s1">&#39;background_iot_v0&#39;</span><span class="p">:</span> <span class="s1">&#39;background.iot.v0.pkl&#39;</span><span class="p">,</span>
     <span class="s1">&#39;background_wilddog_v0&#39;</span><span class="p">:</span> <span class="s1">&#39;background.wild_dog.v0.pkl&#39;</span><span class="p">,</span>
     <span class="s1">&#39;background_leopard_v0&#39;</span><span class="p">:</span> <span class="s1">&#39;background.leopard.v0.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_snow_leopard_v0&#39;</span><span class="p">:</span> <span class="s1">&#39;background.snow_leopard.v0.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_whale_grey_v0&#39;</span><span class="p">:</span> <span class="s1">&#39;background.whale_grey.v0.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_whale_beluga_v0&#39;</span><span class="p">:</span> <span class="s1">&#39;background.whale_beluga.v0.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_seals_v0&#39;</span><span class="p">:</span> <span class="s1">&#39;background.seals.v0.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_grouper_nassau_v0&#39;</span><span class="p">:</span> <span class="s1">&#39;background.grouper_nassau.v0.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_sea_turtle_v4&#39;</span><span class="p">:</span> <span class="s1">&#39;background.sea_turtle.v4.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_spotted_eagle_ray_v0&#39;</span><span class="p">:</span> <span class="s1">&#39;background.spotted_eagle_ray.v0.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;background_yellow_bellied_toad_v0&#39;</span><span class="p">:</span> <span class="s1">&#39;background.yellow_bellied_toad.v0.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;salanader_fire_v0&#39;</span><span class="p">:</span> <span class="s1">&#39;background.salanader_fire.v0.pkl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;salanader_fire_adult_v0&#39;</span><span class="p">:</span> <span class="s1">&#39;background.salanader_fire_adult.v0.pkl&#39;</span><span class="p">,</span>
     <span class="s1">&#39;aoi2_candidacy&#39;</span><span class="p">:</span> <span class="s1">&#39;aoi2.candidacy.pkl&#39;</span><span class="p">,</span>
     <span class="s1">&#39;aoi2_ggr2&#39;</span><span class="p">:</span> <span class="s1">&#39;aoi2.ggr2.pkl&#39;</span><span class="p">,</span>
     <span class="s1">&#39;aoi2_hammerhead&#39;</span><span class="p">:</span> <span class="s1">&#39;aoi2.shark_hammerhead.pkl&#39;</span><span class="p">,</span>
@@ -152,71 +202,31 @@
     <span class="n">ut</span><span class="o">.</span><span class="n">doctest_funcs</span><span class="p">()</span>
 </pre></div>
 
+           </div>
           </div>
-          
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Wild Me.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../index.html">wbia-cnn</a></h1>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
 
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../wbia_cnn.html">wbia_cnn package</a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../index.html">Documentation overview</a><ul>
-  <li><a href="../index.html">Module code</a><ul>
-  <li><a href="../wbia_cnn.html">wbia_cnn</a><ul>
-  </ul></li>
-  </ul></li>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2020, Wild Me.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-    </div>
-
-    
-
-    
-  </body>
+</body>
 </html>

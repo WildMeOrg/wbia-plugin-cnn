@@ -100,7 +100,7 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
         python -m wbia_cnn.draw_net show_arch_nx_graph:0 --show
         python -m wbia_cnn.draw_net show_arch_nx_graph:1 --show
 
-    Example0:
+    Example:
         >>> # ENABLE_DOCTEST
         >>> from wbia_cnn.draw_net import *  # NOQA
         >>> from wbia_cnn import models
@@ -113,7 +113,7 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
         >>> from wbia import plottool as pt
         >>> ut.show_if_requested()
 
-    Example1:
+    Example:
         >>> # ENABLE_DOCTEST
         >>> from wbia_cnn.draw_net import *  # NOQA
         >>> from wbia_cnn import models
@@ -353,17 +353,17 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
         # Main nodes only place constraints on nodes in the next main group.
         # Not their own
         next_main = None
-        G.node[n1]['group'] = n1
+        G.nodes[n1]['group'] = n1
         for (_, n2) in nx.bfs_edges(G, n1):
             if next_main is None:
                 if n2 in main_nodes:
                     next_main = n2
                 else:
-                    G.node[n2]['group'] = n1
+                    G.nodes[n2]['group'] = n1
                     main_children[n1].append(n2)
             else:
                 if n2 not in list(nx.descendants(G, next_main)):
-                    G.node[n2]['group'] = n1
+                    G.nodes[n2]['group'] = n1
                     main_children[n1].append(n2)
 
     # Custom positioning
@@ -381,27 +381,27 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
     for n1 in main_nodes:
         cumheight = 0
 
-        maxwidth = G.node[n1]['width']
+        maxwidth = G.nodes[n1]['width']
         for n2 in main_children[n1]:
-            maxwidth = max(maxwidth, G.node[n2]['width'])
+            maxwidth = max(maxwidth, G.nodes[n2]['width'])
 
         cumwidth += xpad
         cumwidth += maxwidth / 2
 
         pos = np.array([x + cumwidth, y - cumheight])
-        G.node[n1]['pos'] = pos
-        G.node[n1]['pin'] = 'true'
+        G.nodes[n1]['pos'] = pos
+        G.nodes[n1]['pin'] = 'true'
 
-        height = G.node[n1]['height']
+        height = G.nodes[n1]['height']
         cumheight += height / 2
 
         for n2 in main_children[n1]:
-            height = G.node[n2]['height']
+            height = G.nodes[n2]['height']
             cumheight += ypad
             cumheight += height / 2
             pos = np.array([x + cumwidth, y - cumheight])
-            G.node[n2]['pos'] = pos
-            G.node[n2]['pin'] = 'true'
+            G.nodes[n2]['pos'] = pos
+            G.nodes[n2]['pin'] = 'true'
             cumheight += height / 2
 
         cumwidth += maxwidth / 2
@@ -423,7 +423,7 @@ def show_arch_nx_graph(layers, fnum=None, fullinfo=True):
         layout_info = pt.nx_agraph_layout(G_, inplace=True, **layoutkw)  # NOQA
     # reset labels
     if not nolayout:
-        nx.set_node_attributes(G_, 'label', _labels)
+        nx.set_node_attributes(G_, _labels, 'label')
     _ = pt.show_nx(G_, fontsize=8, arrow_width=0.3, layout='custom', fnum=fnum)  # NOQA
     # pt.adjust_subplots(top=1, bot=0, left=0, right=1)
     pt.plt.tight_layout()
@@ -521,39 +521,42 @@ def pydot_to_image(pydot_graph):
 
 
 def occlusion_heatmap(net, x, target, square_length=7):
-    """An occlusion test that checks an image for its critical parts.
+    """
+    An occlusion test that checks an image for its critical parts.
     In this function, a square part of the image is occluded (i.e. set
     to 0) and then the net is tested for its propensity to predict the
     correct label. One should expect that this propensity shrinks of
     critical parts of the image are occluded. If not, this indicates
     overfitting.
+
     Depending on the depth of the net and the size of the image, this
     function may take awhile to finish, since one prediction for each
     pixel of the image is made.
     Currently, all color channels are occluded at the same time. Also,
     this does not really work if images are randomly distorted by the
     batch iterator.
+
     See paper: Zeiler, Fergus 2013
-    Parameters
-    ----------
-    net : NeuralNet instance
-      The neural net to test.
-    x : np.array
-      The input data, should be of shape (1, c, x, y). Only makes
-      sense with image data.
-    target : int
-      The true value of the image. If the net makes several
-      predictions, say 10 classes, this indicates which one to look
-      at.
-    square_length : int (default=7)
-      The length of the side of the square that occludes the image.
-      Must be an odd number.
-    Results
-    -------
-    heat_array : np.array (with same size as image)
-      An 2D np.array that at each point (i, j) contains the predicted
-      probability of the correct class if the image is occluded by a
-      square with center (i, j).
+
+    Parameters:
+        net : NeuralNet instance
+        The neural net to test.
+        x : np.array
+        The input data, should be of shape (1, c, x, y). Only makes
+        sense with image data.
+        target : int
+        The true value of the image. If the net makes several
+        predictions, say 10 classes, this indicates which one to look
+        at.
+        square_length : int (default=7)
+        The length of the side of the square that occludes the image.
+        Must be an odd number.
+
+    Results:
+        heat_array : np.array (with same size as image)
+        An 2D np.array that at each point (i, j) contains the predicted
+        probability of the correct class if the image is occluded by a
+        square with center (i, j).
     """
     from lasagne.layers import get_output_shape
 
@@ -629,30 +632,28 @@ def _plot_heat_map(net, Xb, figsize, get_heat_image):
 
 
 def plot_occlusion(net, Xb, target, square_length=7, figsize=(9, None)):
-    """Plot which parts of an image are particularly import for the
+    """
+    Plot which parts of an image are particularly import for the
     net to classify the image correctly.
+
     See paper: Zeiler, Fergus 2013
-    Parameters
-    ----------
-    net : NeuralNet instance
-      The neural net to test.
-    Xb : numpy.array
-      The input data, should be of shape (b, c, 0, 1). Only makes
-      sense with image data.
-    target : list or numpy.array of ints
-      The true values of the image. If the net makes several
-      predictions, say 10 classes, this indicates which one to look
-      at. If more than one sample is passed to Xb, each of them needs
-      its own target.
-    square_length : int (default=7)
-      The length of the side of the square that occludes the image.
-      Must be an odd number.
-    figsize : tuple (int, int)
-      Size of the figure.
-    Plots
-    -----
-    Figure with 3 subplots: the original image, the occlusion heatmap,
-    and both images super-imposed.
+
+    Parameters:
+        net : NeuralNet instance
+        The neural net to test.
+        Xb : numpy.array
+        The input data, should be of shape (b, c, 0, 1). Only makes
+        sense with image data.
+        target : list or numpy.array of ints
+        The true values of the image. If the net makes several
+        predictions, say 10 classes, this indicates which one to look
+        at. If more than one sample is passed to Xb, each of them needs
+        its own target.
+        square_length : int (default=7)
+        The length of the side of the square that occludes the image.
+        Must be an odd number.
+        figsize : tuple (int, int)
+        Size of the figure.
     """
     return _plot_heat_map(
         net,
@@ -963,30 +964,31 @@ class Dream(object):
 
     def generate_class_images(dream, target_labels):
         """
-        from wbia import plottool as pt
-        fnum = None
-        kw = dict(init='gauss', niters=500, update_rate=.05, weight_decay=1e-4)
-        target_labels = list(range(model.output_dims))
-        dream = draw_net.Dream(model, **kw)
-        target_labels = 8
-        images = list(dream.generate_class_images(target_labels))
-
-        vid = vt.make_video(images, 'dynimg.pimj', fps=1, is_color=False, format='PIM1')
-        vid = vt.make_video2(images, 'dynimg')
-
-        import matplotlib.pyplot as plt
-        ims = []
-        for img in imgs:
-            im = plt.imshow(img[:, :, 0], interpolation='nearest', cmap='gray')
-            ims.append([im])
-
-        import matplotlib.animation as animation
-        fig = plt.figure()
-        ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True,
-                                        repeat_delay=1000)
-        ani.save('dynamic_images.mp4')
-        ut.startfile('dynamic_images.mp4')
-        plt.show()
+        Ignore:
+            >>> from wbia import plottool as pt
+            >>> fnum = None
+            >>> kw = dict(init='gauss', niters=500, update_rate=.05, weight_decay=1e-4)
+            >>> target_labels = list(range(model.output_dims))
+            >>> dream = draw_net.Dream(model, **kw)
+            >>> target_labels = 8
+            >>> images = list(dream.generate_class_images(target_labels))
+            >>>
+            >>> vid = vt.make_video(images, 'dynimg.pimj', fps=1, is_color=False, format='PIM1')
+            >>> vid = vt.make_video2(images, 'dynimg')
+            >>>
+            >>> import matplotlib.pyplot as plt
+            >>> ims = []
+            >>> for img in imgs:
+            >>>     im = plt.imshow(img[:, :, 0], interpolation='nearest', cmap='gray')
+            >>>     ims.append([im])
+            >>>
+            >>> import matplotlib.animation as animation
+            >>> fig = plt.figure()
+            >>> ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True,
+            >>>                                 repeat_delay=1000)
+            >>> ani.save('dynamic_images.mp4')
+            >>> ut.startfile('dynamic_images.mp4')
+            >>> plt.show()
         """
         import theano
         from theano import tensor as T  # NOQA

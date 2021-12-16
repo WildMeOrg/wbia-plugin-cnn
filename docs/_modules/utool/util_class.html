@@ -1,36 +1,71 @@
-
 <!DOCTYPE html>
-
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>utool.util_class &#8212; wbia-cnn 3.3.0 documentation</title>
-    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
-    <script src="../../_static/language_data.js"></script>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>utool.util_class &mdash; wbia-cnn 4.0.1.dev0+dirty documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" />
-   
-  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
 
-  </head><body>
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> wbia-cnn
+          </a>
+              <div class="version">
+                4.0.1.dev0+dirty
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../wbia_cnn.html">wbia_cnn package</a></li>
+</ul>
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          
+        </div>
+      </div>
+    </nav>
 
-          <div class="body" role="main">
-            
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">wbia-cnn</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      <li>utool.util_class</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
   <h1>Source code for utool.util_class</h1><div class="highlight"><pre>
 <span></span><span class="c1"># -*- coding: utf-8 -*-</span>
 <span class="sd">&quot;&quot;&quot;</span>
@@ -48,7 +83,11 @@
 <span class="kn">import</span> <span class="nn">six</span>
 <span class="kn">import</span> <span class="nn">types</span>
 <span class="kn">import</span> <span class="nn">functools</span>
-<span class="kn">import</span> <span class="nn">collections</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Mapping</span>  <span class="c1"># noqa</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">Mapping</span>  <span class="c1"># noqa</span>
 <span class="kn">import</span> <span class="nn">operator</span> <span class="k">as</span> <span class="nn">op</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
 <span class="kn">from</span> <span class="nn">utool</span> <span class="kn">import</span> <span class="n">util_inject</span>
@@ -143,7 +182,7 @@
         <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span>
                 <span class="s1">&#39;[util_class] injecting </span><span class="si">%d</span><span class="s1"> methods</span><span class="se">\n</span><span class="s1">   with classkey=</span><span class="si">%r</span><span class="se">\n</span><span class="s1">   into </span><span class="si">%r</span><span class="s1">&#39;</span>
-                <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">func_list</span><span class="p">),</span> <span class="n">classkey</span><span class="p">,</span> <span class="bp">self</span><span class="p">,)</span>
+                <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">func_list</span><span class="p">),</span> <span class="n">classkey</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
             <span class="p">)</span>
         <span class="k">for</span> <span class="n">func</span> <span class="ow">in</span> <span class="n">func_list</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">VERBOSE_CLASS</span><span class="p">:</span>
@@ -232,11 +271,18 @@
         <span class="n">pkgname</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
         <span class="n">modname</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">exec</span><span class="p">(</span><span class="s1">&#39;from </span><span class="si">%s</span><span class="s1"> import </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">pkgname</span><span class="p">,</span> <span class="n">modname</span><span class="p">,),</span> <span class="nb">globals</span><span class="p">(),</span> <span class="nb">locals</span><span class="p">())</span>
+            <span class="n">exec</span><span class="p">(</span>
+                <span class="s1">&#39;from </span><span class="si">%s</span><span class="s1"> import </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">pkgname</span><span class="p">,</span> <span class="n">modname</span><span class="p">),</span>
+                <span class="nb">globals</span><span class="p">(),</span>
+                <span class="nb">locals</span><span class="p">(),</span>
+            <span class="p">)</span>
             <span class="n">module</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="n">modname</span><span class="p">)</span>
             <span class="n">injected_modules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
-            <span class="n">ut</span><span class="o">.</span><span class="n">printex</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="s1">&#39;Cannot load package=</span><span class="si">%r</span><span class="s1">, module=</span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">pkgname</span><span class="p">,</span> <span class="n">modname</span><span class="p">,))</span>
+            <span class="n">ut</span><span class="o">.</span><span class="n">printex</span><span class="p">(</span>
+                <span class="n">ex</span><span class="p">,</span>
+                <span class="s1">&#39;Cannot load package=</span><span class="si">%r</span><span class="s1">, module=</span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">pkgname</span><span class="p">,</span> <span class="n">modname</span><span class="p">),</span>
+            <span class="p">)</span>
     <span class="k">return</span> <span class="n">injected_modules</span>
 
 
@@ -436,9 +482,11 @@
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">classkey</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
         <span class="n">classname</span> <span class="o">=</span> <span class="n">classkey</span><span class="o">.</span><span class="vm">__name__</span>
         <span class="k">if</span> <span class="n">modname</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="n">modname</span> <span class="o">==</span> <span class="n">classkey</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span> <span class="p">(</span>
-                <span class="s1">&#39;modname=</span><span class="si">%r</span><span class="s1"> does not agree with __module__=</span><span class="si">%r</span><span class="s1">&#39;</span>
-                <span class="o">%</span> <span class="p">(</span><span class="n">modname</span><span class="p">,</span> <span class="n">classkey</span><span class="o">.</span><span class="vm">__module__</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="p">(</span>
+                <span class="n">modname</span> <span class="o">==</span> <span class="n">classkey</span><span class="o">.</span><span class="vm">__module__</span>
+            <span class="p">),</span> <span class="s1">&#39;modname=</span><span class="si">%r</span><span class="s1"> does not agree with __module__=</span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span>
+                <span class="n">modname</span><span class="p">,</span>
+                <span class="n">classkey</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="n">modname</span> <span class="o">=</span> <span class="n">classkey</span><span class="o">.</span><span class="vm">__module__</span>
         <span class="c1"># Convert to new classkey format</span>
@@ -532,7 +580,7 @@
     <span class="n">override</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
 <span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot; Injects a function into an object as a method</span>
+    <span class="sd">&quot;&quot;&quot;Injects a function into an object as a method</span>
 
 <span class="sd">    Wraps func as a bound method of self. Then injects func into self</span>
 <span class="sd">    It is preferable to use make_class_method_decorator and inject_instance</span>
@@ -622,7 +670,7 @@
 
 
 <span class="k">def</span> <span class="nf">inject_func_as_unbound_method</span><span class="p">(</span><span class="n">class_</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">method_name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot; This is actually quite simple &quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;This is actually quite simple&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">method_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">method_name</span> <span class="o">=</span> <span class="n">get_funcname</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
     <span class="nb">setattr</span><span class="p">(</span><span class="n">class_</span><span class="p">,</span> <span class="n">method_name</span><span class="p">,</span> <span class="n">func</span><span class="p">)</span>
@@ -788,7 +836,7 @@
 
 
 <span class="k">def</span> <span class="nf">reloading_meta_metaclass_factory</span><span class="p">(</span><span class="n">BASE_TYPE</span><span class="o">=</span><span class="nb">type</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot; hack for pyqt &quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;hack for pyqt&quot;&quot;&quot;</span>
 
     <span class="k">class</span> <span class="nc">ReloadingMetaclass2</span><span class="p">(</span><span class="n">BASE_TYPE</span><span class="p">):</span>
         <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="n">metaself</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">dct</span><span class="p">):</span>
@@ -938,7 +986,7 @@
 
 
 <span class="k">def</span> <span class="nf">get_comparison_methods</span><span class="p">():</span>
-    <span class="sd">&quot;&quot;&quot; makes methods for &gt;, &lt;, =, etc... &quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;makes methods for &gt;, &lt;, =, etc...&quot;&quot;&quot;</span>
     <span class="n">method_list</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="k">def</span> <span class="nf">_register</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
@@ -1059,10 +1107,9 @@
     <span class="k">return</span> <span class="n">six</span><span class="o">.</span><span class="n">add_metaclass</span><span class="p">(</span><span class="n">ReloadingMetaclass</span><span class="p">)(</span><span class="bp">cls</span><span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">KwargsWrapper</span><span class="p">(</span><span class="n">collections</span><span class="o">.</span><span class="n">Mapping</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Allows an arbitrary object attributes to be passed as a **kwargs</span>
-<span class="sd">    argument</span>
+<span class="k">class</span> <span class="nc">KwargsWrapper</span><span class="p">(</span><span class="n">Mapping</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Allows an arbitrary object attributes to be passed as a \*\*kwargs argument.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
@@ -1132,69 +1179,31 @@
     <span class="n">ut</span><span class="o">.</span><span class="n">doctest_funcs</span><span class="p">()</span>
 </pre></div>
 
+           </div>
           </div>
-          
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Wild Me.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../index.html">wbia-cnn</a></h1>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
 
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../wbia_cnn.html">wbia_cnn package</a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../index.html">Documentation overview</a><ul>
-  <li><a href="../index.html">Module code</a><ul>
-  </ul></li>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2020, Wild Me.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-    </div>
-
-    
-
-    
-  </body>
+</body>
 </html>

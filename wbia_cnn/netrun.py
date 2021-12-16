@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-
+r"""
 FIXME:
     sometimes you have to chown -R user:user ~/.theano or run with sudo the
     first time after roboot, otherwise you get errors
@@ -10,20 +9,20 @@ CommandLineHelp:
     python -m wbia_cnn --tf netrun <networkmodel>
 
     --dataset, --ds = <dstag>:<subtag>
-        dstag is the main dataset name (eg PZ_MTEST), subtag are parameters to
-        modify (max_examples=3)
+    dstag is the main dataset name (eg PZ_MTEST), subtag are parameters to
+    modify (max_examples=3)
 
-    --weights, -w = |new|<checkpoint_tag>|<dstag>:<checkpoint_tag> (default: <checkpoint_tag>)
-        new will initialize clean weights.
-        a checkpoint tag will try to to match a saved model state in the history.
-        can load weights from an external dataset.
-        <checkpoint_tag> defaults to current
+    --weights, -w = \|new\|<checkpoint_tag>\|<dstag>:<checkpoint_tag> (default: <checkpoint_tag>)
+    new will initialize clean weights.
+    a checkpoint tag will try to to match a saved model state in the history.
+    can load weights from an external dataset.
+    <checkpoint_tag> defaults to current
 
     --arch, -a = <archtag>
-        model architecture tag (eg siaml2_128, siam2stream, viewpoint)
+    model architecture tag (eg siaml2_128, siam2stream, viewpoint)
 
     --device = <processor>
-       sets theano device flag to a processor like gpu0, gpu1, or cpu0
+    sets theano device flag to a processor like gpu0, gpu1, or cpu0
 """
 import logging
 from wbia_cnn import models
@@ -80,7 +79,7 @@ def netrun():
         # Parts based datasets
         python -m wbia_cnn --tf netrun --db PZ_MTEST --acfg ctrl --datatype=siam-part --ensuredata --show
 
-        % Patch based dataset (big one)
+        # Patch based dataset (big one)
         python -m wbia_cnn --tf netrun --db PZ_Master1 --acfg default:is_known=True,qmin_pername=2,view=primary,species=primary,minqual=ok --ensuredata --show --vtd
         python -m wbia_cnn --tf netrun --ds pzm4 --weights=new --arch=siaml2_128 --train --monitor
         python -m wbia_cnn --tf netrun --ds pzm4 --arch=siaml2_128 --test

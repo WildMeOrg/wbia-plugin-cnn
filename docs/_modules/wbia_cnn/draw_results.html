@@ -1,44 +1,81 @@
-
 <!DOCTYPE html>
-
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>wbia_cnn.draw_results &#8212; wbia-cnn 3.3.0 documentation</title>
-    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
-    <script src="../../_static/language_data.js"></script>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>wbia_cnn.draw_results &mdash; wbia-cnn 4.0.1.dev0+dirty documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" />
-   
-  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
 
-  </head><body>
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> wbia-cnn
+          </a>
+              <div class="version">
+                4.0.1.dev0+dirty
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../wbia_cnn.html">wbia_cnn package</a></li>
+</ul>
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          
+        </div>
+      </div>
+    </nav>
 
-          <div class="body" role="main">
-            
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">wbia-cnn</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+          <li><a href="../wbia_cnn.html">wbia_cnn</a> &raquo;</li>
+      <li>wbia_cnn.draw_results</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
   <h1>Source code for wbia_cnn.draw_results</h1><div class="highlight"><pre>
 <span></span><span class="c1"># -*- coding: utf-8 -*-</span>
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">unicode_literals</span>
+<span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">utool</span> <span class="k">as</span> <span class="nn">ut</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">six</span>
 
 <span class="nb">print</span><span class="p">,</span> <span class="n">rrr</span><span class="p">,</span> <span class="n">profile</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">inject2</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span>
 
 
 <div class="viewcode-block" id="interact_siamsese_data_patches"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.draw_results.interact_siamsese_data_patches">[docs]</a><span class="k">def</span> <span class="nf">interact_siamsese_data_patches</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">flat_metadata</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -127,14 +164,14 @@
     <span class="kn">import</span> <span class="nn">vtool</span> <span class="k">as</span> <span class="nn">vt</span>
 
     <span class="c1"># from wbia.viz import viz_helpers as vh</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Building patch interaction&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Building patch interaction&#39;</span><span class="p">)</span>
     <span class="n">num_datas</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">len</span><span class="p">,</span> <span class="n">data_lists</span><span class="p">))</span>
     <span class="n">num_data</span> <span class="o">=</span> <span class="n">num_datas</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">ut</span><span class="o">.</span><span class="n">assert_all_eq</span><span class="p">(</span><span class="n">num_datas</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;num_datas = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">num_data</span><span class="p">,))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;num_datas = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">num_data</span><span class="p">,))</span>
     <span class="k">if</span> <span class="n">label_list</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">label_list</span><span class="p">)</span> <span class="o">==</span> <span class="n">num_data</span><span class="p">,</span> <span class="s1">&#39;datas must be corresponding&#39;</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;len(label_list) = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">label_list</span><span class="p">),))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;len(label_list) = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">label_list</span><span class="p">),))</span>
 
     <span class="c1"># chunck_sizes = (6, 8)</span>
     <span class="k">if</span> <span class="n">chunck_sizes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -142,7 +179,7 @@
         <span class="c1"># chunck_sizes = (3, 3)</span>
 
     <span class="c1"># Check out the score pdfs</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;sortby = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">sortby</span><span class="p">,))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;sortby = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">sortby</span><span class="p">,))</span>
     <span class="k">if</span> <span class="n">sortby</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">sortby</span> <span class="o">==</span> <span class="s1">&#39;fs&#39;</span><span class="p">:</span>
             <span class="n">index_list</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">list_argsort</span><span class="p">(</span><span class="n">flat_metadata</span><span class="p">[</span><span class="s1">&#39;fs&#39;</span><span class="p">])[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
@@ -170,7 +207,7 @@
 
                 <span class="c1"># FILTER TO ONLY SHOW ONE PER AID</span>
                 <span class="k">if</span> <span class="n">hack_one_per_aid</span> <span class="ow">and</span> <span class="s1">&#39;aid_pairs&#39;</span> <span class="ow">in</span> <span class="n">flat_metadata</span><span class="p">:</span>
-                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;hacking one per aid&#39;</span><span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;hacking one per aid&#39;</span><span class="p">)</span>
                     <span class="n">aid_pairs</span> <span class="o">=</span> <span class="n">flat_metadata</span><span class="p">[</span><span class="s1">&#39;aid_pairs&#39;</span><span class="p">]</span>
                     <span class="n">dataids</span> <span class="o">=</span> <span class="n">vt</span><span class="o">.</span><span class="n">get_undirected_edge_ids</span><span class="p">(</span><span class="n">aid_pairs</span><span class="p">)</span>
                     <span class="n">new_idx_lists</span> <span class="o">=</span> <span class="p">[]</span>
@@ -215,8 +252,8 @@
 
 
 <div class="viewcode-block" id="make_InteractSiamPatches"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.draw_results.make_InteractSiamPatches">[docs]</a><span class="k">def</span> <span class="nf">make_InteractSiamPatches</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="kn">import</span> <span class="nn">plottool</span> <span class="k">as</span> <span class="nn">pt</span>
-    <span class="kn">from</span> <span class="nn">plottool</span> <span class="kn">import</span> <span class="n">abstract_interaction</span>
+    <span class="kn">from</span> <span class="nn">wbia</span> <span class="kn">import</span> <span class="n">plottool</span> <span class="k">as</span> <span class="n">pt</span>
+    <span class="kn">from</span> <span class="nn">wbia.plottool</span> <span class="kn">import</span> <span class="n">abstract_interaction</span>
 
     <span class="n">BASE_CLASS</span> <span class="o">=</span> <span class="n">abstract_interaction</span><span class="o">.</span><span class="n">AbstractPagedInteraction</span>
 
@@ -237,13 +274,13 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">nCols</span> <span class="o">=</span> <span class="n">chunck_sizes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="k">if</span> <span class="n">index_list</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">index_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">label_list</span><span class="p">))</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;len(index_list) = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">index_list</span><span class="p">),))</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;len(label_list) = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">label_list</span><span class="p">),))</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;chunck_sizes = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">chunck_sizes</span><span class="p">,))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;len(index_list) = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">index_list</span><span class="p">),))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;len(label_list) = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">label_list</span><span class="p">),))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;chunck_sizes = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">chunck_sizes</span><span class="p">,))</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">multi_chunked_indicies</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
                 <span class="n">ut</span><span class="o">.</span><span class="n">iter_multichunks</span><span class="p">(</span><span class="n">index_list</span><span class="p">,</span> <span class="n">chunck_sizes</span><span class="p">)</span>
             <span class="p">)</span>
-            <span class="c1"># print(&#39;ut.depth_profile(self.multi_chunked_indicies) = %r&#39; % (ut.depth_profile(self.multi_chunked_indicies),))</span>
+            <span class="c1"># logger.info(&#39;ut.depth_profile(self.multi_chunked_indicies) = %r&#39; % (ut.depth_profile(self.multi_chunked_indicies),))</span>
             <span class="n">nPages</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">multi_chunked_indicies</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">data_lists</span> <span class="o">=</span> <span class="n">data_lists</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">figtitle</span> <span class="o">=</span> <span class="n">figtitle</span>
@@ -261,7 +298,7 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">current_pagenum</span> <span class="o">=</span> <span class="n">pagenum</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">prepare_page</span><span class="p">()</span>
-            <span class="c1"># print(&#39;pagenum = %r&#39; % (pagenum,))</span>
+            <span class="c1"># logger.info(&#39;pagenum = %r&#39; % (pagenum,))</span>
             <span class="n">next_pnum</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">make_pnum_nextgen</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nCols</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">multiindicies</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">multi_chunked_indicies</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">current_pagenum</span><span class="p">]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">offset_lists</span> <span class="o">=</span> <span class="p">[]</span>
@@ -284,15 +321,15 @@
                 <span class="n">ax</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">ax_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">figtitle</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="c1"># print(self.figtitle)</span>
+                <span class="c1"># logger.info(self.figtitle)</span>
                 <span class="n">pt</span><span class="o">.</span><span class="n">set_figtitle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">figtitle</span><span class="p">)</span>
                 <span class="k">pass</span>
 
         <span class="k">def</span> <span class="nf">on_click_inside</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">ax</span><span class="p">):</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;click inside&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;click inside&#39;</span><span class="p">)</span>
 
             <span class="k">def</span> <span class="nf">get_label_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">ax</span><span class="p">):</span>
-                <span class="sd">&quot;&quot;&quot; generalize &quot;&quot;&quot;</span>
+                <span class="sd">&quot;&quot;&quot;generalize&quot;&quot;&quot;</span>
                 <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">xdata</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">ydata</span>
 
                 <span class="k">def</span> <span class="nf">find_offset_index</span><span class="p">(</span><span class="n">offset_list</span><span class="p">,</span> <span class="n">size_list</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
@@ -305,7 +342,7 @@
                         <span class="p">[</span><span class="n">x</span> <span class="o">&gt;=</span> <span class="n">x1_pts</span><span class="p">,</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="n">x2_pts</span><span class="p">,</span> <span class="n">y</span> <span class="o">&gt;=</span> <span class="n">y1_pts</span><span class="p">,</span> <span class="n">y</span> <span class="o">&lt;</span> <span class="n">y2_pts</span><span class="p">]</span>
                     <span class="p">)</span>
                     <span class="n">valid_idxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">in_bounds</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-                    <span class="c1"># print(&#39;valid_idxs = %r&#39; % (valid_idxs,))</span>
+                    <span class="c1"># logger.info(&#39;valid_idxs = %r&#39; % (valid_idxs,))</span>
                     <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">valid_idxs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
                     <span class="k">return</span> <span class="n">valid_idxs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
@@ -324,10 +361,10 @@
                     <span class="n">row_index</span> <span class="o">=</span> <span class="n">_subindex</span> <span class="o">%</span> <span class="n">num_rows</span>
                     <span class="n">col_index</span> <span class="o">=</span> <span class="n">_subindex</span> <span class="o">//</span> <span class="n">num_rows</span>
                     <span class="n">label_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">multiindicies</span><span class="p">[</span><span class="n">plot_index</span><span class="p">][</span><span class="n">row_index</span><span class="p">]</span>
-                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;_subindex = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">_subindex</span><span class="p">,))</span>
-                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;row_index = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">row_index</span><span class="p">,))</span>
-                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;col_index = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">col_index</span><span class="p">,))</span>
-                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;label_index = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">label_index</span><span class="p">,))</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;_subindex = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">_subindex</span><span class="p">,))</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;row_index = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">row_index</span><span class="p">,))</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;col_index = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">col_index</span><span class="p">,))</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;label_index = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">label_index</span><span class="p">,))</span>
                 <span class="k">return</span> <span class="n">label_index</span>
 
             <span class="k">def</span> <span class="nf">embed_ipy</span><span class="p">(</span><span class="bp">self</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="o">=</span><span class="n">event</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">):</span>
@@ -339,7 +376,7 @@
                 <span class="n">label_index</span> <span class="o">=</span> <span class="n">get_label_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">ax</span><span class="p">)</span>
                 <span class="n">d1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_lists</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">label_index</span><span class="p">]</span>
                 <span class="n">d2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_lists</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">label_index</span><span class="p">]</span>
-                <span class="kn">import</span> <span class="nn">plottool</span> <span class="k">as</span> <span class="nn">pt</span>
+                <span class="kn">from</span> <span class="nn">wbia</span> <span class="kn">import</span> <span class="n">plottool</span> <span class="k">as</span> <span class="n">pt</span>
 
                 <span class="n">pt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">d1</span><span class="p">,</span> <span class="n">pnum</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">fnum</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
                 <span class="n">pt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">d2</span><span class="p">,</span> <span class="n">pnum</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">fnum</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
@@ -351,7 +388,7 @@
 
             <span class="k">if</span> <span class="n">label_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_list</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="nb">print</span><span class="p">(</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
                         <span class="s1">&#39;self.label_list[</span><span class="si">%d</span><span class="s1">] = </span><span class="si">%r</span><span class="s1">&#39;</span>
                         <span class="o">%</span> <span class="p">(</span><span class="n">label_index</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_list</span><span class="p">[</span><span class="n">label_index</span><span class="p">])</span>
                     <span class="p">)</span>
@@ -359,7 +396,7 @@
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">flat_metadata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">flat_metadata</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">label_list</span><span class="p">):</span>
-                            <span class="nb">print</span><span class="p">(</span>
+                            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
                                 <span class="s1">&#39;self.flat_metadata[</span><span class="si">%s</span><span class="s1">][</span><span class="si">%d</span><span class="s1">] = </span><span class="si">%r</span><span class="s1">&#39;</span>
                                 <span class="o">%</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">label_index</span><span class="p">,</span> <span class="n">val</span><span class="p">[</span><span class="n">label_index</span><span class="p">])</span>
                             <span class="p">)</span>
@@ -368,7 +405,7 @@
                         <span class="n">aid1</span><span class="p">,</span> <span class="n">aid2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">flat_metadata</span><span class="p">[</span><span class="s1">&#39;aid_pairs&#39;</span><span class="p">][</span><span class="n">label_index</span><span class="p">]</span>
                         <span class="kn">from</span> <span class="nn">wbia.gui</span> <span class="kn">import</span> <span class="n">inspect_gui</span>
 
-                        <span class="nb">print</span><span class="p">(</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
                             <span class="n">ut</span><span class="o">.</span><span class="n">repr3</span><span class="p">(</span>
                                 <span class="bp">self</span><span class="o">.</span><span class="n">ibs</span><span class="o">.</span><span class="n">get_annot_info</span><span class="p">(</span>
                                     <span class="p">[</span><span class="n">aid1</span><span class="p">],</span>
@@ -379,7 +416,7 @@
                                 <span class="p">)</span>
                             <span class="p">)</span>
                         <span class="p">)</span>
-                        <span class="nb">print</span><span class="p">(</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
                             <span class="n">ut</span><span class="o">.</span><span class="n">repr3</span><span class="p">(</span>
                                 <span class="bp">self</span><span class="o">.</span><span class="n">ibs</span><span class="o">.</span><span class="n">get_annot_info</span><span class="p">(</span>
                                     <span class="p">[</span><span class="n">aid2</span><span class="p">],</span>
@@ -415,8 +452,8 @@
 
 
 <div class="viewcode-block" id="make_InteractClasses"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.draw_results.make_InteractClasses">[docs]</a><span class="k">def</span> <span class="nf">make_InteractClasses</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="kn">import</span> <span class="nn">plottool</span> <span class="k">as</span> <span class="nn">pt</span>
-    <span class="kn">from</span> <span class="nn">plottool</span> <span class="kn">import</span> <span class="n">abstract_interaction</span>
+    <span class="kn">from</span> <span class="nn">wbia</span> <span class="kn">import</span> <span class="n">plottool</span> <span class="k">as</span> <span class="n">pt</span>
+    <span class="kn">from</span> <span class="nn">wbia.plottool</span> <span class="kn">import</span> <span class="n">abstract_interaction</span>
 
     <span class="nd">@ut</span><span class="o">.</span><span class="n">reloadable_class</span>
     <span class="k">class</span> <span class="nc">InteractAnnotClasses</span><span class="p">(</span><span class="n">abstract_interaction</span><span class="o">.</span><span class="n">AbstractInteraction</span><span class="p">):</span>
@@ -481,10 +518,10 @@
             <span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">on_click_inside</span><span class="p">(</span><span class="n">inter</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">ax</span><span class="p">):</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;click inside&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;click inside&#39;</span><span class="p">)</span>
 
             <span class="k">def</span> <span class="nf">get_label_index</span><span class="p">(</span><span class="n">inter</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">ax</span><span class="p">):</span>
-                <span class="sd">&quot;&quot;&quot; generalize &quot;&quot;&quot;</span>
+                <span class="sd">&quot;&quot;&quot;generalize&quot;&quot;&quot;</span>
                 <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">xdata</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">ydata</span>
 
                 <span class="k">def</span> <span class="nf">find_offset_index</span><span class="p">(</span><span class="n">offsets</span><span class="p">,</span> <span class="n">sizes</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
@@ -497,7 +534,7 @@
                         <span class="p">[</span><span class="n">x</span> <span class="o">&gt;=</span> <span class="n">x1_pts</span><span class="p">,</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="n">x2_pts</span><span class="p">,</span> <span class="n">y</span> <span class="o">&gt;=</span> <span class="n">y1_pts</span><span class="p">,</span> <span class="n">y</span> <span class="o">&lt;</span> <span class="n">y2_pts</span><span class="p">]</span>
                     <span class="p">)</span>
                     <span class="n">valid_idxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">in_bounds</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-                    <span class="c1"># print(&#39;valid_idxs = %r&#39; % (valid_idxs,))</span>
+                    <span class="c1"># logger.info(&#39;valid_idxs = %r&#39; % (valid_idxs,))</span>
                     <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">valid_idxs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
                     <span class="k">return</span> <span class="n">valid_idxs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
@@ -519,11 +556,11 @@
                     <span class="n">row_index</span> <span class="o">=</span> <span class="n">_subindex</span> <span class="o">//</span> <span class="n">num_cols</span>
                     <span class="n">col_index</span> <span class="o">=</span> <span class="n">_subindex</span> <span class="o">%</span> <span class="n">num_cols</span>
                     <span class="c1"># label_index = inter.multiindicies[plot_index][row_index]</span>
-                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;_subindex = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">_subindex</span><span class="p">,))</span>
-                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;row_index = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">row_index</span><span class="p">,))</span>
-                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;col_index = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">col_index</span><span class="p">,))</span>
-                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;px = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">px</span><span class="p">,))</span>
-                    <span class="c1"># print(&#39;label_index = %r&#39; % (label_index,))</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;_subindex = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">_subindex</span><span class="p">,))</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;row_index = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">row_index</span><span class="p">,))</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;col_index = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">col_index</span><span class="p">,))</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;px = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">px</span><span class="p">,))</span>
+                    <span class="c1"># logger.info(&#39;label_index = %r&#39; % (label_index,))</span>
                     <span class="n">label_index</span> <span class="o">=</span> <span class="p">(</span><span class="n">px</span><span class="p">,</span> <span class="n">col_index</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">label_index</span>
 
@@ -542,18 +579,18 @@
                     <span class="n">aid</span> <span class="o">=</span> <span class="n">flat_metadata</span><span class="p">[</span><span class="s1">&#39;aid&#39;</span><span class="p">][</span><span class="n">col_index</span><span class="p">]</span>
                     <span class="k">if</span> <span class="n">ibs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                         <span class="n">options</span> <span class="o">+=</span> <span class="n">interact_chip</span><span class="o">.</span><span class="n">build_annot_context_options</span><span class="p">(</span><span class="n">ibs</span><span class="p">,</span> <span class="n">aid</span><span class="p">)</span>
-                        <span class="nb">print</span><span class="p">(</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
                             <span class="s1">&#39;Annot Info:&#39;</span>
                             <span class="o">+</span> <span class="n">ut</span><span class="o">.</span><span class="n">repr3</span><span class="p">(</span><span class="n">inter</span><span class="o">.</span><span class="n">ibs</span><span class="o">.</span><span class="n">get_annot_info</span><span class="p">([</span><span class="n">aid</span><span class="p">],</span> <span class="n">case_tags</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
                         <span class="p">)</span>
 
             <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">dblclick</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Doubleclick&#39;</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Doubleclick&#39;</span><span class="p">)</span>
                 <span class="kn">import</span> <span class="nn">guitool</span> <span class="k">as</span> <span class="nn">gt</span>
 
                 <span class="n">option_dict</span> <span class="o">=</span> <span class="n">gt</span><span class="o">.</span><span class="n">make_option_dict</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">shortcuts</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-                <span class="c1"># print(&#39;options = %s&#39; % (ut.repr3(options),))</span>
-                <span class="c1"># print(&#39;option_dict = %s&#39; % (ut.repr3(option_dict),))</span>
+                <span class="c1"># logger.info(&#39;options = %s&#39; % (ut.repr3(options),))</span>
+                <span class="c1"># logger.info(&#39;option_dict = %s&#39; % (ut.repr3(option_dict),))</span>
                 <span class="n">func</span> <span class="o">=</span> <span class="n">option_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;Interact image&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">func</span><span class="p">()</span>
@@ -598,7 +635,7 @@
         <span class="n">tup</span> <span class="o">=</span> <span class="n">get_patch_multichunks</span><span class="p">(</span><span class="n">data_lists</span><span class="p">,</span> <span class="n">label_list</span><span class="p">,</span> <span class="n">flat_metadata</span><span class="p">,</span> <span class="n">multiindices</span><span class="p">)</span>
         <span class="n">stacked_img</span><span class="p">,</span> <span class="n">stacked_offsets</span><span class="p">,</span> <span class="n">stacked_sfs</span> <span class="o">=</span> <span class="n">tup</span>
         <span class="k">return</span> <span class="n">stacked_img</span><span class="p">,</span> <span class="n">stacked_offsets</span><span class="p">,</span> <span class="n">stacked_sfs</span>
-    <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">RuntimeError</span><span class="p">,</span> <span class="ne">StopIteration</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">index_list</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span>
         <span class="kn">import</span> <span class="nn">vtool</span> <span class="k">as</span> <span class="nn">vt</span>
@@ -614,7 +651,7 @@
 <span class="sd">        python -m wbia_cnn.draw_results --test-get_patch_multichunks --show</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # ENABLE_DOCTEST</span>
+<span class="sd">        &gt;&gt;&gt; # DISABLE_DOCTEST</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn.draw_results import *  # NOQA</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn import ingest_data</span>
 <span class="sd">        &gt;&gt;&gt; data, label_list = ingest_data.testdata_patchmatch2()</span>
@@ -624,7 +661,7 @@
 <span class="sd">        &gt;&gt;&gt; multiindicies = [np.arange(0, 10), np.arange(10, 20), np.arange(20, 30) ]</span>
 <span class="sd">        &gt;&gt;&gt; stacked_img, stacked_offsets, stacked_sfs = get_patch_multichunks(data_lists, label_list, flat_metadata, multiindicies)</span>
 <span class="sd">        &gt;&gt;&gt; ut.quit_if_noshow()</span>
-<span class="sd">        &gt;&gt;&gt; import plottool as pt</span>
+<span class="sd">        &gt;&gt;&gt; from wbia import plottool as pt</span>
 <span class="sd">        &gt;&gt;&gt; pt.imshow(stacked_img)</span>
 <span class="sd">        &gt;&gt;&gt; ut.show_if_requested()</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -690,7 +727,7 @@
 <span class="sd">        python -m wbia_cnn.draw_results --test-get_patch_chunk</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # ENABLE_DOCTEST</span>
+<span class="sd">        &gt;&gt;&gt; # DISABLE_DOCTEST</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn.draw_results import *  # NOQA</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn import ingest_data</span>
 <span class="sd">        &gt;&gt;&gt; data, label_list = ingest_data.testdata_patchmatch2()</span>
@@ -701,7 +738,7 @@
 <span class="sd">        &gt;&gt;&gt; result = str(img.shape)</span>
 <span class="sd">        &gt;&gt;&gt; print(result)</span>
 <span class="sd">        &gt;&gt;&gt; ut.quit_if_noshow()</span>
-<span class="sd">        &gt;&gt;&gt; import plottool as pt</span>
+<span class="sd">        &gt;&gt;&gt; from wbia import plottool as pt</span>
 <span class="sd">        &gt;&gt;&gt; pt.imshow(img)</span>
 <span class="sd">        &gt;&gt;&gt; ut.show_if_requested()</span>
 <span class="sd">        (1920, 384, 3)</span>
@@ -712,7 +749,7 @@
     <span class="n">data_per_label</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data_lists</span><span class="p">)</span>
     <span class="kn">import</span> <span class="nn">utool</span> <span class="k">as</span> <span class="nn">ut</span>
     <span class="kn">import</span> <span class="nn">vtool</span> <span class="k">as</span> <span class="nn">vt</span>
-    <span class="kn">import</span> <span class="nn">plottool</span> <span class="k">as</span> <span class="nn">pt</span>
+    <span class="kn">from</span> <span class="nn">wbia</span> <span class="kn">import</span> <span class="n">plottool</span> <span class="k">as</span> <span class="n">pt</span>
 
     <span class="c1"># Ipython embed hates dict comprehensions and locals</span>
     <span class="c1"># with ut.embed_on_exception_context:</span>
@@ -839,8 +876,8 @@
         <span class="k">for</span> <span class="n">offset</span><span class="p">,</span> <span class="n">patchsize</span><span class="p">,</span> <span class="n">sf</span><span class="p">,</span> <span class="n">text</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
             <span class="n">left_offsets</span><span class="p">,</span> <span class="n">left_patchsizees</span><span class="p">,</span> <span class="n">left_sfs</span><span class="p">,</span> <span class="n">patch_texts</span>
         <span class="p">):</span>
-            <span class="c1"># print(offset)</span>
-            <span class="c1"># print(s)</span>
+            <span class="c1"># logger.info(offset)</span>
+            <span class="c1"># logger.info(s)</span>
             <span class="kn">import</span> <span class="nn">cv2</span>
 
             <span class="n">scaled_offset</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">offset</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">thickness</span> <span class="o">+</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">thickness</span> <span class="o">-</span> <span class="mi">2</span><span class="p">])</span>
@@ -866,7 +903,7 @@
     <span class="n">label_list</span><span class="p">,</span> <span class="n">warped_patch1_list</span><span class="p">,</span> <span class="n">warped_patch2_list</span><span class="p">,</span> <span class="n">flat_metadata</span>
 <span class="p">):</span>
     <span class="c1"># import vtool as vt</span>
-    <span class="kn">import</span> <span class="nn">plottool</span> <span class="k">as</span> <span class="nn">pt</span>
+    <span class="kn">from</span> <span class="nn">wbia</span> <span class="kn">import</span> <span class="n">plottool</span> <span class="k">as</span> <span class="n">pt</span>
 
     <span class="c1"># draw_results.interact_siamsese_data_patches(fp_labels, fp_data, {&#39;fs&#39;: fp_scores}, rand=False, figtitle=&#39;FP&#39;)</span>
     <span class="kn">from</span> <span class="nn">vtool</span> <span class="kn">import</span> <span class="n">score_normalization</span> <span class="k">as</span> <span class="n">scorenorm</span>
@@ -898,71 +935,31 @@
     <span class="n">ut</span><span class="o">.</span><span class="n">doctest_funcs</span><span class="p">()</span>
 </pre></div>
 
+           </div>
           </div>
-          
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Wild Me.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../index.html">wbia-cnn</a></h1>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
 
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../wbia_cnn.html">wbia_cnn package</a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../index.html">Documentation overview</a><ul>
-  <li><a href="../index.html">Module code</a><ul>
-  <li><a href="../wbia_cnn.html">wbia_cnn</a><ul>
-  </ul></li>
-  </ul></li>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2020, Wild Me.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-    </div>
-
-    
-
-    
-  </body>
+</body>
 </html>

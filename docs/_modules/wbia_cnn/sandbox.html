@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>wbia_cnn.sandbox &mdash; wbia-cnn 4.0.1.dev0+dirty documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> wbia-cnn
+          </a>
+              <div class="version">
+                4.0.1.dev0+dirty
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../wbia_cnn.html">wbia_cnn package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">wbia-cnn</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+          <li><a href="../wbia_cnn.html">wbia_cnn</a> &raquo;</li>
+      <li>wbia_cnn.sandbox</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for wbia_cnn.sandbox</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="c1"># flake8: noqa</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="n">cPickle</span> <span class="k">as</span> <span class="n">pickle</span>
+<span class="kn">from</span> <span class="nn">wbia_cnn.models</span> <span class="kn">import</span> <span class="n">abstract_models</span>
+<span class="kn">from</span> <span class="nn">wbia_cnn.models.abstract_models</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="p">(</span><span class="nb">print</span><span class="p">,</span> <span class="n">rrr</span><span class="p">,</span> <span class="n">profile</span><span class="p">)</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">inject2</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span>
+
+<span class="p">(</span><span class="nb">print</span><span class="p">,</span> <span class="n">rrr</span><span class="p">,</span> <span class="n">profile</span><span class="p">)</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">inject2</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="check_external_training_paths"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.sandbox.check_external_training_paths">[docs]</a><span class="k">def</span> <span class="nf">check_external_training_paths</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Notes:</span>
+<span class="sd">        http://cs231n.github.io/neural-networks-3/#distr</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">checkpoints_dir</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span>
+    <span class="n">checkpoints_dir</span> <span class="o">=</span> <span class="s1">&#39;/home/joncrall/.config/wbia_cnn/training_junction/train_patchmetric((315)iofvvdflcllgjkyu)/checkpoints&#39;</span>
+    <span class="c1"># checkpoints_dir = &#39;/media/raid/work/PZ_MTEST/_ibsdb/_ibeis_cache/nets/train_patchmetric((315)iofvvdflcllgjkyu)/checkpoints/hist_eras2_epochs23_aayzxkezpzjgwupd&#39;</span>
+    <span class="n">checkpoints_dir</span> <span class="o">=</span> <span class="s1">&#39;/home/joncrall/.config/wbia_cnn/training_junction/train_patchmetric((1576)fxzkszaajypyzqne)/checkpoints&#39;</span>
+
+    <span class="n">checkpoints_dir</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s1">&#39;/home/joncrall/.config/wbia_cnn/training_junction/liberty/checkpoints&#39;</span>
+    <span class="p">)</span>
+    <span class="n">checkpoints_dir</span> <span class="o">=</span> <span class="s1">&#39;/home/joncrall/.config/wbia_cnn/training_junction/NNP_Master3_patchmatch-_24285_xatwrytpdbfttoax-/checkpoints&#39;</span>
+
+    <span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="n">cPickle</span> <span class="k">as</span> <span class="n">pickle</span>
+    <span class="kn">from</span> <span class="nn">wbia_cnn.models</span> <span class="kn">import</span> <span class="n">abstract_models</span>
+
+    <span class="n">model_fpaths</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">checkpoints_dir</span><span class="p">,</span> <span class="s1">&#39;*.pkl&#39;</span><span class="p">,</span> <span class="n">recursive</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">tmp_model_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">fpath</span> <span class="ow">in</span> <span class="n">model_fpaths</span><span class="p">:</span>
+        <span class="n">tmp_model</span> <span class="o">=</span> <span class="n">abstract_models</span><span class="o">.</span><span class="n">BaseModel</span><span class="p">()</span>
+        <span class="n">tmp_model</span><span class="o">.</span><span class="n">load_model_state</span><span class="p">(</span><span class="n">fpath</span><span class="o">=</span><span class="n">fpath</span><span class="p">)</span>
+        <span class="n">tmp_model_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tmp_model</span><span class="p">)</span>
+        <span class="c1"># hashid = tmp_model.get_history_hashid()</span>
+        <span class="c1"># dpath = dirname(fpath)</span>
+        <span class="c1"># new_dpath = join(dirname(dpath), hashid)</span>
+        <span class="c1"># ut.move(dpath, new_dpath)</span>
+
+    <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">tmp_model_list</span><span class="p">:</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">rrr</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="n">vallist_</span> <span class="o">=</span> <span class="p">[</span><span class="n">tmp_model</span><span class="o">.</span><span class="n">get_total_epochs</span><span class="p">()</span> <span class="k">for</span> <span class="n">tmp_model</span> <span class="ow">in</span> <span class="n">tmp_model_list</span><span class="p">]</span>
+    <span class="n">tmp_model_list</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">sortedby</span><span class="p">(</span><span class="n">tmp_model_list</span><span class="p">,</span> <span class="n">vallist_</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">tmp_model</span> <span class="ow">in</span> <span class="n">tmp_model_list</span><span class="p">:</span>
+        <span class="c1"># tmp_model.checkpoint_save_model_info()</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">tmp_model</span><span class="o">.</span><span class="n">best_results</span><span class="p">[</span><span class="s1">&#39;train_loss&#39;</span><span class="p">])</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">tmp_model</span><span class="o">.</span><span class="n">best_results</span><span class="p">[</span><span class="s1">&#39;valid_loss&#39;</span><span class="p">])</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;----&#39;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">tmp_model</span> <span class="ow">in</span> <span class="n">ut</span><span class="o">.</span><span class="n">InteractiveIter</span><span class="p">(</span><span class="n">tmp_model_list</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">fpath</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="nb">sum</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">era</span><span class="p">[</span><span class="s1">&#39;epoch_list&#39;</span><span class="p">])</span> <span class="k">for</span> <span class="n">era</span> <span class="ow">in</span> <span class="n">tmp_model</span><span class="o">.</span><span class="n">era_history</span><span class="p">]))</span>
+        <span class="n">tmp_model</span><span class="o">.</span><span class="n">show_era_loss</span><span class="p">(</span><span class="n">fnum</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="load_tmp_model"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.sandbox.load_tmp_model">[docs]</a><span class="k">def</span> <span class="nf">load_tmp_model</span><span class="p">():</span>
+    <span class="kn">from</span> <span class="nn">wbia_cnn.models</span> <span class="kn">import</span> <span class="n">abstract_models</span>
+
+    <span class="n">fpath</span> <span class="o">=</span> <span class="s1">&#39;/home/joncrall/.config/wbia_cnn/training_junction/liberty/model_state.pkl&#39;</span>
+    <span class="n">fpath</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s1">&#39;/home/joncrall/.config/wbia_cnn/training_junction/liberty/model_state_dozer.pkl&#39;</span>
+    <span class="p">)</span>
+    <span class="n">fpath</span> <span class="o">=</span> <span class="s1">&#39;/home/joncrall/.config/wbia_cnn/training_junction/train_patchmetric((15152)nunivgoaibmjsdbs)/model_state.pkl&#39;</span>
+
+    <span class="n">tmp_model</span> <span class="o">=</span> <span class="n">abstract_models</span><span class="o">.</span><span class="n">BaseModel</span><span class="p">()</span>
+    <span class="n">tmp_model</span><span class="o">.</span><span class="n">load_model_state</span><span class="p">(</span><span class="n">fpath</span><span class="o">=</span><span class="n">fpath</span><span class="p">)</span>
+    <span class="n">tmp_model</span><span class="o">.</span><span class="n">rrr</span><span class="p">()</span>
+    <span class="n">tmp_model</span><span class="o">.</span><span class="n">show_era_loss</span><span class="p">(</span><span class="n">fnum</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">pt</span><span class="o">.</span><span class="n">iup</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="grab_model_from_dozer"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.sandbox.grab_model_from_dozer">[docs]</a><span class="k">def</span> <span class="nf">grab_model_from_dozer</span><span class="p">():</span>
+    <span class="n">remote</span> <span class="o">=</span> <span class="s1">&#39;dozer&#39;</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="s1">&#39;joncrall&#39;</span>
+    <span class="c1"># remote_path = &#39;/home/joncrall/.config/wbia_cnn/training/liberty/model_state.pkl&#39;</span>
+    <span class="c1"># local_path = &#39;/home/joncrall/.config/wbia_cnn/training/liberty/model_state_dozer.pkl&#39;</span>
+
+    <span class="n">remote_path</span> <span class="o">=</span> <span class="s1">&#39;/home/joncrall/.config/wbia_cnn/training/liberty/checkpoints/hist_eras3_epochs30_zqwhqylxyihnknxc/model_state_arch_tiloohclkatusmmp&#39;</span>
+    <span class="n">local_path</span> <span class="o">=</span> <span class="s1">&#39;/home/joncrall/.config/wbia_cnn/training/liberty/checkpoints/hist_eras3_epochs30_zqwhqylxyihnknxc/model_state_arch_tiloohclkatusmmp.pkl&#39;</span>
+
+    <span class="n">remote_path</span> <span class="o">=</span> <span class="s1">&#39;/home/joncrall/.config/wbia_cnn/training/liberty/checkpoints&#39;</span>
+    <span class="n">local_path</span> <span class="o">=</span> <span class="s1">&#39;/home/joncrall/.config/wbia_cnn/training/liberty&#39;</span>
+
+    <span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">dirname</span>
+
+    <span class="n">ut</span><span class="o">.</span><span class="n">ensuredir</span><span class="p">(</span><span class="n">dirname</span><span class="p">(</span><span class="n">local_path</span><span class="p">))</span>
+
+    <span class="n">ut</span><span class="o">.</span><span class="n">scp_pull</span><span class="p">(</span><span class="n">remote_path</span><span class="p">,</span> <span class="n">local_path</span><span class="p">,</span> <span class="n">remote</span><span class="p">,</span> <span class="n">user</span><span class="p">)</span>
+
+    <span class="n">ut</span><span class="o">.</span><span class="n">vd</span><span class="p">(</span><span class="n">dirname</span><span class="p">(</span><span class="n">local_path</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="convert_old_weights"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.sandbox.convert_old_weights">[docs]</a><span class="k">def</span> <span class="nf">convert_old_weights</span><span class="p">():</span>
+    <span class="c1">## DO CONVERSION</span>
+    <span class="c1"># if False:</span>
+    <span class="c1">#    old_weights_fpath = ut.truepath(&#39;~/Dropbox/wbia_cnn_weights_liberty.pickle&#39;)</span>
+    <span class="c1">#    if ut.checkpath(old_weights_fpath, verbose=True):</span>
+    <span class="c1">#        self = model</span>
+    <span class="c1">#        self.load_old_weights_kw(old_weights_fpath)</span>
+    <span class="c1">#    self.save_model_state()</span>
+    <span class="c1">#    #self.save_state()</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="theano_gradient_funtimes"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn.sandbox.theano_gradient_funtimes">[docs]</a><span class="k">def</span> <span class="nf">theano_gradient_funtimes</span><span class="p">():</span>
+    <span class="kn">import</span> <span class="nn">theano</span>
+    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+    <span class="kn">import</span> <span class="nn">theano.tensor</span> <span class="k">as</span> <span class="nn">T</span>
+    <span class="kn">import</span> <span class="nn">lasagne</span>
+    <span class="kn">import</span> <span class="nn">wbia_cnn.theano_ext</span> <span class="k">as</span> <span class="nn">theano_ext</span>
+
+    <span class="n">TEST</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="n">x_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="n">y_data</span> <span class="o">=</span> <span class="p">(</span><span class="n">x_data</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()[:,</span> <span class="kc">None</span><span class="p">]</span>
+
+    <span class="n">X</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">tensor4</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+
+    <span class="c1"># x_data_batch =</span>
+    <span class="c1"># y_data_batch =</span>
+    <span class="n">inputs_to_value</span> <span class="o">=</span> <span class="p">{</span><span class="n">X</span><span class="p">:</span> <span class="n">x_data</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">16</span><span class="p">],</span> <span class="n">y</span><span class="p">:</span> <span class="n">y_data</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">16</span><span class="p">]}</span>
+
+    <span class="n">l_in</span> <span class="o">=</span> <span class="n">lasagne</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">InputLayer</span><span class="p">((</span><span class="mi">16</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">l_out</span> <span class="o">=</span> <span class="n">lasagne</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">DenseLayer</span><span class="p">(</span>
+        <span class="n">l_in</span><span class="p">,</span>
+        <span class="n">num_units</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">nonlinearity</span><span class="o">=</span><span class="n">lasagne</span><span class="o">.</span><span class="n">nonlinearities</span><span class="o">.</span><span class="n">rectify</span><span class="p">,</span>
+        <span class="n">W</span><span class="o">=</span><span class="n">lasagne</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">Orthogonal</span><span class="p">(),</span>
+    <span class="p">)</span>
+
+    <span class="n">network_output</span> <span class="o">=</span> <span class="n">lasagne</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">get_output</span><span class="p">(</span><span class="n">l_out</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
+
+    <span class="c1"># TEST NETWORK OUTPUT</span>
+
+    <span class="k">if</span> <span class="n">TEST</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">theano_ext</span><span class="o">.</span><span class="n">eval_symbol</span><span class="p">(</span><span class="n">network_output</span><span class="p">,</span> <span class="n">inputs_to_value</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;network_output = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">result</span><span class="p">,))</span>
+
+    <span class="n">loss_function</span> <span class="o">=</span> <span class="n">lasagne</span><span class="o">.</span><span class="n">objectives</span><span class="o">.</span><span class="n">squared_error</span>
+    <span class="c1"># def loss_function(network_output, labels):</span>
+    <span class="c1">#    return (network_output - labels) ** 2</span>
+
+    <span class="n">losses</span> <span class="o">=</span> <span class="n">loss_function</span><span class="p">(</span><span class="n">network_output</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">TEST</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">theano_ext</span><span class="o">.</span><span class="n">eval_symbol</span><span class="p">(</span><span class="n">losses</span><span class="p">,</span> <span class="n">inputs_to_value</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;losses = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">result</span><span class="p">,))</span>
+
+    <span class="n">loss</span> <span class="o">=</span> <span class="n">lasagne</span><span class="o">.</span><span class="n">objectives</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">losses</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">TEST</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">theano_ext</span><span class="o">.</span><span class="n">eval_symbol</span><span class="p">(</span><span class="n">loss</span><span class="p">,</span> <span class="n">inputs_to_value</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;loss = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">result</span><span class="p">,))</span>
+
+    <span class="n">L2</span> <span class="o">=</span> <span class="n">lasagne</span><span class="o">.</span><span class="n">regularization</span><span class="o">.</span><span class="n">regularize_network_params</span><span class="p">(</span>
+        <span class="n">l_out</span><span class="p">,</span> <span class="n">lasagne</span><span class="o">.</span><span class="n">regularization</span><span class="o">.</span><span class="n">l2</span>
+    <span class="p">)</span>
+    <span class="n">weight_decay</span> <span class="o">=</span> <span class="mf">0.0001</span>
+    <span class="n">loss_regularized</span> <span class="o">=</span> <span class="n">loss</span> <span class="o">+</span> <span class="n">weight_decay</span> <span class="o">*</span> <span class="n">L2</span>
+    <span class="n">loss_regularized</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;loss_regularized&#39;</span>
+
+    <span class="n">parameters</span> <span class="o">=</span> <span class="n">lasagne</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">get_all_params</span><span class="p">(</span><span class="n">l_out</span><span class="p">)</span>
+
+    <span class="n">gradients_regularized</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">loss_regularized</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">add_names</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">TEST</span><span class="p">:</span>
+        <span class="k">if</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">T</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">X</span><span class="p">)))</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;s&#39;</span>
+            <span class="n">gs</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">add_names</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">theano</span><span class="o">.</span><span class="n">pp</span><span class="p">(</span><span class="n">gs</span><span class="p">)</span>
+            <span class="n">inputs_to_value</span> <span class="o">=</span> <span class="p">{</span><span class="n">X</span><span class="p">:</span> <span class="n">x_data</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">16</span><span class="p">],</span> <span class="n">y</span><span class="p">:</span> <span class="n">y_data</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">16</span><span class="p">]}</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">theano_ext</span><span class="o">.</span><span class="n">eval_symbol</span><span class="p">(</span><span class="n">gs</span><span class="p">,</span> <span class="n">inputs_to_value</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> = </span><span class="si">%r</span><span class="s1">&#39;</span>
+                <span class="o">%</span> <span class="p">(</span>
+                    <span class="n">gs</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                    <span class="n">result</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">inputs_to_value</span> <span class="o">=</span> <span class="p">{</span><span class="n">X</span><span class="p">:</span> <span class="n">x_data</span><span class="p">[</span><span class="mi">16</span><span class="p">:</span><span class="mi">32</span><span class="p">],</span> <span class="n">y</span><span class="p">:</span> <span class="n">y_data</span><span class="p">[</span><span class="mi">16</span><span class="p">:</span><span class="mi">32</span><span class="p">]}</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">theano_ext</span><span class="o">.</span><span class="n">eval_symbol</span><span class="p">(</span><span class="n">gs</span><span class="p">,</span> <span class="n">inputs_to_value</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> = </span><span class="si">%r</span><span class="s1">&#39;</span>
+                <span class="o">%</span> <span class="p">(</span>
+                    <span class="n">gs</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                    <span class="n">result</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">grad</span> <span class="ow">in</span> <span class="n">gradients_regularized</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">theano_ext</span><span class="o">.</span><span class="n">eval_symbol</span><span class="p">(</span><span class="n">grad</span><span class="p">,</span> <span class="n">inputs_to_value</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> = </span><span class="si">%r</span><span class="s1">&#39;</span>
+                <span class="o">%</span> <span class="p">(</span>
+                    <span class="n">grad</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                    <span class="n">result</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="n">grad_on_losses</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">losses</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">add_names</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">learning_rate_theano</span> <span class="o">=</span> <span class="mf">0.0001</span>
+    <span class="n">momentum</span> <span class="o">=</span> <span class="mf">0.9</span>
+    <span class="n">updates</span> <span class="o">=</span> <span class="n">lasagne</span><span class="o">.</span><span class="n">updates</span><span class="o">.</span><span class="n">nesterov_momentum</span><span class="p">(</span>
+        <span class="n">gradients_regularized</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">learning_rate_theano</span><span class="p">,</span> <span class="n">momentum</span>
+    <span class="p">)</span>
+
+    <span class="n">X_batch</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">tensor4</span><span class="p">(</span><span class="s1">&#39;x_batch&#39;</span><span class="p">)</span>
+    <span class="n">y_batch</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">fvector</span><span class="p">(</span><span class="s1">&#39;y_batch&#39;</span><span class="p">)</span>
+
+    <span class="n">func</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">function</span><span class="p">(</span>
+        <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="n">theano</span><span class="o">.</span><span class="n">Param</span><span class="p">(</span><span class="n">X_batch</span><span class="p">),</span> <span class="n">theano</span><span class="o">.</span><span class="n">Param</span><span class="p">(</span><span class="n">y_batch</span><span class="p">)],</span>
+        <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">network_output</span><span class="p">,</span> <span class="n">losses</span><span class="p">],</span>
+        <span class="c1"># updates=updates,</span>
+        <span class="n">givens</span><span class="o">=</span><span class="p">{</span>
+            <span class="n">X</span><span class="p">:</span> <span class="n">X_batch</span><span class="p">,</span>
+            <span class="n">y</span><span class="p">:</span> <span class="n">y_batch</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+
+    <span class="n">y_predict_batch</span><span class="p">,</span> <span class="n">loss_batch</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">inputs_to_value</span><span class="p">[</span><span class="n">X</span><span class="p">],</span> <span class="n">inputs_to_value</span><span class="p">[</span><span class="n">y</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">ut</span><span class="o">.</span><span class="n">inIPython</span><span class="p">():</span>
+        <span class="kn">import</span> <span class="nn">IPython</span>
+
+        <span class="n">IPython</span><span class="o">.</span><span class="n">get_ipython</span><span class="p">()</span><span class="o">.</span><span class="n">magic</span><span class="p">(</span><span class="s1">&#39;pylab qt4&#39;</span><span class="p">)</span>
+
+    <span class="kn">from</span> <span class="nn">wbia</span> <span class="kn">import</span> <span class="n">plottool</span> <span class="k">as</span> <span class="n">pt</span>
+
+    <span class="n">pt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x_data</span><span class="p">,</span> <span class="n">y_predict</span><span class="p">)</span>
+    <span class="n">pt</span><span class="o">.</span><span class="n">iup</span><span class="p">()</span>
+    <span class="k">pass</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Wild Me.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

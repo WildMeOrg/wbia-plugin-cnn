@@ -1,45 +1,80 @@
-
 <!DOCTYPE html>
-
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>wbia_cnn._plugin &#8212; wbia-cnn 3.3.0 documentation</title>
-    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
-    <script src="../../_static/language_data.js"></script>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>wbia_cnn._plugin &mdash; wbia-cnn 4.0.1.dev0+dirty documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" />
-   
-  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
 
-  </head><body>
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> wbia-cnn
+          </a>
+              <div class="version">
+                4.0.1.dev0+dirty
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../wbia_cnn.html">wbia_cnn package</a></li>
+</ul>
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          
+        </div>
+      </div>
+    </nav>
 
-          <div class="body" role="main">
-            
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">wbia-cnn</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+          <li><a href="../wbia_cnn.html">wbia_cnn</a> &raquo;</li>
+      <li>wbia_cnn._plugin</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
   <h1>Source code for wbia_cnn._plugin</h1><div class="highlight"><pre>
-<span></span><span class="ch">#!/usr/bin/env python</span>
-<span class="c1"># -*- coding: utf-8 -*-</span>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">tests a test set of data using a specified, pre-trained model and weights</span>
 
 <span class="sd">python -c &quot;import wbia_cnn&quot;</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">unicode_literals</span>
+<span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">wbia_cnn</span> <span class="kn">import</span> <span class="n">models</span>
 <span class="kn">from</span> <span class="nn">wbia_cnn</span> <span class="kn">import</span> <span class="n">_plugin_grabmodels</span> <span class="k">as</span> <span class="n">grabmodels</span>
 <span class="kn">import</span> <span class="nn">utool</span> <span class="k">as</span> <span class="nn">ut</span>
@@ -51,6 +86,7 @@
 <span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="nb">zip</span><span class="p">,</span> <span class="nb">range</span>
 
 <span class="nb">print</span><span class="p">,</span> <span class="n">rrr</span><span class="p">,</span> <span class="n">profile</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">inject2</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span>
 
 
 <span class="k">try</span><span class="p">:</span>
@@ -106,9 +142,9 @@
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; # DISABLE_DOCTEST</span>
-<span class="sd">        &gt;&gt;&gt; from wbia_cnn.train import *  # NOQA</span>
+<span class="sd">        &gt;&gt;&gt; from wbia_cnn._plugin import *  # NOQA</span>
 <span class="sd">        &gt;&gt;&gt; import wbia</span>
-<span class="sd">        &gt;&gt;&gt; ibs = wbia.opendb(&#39;NNP_Master3&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; ibs = wbia.opendb(&#39;NNP_Master3&#39;, allow_newdir=True)</span>
 <span class="sd">        &gt;&gt;&gt; verified_aid1_list, verified_aid2_list = get_verified_aid_pairs(ibs)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Grab marked hard cases</span>
@@ -131,14 +167,14 @@
     <span class="n">data_shape</span> <span class="o">=</span> <span class="p">(</span><span class="mi">192</span><span class="p">,</span> <span class="mi">192</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
     <span class="n">batch_size</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="c1"># Define model and load weights</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">[wbia_cnn] Loading model...&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">[wbia_cnn] Loading model...&#39;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">nInput</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">nInput</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">thumbnail_list</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Warning passed in generator without specifying nInput hint&#39;</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Explicitly evaluating generator&#39;</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;type(chip_list) = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">thumbnail_list</span><span class="p">),))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Warning passed in generator without specifying nInput hint&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Explicitly evaluating generator&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;type(chip_list) = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">thumbnail_list</span><span class="p">),))</span>
             <span class="n">thumbnail_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">thumbnail_list</span><span class="p">)</span>
             <span class="n">nInput</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">thumbnail_list</span><span class="p">)</span>
 
@@ -206,7 +242,7 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Classifier does not have a valid trained model&#39;</span><span class="p">)</span>
 
     <span class="n">model_state_fpath</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_model_state_fpath</span><span class="p">(</span><span class="n">fpath</span><span class="o">=</span><span class="n">weights_path</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[model] loading model state from: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">model_state_fpath</span><span class="p">,))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[model] loading model state from: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">model_state_fpath</span><span class="p">,))</span>
     <span class="n">model_state</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">load_cPkl</span><span class="p">(</span><span class="n">model_state_fpath</span><span class="p">)</span>
 
     <span class="n">model</span><span class="o">.</span><span class="n">encoder</span> <span class="o">=</span> <span class="n">model_state</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;encoder&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
@@ -222,11 +258,11 @@
 
     <span class="c1"># Create the Theano primitives</span>
     <span class="c1"># create theano symbolic expressions that define the network</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">[wbia_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---&#39;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[model] creating Theano primitives...&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">[wbia_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[model] creating Theano primitives...&#39;</span><span class="p">)</span>
     <span class="n">theano_predict</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">build_predict_func</span><span class="p">()</span>
 
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[wbia_cnn] Performing inference...&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[wbia_cnn] Performing inference...&#39;</span><span class="p">)</span>
     <span class="n">test_results</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">process_batch</span><span class="p">(</span><span class="n">theano_predict</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">thumbnail_list</span><span class="p">))</span>
 
     <span class="n">prediction_list</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">encoder</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">test_results</span><span class="p">[</span><span class="s1">&#39;predictions&#39;</span><span class="p">])</span>
@@ -245,14 +281,14 @@
     <span class="n">data_shape</span> <span class="o">=</span> <span class="p">(</span><span class="mi">192</span><span class="p">,</span> <span class="mi">192</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
     <span class="n">batch_size</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="c1"># Define model and load weights</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">[wbia_cnn] Loading model...&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">[wbia_cnn] Loading model...&#39;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">nInput</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">nInput</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">thumbnail_list</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Warning passed in generator without specifying nInput hint&#39;</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Explicitly evaluating generator&#39;</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;type(chip_list) = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">thumbnail_list</span><span class="p">),))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Warning passed in generator without specifying nInput hint&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Explicitly evaluating generator&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;type(chip_list) = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">thumbnail_list</span><span class="p">),))</span>
             <span class="n">thumbnail_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">thumbnail_list</span><span class="p">)</span>
             <span class="n">nInput</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">thumbnail_list</span><span class="p">)</span>
 
@@ -270,7 +306,7 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Classifier does not have a valid trained model&#39;</span><span class="p">)</span>
 
     <span class="n">model_state_fpath</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_model_state_fpath</span><span class="p">(</span><span class="n">fpath</span><span class="o">=</span><span class="n">weights_path</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[model] loading model state from: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">model_state_fpath</span><span class="p">,))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[model] loading model state from: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">model_state_fpath</span><span class="p">,))</span>
     <span class="n">model_state</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">load_cPkl</span><span class="p">(</span><span class="n">model_state_fpath</span><span class="p">)</span>
 
     <span class="n">category_list</span> <span class="o">=</span> <span class="n">model_state</span><span class="p">[</span><span class="s1">&#39;category_list&#39;</span><span class="p">]</span>
@@ -287,11 +323,11 @@
 
     <span class="c1"># Create the Theano primitives</span>
     <span class="c1"># create theano symbolic expressions that define the network</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">[wbia_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---&#39;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[model] creating Theano primitives...&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">[wbia_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[model] creating Theano primitives...&#39;</span><span class="p">)</span>
     <span class="n">theano_predict</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">build_predict_func</span><span class="p">()</span>
 
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[wbia_cnn] Performing inference...&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[wbia_cnn] Performing inference...&#39;</span><span class="p">)</span>
     <span class="n">test_results</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">process_batch</span><span class="p">(</span><span class="n">theano_predict</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">thumbnail_list</span><span class="p">))</span>
 
     <span class="n">confidences_list</span> <span class="o">=</span> <span class="n">test_results</span><span class="p">[</span><span class="s1">&#39;confidences&#39;</span><span class="p">]</span>
@@ -304,7 +340,7 @@
 
     <span class="c1"># zipped = zip(thumbnail_list, confidence_dict_list)</span>
     <span class="c1"># for index, (thumbnail, confidence_dict) in enumerate(zipped):</span>
-    <span class="c1">#     print(index)</span>
+    <span class="c1">#     logger.info(index)</span>
     <span class="c1">#     y = []</span>
     <span class="c1">#     for key in confidence_dict:</span>
     <span class="c1">#         y.append(&#39;%s-%0.04f&#39; % (key, confidence_dict[key], ))</span>
@@ -335,14 +371,14 @@
     <span class="n">data_shape</span> <span class="o">=</span> <span class="p">(</span><span class="mi">192</span><span class="p">,</span> <span class="mi">192</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
     <span class="n">batch_size</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="c1"># Define model and load weights</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">[wbia_cnn] Loading model...&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">[wbia_cnn] Loading model...&#39;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">nInput</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">nInput</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">thumbnail_list</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Warning passed in generator without specifying nInput hint&#39;</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Explicitly evaluating generator&#39;</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;type(chip_list) = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">thumbnail_list</span><span class="p">),))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Warning passed in generator without specifying nInput hint&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Explicitly evaluating generator&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;type(chip_list) = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">thumbnail_list</span><span class="p">),))</span>
             <span class="n">thumbnail_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">thumbnail_list</span><span class="p">)</span>
             <span class="n">nInput</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">thumbnail_list</span><span class="p">)</span>
 
@@ -362,7 +398,7 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;AoI2 does not have a valid trained model&#39;</span><span class="p">)</span>
 
     <span class="n">model_state_fpath</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_model_state_fpath</span><span class="p">(</span><span class="n">fpath</span><span class="o">=</span><span class="n">weights_path</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[model] loading model state from: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">model_state_fpath</span><span class="p">,))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[model] loading model state from: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">model_state_fpath</span><span class="p">,))</span>
     <span class="n">model_state</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">load_cPkl</span><span class="p">(</span><span class="n">model_state_fpath</span><span class="p">)</span>
 
     <span class="n">model</span><span class="o">.</span><span class="n">encoder</span> <span class="o">=</span> <span class="n">model_state</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;encoder&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
@@ -378,8 +414,8 @@
 
     <span class="c1"># Create the Theano primitives</span>
     <span class="c1"># create theano symbolic expressions that define the network</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">[wbia_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---&#39;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[model] creating Theano primitives...&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">[wbia_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[model] creating Theano primitives...&#39;</span><span class="p">)</span>
     <span class="n">theano_predict</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">build_predict_func</span><span class="p">()</span>
 
     <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">192</span><span class="p">,</span> <span class="mi">192</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
@@ -400,7 +436,7 @@
         <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dstack</span><span class="p">((</span><span class="n">thumbnail</span><span class="p">,</span> <span class="n">mask_</span><span class="p">))</span>
         <span class="n">data_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[wbia_cnn] Performing inference...&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[wbia_cnn] Performing inference...&#39;</span><span class="p">)</span>
     <span class="n">test_results</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">process_batch</span><span class="p">(</span><span class="n">theano_predict</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data_list</span><span class="p">))</span>
 
     <span class="n">confidence_list</span> <span class="o">=</span> <span class="n">test_results</span><span class="p">[</span><span class="s1">&#39;confidences&#39;</span><span class="p">]</span>
@@ -422,14 +458,14 @@
     <span class="n">data_shape</span> <span class="o">=</span> <span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
     <span class="n">batch_size</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="c1"># Define model and load weights</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">[wbia_cnn] Loading model...&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">[wbia_cnn] Loading model...&#39;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">nInput</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">nInput</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">chip_list</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Warning passed in generator without specifying nInput hint&#39;</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Explicitly evaluating generator&#39;</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;type(chip_list) = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">chip_list</span><span class="p">),))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Warning passed in generator without specifying nInput hint&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Explicitly evaluating generator&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;type(chip_list) = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">chip_list</span><span class="p">),))</span>
             <span class="n">chip_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">chip_list</span><span class="p">)</span>
             <span class="n">nInput</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">chip_list</span><span class="p">)</span>
 
@@ -459,7 +495,7 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Labeler does not have a valid trained model&#39;</span><span class="p">)</span>
 
     <span class="n">model_state_fpath</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_model_state_fpath</span><span class="p">(</span><span class="n">fpath</span><span class="o">=</span><span class="n">weights_path</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[model] loading model state from: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">model_state_fpath</span><span class="p">,))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[model] loading model state from: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">model_state_fpath</span><span class="p">,))</span>
     <span class="n">model_state</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">load_cPkl</span><span class="p">(</span><span class="n">model_state_fpath</span><span class="p">)</span>
 
     <span class="n">model</span><span class="o">.</span><span class="n">encoder</span> <span class="o">=</span> <span class="n">model_state</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;encoder&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
@@ -476,11 +512,11 @@
 
     <span class="c1"># Create the Theano primitives</span>
     <span class="c1"># create theano symbolic expressions that define the network</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">[wbia_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---&#39;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[model] creating Theano primitives...&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">[wbia_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[model] creating Theano primitives...&#39;</span><span class="p">)</span>
     <span class="n">theano_predict</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">build_predict_func</span><span class="p">()</span>
 
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[wbia_cnn] Performing inference...&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[wbia_cnn] Performing inference...&#39;</span><span class="p">)</span>
     <span class="n">test_results</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">process_batch</span><span class="p">(</span><span class="n">theano_predict</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">chip_list</span><span class="p">))</span>
 
     <span class="n">class_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">encoder</span><span class="o">.</span><span class="n">classes_</span><span class="p">)</span>
@@ -548,7 +584,7 @@
 <span class="sd">        list: mask_list</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Read the data</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">[wbia_cnn] Loading chips...&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">[wbia_cnn] Loading chips...&#39;</span><span class="p">)</span>
     <span class="n">chip_list</span> <span class="o">=</span> <span class="n">ibs</span><span class="o">.</span><span class="n">get_annot_chips</span><span class="p">(</span><span class="n">aid_list</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">config2_</span><span class="o">=</span><span class="n">config2_</span><span class="p">)</span>
     <span class="n">mask_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">generate_species_background</span><span class="p">(</span><span class="n">ibs</span><span class="p">,</span> <span class="n">chip_list</span><span class="p">,</span> <span class="n">species</span><span class="o">=</span><span class="n">species</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">mask_list</span></div>
@@ -567,7 +603,7 @@
 <span class="sd">        list: mask_list</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Read the data</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">[wbia_cnn] Loading chips...&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">[wbia_cnn] Loading chips...&#39;</span><span class="p">)</span>
     <span class="n">chip_list</span> <span class="o">=</span> <span class="n">ibs</span><span class="o">.</span><span class="n">get_annot_chips</span><span class="p">(</span><span class="n">aid_list</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">config2_</span><span class="o">=</span><span class="n">config2_</span><span class="p">)</span>
     <span class="n">mask_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">generate_species_background</span><span class="p">(</span><span class="n">ibs</span><span class="p">,</span> <span class="n">chip_list</span><span class="p">,</span> <span class="n">species</span><span class="o">=</span><span class="n">species</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">mask_list</span></div>
@@ -592,14 +628,14 @@
 <span class="sd">        &gt;&gt;&gt; import wbia_cnn</span>
 <span class="sd">        &gt;&gt;&gt; import wbia</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn._plugin import *  # NOQA</span>
-<span class="sd">        &gt;&gt;&gt; ibs = wbia.opendb(defaultdb=&#39;testdb1&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; ibs = wbia.opendb(defaultdb=&#39;testdb1&#39;, allow_newdir=True)</span>
 <span class="sd">        &gt;&gt;&gt; aid_list = ut.get_argval((&#39;--aids&#39;, &#39;--aid&#39;), type_=list, default=ibs.get_valid_aids()[0:2])</span>
 <span class="sd">        &gt;&gt;&gt; chip_fpath_list = ibs.get_annot_chip_fpath(aid_list)</span>
 <span class="sd">        &gt;&gt;&gt; species = ibs.const.TEST_SPECIES.ZEB_PLAIN</span>
 <span class="sd">        &gt;&gt;&gt; mask_list = generate_species_background_mask(ibs, chip_fpath_list, species)</span>
 <span class="sd">        &gt;&gt;&gt; mask_list = list(mask_list)</span>
 <span class="sd">        &gt;&gt;&gt; ut.quit_if_noshow()</span>
-<span class="sd">        &gt;&gt;&gt; import plottool as pt</span>
+<span class="sd">        &gt;&gt;&gt; from wbia import plottool as pt</span>
 <span class="sd">        &gt;&gt;&gt; iteract_obj = pt.interact_multi_image.MultiImageInteraction(mask_list, nPerPage=4)</span>
 <span class="sd">        &gt;&gt;&gt; #pt.imshow(mask_list[0])</span>
 <span class="sd">        &gt;&gt;&gt; ut.show_if_requested()</span>
@@ -612,7 +648,7 @@
 <span class="sd">        #&gt;&gt;&gt; ut.show_if_requested()</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Read the data</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">[wbia_cnn] Loading chips...&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">[wbia_cnn] Loading chips...&#39;</span><span class="p">)</span>
     <span class="kn">import</span> <span class="nn">vtool</span> <span class="k">as</span> <span class="nn">vt</span>
 
     <span class="n">nInput</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">chip_fpath_list</span><span class="p">)</span>
@@ -655,7 +691,7 @@
 <span class="sd">        &gt;&gt;&gt; import wbia_cnn</span>
 <span class="sd">        &gt;&gt;&gt; import wbia</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn._plugin import *  # NOQA</span>
-<span class="sd">        &gt;&gt;&gt; ibs = wbia.opendb(defaultdb=&#39;testdb1&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; ibs = wbia.opendb(defaultdb=&#39;testdb1&#39;, allow_newdir=True)</span>
 <span class="sd">        &gt;&gt;&gt; aid_list = ibs.get_valid_aids()[0:8]</span>
 <span class="sd">        &gt;&gt;&gt; species = ut.get_argval(&#39;--species&#39;, type_=str, default=&#39;zebra_plains&#39;)</span>
 <span class="sd">        &gt;&gt;&gt; config2_ = None</span>
@@ -664,7 +700,7 @@
 <span class="sd">        &gt;&gt;&gt; mask_iter = generate_species_background(ibs, chip_iter, species=species, nInput=nInput)</span>
 <span class="sd">        &gt;&gt;&gt; mask_list = list(mask_iter)</span>
 <span class="sd">        &gt;&gt;&gt; ut.quit_if_noshow()</span>
-<span class="sd">        &gt;&gt;&gt; import plottool as pt</span>
+<span class="sd">        &gt;&gt;&gt; from wbia import plottool as pt</span>
 <span class="sd">        &gt;&gt;&gt; import vtool as vt</span>
 <span class="sd">        &gt;&gt;&gt; chip_list = ibs.get_annot_chips(aid_list, verbose=True, config2_=config2_, eager=True)</span>
 <span class="sd">        &gt;&gt;&gt; stacked_list = [vt.stack_images(chip, mask)[0] for chip, mask in  zip(chip_list, mask_list)]</span>
@@ -690,14 +726,14 @@
     <span class="c1"># Load chips and resize to the target</span>
     <span class="n">data_shape</span> <span class="o">=</span> <span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
     <span class="c1"># Define model and load weights</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">[wbia_cnn] Loading model...&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">[wbia_cnn] Loading model...&#39;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">nInput</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">nInput</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">chip_list</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Warning passed in generator without specifying nInput hint&#39;</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Explicitly evaluating generator&#39;</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;type(chip_list) = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">chip_list</span><span class="p">),))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Warning passed in generator without specifying nInput hint&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Explicitly evaluating generator&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;type(chip_list) = </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">chip_list</span><span class="p">),))</span>
             <span class="n">chip_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">chip_list</span><span class="p">)</span>
             <span class="n">nInput</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">chip_list</span><span class="p">)</span>
 
@@ -707,7 +743,7 @@
     <span class="n">LEGACY</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">NEW</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">confidence_thresh</span> <span class="o">=</span> <span class="mf">0.5</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">species</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">species</span><span class="p">)</span>
 
     <span class="n">candidacy_species_list</span> <span class="o">=</span> <span class="p">[</span>
         <span class="s1">&#39;giraffe_masai&#39;</span><span class="p">,</span>
@@ -789,7 +825,7 @@
         <span class="s1">&#39;whale_fluke&#39;</span><span class="p">,</span>
         <span class="s1">&#39;whale_humpback&#39;</span><span class="p">,</span>
         <span class="s1">&#39;megaptera_novaeangliae&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;physeter_macrocephalus&#39;</span><span class="p">,</span>
+        <span class="c1"># &#39;physeter_macrocephalus&#39;,</span>
     <span class="p">]:</span>
         <span class="n">LEGACY</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="n">species</span> <span class="o">=</span> <span class="s1">&#39;whale_fluke&#39;</span>
@@ -815,7 +851,14 @@
         <span class="n">species</span> <span class="o">=</span> <span class="s1">&#39;cheetah&#39;</span>
         <span class="n">confidence_thresh</span> <span class="o">=</span> <span class="mf">0.2</span>
         <span class="n">model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BackgroundModel</span><span class="p">(</span><span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">data_shape</span><span class="o">=</span><span class="n">data_shape</span><span class="p">)</span>
-        <span class="n">weights_path</span> <span class="o">=</span> <span class="n">grabmodels</span><span class="o">.</span><span class="n">ensure_model</span><span class="p">(</span><span class="s1">&#39;background_cheetah_v1&#39;</span><span class="p">,</span> <span class="n">redownload</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">weights_path</span> <span class="o">=</span> <span class="n">grabmodels</span><span class="o">.</span><span class="n">ensure_model</span><span class="p">(</span><span class="s1">&#39;background_cheetah_v2&#39;</span><span class="p">,</span> <span class="n">redownload</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">canvas_key</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">elif</span> <span class="n">species</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;hyaena&#39;</span><span class="p">,</span> <span class="s1">&#39;hyaena_hyaena&#39;</span><span class="p">]:</span>
+        <span class="n">LEGACY</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">species</span> <span class="o">=</span> <span class="s1">&#39;hyaena&#39;</span>
+        <span class="n">confidence_thresh</span> <span class="o">=</span> <span class="mf">0.2</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BackgroundModel</span><span class="p">(</span><span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">data_shape</span><span class="o">=</span><span class="n">data_shape</span><span class="p">)</span>
+        <span class="n">weights_path</span> <span class="o">=</span> <span class="n">grabmodels</span><span class="o">.</span><span class="n">ensure_model</span><span class="p">(</span><span class="s1">&#39;background_hyaena_v0&#39;</span><span class="p">,</span> <span class="n">redownload</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="n">canvas_key</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="k">elif</span> <span class="n">species</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;jaguar&#39;</span><span class="p">,</span> <span class="s1">&#39;panthera_onca&#39;</span><span class="p">]:</span>
         <span class="n">LEGACY</span> <span class="o">=</span> <span class="kc">False</span>
@@ -865,6 +908,20 @@
         <span class="n">confidence_thresh</span> <span class="o">=</span> <span class="mf">0.2</span>
         <span class="n">model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BackgroundModel</span><span class="p">(</span><span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">data_shape</span><span class="o">=</span><span class="n">data_shape</span><span class="p">)</span>
         <span class="n">weights_path</span> <span class="o">=</span> <span class="n">grabmodels</span><span class="o">.</span><span class="n">ensure_model</span><span class="p">(</span><span class="s1">&#39;background_orca_v0&#39;</span><span class="p">,</span> <span class="n">redownload</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">canvas_key</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">elif</span> <span class="n">species</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="s1">&#39;whale_sperm&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;whale_sperm+fluke&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;physeter_macrocephalus&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;physeter_macrocephalus+fluke&#39;</span><span class="p">,</span>
+    <span class="p">]:</span>
+        <span class="n">LEGACY</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">species</span> <span class="o">=</span> <span class="s1">&#39;whale_sperm+fluke&#39;</span>
+        <span class="n">confidence_thresh</span> <span class="o">=</span> <span class="mf">0.2</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BackgroundModel</span><span class="p">(</span><span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">data_shape</span><span class="o">=</span><span class="n">data_shape</span><span class="p">)</span>
+        <span class="n">weights_path</span> <span class="o">=</span> <span class="n">grabmodels</span><span class="o">.</span><span class="n">ensure_model</span><span class="p">(</span>
+            <span class="s1">&#39;background_whale_sperm_v0&#39;</span><span class="p">,</span> <span class="n">redownload</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
         <span class="n">canvas_key</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="k">elif</span> <span class="n">species</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;seadragon_leafy&#39;</span><span class="p">,</span> <span class="s1">&#39;phycodurus_eques&#39;</span><span class="p">]:</span>
         <span class="n">LEGACY</span> <span class="o">=</span> <span class="kc">False</span>
@@ -956,12 +1013,39 @@
         <span class="s1">&#39;lepidochelys_olivacea&#39;</span><span class="p">,</span>
         <span class="s1">&#39;turtle_oliveridley+head&#39;</span><span class="p">,</span>
         <span class="s1">&#39;lepidochelys_olivacea+head&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;turtle_asian&#39;</span><span class="p">,</span>
     <span class="p">]:</span>
         <span class="n">LEGACY</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="n">species</span> <span class="o">=</span> <span class="s1">&#39;turtle_sea&#39;</span>
+        <span class="n">species</span> <span class="o">=</span> <span class="s1">&#39;seaturtle&#39;</span>
         <span class="n">confidence_thresh</span> <span class="o">=</span> <span class="mf">0.2</span>
         <span class="n">model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BackgroundModel</span><span class="p">(</span><span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">data_shape</span><span class="o">=</span><span class="n">data_shape</span><span class="p">)</span>
-        <span class="n">weights_path</span> <span class="o">=</span> <span class="n">grabmodels</span><span class="o">.</span><span class="n">ensure_model</span><span class="p">(</span><span class="s1">&#39;background_iot_v0&#39;</span><span class="p">,</span> <span class="n">redownload</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">weights_path</span> <span class="o">=</span> <span class="n">grabmodels</span><span class="o">.</span><span class="n">ensure_model</span><span class="p">(</span>
+            <span class="s1">&#39;background_sea_turtle_v4&#39;</span><span class="p">,</span> <span class="n">redownload</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
+        <span class="n">canvas_key</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">elif</span> <span class="n">species</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="s1">&#39;spotted_eagle_ray&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;aetobatus_narinari&#39;</span><span class="p">,</span>
+    <span class="p">]:</span>
+        <span class="n">LEGACY</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">species</span> <span class="o">=</span> <span class="s1">&#39;spotted_eagle_ray&#39;</span>
+        <span class="n">confidence_thresh</span> <span class="o">=</span> <span class="mf">0.2</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BackgroundModel</span><span class="p">(</span><span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">data_shape</span><span class="o">=</span><span class="n">data_shape</span><span class="p">)</span>
+        <span class="n">weights_path</span> <span class="o">=</span> <span class="n">grabmodels</span><span class="o">.</span><span class="n">ensure_model</span><span class="p">(</span>
+            <span class="s1">&#39;background_spotted_eagle_ray_v0&#39;</span><span class="p">,</span> <span class="n">redownload</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
+        <span class="n">canvas_key</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">elif</span> <span class="n">species</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="s1">&#39;yellow_bellied_toad&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;bombina_variegata&#39;</span><span class="p">,</span>
+    <span class="p">]:</span>
+        <span class="n">LEGACY</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">species</span> <span class="o">=</span> <span class="s1">&#39;yellow_bellied_toad&#39;</span>
+        <span class="n">confidence_thresh</span> <span class="o">=</span> <span class="mf">0.2</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BackgroundModel</span><span class="p">(</span><span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">data_shape</span><span class="o">=</span><span class="n">data_shape</span><span class="p">)</span>
+        <span class="n">weights_path</span> <span class="o">=</span> <span class="n">grabmodels</span><span class="o">.</span><span class="n">ensure_model</span><span class="p">(</span>
+            <span class="s1">&#39;background_yellow_bellied_toad_v0&#39;</span><span class="p">,</span> <span class="n">redownload</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
         <span class="n">canvas_key</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="k">elif</span> <span class="n">species</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;dolphin_spotted&#39;</span><span class="p">,</span> <span class="s1">&#39;stenella_frontalis&#39;</span><span class="p">]:</span>
         <span class="n">LEGACY</span> <span class="o">=</span> <span class="kc">False</span>
@@ -978,6 +1062,15 @@
         <span class="n">confidence_thresh</span> <span class="o">=</span> <span class="mf">0.2</span>
         <span class="n">model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BackgroundModel</span><span class="p">(</span><span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">data_shape</span><span class="o">=</span><span class="n">data_shape</span><span class="p">)</span>
         <span class="n">weights_path</span> <span class="o">=</span> <span class="n">grabmodels</span><span class="o">.</span><span class="n">ensure_model</span><span class="p">(</span><span class="s1">&#39;background_leopard_v0&#39;</span><span class="p">,</span> <span class="n">redownload</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">canvas_key</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">elif</span> <span class="n">species</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;snow_leopard&#39;</span><span class="p">,</span> <span class="s1">&#39;panthera_uncia&#39;</span><span class="p">]:</span>
+        <span class="n">LEGACY</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">species</span> <span class="o">=</span> <span class="s1">&#39;snow_leopard&#39;</span>
+        <span class="n">confidence_thresh</span> <span class="o">=</span> <span class="mf">0.2</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BackgroundModel</span><span class="p">(</span><span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">data_shape</span><span class="o">=</span><span class="n">data_shape</span><span class="p">)</span>
+        <span class="n">weights_path</span> <span class="o">=</span> <span class="n">grabmodels</span><span class="o">.</span><span class="n">ensure_model</span><span class="p">(</span>
+            <span class="s1">&#39;background_snow_leopard_v0&#39;</span><span class="p">,</span> <span class="n">redownload</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
         <span class="n">canvas_key</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="k">elif</span> <span class="n">species</span> <span class="ow">in</span> <span class="p">[</span>
         <span class="s1">&#39;wild_dog&#39;</span><span class="p">,</span>
@@ -999,6 +1092,10 @@
         <span class="s1">&#39;dolphin_spotted+fin_dorsal&#39;</span><span class="p">,</span>
         <span class="s1">&#39;stenella_frontalis+dorsal&#39;</span><span class="p">,</span>
         <span class="s1">&#39;stenella_frontalis+fin_dorsal&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;dolphin_bottlenose+dorsal&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;dolphin_bottlenose+fin_dorsal&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;tursiops_truncatus+dorsal&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;tursiops_truncatus+fin_dorsal&#39;</span><span class="p">,</span>
     <span class="p">]:</span>
         <span class="n">LEGACY</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="n">species</span> <span class="o">=</span> <span class="s1">&#39;dolphin_spotted+fin_dorsal&#39;</span>
@@ -1017,6 +1114,79 @@
             <span class="s1">&#39;background_humpback_dorsal&#39;</span><span class="p">,</span> <span class="n">redownload</span><span class="o">=</span><span class="kc">False</span>
         <span class="p">)</span>
         <span class="n">canvas_key</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">elif</span> <span class="n">species</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;gray_whale&#39;</span><span class="p">,</span> <span class="s1">&#39;whale_grey&#39;</span><span class="p">,</span> <span class="s1">&#39;gray_whale+fluke&#39;</span><span class="p">,</span> <span class="s1">&#39;whale_grey+fluke&#39;</span><span class="p">]:</span>
+        <span class="n">LEGACY</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">species</span> <span class="o">=</span> <span class="s1">&#39;whale_grey&#39;</span>
+        <span class="n">confidence_thresh</span> <span class="o">=</span> <span class="mf">0.2</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BackgroundModel</span><span class="p">(</span><span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">data_shape</span><span class="o">=</span><span class="n">data_shape</span><span class="p">)</span>
+        <span class="n">weights_path</span> <span class="o">=</span> <span class="n">grabmodels</span><span class="o">.</span><span class="n">ensure_model</span><span class="p">(</span>
+            <span class="s1">&#39;background_whale_grey_v0&#39;</span><span class="p">,</span> <span class="n">redownload</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
+        <span class="n">canvas_key</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">elif</span> <span class="n">species</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;beluga_whale&#39;</span><span class="p">,</span> <span class="s1">&#39;whale_beluga&#39;</span><span class="p">,</span> <span class="s1">&#39;delphinapterus_leucas&#39;</span><span class="p">]:</span>
+        <span class="n">LEGACY</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">species</span> <span class="o">=</span> <span class="s1">&#39;whale_beluga&#39;</span>
+        <span class="n">confidence_thresh</span> <span class="o">=</span> <span class="mf">0.2</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BackgroundModel</span><span class="p">(</span><span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">data_shape</span><span class="o">=</span><span class="n">data_shape</span><span class="p">)</span>
+        <span class="n">weights_path</span> <span class="o">=</span> <span class="n">grabmodels</span><span class="o">.</span><span class="n">ensure_model</span><span class="p">(</span>
+            <span class="s1">&#39;background_whale_beluga_v0&#39;</span><span class="p">,</span> <span class="n">redownload</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
+        <span class="n">canvas_key</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">elif</span> <span class="n">species</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="s1">&#39;mediterranean_monk_seal&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;grey_seal&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;grey_seal_unknown&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;grey_seal_male&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;grey_seal_femaleyoung&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;grey_seal_pup&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;harbour_seal&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;hawaiian_monk_seal&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;monachus_monachus&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;phoca_vitulina&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;halichoerus_grypus&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;monachus_schauinslandi&#39;</span><span class="p">,</span>
+    <span class="p">]:</span>
+        <span class="n">LEGACY</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">species</span> <span class="o">=</span> <span class="s1">&#39;seals&#39;</span>
+        <span class="n">confidence_thresh</span> <span class="o">=</span> <span class="mf">0.2</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BackgroundModel</span><span class="p">(</span><span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">data_shape</span><span class="o">=</span><span class="n">data_shape</span><span class="p">)</span>
+        <span class="n">weights_path</span> <span class="o">=</span> <span class="n">grabmodels</span><span class="o">.</span><span class="n">ensure_model</span><span class="p">(</span><span class="s1">&#39;background_seals_v0&#39;</span><span class="p">,</span> <span class="n">redownload</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">canvas_key</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">elif</span> <span class="n">species</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="s1">&#39;grouper_nassau&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;grouper_tiger&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;grouper_nassau_bicolor&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;epinephelus_striatus&#39;</span><span class="p">,</span>
+    <span class="p">]:</span>
+        <span class="n">LEGACY</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">species</span> <span class="o">=</span> <span class="s1">&#39;grouper_nassau&#39;</span>
+        <span class="n">confidence_thresh</span> <span class="o">=</span> <span class="mf">0.2</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BackgroundModel</span><span class="p">(</span><span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">data_shape</span><span class="o">=</span><span class="n">data_shape</span><span class="p">)</span>
+        <span class="n">weights_path</span> <span class="o">=</span> <span class="n">grabmodels</span><span class="o">.</span><span class="n">ensure_model</span><span class="p">(</span>
+            <span class="s1">&#39;background_grouper_nassau_v0&#39;</span><span class="p">,</span> <span class="n">redownload</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
+        <span class="n">canvas_key</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">elif</span> <span class="n">species</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="s1">&#39;salamandra_salamandra&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;salamandra_salamandra_larvae&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;salanader_fire&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;salanader_fire_larvae&#39;</span><span class="p">,</span>
+    <span class="p">]:</span>
+        <span class="n">LEGACY</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">species</span> <span class="o">=</span> <span class="s1">&#39;salanader_fire&#39;</span>
+        <span class="n">confidence_thresh</span> <span class="o">=</span> <span class="mf">0.2</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BackgroundModel</span><span class="p">(</span><span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">data_shape</span><span class="o">=</span><span class="n">data_shape</span><span class="p">)</span>
+        <span class="n">weights_path</span> <span class="o">=</span> <span class="n">grabmodels</span><span class="o">.</span><span class="n">ensure_model</span><span class="p">(</span><span class="s1">&#39;salanader_fire_v0&#39;</span><span class="p">,</span> <span class="n">redownload</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">canvas_key</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">elif</span> <span class="n">species</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;salamandra_salamandra_adult&#39;</span><span class="p">,</span> <span class="s1">&#39;salanader_fire_adult&#39;</span><span class="p">]:</span>
+        <span class="n">LEGACY</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">species</span> <span class="o">=</span> <span class="s1">&#39;salanader_fire_adult&#39;</span>
+        <span class="n">confidence_thresh</span> <span class="o">=</span> <span class="mf">0.2</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BackgroundModel</span><span class="p">(</span><span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">data_shape</span><span class="o">=</span><span class="n">data_shape</span><span class="p">)</span>
+        <span class="n">weights_path</span> <span class="o">=</span> <span class="n">grabmodels</span><span class="o">.</span><span class="n">ensure_model</span><span class="p">(</span>
+            <span class="s1">&#39;salanader_fire_adult_v0&#39;</span><span class="p">,</span> <span class="n">redownload</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
+        <span class="n">canvas_key</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;species </span><span class="si">%r</span><span class="s1"> key does not have a trained model&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">species</span><span class="p">,))</span>
 
@@ -1025,7 +1195,7 @@
         <span class="n">model</span><span class="o">.</span><span class="n">load_old_weights_kw2</span><span class="p">(</span><span class="n">old_weights_fpath</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">model_state_fpath</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_model_state_fpath</span><span class="p">(</span><span class="n">fpath</span><span class="o">=</span><span class="n">weights_path</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[model] loading model state from: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">model_state_fpath</span><span class="p">,))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[model] loading model state from: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">model_state_fpath</span><span class="p">,))</span>
         <span class="n">model_state</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">load_cPkl</span><span class="p">(</span><span class="n">model_state_fpath</span><span class="p">)</span>
 
         <span class="n">model</span><span class="o">.</span><span class="n">output_dims</span> <span class="o">=</span> <span class="n">model_state</span><span class="p">[</span><span class="s1">&#39;output_dims&#39;</span><span class="p">]</span>
@@ -1043,11 +1213,11 @@
 
     <span class="c1"># Create the Theano primitives</span>
     <span class="c1"># create theano symbolic expressions that define the network</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">[wbia_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---&#39;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[model] creating Theano primitives...&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">[wbia_cnn] --- COMPILING SYMBOLIC THEANO FUNCTIONS ---&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[model] creating Theano primitives...&#39;</span><span class="p">)</span>
     <span class="n">model</span><span class="o">.</span><span class="n">build_predict_func</span><span class="p">()</span>
 
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[wbia_cnn] Performing inference...&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[wbia_cnn] Performing inference...&#39;</span><span class="p">)</span>
 
     <span class="n">_iter</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">ProgressIter</span><span class="p">(</span>
         <span class="n">chip_list</span><span class="p">,</span>
@@ -1166,7 +1336,7 @@
     <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
         <span class="c1"># Start timer</span>
         <span class="n">tt</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">tic</span><span class="p">()</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[harness] Loading the testing data (convolutional)...&#39;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[harness] Loading the testing data (convolutional)...&#39;</span><span class="p">)</span>
     <span class="c1"># Try to get the image&#39;s shape</span>
     <span class="n">h</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">image</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
 
@@ -1248,7 +1418,7 @@
         <span class="n">canvas_dict</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">))</span>  <span class="c1"># We want float precision</span>
     <span class="c1"># Construct the canvases using the forward inference results</span>
     <span class="n">label_list_</span> <span class="o">=</span> <span class="n">label_list_</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-    <span class="c1"># print(&#39;[harness] Labels: %r&#39; %(label_list_, ))</span>
+    <span class="c1"># logger.info(&#39;[harness] Labels: %r&#39; %(label_list_, ))</span>
     <span class="n">zipped</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">data_list</span><span class="p">,</span> <span class="n">coord_list</span><span class="p">,</span> <span class="n">label_list</span><span class="p">,</span> <span class="n">confidence_list</span><span class="p">))</span>
     <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">label_list_</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">data</span><span class="p">,</span> <span class="n">coord</span><span class="p">,</span> <span class="n">label_</span><span class="p">,</span> <span class="n">confidence</span> <span class="ow">in</span> <span class="n">zipped</span><span class="p">:</span>
@@ -1305,7 +1475,7 @@
     <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
         <span class="c1"># End timer</span>
         <span class="n">duration</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">toc</span><span class="p">(</span><span class="n">tt</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[harness] Interface took </span><span class="si">%s</span><span class="s1"> seconds...&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">duration</span><span class="p">,))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;[harness] Interface took </span><span class="si">%s</span><span class="s1"> seconds...&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">duration</span><span class="p">,))</span>
     <span class="c1"># Return the canvas dict</span>
     <span class="k">return</span> <span class="n">samples</span><span class="p">,</span> <span class="n">canvas_dict</span></div>
 
@@ -1322,7 +1492,7 @@
     <span class="c1"># Load chips and resize to the target</span>
     <span class="n">data_shape</span> <span class="o">=</span> <span class="p">(</span><span class="mi">96</span><span class="p">,</span> <span class="mi">96</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
     <span class="c1"># Define model and load weights</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Loading model...&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Loading model...&#39;</span><span class="p">)</span>
     <span class="n">batch_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">2</span> <span class="o">**</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">aid_list</span><span class="p">)))))</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ViewpointModel</span><span class="p">(</span><span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">data_shape</span><span class="o">=</span><span class="n">data_shape</span><span class="p">)</span>
     <span class="n">weights_path</span> <span class="o">=</span> <span class="n">grabmodels</span><span class="o">.</span><span class="n">ensure_model</span><span class="p">(</span><span class="s1">&#39;viewpoint&#39;</span><span class="p">,</span> <span class="n">redownload</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -1330,9 +1500,9 @@
     <span class="n">model</span><span class="o">.</span><span class="n">load_old_weights_kw</span><span class="p">(</span><span class="n">old_weights_fpath</span><span class="p">)</span>
     <span class="c1"># Read the data</span>
     <span class="n">target</span> <span class="o">=</span> <span class="n">data_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Loading chips...&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Loading chips...&#39;</span><span class="p">)</span>
     <span class="n">chip_list</span> <span class="o">=</span> <span class="n">ibs</span><span class="o">.</span><span class="n">get_annot_chips</span><span class="p">(</span><span class="n">aid_list</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Resizing chips...&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Resizing chips...&#39;</span><span class="p">)</span>
     <span class="n">chip_list_resized</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">cv2</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">chip</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="n">cv2</span><span class="o">.</span><span class="n">INTER_LANCZOS4</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">chip</span> <span class="ow">in</span> <span class="n">ut</span><span class="o">.</span><span class="n">ProgressIter</span><span class="p">(</span><span class="n">chip_list</span><span class="p">,</span> <span class="n">lbl</span><span class="o">=</span><span class="s1">&#39;resizing chips&#39;</span><span class="p">)</span>
@@ -1381,7 +1551,7 @@
 <span class="sd">        &gt;&gt;&gt; # DISABLE_DOCTEST</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn._plugin import *  # NOQA</span>
 <span class="sd">        &gt;&gt;&gt; import wbia</span>
-<span class="sd">        &gt;&gt;&gt; ibs = wbia.opendb(defaultdb=&#39;testdb1&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; ibs = wbia.opendb(defaultdb=&#39;testdb1&#39;, allow_newdir=True)</span>
 <span class="sd">        &gt;&gt;&gt; aid_list = ibs.get_valid_aids()</span>
 <span class="sd">        &gt;&gt;&gt; species_viewpoint_list = detect_annot_species_viewpoint_cnn(ibs, aid_list)</span>
 <span class="sd">        &gt;&gt;&gt; result = (&#39;species_viewpoint_list = %s&#39; % (str(species_viewpoint_list),))</span>
@@ -1392,7 +1562,7 @@
     <span class="c1"># Load chips and resize to the target</span>
     <span class="n">data_shape</span> <span class="o">=</span> <span class="p">(</span><span class="mi">96</span><span class="p">,</span> <span class="mi">96</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
     <span class="c1"># Define model and load weights</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Loading model...&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Loading model...&#39;</span><span class="p">)</span>
     <span class="n">batch_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">2</span> <span class="o">**</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">aid_list</span><span class="p">)))))</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ViewpointModel</span><span class="p">(</span><span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">data_shape</span><span class="o">=</span><span class="n">data_shape</span><span class="p">)</span>
     <span class="n">weights_path</span> <span class="o">=</span> <span class="n">grabmodels</span><span class="o">.</span><span class="n">ensure_model</span><span class="p">(</span><span class="s1">&#39;viewpoint&#39;</span><span class="p">,</span> <span class="n">redownload</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -1400,9 +1570,9 @@
     <span class="n">model</span><span class="o">.</span><span class="n">load_old_weights_kw</span><span class="p">(</span><span class="n">old_weights_fpath</span><span class="p">)</span>
     <span class="c1"># Read the data</span>
     <span class="n">target</span> <span class="o">=</span> <span class="n">data_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Loading chips...&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Loading chips...&#39;</span><span class="p">)</span>
     <span class="n">chip_list</span> <span class="o">=</span> <span class="n">ibs</span><span class="o">.</span><span class="n">get_annot_chips</span><span class="p">(</span><span class="n">aid_list</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Resizing chips...&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Resizing chips...&#39;</span><span class="p">)</span>
     <span class="n">chip_list_resized</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">cv2</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">chip</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="n">cv2</span><span class="o">.</span><span class="n">INTER_LANCZOS4</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">chip</span> <span class="ow">in</span> <span class="n">ut</span><span class="o">.</span><span class="n">ProgressIter</span><span class="p">(</span><span class="n">chip_list</span><span class="p">,</span> <span class="n">lbl</span><span class="o">=</span><span class="s1">&#39;resizing chips&#39;</span><span class="p">)</span>
@@ -1428,30 +1598,6 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        tuple: (bad_species_list, bad_viewpoint_list)</span>
-
-<span class="sd">    CommandLine:</span>
-<span class="sd">        python -m wbia_cnn._plugin --exec-validate_annot_species_viewpoint_cnn --db PZ_FlankHack</span>
-<span class="sd">        python -m wbia_cnn._plugin --exec-validate_annot_species_viewpoint_cnn --db GZ_Master1</span>
-
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # DISABLE_DOCTEST</span>
-<span class="sd">        &gt;&gt;&gt; from wbia_cnn._plugin import *  # NOQA</span>
-<span class="sd">        &gt;&gt;&gt; import wbia</span>
-<span class="sd">        &gt;&gt;&gt; ibs = wbia.opendb(defaultdb=&#39;testdb1&#39;)</span>
-<span class="sd">        &gt;&gt;&gt; aid_list = ibs.get_valid_aids()</span>
-<span class="sd">        &gt;&gt;&gt; verbose = False</span>
-<span class="sd">        &gt;&gt;&gt; (bad_species_list, bad_viewpoint_list) = validate_annot_species_viewpoint_cnn(ibs, aid_list, verbose)</span>
-<span class="sd">        &gt;&gt;&gt; print(&#39;bad_species_list = %s&#39; % (bad_species_list,))</span>
-<span class="sd">        &gt;&gt;&gt; print(&#39;bad_species_list = %s&#39; % (bad_viewpoint_list,))</span>
-<span class="sd">        &gt;&gt;&gt; print(result)</span>
-
-<span class="sd">     Ignore:</span>
-<span class="sd">        bad_viewpoint_list_ = [item for item in bad_viewpoint_list if item[2] is not None and item[0] &gt; 1200]</span>
-<span class="sd">        grouped_dict = ut.group_items(bad_viewpoint_list, ut.get_list_column(bad_viewpoint_list_, 3))</span>
-<span class="sd">        grouped_list = grouped_dict.values()</span>
-<span class="sd">        regrouped_items = ut.flatten(ut.sortedby(grouped_list, map(len, grouped_list)))</span>
-<span class="sd">        candidate_aid_list = ut.get_list_column(regrouped_items, 0)</span>
-<span class="sd">        print(&#39;candidate_aid_list = %r&#39; % (candidate_aid_list,))</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Load chips and metadata</span>
     <span class="n">species_list</span> <span class="o">=</span> <span class="n">ibs</span><span class="o">.</span><span class="n">get_annot_species</span><span class="p">(</span><span class="n">aid_list</span><span class="p">)</span>
@@ -1470,17 +1616,17 @@
             <span class="k">continue</span>
     <span class="c1"># Print bad if verbose</span>
     <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Found conflicting species:&#39;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Found conflicting species:&#39;</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">bad_species</span> <span class="ow">in</span> <span class="n">bad_species_list</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;    AID </span><span class="si">%4d</span><span class="s1"> (</span><span class="si">%r</span><span class="s1">) should be </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">bad_species</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Found conflicting viewpoints:&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;    AID </span><span class="si">%4d</span><span class="s1"> (</span><span class="si">%r</span><span class="s1">) should be </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">bad_species</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Found conflicting viewpoints:&#39;</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">bad_viewpoint</span> <span class="ow">in</span> <span class="n">bad_viewpoint_list</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;    AID </span><span class="si">%4d</span><span class="s1"> (</span><span class="si">%r</span><span class="s1">, </span><span class="si">%r</span><span class="s1">) should be </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">bad_viewpoint</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;    AID </span><span class="si">%4d</span><span class="s1"> (</span><span class="si">%r</span><span class="s1">, </span><span class="si">%r</span><span class="s1">) should be </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">bad_viewpoint</span><span class="p">)</span>
     <span class="c1"># Return bad</span>
     <span class="k">return</span> <span class="n">bad_species_list</span><span class="p">,</span> <span class="n">bad_viewpoint_list</span></div>
 
 
-<div class="viewcode-block" id="_suggest_random_candidate_regions"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn._plugin._suggest_random_candidate_regions">[docs]</a><span class="k">def</span> <span class="nf">_suggest_random_candidate_regions</span><span class="p">(</span><span class="n">ibs</span><span class="p">,</span> <span class="n">image</span><span class="p">,</span> <span class="n">min_size</span><span class="p">,</span> <span class="n">num_candidates</span><span class="o">=</span><span class="mi">2000</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_suggest_random_candidate_regions</span><span class="p">(</span><span class="n">ibs</span><span class="p">,</span> <span class="n">image</span><span class="p">,</span> <span class="n">min_size</span><span class="p">,</span> <span class="n">num_candidates</span><span class="o">=</span><span class="mi">2000</span><span class="p">):</span>
     <span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">image</span><span class="o">.</span><span class="n">shape</span>
     <span class="n">h</span> <span class="o">-=</span> <span class="mi">1</span>
     <span class="n">w</span> <span class="o">-=</span> <span class="mi">1</span>
@@ -1500,10 +1646,10 @@
         <span class="k">return</span> <span class="n">x0</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span>
 
     <span class="n">candidate_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">_candidate</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_candidates</span><span class="p">)]</span>
-    <span class="k">return</span> <span class="n">candidate_list</span></div>
+    <span class="k">return</span> <span class="n">candidate_list</span>
 
 
-<div class="viewcode-block" id="_suggest_bing_candidate_regions"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn._plugin._suggest_bing_candidate_regions">[docs]</a><span class="k">def</span> <span class="nf">_suggest_bing_candidate_regions</span><span class="p">(</span><span class="n">ibs</span><span class="p">,</span> <span class="n">image_path_list</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_suggest_bing_candidate_regions</span><span class="p">(</span><span class="n">ibs</span><span class="p">,</span> <span class="n">image_path_list</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">_dedictify</span><span class="p">(</span><span class="n">dict_list</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">[[</span><span class="n">d_</span><span class="p">[</span><span class="s1">&#39;minx&#39;</span><span class="p">],</span> <span class="n">d_</span><span class="p">[</span><span class="s1">&#39;miny&#39;</span><span class="p">],</span> <span class="n">d_</span><span class="p">[</span><span class="s1">&#39;maxx&#39;</span><span class="p">],</span> <span class="n">d_</span><span class="p">[</span><span class="s1">&#39;maxy&#39;</span><span class="p">]]</span> <span class="k">for</span> <span class="n">d_</span> <span class="ow">in</span> <span class="n">dict_list</span><span class="p">]</span>
 
@@ -1512,7 +1658,7 @@
     <span class="n">detector</span> <span class="o">=</span> <span class="n">BING_Detector</span><span class="p">()</span>
     <span class="n">results_list</span> <span class="o">=</span> <span class="n">detector</span><span class="o">.</span><span class="n">detect</span><span class="p">(</span><span class="n">image_path_list</span><span class="p">)</span>
     <span class="n">result_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">_dedictify</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">for</span> <span class="n">results</span> <span class="ow">in</span> <span class="n">results_list</span><span class="p">]</span>
-    <span class="k">return</span> <span class="n">result_list</span></div>
+    <span class="k">return</span> <span class="n">result_list</span>
 
 
 <div class="viewcode-block" id="non_max_suppression_fast"><a class="viewcode-back" href="../../wbia_cnn.html#wbia_cnn._plugin.non_max_suppression_fast">[docs]</a><span class="k">def</span> <span class="nf">non_max_suppression_fast</span><span class="p">(</span><span class="n">box_list</span><span class="p">,</span> <span class="n">conf_list</span><span class="p">,</span> <span class="n">overlapThresh</span><span class="o">=</span><span class="mf">0.5</span><span class="p">):</span>
@@ -1607,7 +1753,7 @@
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn._plugin import *  # NOQA</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn._plugin import _suggest_random_candidate_regions, _suggest_bing_candidate_regions  # NOQA</span>
 <span class="sd">        &gt;&gt;&gt; import wbia</span>
-<span class="sd">        &gt;&gt;&gt; ibs = wbia.opendb(defaultdb=&#39;testdb1&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; ibs = wbia.opendb(defaultdb=&#39;testdb1&#39;, allow_newdir=True)</span>
 <span class="sd">        &gt;&gt;&gt; gid = 1</span>
 <span class="sd">        &gt;&gt;&gt; confidence = 0.9</span>
 <span class="sd">        &gt;&gt;&gt; extraction = &#39;bing&#39;</span>
@@ -1621,21 +1767,21 @@
     <span class="n">targetx</span><span class="p">,</span> <span class="n">targety</span> <span class="o">=</span> <span class="n">target</span>
     <span class="c1"># gid = gid_list[random.randint(0, len(gid_list))]</span>
     <span class="c1"># gid = gid_list[0]</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Detecting with gid=</span><span class="si">%r</span><span class="s1">...&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">gid</span><span class="p">,))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Detecting with gid=</span><span class="si">%r</span><span class="s1">...&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">gid</span><span class="p">,))</span>
     <span class="n">image</span> <span class="o">=</span> <span class="n">ibs</span><span class="o">.</span><span class="n">get_images</span><span class="p">(</span><span class="n">gid</span><span class="p">)</span>
     <span class="n">rects</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
     <span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">image</span><span class="o">.</span><span class="n">shape</span>
 
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Querrying for candidate regions...&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Querrying for candidate regions...&#39;</span><span class="p">)</span>
     <span class="n">image_path</span> <span class="o">=</span> <span class="n">ibs</span><span class="o">.</span><span class="n">get_image_paths</span><span class="p">(</span><span class="n">gid</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">extraction</span> <span class="o">==</span> <span class="s1">&#39;random&#39;</span><span class="p">:</span>
         <span class="n">candidate_list</span> <span class="o">=</span> <span class="n">_suggest_random_candidate_regions</span><span class="p">(</span><span class="n">ibs</span><span class="p">,</span> <span class="n">image</span><span class="p">,</span> <span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">32</span><span class="p">))</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">candidate_list</span> <span class="o">=</span> <span class="n">_suggest_bing_candidate_regions</span><span class="p">(</span><span class="n">ibs</span><span class="p">,</span> <span class="p">[</span><span class="n">image_path</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
 
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Num candidates: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">candidate_list</span><span class="p">),))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Num candidates: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">candidate_list</span><span class="p">),))</span>
     <span class="n">chip_list_resized</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Extracting candidate regions...&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Extracting candidate regions...&#39;</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="n">candidate_list</span><span class="p">:</span>
         <span class="n">x0</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="n">candidate</span>
         <span class="n">chip</span> <span class="o">=</span> <span class="n">image</span><span class="p">[</span><span class="n">y0</span><span class="p">:</span><span class="n">y1</span><span class="p">,</span> <span class="n">x0</span><span class="p">:</span><span class="n">x1</span><span class="p">]</span>
@@ -1653,10 +1799,10 @@
     <span class="c1"># Build data for network</span>
     <span class="n">X_test</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">chip_list_resized</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
     <span class="c1"># Define model and load weights</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Loading model...&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Loading model...&#39;</span><span class="p">)</span>
     <span class="n">data_shape</span> <span class="o">=</span> <span class="p">(</span><span class="mi">96</span><span class="p">,</span> <span class="mi">96</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
     <span class="c1"># Define model and load weights</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Loading model...&#39;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Loading model...&#39;</span><span class="p">)</span>
     <span class="c1"># batch_size = int(min(128, 2 ** np.floor(np.log2(len(chip_list_resized)))))</span>
     <span class="n">batch_size</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ViewpointModel</span><span class="p">(</span><span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">data_shape</span><span class="o">=</span><span class="n">data_shape</span><span class="p">)</span>
@@ -1674,9 +1820,9 @@
 
     <span class="n">num_all_candidates</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">conf_list</span><span class="p">)</span>
     <span class="n">index_list</span> <span class="o">=</span> <span class="n">non_max_suppression_fast</span><span class="p">(</span><span class="n">candidate_list</span><span class="p">,</span> <span class="n">conf_list</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Surviving candidates: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">index_list</span><span class="p">,))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Surviving candidates: </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">index_list</span><span class="p">,))</span>
     <span class="n">num_supressed_candidates</span> <span class="o">=</span> <span class="n">num_all_candidates</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">index_list</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Supressed: </span><span class="si">%d</span><span class="s1"> candidates&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">num_supressed_candidates</span><span class="p">,))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Supressed: </span><span class="si">%d</span><span class="s1"> candidates&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">num_supressed_candidates</span><span class="p">,))</span>
 
     <span class="n">candidate_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">candidate_list</span><span class="p">,</span> <span class="n">index_list</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">pred_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">pred_list</span><span class="p">,</span> <span class="n">index_list</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
@@ -1699,7 +1845,7 @@
         <span class="k">if</span> <span class="n">conf</span> <span class="o">&lt;</span> <span class="n">confidence</span><span class="p">:</span>
             <span class="n">skipped</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="k">continue</span>
-        <span class="nb">print</span><span class="p">(</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s1">&#39;</span><span class="si">%r</span><span class="s1"> Found </span><span class="si">%s</span><span class="s1"> (</span><span class="si">%s</span><span class="s1">, </span><span class="si">%s</span><span class="s1">) at </span><span class="si">%s</span><span class="s1">&#39;</span>
             <span class="o">%</span> <span class="p">(</span>
                 <span class="n">candidate</span><span class="p">,</span>
@@ -1714,7 +1860,7 @@
         <span class="c1"># mx = int((x1 - x0) * 0.5)</span>
         <span class="c1"># my = int((y1 - y0) * 0.5)</span>
         <span class="c1"># cv2.circle(rects, (x0 + mx, y0 + my), 5, color, -1)</span>
-    <span class="nb">print</span><span class="p">(</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
         <span class="s1">&#39;Skipped [ </span><span class="si">%d</span><span class="s1"> / </span><span class="si">%d</span><span class="s1"> ]&#39;</span>
         <span class="o">%</span> <span class="p">(</span>
             <span class="n">skipped</span><span class="p">,</span>
@@ -1767,7 +1913,7 @@
 <span class="sd">        &gt;&gt;&gt; # DISABLE_DOCTEST</span>
 <span class="sd">        &gt;&gt;&gt; from wbia_cnn._plugin import *  # NOQA</span>
 <span class="sd">        &gt;&gt;&gt; import wbia</span>
-<span class="sd">        &gt;&gt;&gt; ibs = wbia.opendb(defaultdb=&#39;testdb1&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; ibs = wbia.opendb(defaultdb=&#39;testdb1&#39;, allow_newdir=True)</span>
 <span class="sd">        &gt;&gt;&gt; cid_list = ibs.depc_annot.get_rowids(&#39;chips&#39;, ibs.get_valid_aids())</span>
 <span class="sd">        &gt;&gt;&gt; config2_ = None</span>
 <span class="sd">        &gt;&gt;&gt; # megahack</span>
@@ -1787,7 +1933,7 @@
     <span class="n">patch_size</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">input_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">config2_</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="c1"># Get config from config2_ object</span>
-        <span class="c1"># print(&#39;id(config2_) = &#39; + str(id(config2_)))</span>
+        <span class="c1"># logger.info(&#39;id(config2_) = &#39; + str(id(config2_)))</span>
         <span class="n">feat_cfgstr</span> <span class="o">=</span> <span class="n">config2_</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;feat_cfgstr&#39;</span><span class="p">)</span>
         <span class="n">hesaff_params</span> <span class="o">=</span> <span class="n">config2_</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;hesaff_params&#39;</span><span class="p">)</span>
         <span class="k">assert</span> <span class="n">feat_cfgstr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
@@ -1799,7 +1945,7 @@
         <span class="n">feat_cfgstr</span><span class="o">=</span><span class="n">feat_cfgstr</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;siam128&#39;</span><span class="p">,</span> <span class="s1">&#39;sift&#39;</span><span class="p">),</span>
         <span class="n">hesaff_params</span><span class="o">=</span><span class="n">hesaff_params</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Generating siam128 features for </span><span class="si">%d</span><span class="s1"> chips&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cid_list</span><span class="p">),))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Generating siam128 features for </span><span class="si">%d</span><span class="s1"> chips&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cid_list</span><span class="p">),))</span>
     <span class="n">BATCHED</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="k">if</span> <span class="n">BATCHED</span><span class="p">:</span>
         <span class="n">ibs</span><span class="o">.</span><span class="n">get_chip_feat_rowid</span><span class="p">(</span><span class="n">cid_list</span><span class="p">,</span> <span class="n">config2_</span><span class="o">=</span><span class="n">hack_config2_</span><span class="p">,</span> <span class="n">ensure</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -1807,13 +1953,13 @@
             <span class="nb">list</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">ichunks</span><span class="p">(</span><span class="n">cid_list</span><span class="p">,</span> <span class="mi">128</span><span class="p">)),</span> <span class="n">lbl</span><span class="o">=</span><span class="s1">&#39;siam128 chip chunk&#39;</span>
         <span class="p">):</span>
             <span class="n">sift_fid_list</span> <span class="o">=</span> <span class="n">ibs</span><span class="o">.</span><span class="n">get_chip_feat_rowid</span><span class="p">(</span><span class="n">cid_batch</span><span class="p">,</span> <span class="n">config2_</span><span class="o">=</span><span class="n">hack_config2_</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Reading keypoints&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Reading keypoints&#39;</span><span class="p">)</span>
             <span class="n">kpts_list</span> <span class="o">=</span> <span class="n">ibs</span><span class="o">.</span><span class="n">get_feat_kpts</span><span class="p">(</span><span class="n">sift_fid_list</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Reading chips&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Reading chips&#39;</span><span class="p">)</span>
             <span class="n">chip_list</span> <span class="o">=</span> <span class="n">vt</span><span class="o">.</span><span class="n">convert_image_list_colorspace</span><span class="p">(</span>
                 <span class="n">ibs</span><span class="o">.</span><span class="n">get_chips</span><span class="p">(</span><span class="n">cid_batch</span><span class="p">,</span> <span class="n">ensure</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">colorspace</span>
             <span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Warping patches&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Warping patches&#39;</span><span class="p">)</span>
             <span class="n">warped_patches_list</span> <span class="o">=</span> <span class="p">[</span>
                 <span class="n">vt</span><span class="o">.</span><span class="n">get_warped_patches</span><span class="p">(</span><span class="n">chip</span><span class="p">,</span> <span class="n">kpts</span><span class="p">,</span> <span class="n">patch_size</span><span class="o">=</span><span class="n">patch_size</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
                 <span class="k">for</span> <span class="n">chip</span><span class="p">,</span> <span class="n">kpts</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">chip_list</span><span class="p">,</span> <span class="n">kpts_list</span><span class="p">)</span>
@@ -1833,13 +1979,13 @@
         <span class="n">sift_fid_list</span> <span class="o">=</span> <span class="n">ibs</span><span class="o">.</span><span class="n">get_chip_feat_rowid</span><span class="p">(</span>
             <span class="n">cid_list</span><span class="p">,</span> <span class="n">config2_</span><span class="o">=</span><span class="n">hack_config2_</span><span class="p">,</span> <span class="n">ensure</span><span class="o">=</span><span class="kc">True</span>
         <span class="p">)</span>  <span class="c1"># NOQA</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Reading keypoints&#39;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Reading keypoints&#39;</span><span class="p">)</span>
         <span class="n">kpts_list</span> <span class="o">=</span> <span class="n">ibs</span><span class="o">.</span><span class="n">get_feat_kpts</span><span class="p">(</span><span class="n">sift_fid_list</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Reading chips&#39;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Reading chips&#39;</span><span class="p">)</span>
         <span class="n">chip_list</span> <span class="o">=</span> <span class="n">vt</span><span class="o">.</span><span class="n">convert_image_list_colorspace</span><span class="p">(</span>
             <span class="n">ibs</span><span class="o">.</span><span class="n">get_chips</span><span class="p">(</span><span class="n">cid_list</span><span class="p">,</span> <span class="n">ensure</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">colorspace</span>
         <span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Warping patches&#39;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Warping patches&#39;</span><span class="p">)</span>
         <span class="n">warped_patches_list</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">vt</span><span class="o">.</span><span class="n">get_warped_patches</span><span class="p">(</span><span class="n">chip</span><span class="p">,</span> <span class="n">kpts</span><span class="p">,</span> <span class="n">patch_size</span><span class="o">=</span><span class="n">patch_size</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
             <span class="k">for</span> <span class="n">chip</span><span class="p">,</span> <span class="n">kpts</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">chip_list</span><span class="p">,</span> <span class="n">kpts_list</span><span class="p">)</span>
@@ -1898,71 +2044,31 @@
     <span class="n">ut</span><span class="o">.</span><span class="n">doctest_funcs</span><span class="p">()</span>
 </pre></div>
 
+           </div>
           </div>
-          
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Wild Me.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../index.html">wbia-cnn</a></h1>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
 
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../wbia_cnn.html">wbia_cnn package</a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../index.html">Documentation overview</a><ul>
-  <li><a href="../index.html">Module code</a><ul>
-  <li><a href="../wbia_cnn.html">wbia_cnn</a><ul>
-  </ul></li>
-  </ul></li>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2020, Wild Me.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-    </div>
-
-    
-
-    
-  </body>
+</body>
 </html>

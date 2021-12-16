@@ -19,7 +19,6 @@ wbia\_cnn.\_\_main\_\_ module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 wbia\_cnn.\_plugin module
 -------------------------
@@ -28,7 +27,6 @@ wbia\_cnn.\_plugin module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 wbia\_cnn.\_plugin\_grabmodels module
 -------------------------------------
@@ -37,16 +35,6 @@ wbia\_cnn.\_plugin\_grabmodels module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
-
-wbia\_cnn.\_version module
---------------------------
-
-.. automodule:: wbia_cnn._version
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :private-members:
 
 wbia\_cnn.augment module
 ------------------------
@@ -55,7 +43,6 @@ wbia\_cnn.augment module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 wbia\_cnn.batch\_processing module
 ----------------------------------
@@ -64,7 +51,6 @@ wbia\_cnn.batch\_processing module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 wbia\_cnn.custom\_layers module
 -------------------------------
@@ -73,7 +59,6 @@ wbia\_cnn.custom\_layers module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 wbia\_cnn.dataset module
 ------------------------
@@ -82,7 +67,6 @@ wbia\_cnn.dataset module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 wbia\_cnn.draw\_net module
 --------------------------
@@ -91,7 +75,6 @@ wbia\_cnn.draw\_net module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 wbia\_cnn.draw\_results module
 ------------------------------
@@ -100,7 +83,6 @@ wbia\_cnn.draw\_results module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 wbia\_cnn.experiments module
 ----------------------------
@@ -109,7 +91,6 @@ wbia\_cnn.experiments module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 wbia\_cnn.harness module
 ------------------------
@@ -118,7 +99,6 @@ wbia\_cnn.harness module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 wbia\_cnn.ingest\_data module
 -----------------------------
@@ -127,7 +107,6 @@ wbia\_cnn.ingest\_data module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 wbia\_cnn.ingest\_helpers module
 --------------------------------
@@ -136,7 +115,6 @@ wbia\_cnn.ingest\_helpers module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 wbia\_cnn.ingest\_wbia module
 -----------------------------
@@ -145,7 +123,6 @@ wbia\_cnn.ingest\_wbia module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 wbia\_cnn.lasagne\_ext module
 -----------------------------
@@ -154,7 +131,6 @@ wbia\_cnn.lasagne\_ext module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 wbia\_cnn.net\_strs module
 --------------------------
@@ -163,7 +139,6 @@ wbia\_cnn.net\_strs module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 wbia\_cnn.netrun module
 -----------------------
@@ -172,7 +147,6 @@ wbia\_cnn.netrun module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 wbia\_cnn.process module
 ------------------------
@@ -181,7 +155,6 @@ wbia\_cnn.process module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 wbia\_cnn.sandbox module
 ------------------------
@@ -190,7 +163,6 @@ wbia\_cnn.sandbox module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 wbia\_cnn.test module
 ---------------------
@@ -199,7 +171,6 @@ wbia\_cnn.test module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 wbia\_cnn.theano\_ext module
 ----------------------------
@@ -208,7 +179,6 @@ wbia\_cnn.theano\_ext module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 wbia\_cnn.utils module
 ----------------------
@@ -217,7 +187,6 @@ wbia\_cnn.utils module
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
 
 Module contents
 ---------------
@@ -226,4 +195,3 @@ Module contents
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:

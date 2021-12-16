@@ -357,8 +357,8 @@ def get_aidpair_patchmatch_training_data(
         >>> colorspace = pmcfg['colorspace']
         >>> # execute function
         >>> tup = get_aidpair_patchmatch_training_data(ibs, aid1_list,
-        ...     aid2_list, kpts1_m_list, kpts2_m_list, fm_list, metadata_lists,
-        ...     patch_size, colorspace)
+        >>>     aid2_list, kpts1_m_list, kpts2_m_list, fm_list, metadata_lists,
+        >>>     patch_size, colorspace)
         >>> aid1_list_, aid2_list_, warped_patch1_list, warped_patch2_list, flat_metadata = tup
         >>> ut.quit_if_noshow()
         >>> label_list = get_aidpair_training_labels(ibs, aid1_list_, aid2_list_)
@@ -865,9 +865,9 @@ def get_aidpairs_and_matches(
 
     Returns:
         tuple : patchmatch_tup = (aid1_list, aid2_list, kpts1_m_list,
-                                   kpts2_m_list, fm_list, metadata_lists)
-            aid pairs and matching keypoint pairs as well as the original index
-            of the feature matches
+        kpts2_m_list, fm_list, metadata_lists)
+        aid pairs and matching keypoint pairs as well as the original index
+        of the feature matches
 
     CommandLine:
         python -m wbia_cnn.ingest_wbia get_aidpairs_and_matches --show
@@ -877,10 +877,10 @@ def get_aidpairs_and_matches(
         python -m wbia_cnn.ingest_wbia --test-get_aidpairs_and_matches --db NNP_Master3
 
         python -m wbia_cnn.ingest_wbia --test-get_aidpairs_and_matches --db PZ_MTEST \
-                --acfg default:is_known=True,qmin_pername=2,view=primary,species=primary,minqual=ok --show
+        --acfg default:is_known=True,qmin_pername=2,view=primary,species=primary,minqual=ok --show
 
         python -m wbia_cnn.ingest_wbia --test-get_aidpairs_and_matches --db PZ_Master1 \
-                --acfg default:is_known=True,qmin_pername=2,view=primary,species=primary,minqual=ok --show
+        --acfg default:is_known=True,qmin_pername=2,view=primary,species=primary,minqual=ok --show
 
     Example:
         >>> # DISABLE_DOCTEST
@@ -889,8 +889,8 @@ def get_aidpairs_and_matches(
         >>> # build test data
         >>> ibs = wbia.opendb(defaultdb='PZ_MTEST', allow_newdir=True)
         >>> acfg_name = ut.get_argval(('--aidcfg', '--acfg', '-a', '--acfg-name'),
-        ...                             type_=str,
-        ...                             default='ctrl:qindex=0:10')
+        >>>                             type_=str,
+        >>>                             default='ctrl:qindex=0:10')
         >>> max_examples = None
         >>> num_top = None
         >>> controlled = True
@@ -2786,9 +2786,9 @@ def get_orientation_training_images(ibs, dest_path=None, **kwargs):
 
     Returns:
         tuple : patchmatch_tup = (aid1_list, aid2_list, kpts1_m_list,
-                                   kpts2_m_list, fm_list, metadata_lists)
-            aid pairs and matching keypoint pairs as well as the original index
-            of the feature matches
+        kpts2_m_list, fm_list, metadata_lists)
+        aid pairs and matching keypoint pairs as well as the original index
+        of the feature matches
 
     CommandLine:
         python -m wbia_cnn.ingest_wbia --test-get_orientation_training_images --dbdir /Datasets/BACKGROUND/PZ_Master1
