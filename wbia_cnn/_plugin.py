@@ -1099,22 +1099,30 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
     elif species in [
         'salamandra_salamandra',
         'salamandra_salamandra_larvae',
+        'salamandra_salamandra_juvenile',
         'salanader_fire',
         'salanader_fire_larvae',
+        'salanader_fire_juvenile',
+        'salamander_fire_larvae',
+        'salamander_fire_juvenile',
     ]:
         LEGACY = False
-        species = 'salanader_fire'
+        species = 'salamander_fire_juvenile'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
-        weights_path = grabmodels.ensure_model('salanader_fire_v0', redownload=False)
+        weights_path = grabmodels.ensure_model('background_salamander_fire_juvenile_v2', redownload=False)
         canvas_key = 1
-    elif species in ['salamandra_salamandra_adult', 'salanader_fire_adult']:
+    elif species in [
+        'salamandra_salamandra_adult', 
+        'salanader_fire_adult',
+        'salamander_fire_adult',
+    ]:
         LEGACY = False
-        species = 'salanader_fire_adult'
+        species = 'salamander_fire_adult'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model(
-            'salanader_fire_adult_v0', redownload=False
+            'background_salamander_fire_adult_v2', redownload=False
         )
         canvas_key = 1
     else:
