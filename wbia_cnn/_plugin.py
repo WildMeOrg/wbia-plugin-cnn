@@ -986,7 +986,7 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
             'background_dolphin_spotted', redownload=False
         )
         canvas_key = 1
-    elif species in ['leopard', 'panthera_pardus']:
+    elif species in ['leopard', 'panthera_pardus', 'panthera_pardus_fusca', 'indian_leopard', 'leopard_indian']:
         LEGACY = False
         species = 'leopard'
         confidence_thresh = 0.2
