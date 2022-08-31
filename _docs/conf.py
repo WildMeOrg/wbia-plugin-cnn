@@ -3,6 +3,7 @@ from sphinx.ext.autodoc import between
 from datetime import date
 import sys
 import os
+
 try:
     import theano  # NOQA
 except Exception:

@@ -986,7 +986,13 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
             'background_dolphin_spotted', redownload=False
         )
         canvas_key = 1
-    elif species in ['leopard', 'panthera_pardus', 'panthera_pardus_fusca', 'indian_leopard', 'leopard_indian']:
+    elif species in [
+        'leopard',
+        'panthera_pardus',
+        'panthera_pardus_fusca',
+        'indian_leopard',
+        'leopard_indian',
+    ]:
         LEGACY = False
         species = 'leopard'
         confidence_thresh = 0.2
@@ -1110,10 +1116,12 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         species = 'salamander_fire_juvenile'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
-        weights_path = grabmodels.ensure_model('background_salamander_fire_juvenile_v2', redownload=False)
+        weights_path = grabmodels.ensure_model(
+            'background_salamander_fire_juvenile_v2', redownload=False
+        )
         canvas_key = 1
     elif species in [
-        'salamandra_salamandra_adult', 
+        'salamandra_salamandra_adult',
         'salanader_fire_adult',
         'salamander_fire_adult',
     ]:
@@ -1140,6 +1148,13 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_lions_v0', redownload=False)
+        canvas_key = 1
+    elif species in ['scout']:
+        LEGACY = False
+        species = 'vulcan'
+        confidence_thresh = 0.2
+        model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
+        weights_path = grabmodels.ensure_model('background_scout_v0', redownload=False)
         canvas_key = 1
     else:
         raise ValueError('species %r key does not have a trained model' % (species,))
