@@ -96,6 +96,7 @@ MODEL_URLS = {
     'background_salamander_fire_adult_v2': 'background.salamander_fire_adult.v2.pkl',
     'background_lions_v0': 'background.lions.v0.pkl',
     'background_scout_v0': 'background.scout.v0.pkl',
+    'background_whale_fin_v0': 'background.whale_fin.v0.pkl',
     'aoi2_candidacy': 'aoi2.candidacy.pkl',
     'aoi2_ggr2': 'aoi2.ggr2.pkl',
     'aoi2_hammerhead': 'aoi2.shark_hammerhead.pkl',
