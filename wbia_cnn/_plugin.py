@@ -1068,6 +1068,26 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
             'background_whale_beluga_v0', redownload=False
         )
         canvas_key = 1
+    # elif species in [
+    #     'mediterranean_monk_seal',
+    #     'grey_seal',
+    #     'grey_seal_unknown',
+    #     'grey_seal_male',
+    #     'grey_seal_femaleyoung',
+    #     'grey_seal_pup',
+    #     'harbour_seal',
+    #     'hawaiian_monk_seal',
+    #     'monachus_monachus',
+    #     'phoca_vitulina',
+    #     'halichoerus_grypus',
+    #     'monachus_schauinslandi',
+    # ]:
+    #     LEGACY = False
+    #     species = 'seals'
+    #     confidence_thresh = 0.2
+    #     model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
+    #     weights_path = grabmodels.ensure_model('background_seals_v0', redownload=False)
+    #     canvas_key = 1
     elif species in [
         'mediterranean_monk_seal',
         'grey_seal',
@@ -1081,12 +1101,28 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         'phoca_vitulina',
         'halichoerus_grypus',
         'monachus_schauinslandi',
+        'mediterranean_monk_seal+head',
+        'grey_seal+head',
+        'grey_seal_unknown+head',
+        'grey_seal_male+head',
+        'grey_seal_femaleyoung+head',
+        'grey_seal_pup+head',
+        'harbour_seal+head',
+        'hawaiian_monk_seal+head',
+        'monachus_monachus+head',
+        'phoca_vitulina+head',
+        'halichoerus_grypus+head',
+        'monachus_schauinslandi+head',
+        'seal',
+        'seal+head',
+        'seal_ringed',
+        'seal_ringed+head',
     ]:
         LEGACY = False
-        species = 'seals'
+        species = 'seal'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
-        weights_path = grabmodels.ensure_model('background_seals_v0', redownload=False)
+        weights_path = grabmodels.ensure_model('background_seals_v1', redownload=False)
         canvas_key = 1
     elif species in [
         'grouper_nassau',

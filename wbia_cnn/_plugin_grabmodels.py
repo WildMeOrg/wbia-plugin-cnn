@@ -84,6 +84,7 @@ MODEL_URLS = {
     'background_whale_grey_v0': 'background.whale_grey.v0.pkl',
     'background_whale_beluga_v0': 'background.whale_beluga.v0.pkl',
     'background_seals_v0': 'background.seals.v0.pkl',
+    'background_seals_v1': 'background.seals.v1.pkl',
     'background_grouper_nassau_v0': 'background.grouper_nassau.v0.pkl',
     'background_sea_turtle_v4': 'background.sea_turtle.v4.pkl',
     'background_spotted_eagle_ray_v0': 'background.spotted_eagle_ray.v0.pkl',
