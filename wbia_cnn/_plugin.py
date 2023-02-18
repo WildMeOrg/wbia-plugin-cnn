@@ -855,7 +855,7 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         canvas_key = 1
     elif species in [
         'tiger_shark',
-         'tigershark']:
+        'tigershark']:
         LEGACY = False
         species = 'tiger_shark'
         confidence_thresh = 0.2
@@ -864,8 +864,6 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
             'background_tiger_shark_v0', redownload=False
         )
         canvas_key = 1
-
-
     elif species in ['seadragon_leafy', 'phycodurus_eques']:
         LEGACY = False
         species = 'seadragon_leafy'
