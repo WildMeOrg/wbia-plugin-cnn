@@ -10,6 +10,7 @@ logger = logging.getLogger()
 # DEFAULT_CNNMODELS_DIR = ut.get_app_resource_dir('wbia_cnn', 'pretrained')
 
 MODEL_DOMAIN = 'https://wildbookiarepository.azureedge.net/models/'
+
 MODEL_URLS = {
     'classifier_cameratrap_megan_v1': 'classifier.cameratrap.megan.v1.pkl',
     'classifier_cameratrap_megan_v2': 'classifier.cameratrap.megan.v2.pkl',
@@ -108,6 +109,7 @@ MODEL_URLS = {
     'vggnet': 'pretrained.caffe.vgg.slice_0_6_None.pkl',
     'vggnet_conv': 'pretrained.caffe.vgg.slice_0_32_None.pkl',
     'vggnet_full': 'pretrained.caffe.vgg.pkl',
+    'background_tiger_shark_v0':'background.tigershark.v0.pkl'
 }
 
 
