@@ -853,6 +853,19 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
             'background_whale_sperm_v0', redownload=False
         )
         canvas_key = 1
+
+    elif species in [
+        'leopard_shark',
+        'leopardshark',
+    ]:
+        LEGACY = False
+        species = 'leopard_shark'
+        confidence_thresh = 0.2
+        model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
+        weights_path = grabmodels.ensure_model(
+            'background_leopard_shark_v0', redownload=False
+        )
+        canvas_key = 1
     elif species in ['seadragon_leafy', 'phycodurus_eques']:
         LEGACY = False
         species = 'seadragon_leafy'
