@@ -110,6 +110,7 @@ MODEL_URLS = {
     'vggnet': 'pretrained.caffe.vgg.slice_0_6_None.pkl',
     'vggnet_conv': 'pretrained.caffe.vgg.slice_0_32_None.pkl',
     'vggnet_full': 'pretrained.caffe.vgg.pkl',
+    'background_leopard_shark_v0': 'background.leopard_shark.v0.pkl',
 }
 
 
