@@ -1125,6 +1125,15 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         weights_path = grabmodels.ensure_model('background_seals_v1', redownload=False)
         canvas_key = 1
     elif species in [
+        'leopard_shark',
+    ]:
+        LEGACY = False
+        species = 'leopard_shark'
+        confidence_thresh = 0.2
+        model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
+        weights_path = grabmodels.ensure_model('background_leopard_shark_v0', redownload=False)
+        canvas_key = 1
+    elif species in [
         'grouper_nassau',
         'grouper_tiger',
         'grouper_nassau_bicolor',
