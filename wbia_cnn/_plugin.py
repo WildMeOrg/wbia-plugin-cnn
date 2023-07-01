@@ -1133,6 +1133,26 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
         weights_path = grabmodels.ensure_model('background_leopard_shark_v0', redownload=False)
         canvas_key = 1
+
+    elif species in [
+        "turtle_sea",
+        "turtle_sea+head",
+        "turtle_asian",
+        "turtle_green",
+        "turtle_green+head",
+        "turtle_hawksbill",
+        "turtle_hawksbill+head",
+        "turtle_leatherback",
+        "turtle_leatherback+head",
+        "turtle_oliveridley",
+        "turtle_oliveridley+head",
+    ]:
+        LEGACY = False
+        species = 'turtle_sea'
+        confidence_thresh = 0.2
+        model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
+        weights_path = grabmodels.ensure_model('background_sea_turtle_new_v0', redownload=False)
+        canvas_key = 1
     elif species in [
         'grouper_nassau',
         'grouper_tiger',
