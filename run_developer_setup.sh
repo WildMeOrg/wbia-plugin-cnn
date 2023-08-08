@@ -9,8 +9,10 @@ python setup.py develop
 
 pip install -e .
 
-cd Lasagne/
+pip install -r https://raw.githubusercontent.com/Lasagne/Lasagne/master/requirements.txt
+pip install https://github.com/Lasagne/Lasagne/archive/master.zip
 
-pip install -e .
+#cd Lasagne/
+#pip install -e .
 
 cd ../
