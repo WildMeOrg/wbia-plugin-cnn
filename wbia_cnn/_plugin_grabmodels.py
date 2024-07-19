@@ -112,6 +112,8 @@ MODEL_URLS = {
     'vggnet_conv': 'pretrained.caffe.vgg.slice_0_32_None.pkl',
     'vggnet_full': 'pretrained.caffe.vgg.pkl',
     'background_sea_turtle_new_v0': 'background.sea_turtle_new.v0.pkl',
+    'background_deer_v0': 'background.deer.v0.pkl'
+
 }
 
 
