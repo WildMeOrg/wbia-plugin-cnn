@@ -22,9 +22,9 @@ jobs:
       # Lint things before going any further
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
+          pip install --user --upgrade pip
           #python -m pip install --upgrade pip
-          pip install flake8
+          pip install --user flake8
 
       - name: Lint with flake8
         run: |
@@ -66,8 +66,8 @@ jobs:
       - name: Build project
         run: |
            python3 -m pip install --upgrade pip
-           pip3 install --upgrade setuptools
-           pip3 install --upgrade scikit-build
+           pip3 install --user --upgrade setuptools
+           pip3 install --user --upgrade scikit-build
            bash run_developer_setup.sh
 
       # Install and test
@@ -76,7 +76,7 @@ jobs:
           python3 -m pip install setuptools
           #pip install --upgrade pip
           mkdir -p /tmp/work
-          pip3 install -e .[tests]
+          pip3 install --user -e .[tests]
           export PYTHONFAULTHANDLER=1
           python3 -X faulthandler -m wbia_cnn --set-workdir /tmp/work --preload-exit
           
