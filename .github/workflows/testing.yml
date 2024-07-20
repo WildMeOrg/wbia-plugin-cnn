@@ -71,6 +71,13 @@ jobs:
           export PYTHONFAULTHANDLER=1
           python -X faulthandler -m wbia --set-workdir /tmp/work --preload-exit
 
+      - name: gdb backtrace (if failed)
+        if: failure()
+        run: |
+          set -x
+          sudo apt-get install -y gdb
+          echo -e "r\nbt\nq" | gdb --args python -m wbia --set-workdir /tmp/work --preload-exit
+
       # Install and test
       - name: Install project
         run: |
