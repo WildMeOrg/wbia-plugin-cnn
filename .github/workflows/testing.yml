@@ -66,8 +66,8 @@ jobs:
       - name: Build project
         run: |
           bash run_developer_setup.sh
-          # python -m pip install setuptools
-          # mkdir -p /tmp/work
+          python -m pip install setuptools
+          mkdir -p /tmp/work
           python -m wbia --set-workdir . --preload-exit
 
       # Install and test
