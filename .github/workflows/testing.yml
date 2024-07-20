@@ -65,13 +65,14 @@ jobs:
              
       - name: Build project
         run: |
-          bash run_developer_setup.sh
+           python -m pip install --upgrade pip
+           bash run_developer_setup.sh
 
       # Install and test
       - name: Install project
         run: |
-          #python -m pip install setuptools
-          pip install --upgrade pip
+          python -m pip install setuptools
+          #pip install --upgrade pip
           mkdir -p /tmp/work
           pip install -e .[tests]
           export PYTHONFAULTHANDLER=1
