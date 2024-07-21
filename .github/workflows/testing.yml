@@ -74,6 +74,8 @@ jobs:
       - name: Install project
         run: |
           #pip install --upgrade pip
+          pip install --user wbia-utool
+          pip install --user wbia-vtool          
           pip install --user -e .[tests]
           sudo mkdir -p /tmp/work
           export PYTHONFAULTHANDLER=1
