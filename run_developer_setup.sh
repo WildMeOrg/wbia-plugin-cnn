@@ -1,16 +1,16 @@
 #!/bin/bash
 
 ./clean.sh
-python3 setup.py clean
+python setup.py clean
 
-pip3 install --user -r requirements.txt
+pip install --user -r requirements.txt
 
-python3 setup.py develop
+python setup.py develop
 
-pip3 install --user -e .
+pip install --user -e .
 
-pip3 install --user -r https://raw.githubusercontent.com/Lasagne/Lasagne/master/requirements.txt
-pip3 install --user https://github.com/Lasagne/Lasagne/archive/master.zip
+pip install --user -r https://raw.githubusercontent.com/Lasagne/Lasagne/master/requirements.txt
+pip install --user https://github.com/Lasagne/Lasagne/archive/master.zip
 
 #cd Lasagne/
 #pip install -e .
