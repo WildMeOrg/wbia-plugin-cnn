@@ -73,19 +73,18 @@ jobs:
       # Install and test
       - name: Install project
         run: |
-          python3 -m pip install setuptools
           #pip install --upgrade pip
+          pip install --user -e .[tests]
           mkdir -p /tmp/work
-          pip3 install --user -e .[tests]
           export PYTHONFAULTHANDLER=1
-          python3 -X faulthandler -m wbia_cnn --set-workdir /tmp/work --preload-exit
-          
+          python -X faulthandler -m wbia_cnn --set-workdir /tmp/work --preload-exit
+
       - name: gdb backtrace (if failed)
         if: failure()
         run: |
           set -x
           sudo apt-get install -y gdb
-          echo -e "r\nbt\nq" | gdb --args python3 -m wbia_cnn --set-workdir /tmp/work --preload-exit
+          echo -e "r\nbt\nq" | gdb --args python -m wbia_cnn --set-workdir /tmp/work --preload-exit
 
       - name: Test project
         run: |
