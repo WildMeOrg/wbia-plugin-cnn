@@ -75,9 +75,9 @@ jobs:
         run: |
           #pip install --upgrade pip
           pip install --user -e .[tests]
-          mkdir -p /tmp/work
+          sudo mkdir -p /tmp/work
           export PYTHONFAULTHANDLER=1
-          python -X faulthandler -m wbia_cnn --set-workdir /tmp/work --preload-exit
+          sudo python -X faulthandler -m wbia_cnn --set-workdir /tmp/work --preload-exit
 
       - name: gdb backtrace (if failed)
         if: failure()
