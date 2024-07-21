@@ -65,18 +65,18 @@ jobs:
              
       - name: Build project
         run: |
-           python3 -m pip install --upgrade pip
-           pip3 install --user --upgrade setuptools
-           pip3 install --user --upgrade scikit-build
-           bash run_developer_setup.sh
+           sudo python -m pip install --upgrade pip
+           sudo pip install --upgrade setuptools
+           sudo pip install --upgrade scikit-build
+           sudo bash run_developer_setup.sh
 
       # Install and test
       - name: Install project
         run: |
           #pip install --upgrade pip
-          pip install --user wbia-utool
-          pip install --user wbia-vtool          
-          pip install --user -e .[tests]
+          sudo pip install wbia-utool
+          sudo pip install wbia-vtool          
+          sudo pip install -e .[tests]
           sudo mkdir -p /tmp/work
           export PYTHONFAULTHANDLER=1
           sudo python -X faulthandler -m wbia_cnn --set-workdir /tmp/work --preload-exit
