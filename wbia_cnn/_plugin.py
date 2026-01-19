@@ -1226,7 +1226,7 @@ def generate_species_background(ibs, chip_list, species=None, nInput=None):
         species = 'deer'
         confidence_thresh = 0.2
         model = models.BackgroundModel(batch_size=batch_size, data_shape=data_shape)
-        weights_path = grabmodels.ensure_model('background_deer_v0', redownload=False)
+        weights_path = grabmodels.ensure_model('background_deer_v0', redownload=True)
         canvas_key = 1
     elif species in [
         'whale_fin',
